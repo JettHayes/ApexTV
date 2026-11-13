@@ -2,7 +2,8 @@
 
 'use client';
 
-import { AlertCircle, CheckCircle, Eye, EyeOff, Lock,Send, User } from 'lucide-react';
+import { AlertCircle, ArrowRight, CheckCircle, Eye, EyeOff, Lock,Send, User } from 'lucide-react';
+import Image from 'next/image';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Suspense, useEffect, useState } from 'react';
 
@@ -37,7 +38,7 @@ function VersionDisplay() {
       onClick={() =>
         window.open('https://github.com/JettHayes/ApexTV', '_blank')
       }
-      className='absolute bottom-4 left-1/2 transform -translate-x-1/2 flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400 transition-colors cursor-pointer'
+      className='ptv-login-version z-10 cursor-pointer'
     >
       <span className='font-mono'>v{CURRENT_VERSION}</span>
       {!isChecking && updateStatus !== UpdateStatus.FETCH_FAILED && (
@@ -81,13 +82,13 @@ function getOIDCProviderIcon(buttonText: string) {
 
   for (const provider of providers) {
     if (provider.keywords.some(keyword => text.includes(keyword))) {
-      return <img src={provider.icon} alt={provider.alt} className='w-5 h-5 mr-2' />;
+      return <img src={provider.icon} alt={provider.alt} className='w-5 h-5' />;
     }
   }
 
   // 默认图标
   return (
-    <svg className='w-5 h-5 mr-2' fill='currentColor' viewBox='0 0 20 20'>
+    <svg className='w-5 h-5' fill='currentColor' viewBox='0 0 20 20'>
       <path fillRule='evenodd' d='M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z' clipRule='evenodd' />
     </svg>
   );
@@ -345,29 +346,30 @@ function LoginPageClient() {
         backgroundPosition: 'center',
         backgroundRepeat: 'no-repeat'
       } : undefined}
+      data-has-bg={backgroundImage ? 'true' : undefined}
     >
-      <div className='absolute top-4 right-4'>
+      <div className='absolute top-4 right-4 z-20'>
         <ThemeToggle />
       </div>
-      <div className='ptv-auth-panel relative z-10 w-full max-w-md rounded-3xl p-10'>
-        <h1 className='text-green-600 tracking-tight text-center text-3xl font-extrabold mb-8 bg-clip-text drop-shadow-sm'>
-          {siteName}
-        </h1>
-        <form onSubmit={handleSubmit} className='space-y-8'>
+      <div className='ptv-auth-panel ptv-login-panel z-10 w-full max-w-md'>
+        <div className='ptv-login-brand'>
+          <Image src='/favicon.ico' alt='' width={44} height={44} unoptimized priority />
+          <p className='ptv-login-eyebrow'>SIGN IN</p>
+          <h1>{siteName}</h1>
+          <p className='ptv-login-subtitle'>登录后继续你的观影进度</p>
+        </div>
+        <form onSubmit={handleSubmit} className='ptv-login-form'>
           {shouldAskUsername && (
-            <div>
-              <label htmlFor='username' className='sr-only'>
-                用户名
+            <div className='ptv-field'>
+              <label htmlFor='username' className='ptv-field-label'>
+                <span>01</span>用户名
               </label>
-              <div className='relative'>
-                <div className='absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none'>
-                  <User className='h-5 w-5 text-gray-400 dark:text-gray-500' />
-                </div>
+              <div className='ptv-field-control'>
+                <User aria-hidden='true' />
                 <input
                   id='username'
                   type='text'
                   autoComplete='username'
-                  className='block w-full rounded-lg border-0 py-3 pl-10 pr-4 text-gray-900 dark:text-gray-100 shadow-sm ring-1 ring-white/60 dark:ring-white/20 placeholder:text-gray-500 dark:placeholder:text-gray-400 focus:ring-2 focus:ring-green-500 focus:outline-none sm:text-base bg-white/60 dark:bg-zinc-800/60'
                   placeholder='输入用户名'
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
@@ -376,19 +378,16 @@ function LoginPageClient() {
             </div>
           )}
 
-          <div>
-            <label htmlFor='password' className='sr-only'>
-              密码
+          <div className='ptv-field'>
+            <label htmlFor='password' className='ptv-field-label'>
+              <span>{shouldAskUsername ? '02' : '01'}</span>密码
             </label>
-            <div className='relative'>
-              <div className='absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none'>
-                <Lock className='h-5 w-5 text-gray-400 dark:text-gray-500' />
-              </div>
+            <div className='ptv-field-control'>
+              <Lock aria-hidden='true' />
               <input
                 id='password'
                 type={showPassword ? 'text' : 'password'}
                 autoComplete='current-password'
-                className='block w-full rounded-lg border-0 py-3 pl-10 pr-12 text-gray-900 dark:text-gray-100 shadow-sm ring-1 ring-white/60 dark:ring-white/20 placeholder:text-gray-500 dark:placeholder:text-gray-400 focus:ring-2 focus:ring-green-500 focus:outline-none sm:text-base bg-white/60 dark:bg-zinc-800/60'
                 placeholder='输入访问密码'
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
@@ -397,7 +396,7 @@ function LoginPageClient() {
                 type='button'
                 aria-label={showPassword ? '隐藏密码' : '显示密码'}
                 aria-pressed={showPassword}
-                className='absolute inset-y-0 right-0 flex items-center pr-3 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'
+                className='ptv-field-toggle'
                 onClick={() => setShowPassword(!showPassword)}
               >
                 {showPassword ? (
@@ -415,25 +414,24 @@ function LoginPageClient() {
           )}
 
           {error && (
-            <p className='text-sm text-red-600 dark:text-red-400'>{error}</p>
+            <p role='alert' className='ptv-login-error'>
+              <AlertCircle className='mt-0.5 h-4 w-4 shrink-0' aria-hidden='true' />
+              <span>{error}</span>
+            </p>
           )}
 
-          {/* 记住密码复选框 */}
-          <div className='flex items-center'>
+          {/* 记住密码开关 */}
+          <label htmlFor='remember-password' className='ptv-switch'>
             <input
               id='remember-password'
               type='checkbox'
-              className='h-4 w-4 rounded border-gray-300 text-green-600 focus:ring-green-500 dark:border-gray-600 dark:bg-gray-700'
+              role='switch'
               checked={rememberPassword}
               onChange={(e) => setRememberPassword(e.target.checked)}
             />
-            <label
-              htmlFor='remember-password'
-              className='ml-2 block text-sm text-gray-700 dark:text-gray-300'
-            >
-              记住密码
-            </label>
-          </div>
+            <span className='ptv-switch-track' aria-hidden='true' />
+            记住密码
+          </label>
 
           {/* 登录按钮 */}
           <button
@@ -442,9 +440,19 @@ function LoginPageClient() {
               !password || loading || (shouldAskUsername && !username) ||
               (siteConfig?.LoginRequireTurnstile && !turnstileToken)
             }
-            className='inline-flex w-full justify-center rounded-lg bg-green-600 py-3 text-base font-semibold text-white shadow-lg transition-all duration-200 hover:from-green-600 hover:to-blue-600 disabled:cursor-not-allowed disabled:opacity-50'
+            className='ptv-login-submit'
           >
-            {loading ? '登录中...' : '登录'}
+            {loading ? (
+              <>
+                <span className='ptv-login-spinner' aria-hidden='true' />
+                登录中...
+              </>
+            ) : (
+              <>
+                登录
+                <ArrowRight className='h-5 w-5' aria-hidden='true' />
+              </>
+            )}
           </button>
 
           {/* 注册按钮 */}
@@ -453,7 +461,7 @@ function LoginPageClient() {
               <button
                 type='button'
                 onClick={() => router.push('/register')}
-                className='text-sm text-green-600 dark:text-green-400 hover:text-green-700 dark:hover:text-green-300 transition-colors'
+                className='ptv-login-link'
               >
                 还没有账号？立即注册
               </button>
@@ -463,32 +471,23 @@ function LoginPageClient() {
 
         {/* 第三方登录区域 */}
         {shouldAskUsername && (telegramLoginEnabled || siteConfig?.EnableOIDCLogin) && (
-          <div className='mt-6'>
-            <div className='relative'>
-              <div className='absolute inset-0 flex items-center'>
-                <div className='w-full border-t border-gray-300 dark:border-gray-600'></div>
-              </div>
-              <div className='relative flex justify-center text-sm'>
-                <span className='px-2 text-gray-500 dark:text-gray-400'>
-                  或
-                </span>
-              </div>
-            </div>
-            <div className='mt-4 space-y-3'>
+          <div>
+            <div className='ptv-login-divider'>或</div>
+            <div className='space-y-3'>
               {/* Telegram登录按钮 */}
               {telegramLoginEnabled && (
                 <button
                   type='button'
                   disabled={telegramLoginLoading}
                   onClick={handleTelegramLogin}
-                  className='w-full inline-flex justify-center items-center rounded-lg border-2 border-sky-300 dark:border-sky-700 bg-white/60 dark:bg-zinc-800/60 py-3 text-base font-semibold text-sky-700 dark:text-sky-300 shadow-sm transition-all duration-200 hover:bg-sky-50 dark:hover:bg-sky-900/30 disabled:cursor-not-allowed disabled:opacity-60'
+                  className='ptv-login-alt'
                 >
-                  <Send className='w-5 h-5 mr-2' />
+                  <Send className='h-5 w-5' aria-hidden='true' />
                   {telegramLoginLoading ? '等待 Telegram 确认...' : '使用 Telegram 登录'}
                 </button>
               )}
               {telegramLoginHint && (
-                <p className='text-center text-xs text-gray-500 dark:text-gray-400'>
+                <p className='ptv-login-subtitle text-center'>
                   {telegramLoginHint}
                 </p>
               )}
@@ -497,7 +496,7 @@ function LoginPageClient() {
                 <button
                   type='button'
                   onClick={() => window.location.href = '/api/auth/oidc/login'}
-                  className='w-full inline-flex justify-center items-center rounded-lg border-2 border-gray-300 dark:border-gray-600 bg-white/60 dark:bg-zinc-800/60 py-3 text-base font-semibold text-gray-700 dark:text-gray-200 shadow-sm transition-all duration-200 hover:bg-gray-50 dark:hover:bg-zinc-700/60'
+                  className='ptv-login-alt'
                 >
                   {getOIDCProviderIcon(siteConfig?.OIDCButtonText || '')}
                   {siteConfig?.OIDCButtonText || '使用OIDC登录'}

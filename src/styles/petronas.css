@@ -146,12 +146,69 @@ html[data-moontvplus] :is(a, button, input, select, textarea, [tabindex]):focus-
 .ptv-search-clear { display: flex; align-items: center; justify-content: center; min-width: 44px; min-height: 44px; right: 2px !important; }
 .ptv-search-history button { min-height: 40px; }
 .ptv-search-history-more { display: inline-flex; align-items: center; min-height: 44px; margin-top: 12px; color: var(--ptv-accent); font-size: 14px; }
-.ptv-auth { background-color: var(--ptv-page); color: var(--ptv-text); }
-.ptv-auth-panel { background: var(--ptv-surface); border: 1px solid var(--ptv-line); box-shadow: var(--ptv-shadow); border-radius: 20px; padding: clamp(24px, 5vw, 40px); }
+.ptv-auth {
+  background-color: var(--ptv-page);
+  background-image:
+    radial-gradient(56rem 36rem at 88% -12%, color-mix(in srgb, var(--ptv-action) 16%, transparent), transparent 62%),
+    radial-gradient(40rem 28rem at -6% 112%, color-mix(in srgb, var(--ptv-accent) 12%, transparent), transparent 70%),
+    repeating-linear-gradient(115deg, transparent 0 26px, color-mix(in srgb, var(--ptv-text) 3.5%, transparent) 26px 27px);
+  color: var(--ptv-text);
+}
+.ptv-auth[data-has-bg]::before { content: ''; position: absolute; inset: 0; background: color-mix(in srgb, var(--ptv-page) 58%, transparent); }
+.ptv-auth-panel { position: relative; overflow: hidden; background: var(--ptv-surface); border: 1px solid var(--ptv-line); box-shadow: inset 0 1px 0 rgba(255, 255, 255, .7), var(--ptv-shadow); border-radius: 20px; padding: clamp(24px, 5vw, 40px); }
+.ptv-auth-panel::before { content: ''; position: absolute; inset: 0 0 auto; height: 4px; background: linear-gradient(90deg, var(--ptv-action) 0 38%, #c3cecc 38% 72%, var(--ptv-accent) 72%); }
+html[data-moontvplus].dark .ptv-auth-panel { box-shadow: inset 0 1px 0 rgba(255, 255, 255, .05), var(--ptv-shadow); }
+html[data-moontvplus].dark .ptv-auth-panel::before { background: linear-gradient(90deg, var(--ptv-action) 0 38%, #4d5f61 38% 72%, #007c76 72%); }
 .ptv-auth-panel h1 { color: var(--ptv-accent); }
-.ptv-auth-panel :is(input, button[type='submit']) { min-height: 48px; border-radius: 10px; }
-.ptv-auth-panel input { color: var(--ptv-text); background: var(--ptv-panel); border-color: var(--ptv-line); }
-.ptv-auth-panel button[type='submit'] { background: var(--ptv-action); color: var(--ptv-action-ink); }
+.ptv-auth-panel :where(input:not([type='checkbox']):not([type='radio']), button[type='submit']) { min-height: 48px; border-radius: 10px; }
+.ptv-auth-panel :where(input:not([type='checkbox']):not([type='radio'])) { color: var(--ptv-text); background: var(--ptv-panel); border-color: var(--ptv-line); }
+.ptv-auth-panel :where(button[type='submit']) { background: var(--ptv-action); color: var(--ptv-action-ink); }
+
+.ptv-login-panel { animation: ptv-reveal 460ms var(--ptv-ease) both; }
+.ptv-login-brand { display: flex; flex-direction: column; align-items: center; gap: 6px; margin-bottom: 32px; text-align: center; }
+.ptv-login-brand img { width: 44px; height: 44px; margin-bottom: 6px; object-fit: contain; }
+.ptv-login-eyebrow { font: 600 11px/1.4 ui-monospace, 'Cascadia Mono', Consolas, monospace; letter-spacing: .28em; color: var(--ptv-accent); }
+.ptv-auth-panel .ptv-login-brand h1 { font-size: clamp(28px, 6vw, 34px); font-weight: 800; line-height: 1.1; letter-spacing: -.045em; color: var(--ptv-text); }
+.ptv-login-subtitle { font-size: 14px; color: var(--ptv-muted); }
+.ptv-login-form { display: grid; gap: 20px; }
+
+.ptv-field { display: grid; gap: 8px; }
+.ptv-field-label { display: flex; align-items: center; gap: 10px; font-size: 13px; font-weight: 600; letter-spacing: .04em; color: var(--ptv-muted); }
+.ptv-field-label span { font: 600 11px/1 ui-monospace, 'Cascadia Mono', Consolas, monospace; letter-spacing: .1em; color: var(--ptv-accent); }
+.ptv-field-control { position: relative; display: flex; align-items: center; border: 1px solid var(--ptv-line); border-radius: 12px; background: var(--ptv-panel); transition: border-color 160ms, box-shadow 160ms, background-color 160ms; }
+.ptv-field-control > svg { position: absolute; left: 15px; width: 18px; height: 18px; color: var(--ptv-muted); pointer-events: none; transition: color 160ms; }
+.ptv-field-control:focus-within { border-color: var(--ptv-accent); background: var(--ptv-surface); box-shadow: 0 0 0 4px color-mix(in srgb, var(--ptv-accent) 16%, transparent); }
+.ptv-field-control:focus-within > svg { color: var(--ptv-accent); }
+.ptv-auth-panel .ptv-field-control input { flex: 1; min-width: 0; min-height: 52px; padding: 0 16px 0 46px; border: 0; border-radius: 12px; background: transparent; box-shadow: none; color: var(--ptv-text); font-size: 16px; }
+.ptv-auth-panel .ptv-field-control input:focus-visible { outline: none; }
+.ptv-field-control input::placeholder { color: var(--ptv-muted); opacity: .75; }
+.ptv-field-toggle { display: flex; flex-shrink: 0; align-items: center; justify-content: center; width: 44px; height: 44px; margin-right: 4px; border-radius: 10px; color: var(--ptv-muted); transition: color 160ms, background-color 160ms; }
+
+.ptv-switch { position: relative; display: inline-flex; align-items: center; gap: 12px; min-height: 44px; font-size: 14px; color: var(--ptv-text); cursor: pointer; user-select: none; }
+.ptv-switch input { position: absolute; width: 1px; height: 1px; opacity: 0; }
+.ptv-switch-track { position: relative; flex-shrink: 0; width: 42px; height: 24px; border: 1px solid var(--ptv-line); border-radius: 999px; background: var(--ptv-soft); transition: background-color 180ms, border-color 180ms; }
+.ptv-switch-track::after { content: ''; position: absolute; top: 2px; left: 2px; width: 18px; height: 18px; border-radius: 50%; background: #fff; box-shadow: 0 1px 3px rgba(6, 36, 33, .3); transition: transform 220ms var(--ptv-ease); }
+.ptv-switch input:checked + .ptv-switch-track { border-color: transparent; background: var(--ptv-action); }
+.ptv-switch input:checked + .ptv-switch-track::after { transform: translateX(18px); }
+.ptv-switch input:focus-visible + .ptv-switch-track { outline: 2px solid var(--ptv-accent); outline-offset: 3px; }
+
+.ptv-login-error { display: flex; align-items: flex-start; gap: 10px; padding: 12px 14px; border: 1px solid rgba(217, 45, 32, .28); border-radius: 12px; background: rgba(217, 45, 32, .07); color: #b42318; font-size: 14px; line-height: 1.5; }
+html[data-moontvplus].dark .ptv-login-error { color: #fda29b; background: rgba(240, 68, 56, .1); }
+
+.ptv-auth-panel button.ptv-login-submit { position: relative; display: flex; align-items: center; justify-content: center; gap: 10px; width: 100%; min-height: 52px; overflow: hidden; border-radius: 12px; background: var(--ptv-action); color: var(--ptv-action-ink); font-size: 16px; font-weight: 700; letter-spacing: .04em; box-shadow: 0 12px 24px -14px rgba(0, 166, 150, .9); transition: background-color 160ms, box-shadow 160ms, transform 160ms var(--ptv-ease); }
+.ptv-login-submit::before { content: ''; position: absolute; inset: 0; background: repeating-linear-gradient(115deg, transparent 0 14px, rgba(255, 255, 255, .16) 14px 16px); opacity: 0; transition: opacity 200ms; }
+.ptv-login-submit svg { transition: transform 200ms var(--ptv-ease); }
+.ptv-auth-panel button.ptv-login-submit:not(:disabled):active { transform: scale(.985); }
+.ptv-auth-panel button.ptv-login-submit:disabled { cursor: not-allowed; background: var(--ptv-soft); color: var(--ptv-muted); box-shadow: none; }
+.ptv-login-spinner { width: 18px; height: 18px; border: 2px solid currentColor; border-right-color: transparent; border-radius: 50%; animation: ptv-spin 700ms linear infinite; }
+@keyframes ptv-spin { to { transform: rotate(360deg); } }
+
+.ptv-login-link { display: inline-flex; align-items: center; min-height: 44px; padding-inline: 8px; color: var(--ptv-accent); font-size: 14px; font-weight: 500; }
+.ptv-login-divider { display: flex; align-items: center; gap: 12px; margin: 24px 0 16px; color: var(--ptv-muted); font-size: 12px; letter-spacing: .14em; }
+.ptv-login-divider::before, .ptv-login-divider::after { content: ''; flex: 1; height: 1px; background: var(--ptv-line); }
+.ptv-login-alt { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; min-height: 48px; border: 1px solid var(--ptv-line); border-radius: 12px; background: var(--ptv-panel); color: var(--ptv-text); font-size: 15px; font-weight: 600; transition: border-color 160ms, background-color 160ms; }
+.ptv-login-alt:disabled { cursor: not-allowed; opacity: .6; }
+.ptv-login-version { position: absolute; bottom: calc(16px + env(safe-area-inset-bottom)); left: 50%; display: inline-flex; align-items: center; gap: 8px; min-height: 32px; padding: 0 12px; transform: translateX(-50%); border: 1px solid var(--ptv-line); border-radius: 999px; background: var(--ptv-surface); color: var(--ptv-muted); font-size: 12px; }
 
 .ptv-play-page { color: var(--ptv-text); background: var(--ptv-page); min-height: 100vh; }
 .ptv-play-backdrop { opacity: .12; pointer-events: none; }
@@ -189,6 +246,12 @@ html[data-moontvplus] :is(a, button, input, select, textarea, [tabindex]):focus-
   .ptv-video-card:hover { transform: translateY(-3px) scale(1.02); }
   .ptv-video-card-menu:hover { background: var(--ptv-selected); color: var(--ptv-accent); }
   .ptv-search-submit:hover, .ptv-hero-play:hover { background: #36e5d3 !important; }
+  .ptv-field-control:not(:focus-within):hover { border-color: color-mix(in srgb, var(--ptv-accent) 40%, var(--ptv-line)); }
+  .ptv-field-toggle:hover, .ptv-login-alt:not(:disabled):hover { color: var(--ptv-accent); background: var(--ptv-selected); }
+  .ptv-login-alt:not(:disabled):hover { border-color: var(--ptv-accent); }
+  .ptv-auth-panel button.ptv-login-submit:not(:disabled):hover { background: #36e5d3; }
+  .ptv-login-submit:not(:disabled):hover::before { opacity: 1; }
+  .ptv-login-submit:not(:disabled):hover svg { transform: translateX(4px); }
 }
 @media (pointer: coarse) {
   .ptv-page :is(button, a.ptv-nav-link) { touch-action: manipulation; }
@@ -233,7 +296,7 @@ html[data-moontvplus] :is(a, button, input, select, textarea, [tabindex]):focus-
   .ptv-page input:not([type='checkbox']):not([type='radio']), .ptv-page select { font-size: 16px; }
 }
 @media (prefers-reduced-motion: reduce) {
-  .ptv-page *, .ptv-page *::before, .ptv-page *::after, .ptv-action-sheet { scroll-behavior: auto !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
+  .ptv-page *, .ptv-page *::before, .ptv-page *::after, .ptv-action-sheet, .ptv-auth *, .ptv-auth *::before, .ptv-auth *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
   .ptv-video-card:hover, .ptv-video-card:active { transform: none !important; }
   ::view-transition-old(root), ::view-transition-new(root) { animation: none !important; }
 }
