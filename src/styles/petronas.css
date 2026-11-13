@@ -42,11 +42,11 @@ html[data-moontvplus] :is(a, button, input, select, textarea, [tabindex]):focus-
   outline-offset: 3px;
 }
 
-.ptv-page { min-height: 100vh; min-height: 100dvh; color: var(--ptv-text); }
+.ptv-page { position: relative; z-index: 1; min-height: 100vh; min-height: 100dvh; color: var(--ptv-text); }
 .ptv-page main { min-width: 0; }
 .ptv-page-main { margin-top: calc(3.5rem + var(--safe-top)); padding-bottom: calc(3.5rem + env(safe-area-inset-bottom)); }
-.ptv-wallpaper { background-position: center top; background-size: cover; background-repeat: no-repeat; opacity: .22; }
-.ptv-wallpaper-overlay { background: color-mix(in srgb, var(--ptv-page) 35%, transparent); }
+.ptv-wallpaper { position: fixed; inset: 0; z-index: 0; background-position: center; background-size: contain; background-repeat: no-repeat; opacity: .22; }
+.ptv-wallpaper-overlay { position: fixed; inset: 0; z-index: 0; background: color-mix(in srgb, var(--ptv-page) 35%, transparent); }
 .ptv-page[data-page='search'] .ptv-wallpaper,
 .ptv-page[data-page='library'] .ptv-wallpaper { opacity: .14; }
 .ptv-page[data-page='admin'] .ptv-wallpaper { opacity: .05; }
@@ -223,6 +223,47 @@ html[data-moontvplus].dark .ptv-login-error { color: #fda29b; background: rgba(2
 .ptv-live-tabs { display: inline-flex; flex-wrap: wrap; gap: 4px; padding: 4px; border: 1px solid var(--ptv-line); border-radius: 12px; background: var(--ptv-panel); }
 .ptv-live-tabs a { display: inline-flex; align-items: center; justify-content: center; min-height: 44px; padding: 8px 18px; border-radius: 8px; color: var(--ptv-muted); }
 .ptv-live-tabs a[aria-current='page'] { background: var(--ptv-accent); color: var(--ptv-page); }
+@media (min-width: 768px) { .ptv-live-tabs { display: none; } }
+.ptv-live-page .ptv-player-grid {
+  gap: 0;
+  overflow: hidden;
+  border: 1px solid var(--ptv-line);
+  border-radius: 16px;
+  background: var(--ptv-surface);
+  box-shadow: 0 18px 40px -28px rgba(9, 18, 20, .45);
+}
+.ptv-live-page .ptv-player-canvas,
+.ptv-live-page .ptv-player-canvas .shadow-lg {
+  border-radius: 0;
+  box-shadow: none;
+  outline: none;
+}
+.ptv-live-page .ptv-player-panel {
+  display: flex;
+  flex-direction: column;
+  height: min(52vh, 420px);
+  max-height: none;
+  min-height: 0;
+  border: 0;
+  border-radius: 0;
+  border-top: 1px solid var(--ptv-line);
+  box-shadow: none;
+  background: var(--ptv-panel);
+}
+.ptv-live-page .ptv-player-panel > div { flex: 1; min-height: 0; }
+html[data-moontvplus]:not(.dark) .ptv-live-page :is(.ptv-player-panel, .ptv-player-tools) {
+  --ptv-text: #192d30;
+  --ptv-muted: #53676b;
+  --ptv-page: #edf2f1;
+  --ptv-panel: #f4f7f6;
+  --ptv-surface: #f7faf9;
+  --ptv-soft: #e5edeb;
+  --ptv-line: rgba(39, 77, 77, .18);
+  --ptv-accent: #007c76;
+  color: var(--ptv-text);
+  background: var(--ptv-surface);
+  border-color: var(--ptv-line);
+}
 .ptv-live-page { width: 100%; max-width: 1600px; margin-inline: auto; padding: 24px var(--ptv-gutter) 40px; }
 .ptv-live-page .ptv-player-panel { max-height: 650px; }
 .ptv-live-page button { min-width: 44px; min-height: 44px; }
@@ -277,6 +318,8 @@ html[data-moontvplus].dark .ptv-login-error { color: #fda29b; background: rgba(2
   .ptv-player-grid { grid-template-columns: minmax(0, 1fr) 300px; }
   .ptv-player-grid.ptv-player-grid-collapsed { grid-template-columns: minmax(0, 1fr); }
   .ptv-player-grid > .ptv-player-panel { height: auto; min-height: 350px; max-height: 650px; align-self: stretch; }
+  .ptv-live-page .ptv-player-grid { align-items: stretch; }
+  .ptv-live-page .ptv-player-panel { height: auto; min-height: 100%; max-height: none; align-self: stretch; border-top: 0; border-left: 1px solid var(--ptv-line); }
   .ptv-player-grid-collapsed > .ptv-player-panel { display: none; }
 }
 @media (max-width: 767px) {

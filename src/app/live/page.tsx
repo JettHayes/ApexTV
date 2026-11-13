@@ -2895,10 +2895,10 @@ function LivePageClient() {
             </div>
 
             {/* 频道列表 */}
-            <div className='ptv-player-panel h-[330px] overflow-hidden'>
-              <div className='md:ml-2 px-4 py-0 h-full rounded-xl bg-black/10 dark:bg-white/5 flex flex-col border border-white/0 dark:border-white/30 overflow-hidden'>
+            <div className='ptv-player-panel overflow-hidden'>
+              <div className='px-4 py-0 h-full flex flex-col overflow-hidden'>
                 {/* 主要的 Tab 切换 */}
-                <div className='flex mb-1 -mx-6 flex-shrink-0'>
+                <div className='flex mb-1 -mx-4 flex-shrink-0'>
                   <div
                     onClick={() => setActiveTab('channels')}
                     className={`flex-1 py-3 px-6 text-center cursor-pointer transition-all duration-200 font-medium
@@ -2927,7 +2927,7 @@ function LivePageClient() {
                 {activeTab === 'channels' && (
                   <>
                     {/* 搜索框 */}
-                    <div className='mb-3 -mx-6 px-6 flex-shrink-0'>
+                    <div className='mb-3 -mx-4 px-4 flex-shrink-0'>
                       <div className='relative'>
                         <input
                           type='text'
@@ -2976,7 +2976,7 @@ function LivePageClient() {
                     </div>
 
                     {/* 分组标签 */}
-                    <div className='flex items-center gap-4 mb-4 border-b border-gray-300 dark:border-gray-700 -mx-6 px-6 flex-shrink-0'>
+                    <div className='flex items-center gap-4 mb-4 border-b border-gray-300 dark:border-gray-700 -mx-4 px-4 flex-shrink-0'>
                       {/* 切换状态提示 */}
                       {isSwitchingSource && (
                         <div className='flex items-center gap-2 text-sm text-amber-600 dark:text-amber-400'>

@@ -773,8 +773,8 @@ export default function WebLivePage() {
               )}
             </div>
 
-            <div className='ptv-player-panel h-[300px] overflow-hidden'>
-              <div className='md:ml-2 px-4 py-0 h-full rounded-xl bg-black/10 dark:bg-white/5 flex flex-col border border-white/0 dark:border-white/30 overflow-hidden'>
+            <div className='ptv-player-panel overflow-hidden'>
+              <div className='px-4 py-0 h-full flex flex-col overflow-hidden'>
                 <div className='flex mb-1 -mx-6 flex-shrink-0'>
                   <div
                     onClick={() => setActiveTab('rooms')}

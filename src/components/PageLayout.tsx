@@ -3,6 +3,7 @@
 import { useRouter } from 'next/navigation';
 import { usePathname } from 'next/navigation';
 import { useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 
 import { BackButton, recordNavigation } from './BackButton';
 import MobileBottomNav from './MobileBottomNav';
@@ -71,14 +72,15 @@ const PageLayout = ({ children, activePath = '/', hideNavigation = false }: Page
   return (
     <VersionCheckProvider>
       <div className='ptv-page relative w-full min-h-dvh overflow-hidden' data-page={page}>
-        {shouldShowSharedBackground && backgroundImage && (
+        {shouldShowSharedBackground && backgroundImage && createPortal(
           <>
             <div
-              className='ptv-wallpaper absolute inset-0 pointer-events-none'
+              className='ptv-wallpaper pointer-events-none'
               style={{ backgroundImage: `url(${backgroundImage})` }}
             />
-            <div className='ptv-wallpaper-overlay absolute inset-0 pointer-events-none' />
-          </>
+            <div className='ptv-wallpaper-overlay pointer-events-none' />
+          </>,
+          document.body
         )}
 
         {/* 移动端头部 */}
