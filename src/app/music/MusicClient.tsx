@@ -236,10 +236,10 @@ function SortablePlaylistRow({
 }
 
 function AudioSpectrumCanvas({
-  bars,
+  barsRef,
   compact = false,
 }: {
-  bars: number[];
+  barsRef: React.MutableRefObject<number[]>;
   compact?: boolean;
 }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -247,28 +247,35 @@ function AudioSpectrumCanvas({
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    let cssWidth = 0;
+    let lastBars: number[] | null = null;
+    let frameId = 0;
+
+    const resize = () => {
+      const rect = canvas.getBoundingClientRect();
+      const dpr = window.devicePixelRatio || 1;
+      cssWidth = rect.width;
+      canvas.width = Math.round(rect.width * dpr);
+      canvas.height = Math.round(rect.height * dpr);
+      lastBars = null;
+    };
 
     const draw = () => {
-      const rect = canvas.getBoundingClientRect();
-      if (!rect.width || !rect.height) return;
+      frameId = window.requestAnimationFrame(draw);
+      const bars = barsRef.current;
+      const { width, height } = canvas;
+      if (bars === lastBars || !cssWidth || !width || !height) return;
+      lastBars = bars;
 
       const dpr = window.devicePixelRatio || 1;
-      const width = Math.round(rect.width * dpr);
-      const height = Math.round(rect.height * dpr);
-
-      if (canvas.width !== width || canvas.height !== height) {
-        canvas.width = width;
-        canvas.height = height;
-      }
-
-      const ctx = canvas.getContext('2d');
-      if (!ctx) return;
-
       ctx.clearRect(0, 0, width, height);
 
       const targetPitch = compact ? 4.2 : 4.6;
       const gap = Math.max(1, Math.round(dpr));
-      const count = Math.max(1, Math.floor(rect.width / targetPitch));
+      const count = Math.max(1, Math.floor(cssWidth / targetPitch));
       const barWidth = Math.max(2 * dpr, (width - gap * (count - 1)) / count);
       const cubeHeight = compact ? Math.max(2, Math.round(2 * dpr)) : Math.max(2, Math.round(2.5 * dpr));
       const cubeGap = 1;
@@ -288,6 +295,7 @@ function AudioSpectrumCanvas({
 
       ctx.fillStyle = themeColor;
       ctx.strokeStyle = themeColor;
+      ctx.beginPath();
 
       for (let i = 0; i < count; i++) {
         const q = Math.max(SPECTRUM_IDLE_LEVEL, sampleBar(i)) * scaleBase;
@@ -296,18 +304,21 @@ function AudioSpectrumCanvas({
 
         for (let segment = 0; segment < cubeCount; segment++) {
           const y = height - segment * (cubeHeight + cubeGap);
-          ctx.beginPath();
           ctx.roundRect(x, y - cubeHeight, barWidth, cubeHeight, Math.min(2 * dpr, cubeHeight / 2));
-          ctx.fill();
         }
       }
+      ctx.fill();
     };
 
-    draw();
-    const observer = new ResizeObserver(draw);
+    resize();
+    const observer = new ResizeObserver(resize);
     observer.observe(canvas);
-    return () => observer.disconnect();
-  }, [bars, compact]);
+    frameId = window.requestAnimationFrame(draw);
+    return () => {
+      observer.disconnect();
+      window.cancelAnimationFrame(frameId);
+    };
+  }, [barsRef, compact]);
 
   return (
     <div
@@ -486,8 +497,8 @@ export default function MusicClient({ children: _children }: { children?: React.
     if (typeof window === 'undefined') return true;
     return localStorage.getItem('musicShowSpectrum') !== '0';
   });
-  const [spectrumBars, setSpectrumBars] = useState<number[]>(
-    () => Array.from({ length: SPECTRUM_BIN_COUNT }, () => SPECTRUM_IDLE_LEVEL)
+  const spectrumBarsRef = useRef<number[]>(
+    Array.from({ length: SPECTRUM_BIN_COUNT }, () => SPECTRUM_IDLE_LEVEL)
   );
 
   useEffect(() => {
@@ -2213,12 +2224,15 @@ export default function MusicClient({ children: _children }: { children?: React.
         });
       }
 
-      setSpectrumBars(prev =>
-        nextBars.map((value, index) => {
-          const previous = prev[index] ?? SPECTRUM_IDLE_LEVEL;
-          return previous + (value - previous) * (isActive ? 0.34 : 0.12);
-        })
-      );
+      const prevBars = spectrumBarsRef.current;
+      let barsChanged = false;
+      const smoothedBars = nextBars.map((value, index) => {
+        const previous = prevBars[index] ?? SPECTRUM_IDLE_LEVEL;
+        const smoothed = previous + (value - previous) * (isActive ? 0.34 : 0.12);
+        if (Math.abs(smoothed - previous) > 0.0005) barsChanged = true;
+        return smoothed;
+      });
+      if (barsChanged) spectrumBarsRef.current = smoothedBars;
 
       spectrumFrameRef.current = window.requestAnimationFrame(tick);
     };
@@ -2535,9 +2549,9 @@ export default function MusicClient({ children: _children }: { children?: React.
       {/* Player */}
       {showPlayer && currentSong && (
         <div className="fixed bottom-[calc(1rem+env(safe-area-inset-bottom))] left-1/2 -translate-x-1/2 w-[95%] max-w-3xl z-50">
-          {showSpectrum && (
+          {showSpectrum && !showLyrics && (
             <div className="pointer-events-none px-4">
-              <AudioSpectrumCanvas bars={spectrumBars} compact />
+              <AudioSpectrumCanvas barsRef={spectrumBarsRef} compact />
             </div>
           )}
 
@@ -2792,7 +2806,7 @@ export default function MusicClient({ children: _children }: { children?: React.
                         type="button"
                         data-index={index}
                         onClick={() => seekToLyric(line, index)}
-                        className={`block min-h-11 w-full appearance-none border-0 bg-transparent p-0 text-center transition-all duration-300 focus-visible:outline focus-visible:outline-2 focus-visible:outline-music-theme ${
+                        className={`block min-h-11 w-full appearance-none border-0 bg-transparent p-0 text-center transition-[color,transform] duration-300 focus-visible:outline focus-visible:outline-2 focus-visible:outline-music-theme ${
                           index === currentLyricIndex
                             ? 'text-white text-lg md:text-xl lg:text-2xl font-bold scale-110'
                             : index === currentLyricIndex - 1 || index === currentLyricIndex + 1
@@ -3028,7 +3042,7 @@ export default function MusicClient({ children: _children }: { children?: React.
                   <div className="relative mb-3 flex items-center gap-2 text-xs">
                     <span className="invisible">{formatTime(currentTime)}</span>
                     <div className="flex-1">
-                      <AudioSpectrumCanvas bars={spectrumBars} />
+                      <AudioSpectrumCanvas barsRef={spectrumBarsRef} />
                     </div>
                     <span className="invisible">{formatTime(duration)}</span>
                   </div>

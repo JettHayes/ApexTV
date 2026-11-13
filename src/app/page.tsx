@@ -910,7 +910,7 @@ function HomeClient() {
               </button>
 
               {musicEnabled && (
-                <Link href='/music' prefetch={false}>
+                <Link href='/music/rankings' prefetch={false}>
                   <button
                     className='p-1.5 rounded-lg text-green-500 hover:text-green-600 transition-colors'
                     title='音乐视听'

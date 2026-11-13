@@ -19,7 +19,7 @@ export function useNavigationItems(searchHref = '/search') {
     ...(config.PRIVATE_LIBRARY_ENABLED ? [{ icon: Container, label: '私人影库', href: '/private-library' }] : []),
     ...(config.LIVE_ENABLED ? [{ icon: TvMinimalPlay, label: '电视直播', href: '/live' }] : []),
     ...(config.WEB_LIVE_ENABLED ? [{ icon: Globe, label: '网络直播', href: '/web-live' }] : []),
-    ...(config.MUSIC_ENABLED ? [{ icon: Music2, label: '音乐', href: '/music' }] : []),
+    ...(config.MUSIC_ENABLED ? [{ icon: Music2, label: '音乐', href: '/music/rankings' }] : []),
   ];
   const categories = [
     { icon: Film, label: '电影', href: '/douban?type=movie' },

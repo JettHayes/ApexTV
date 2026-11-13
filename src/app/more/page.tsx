@@ -8,7 +8,7 @@ import PageLayout from '@/components/PageLayout';
 
 export default function MorePage() {
   const { primary, categories, other } = useNavigationItems();
-  const features = [...primary.filter((item) => ['/music', '/live', '/web-live'].includes(item.href)), ...other];
+  const features = [...primary.filter((item) => ['/music/rankings', '/live', '/web-live'].includes(item.href)), ...other];
   return (
     <PageLayout activePath='/more'>
       <div className='ptv-more mx-auto max-w-5xl px-5 py-10 sm:px-8'>
