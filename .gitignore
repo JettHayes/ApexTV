@@ -4,6 +4,10 @@
 /node_modules
 /.pnp
 .pnp.js
+.pnpm-store
+.pnpm-cache
+.pnpm-state
+.corepack
 
 # testing
 /coverage

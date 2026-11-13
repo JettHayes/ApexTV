@@ -18,6 +18,15 @@ env:
     UPSTREAM_BRANCH: main
     TARGET_BRANCH: main
     SYNC_BRANCH: upstream-sync
+    # ApexTV 仅部署在 Vercel，这些上游文件已删除，同步时不再引入
+    REMOVED_PATHS: >-
+        Dockerfile Dockerfile.lite docker-entrypoint.sh .dockerignore start.js start.sh render.yaml
+        wrangler.toml open-next.config.ts cloudflare-worker.ts proxy.worker.js
+        edgeone.json .env.edgeone.example scripts/edgeone-build.mjs scripts/edgeone-local-preview.mjs
+        apps/android-tv custom-css .github/ISSUE_TEMPLATE migrations
+        scripts/init-sqlite.js scripts/init-postgres.js scripts/init-turso.js
+        public/screenshot1.png public/screenshot2.png public/screenshot3.png
+        public/music/effects/medium-room1.wav public/music/effects/s3_r1_bd.wav
 
 jobs:
     sync_with_upstream:
@@ -77,6 +86,8 @@ jobs:
                   rm -rf .github/workflows
                   git checkout "origin/${TARGET_BRANCH}" -- .github/workflows
                   git add -A .github/workflows
+                  # shellcheck disable=SC2086
+                  git rm -r -q --ignore-unmatch -- ${REMOVED_PATHS}
 
                   if [ -n "$(git diff --name-only --diff-filter=U)" ]; then
                       echo "[Error] 同步分支与上游新提交存在冲突，请在本地处理 PR #${PR_NUMBER}"
@@ -87,7 +98,7 @@ jobs:
                   if [ "${MERGING}" = "true" ]; then
                       git commit --no-edit
                   elif ! git diff --cached --quiet; then
-                      git commit -m "chore(ci): 保留 ApexTV 工作流配置"
+                      git commit -m "chore(ci): 保留 ApexTV 工作流配置并移除不部署的平台文件"
                   fi
 
             - name: Push sync branch
