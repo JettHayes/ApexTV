@@ -227,6 +227,8 @@ Use APIs, media, and related images in accordance with their terms and permissio
 
 ## 📄 License and acknowledgments
 
+Original additions and modifications to Apex TV authored by [JettHayes](https://github.com/JettHayes) © 2026 JettHayes. Rights in upstream code and third-party content remain with their respective rights holders.
+
 This project is licensed under **[CC BY-NC-SA 4.0](LICENSE)**.
 
 Thanks to **[MoonTVPlus](https://github.com/mtvpls/MoonTVPlus)** for the original implementation.

@@ -227,6 +227,8 @@ pnpm dev
 
 ## 📄 许可与致谢
 
+Apex TV 中由 [JettHayes](https://github.com/JettHayes) 创作的原创新增与修改部分 © 2026 JettHayes。原有代码及第三方内容的权利归各自权利人所有。
+
 本项目采用 **[CC BY-NC-SA 4.0](LICENSE)** 许可证。
 
 感谢 **[MoonTVPlus](https://github.com/mtvpls/MoonTVPlus)** 提供的基础实现。
