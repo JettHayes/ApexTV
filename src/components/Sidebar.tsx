@@ -3,6 +3,7 @@
 'use client';
 
 import { Blend, Cat, Clover, Container, Film, Globe, Home, Menu, Search, Star, Tv, TvMinimalPlay, Users } from 'lucide-react';
+import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname, useSearchParams } from 'next/navigation';
 import {
@@ -29,15 +30,23 @@ const SidebarContext = createContext<SidebarContextType>({
 
 export const useSidebar = () => useContext(SidebarContext);
 
-// 可替换为你自己的 logo 图片
 const Logo = () => {
   const { siteName } = useSite();
   return (
     <Link
       href='/'
-      className='flex items-center justify-center h-16 select-none hover:opacity-80 transition-opacity duration-200'
+      aria-label={siteName}
+      className='flex h-16 min-w-0 items-center gap-2.5 rounded-sm text-green-600 select-none transition-opacity duration-200 hover:opacity-80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-500 dark:text-green-400'
     >
-      <span className='text-2xl font-bold text-green-600 tracking-tight'>
+      <Image
+        src='/favicon.ico'
+        alt=''
+        width={32}
+        height={32}
+        unoptimized
+        className='h-8 w-8 shrink-0 object-contain'
+      />
+      <span className='truncate text-xl font-bold tracking-tight'>
         {siteName}
       </span>
     </Link>
@@ -263,10 +272,10 @@ const Sidebar = ({ onToggle, activePath = '/' }: SidebarProps) => {
             {/* 顶部 Logo 区域 */}
             <div className='relative h-16'>
               <div
-                className={`absolute inset-0 flex items-center justify-center transition-opacity duration-200 ${isCollapsed ? 'opacity-0' : 'opacity-100'
+                className={`absolute inset-0 flex items-center pl-4 pr-12 transition-opacity duration-200 ${isCollapsed ? 'opacity-0' : 'opacity-100'
                   }`}
               >
-                <div className='w-[calc(100%-4rem)] flex justify-center'>
+                <div className='flex w-full min-w-0 justify-start'>
                   {!isCollapsed && <Logo />}
                 </div>
               </div>
@@ -373,3 +382,4 @@ const Sidebar = ({ onToggle, activePath = '/' }: SidebarProps) => {
 };
 
 export default Sidebar;
+
