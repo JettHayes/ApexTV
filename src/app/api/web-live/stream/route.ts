@@ -2,6 +2,7 @@ import crypto from 'crypto';
 import { NextRequest, NextResponse } from 'next/server';
 
 import { requireFeaturePermission } from '@/lib/permissions';
+import { webLiveImageUrl } from '@/lib/web-live';
 
 function getAntiCode(oldAntiCode: string, streamName: string): string {
   const paramsT = 100;
@@ -53,6 +54,7 @@ async function getBilibiliStream(roomId: string) {
 
   // 获取主播信息
   let ownerName = '';
+  let avatar = '';
   try {
     const userRes = await fetch(`https://api.live.bilibili.com/live_user/v1/Master/info?uid=${uid}`, {
       headers
@@ -60,6 +62,7 @@ async function getBilibiliStream(roomId: string) {
     const userData = await userRes.json();
     if (userData.code === 0) {
       ownerName = userData.data?.info?.uname || '';
+      avatar = webLiveImageUrl(userData.data?.info?.face);
     }
   } catch (err) {
     console.warn('获取主播信息失败:', err);
@@ -67,6 +70,8 @@ async function getBilibiliStream(roomId: string) {
 
   // 获取房间详细信息（包含标题）
   let title = '';
+  let cover = '';
+  let category = '';
   try {
     const roomInfoRes = await fetch(`https://api.live.bilibili.com/room/v1/Room/get_info?room_id=${realRoomId}`, {
       headers
@@ -74,6 +79,8 @@ async function getBilibiliStream(roomId: string) {
     const roomInfoData = await roomInfoRes.json();
     if (roomInfoData.code === 0) {
       title = roomInfoData.data?.title || '';
+      cover = webLiveImageUrl(roomInfoData.data?.user_cover || roomInfoData.data?.keyframe);
+      category = roomInfoData.data?.area_name || '';
     }
   } catch (err) {
     console.warn('获取房间标题失败:', err);
@@ -128,7 +135,10 @@ async function getBilibiliStream(roomId: string) {
   return {
     url: m3u8Url,
     name: ownerName,
-    title: title
+    title,
+    avatar,
+    cover,
+    category
   };
 }
 
@@ -248,7 +258,10 @@ export async function GET(request: NextRequest) {
         url: proxyUrl,
         originalUrl: streamUrl,
         name: gameLiveInfo?.nick || '',
-        title: gameLiveInfo?.introduction || ''
+        title: gameLiveInfo?.introduction || '',
+        avatar: webLiveImageUrl(gameLiveInfo?.avatar180),
+        cover: webLiveImageUrl(gameLiveInfo?.screenshot),
+        category: gameLiveInfo?.gameFullName || ''
       });
     }
 
@@ -260,7 +273,10 @@ export async function GET(request: NextRequest) {
         url: proxyUrl,
         originalUrl: streamData.url,
         name: streamData.name,
-        title: streamData.title
+        title: streamData.title,
+        avatar: streamData.avatar,
+        cover: streamData.cover,
+        category: streamData.category
       });
     }
 

@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 
 import { useWebLiveSync } from '@/hooks/useWebLiveSync';
+import type { WebLiveRoomInfo } from '@/lib/web-live';
 
 import LiveTabs from '@/components/LiveTabs';
 import LoadingStyle, {
@@ -12,6 +13,7 @@ import LoadingStyle, {
   LoadingErrorStyle,
 } from '@/components/LoadingStyle';
 import PageLayout from '@/components/PageLayout';
+import WebLiveRoomDetails, { WebLiveAvatar } from '@/components/WebLiveRoomInfo';
 
 let Artplayer: any = null;
 let Hls: any = null;
@@ -54,7 +56,7 @@ export default function WebLivePage() {
   const [currentSource, setCurrentSource] = useState<any | null>(null);
   const [videoUrl, setVideoUrl] = useState('');
   const [originalVideoUrl, setOriginalVideoUrl] = useState('');
-  const [streamInfo, setStreamInfo] = useState<{ name?: string; title?: string } | null>(null);
+  const [streamInfo, setStreamInfo] = useState<WebLiveRoomInfo | null>(null);
   const [activeTab, setActiveTab] = useState<'rooms' | 'platforms'>('rooms');
   const [isChannelListCollapsed, setIsChannelListCollapsed] = useState(false);
   const [isVideoLoading, setIsVideoLoading] = useState(false);
@@ -63,6 +65,7 @@ export default function WebLivePage() {
   const [isWebLiveEnabled, setIsWebLiveEnabled] = useState<boolean | null>(null);
   const [librariesLoaded, setLibrariesLoaded] = useState(false);
   const hasAutoLoadedRef = useRef(false); // 防止重复自动加载
+  const streamRequestRef = useRef<AbortController | null>(null);
 
   // 观影室同步功能
   const webLiveSync = useWebLiveSync({
@@ -261,6 +264,7 @@ export default function WebLivePage() {
   // 组件卸载时清理
   useEffect(() => {
     return () => {
+      streamRequestRef.current?.abort();
       cleanupPlayer();
     };
   }, []);
@@ -280,9 +284,14 @@ export default function WebLivePage() {
   }, []);
 
   const handleSourceClick = async (source: any) => {
+    streamRequestRef.current?.abort();
+    const controller = new AbortController();
+    streamRequestRef.current = controller;
     // 立即清理旧的播放器
     cleanupPlayer();
 
+    setVideoUrl('');
+    setOriginalVideoUrl('');
     setCurrentSource(source);
     setIsVideoLoading(true);
     setErrorMessage(null);
@@ -295,12 +304,14 @@ export default function WebLivePage() {
     router.replace(`/web-live?${newSearchParams.toString()}`);
 
     try {
-      const res = await fetch(`/api/web-live/stream?platform=${source.platform}&roomId=${source.roomId}`);
+      const res = await fetch(`/api/web-live/stream?platform=${encodeURIComponent(source.platform)}&roomId=${encodeURIComponent(source.roomId)}`, { signal: controller.signal });
       if (res.ok) {
         const data = await res.json();
+        if (controller.signal.aborted) return;
 
         // 等待 DOM 渲染完成后再设置 videoUrl
         const waitForDom = () => {
+          if (controller.signal.aborted) return;
           if (artRef.current) {
             setVideoUrl(data.url);
             setOriginalVideoUrl(data.originalUrl || data.url);
@@ -313,21 +324,24 @@ export default function WebLivePage() {
         requestAnimationFrame(waitForDom);
 
         // 保存主播信息
-        if (data.name || data.title) {
-          setStreamInfo({
-            name: data.name,
-            title: data.title
-          });
-        }
+        setStreamInfo({
+          name: data.name,
+          title: data.title,
+          avatar: data.avatar,
+          cover: data.cover,
+          category: data.category
+        });
       } else {
         const data = await res.json();
+        if (controller.signal.aborted) return;
         setErrorMessage(data.error || '获取直播流失败');
       }
     } catch (err) {
+      if (controller.signal.aborted) return;
       console.error('获取直播流失败:', err);
       setErrorMessage(err instanceof Error ? err.message : '获取直播流失败');
     } finally {
-      setIsVideoLoading(false);
+      if (!controller.signal.aborted) setIsVideoLoading(false);
     }
   };
 
@@ -580,11 +594,16 @@ export default function WebLivePage() {
                 )}
               </div>
 
+              {currentSource && (
+                <WebLiveRoomDetails source={currentSource} info={streamInfo} loading={isVideoLoading} error={!!errorMessage} />
+              )}
+
               {/* 外部播放器按钮 */}
               {currentSource && !webLiveSync.isInRoom && (
-                <div className='mt-3 px-2 lg:flex-shrink-0 flex justify-end'>
-                  <div className='bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm rounded-lg p-2 border border-gray-200/50 dark:border-gray-700/50 w-full lg:w-auto overflow-x-auto'>
-                    <div className='flex gap-1.5 justify-end lg:flex-wrap items-center'>
+                <div className='ptv-room-tools'>
+                  <span className='ptv-room-tools-label'>外部播放</span>
+                  <div className='min-w-0 overflow-x-auto'>
+                    <div className='flex w-max items-center gap-1.5'>
                       {/* 网页播放 */}
                       <button
                         onClick={(e) => {
@@ -754,23 +773,6 @@ export default function WebLivePage() {
                 </div>
               )}
 
-              {/* 直播信息显示 */}
-              {streamInfo && (streamInfo.name || streamInfo.title) && (
-                <div className='mt-3 px-2'>
-                  <div className='space-y-1.5'>
-                    {streamInfo.title && (
-                      <div className='text-lg font-medium text-black dark:text-white line-clamp-2'>
-                        {streamInfo.title}
-                      </div>
-                    )}
-                    {streamInfo.name && (
-                      <div className='text-base text-black dark:text-white'>
-                        {streamInfo.name}
-                      </div>
-                    )}
-                  </div>
-                </div>
-              )}
             </div>
 
             <div className='ptv-player-panel overflow-hidden'>
@@ -819,9 +821,7 @@ export default function WebLivePage() {
                             className={`w-full p-3 rounded-lg text-left transition-all duration-200 ${isActive ? 'bg-green-100 dark:bg-green-900/30 border border-green-300 dark:border-green-700' : 'hover:bg-gray-100 dark:hover:bg-gray-700'} ${webLiveSync.shouldDisableControls ? 'opacity-50 cursor-not-allowed' : ''}`}
                           >
                             <div className='flex items-center gap-3'>
-                              <div className='w-10 h-10 bg-gray-300 dark:bg-gray-700 rounded-lg flex items-center justify-center flex-shrink-0'>
-                                <Radio className='w-5 h-5 text-gray-500' />
-                              </div>
+                              <WebLiveAvatar avatar={isActive ? streamInfo?.avatar : undefined} cover={isActive ? streamInfo?.cover : undefined} />
                               <div className='flex-1 min-w-0'>
                                 <div className='text-sm font-medium text-gray-900 dark:text-gray-100 truncate'>{source.name}</div>
                                 <div className='text-xs text-gray-500 dark:text-gray-400 mt-1'>房间ID: {source.roomId}</div>

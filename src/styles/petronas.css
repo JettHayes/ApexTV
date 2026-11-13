@@ -81,6 +81,16 @@ html[data-moontvplus] :is(a, button, input, select, textarea, [tabindex]):focus-
 .ptv-brand { display: flex; align-items: center; min-width: 0; flex: 1; gap: 12px; color: var(--ptv-accent); letter-spacing: -.02em; }
 .ptv-brand img { flex-shrink: 0; object-fit: contain; }
 .ptv-brand span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ptv-brand-copy { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.ptv-brand-name { font-size: 20px; font-weight: 750; line-height: 1.15; letter-spacing: -.045em; }
+.ptv-brand-caption { color: var(--ptv-muted); font-size: 10px; font-weight: 500; letter-spacing: .12em; line-height: 1.5; }
+.ptv-sidebar-brand { display: flex; align-items: center; gap: 4px; min-height: 88px; padding: 14px 12px 14px 16px; margin-bottom: 6px; border-bottom: 1px solid var(--ptv-line); }
+.ptv-sidebar-brand .ptv-brand { gap: 8px; }
+.ptv-sidebar-brand .ptv-brand img { width: 40px; height: 40px; }
+.ptv-sidebar-brand .ptv-brand-name { font-size: 24px; }
+.ptv-sidebar-toggle { width: 44px; height: 44px; color: var(--ptv-muted); transition: color 160ms, background-color 160ms; }
+.ptv-sidebar-toggle:hover { background: var(--ptv-selected); color: var(--ptv-accent); }
+.ptv-sidebar[data-collapsed='true'] .ptv-sidebar-brand { justify-content: center; min-height: 88px; padding-inline: 10px; }
 .ptv-nav-link { min-height: 46px; border-radius: 10px; color: var(--ptv-muted); transition: background-color 160ms, color 160ms; }
 .ptv-nav-link:is([data-active='true'], [aria-current='page']) { color: var(--ptv-accent); background: var(--ptv-selected); }
 .ptv-mobile-header, .ptv-mobile-nav { background: var(--ptv-surface) !important; border-color: var(--ptv-line) !important; box-shadow: none !important; }
@@ -333,6 +343,33 @@ html[data-moontvplus]:not(.dark) .ptv-live-page :is(.ptv-player-panel, .ptv-play
 .ptv-live-page { width: 100%; max-width: 1600px; margin-inline: auto; padding: 24px var(--ptv-gutter) 40px; }
 .ptv-live-page .ptv-player-panel { max-height: 650px; }
 .ptv-live-page button { min-width: 44px; min-height: 44px; }
+.ptv-room-info { display: flex; align-items: flex-start; gap: 16px; padding: 20px clamp(16px, 2vw, 24px) 16px; color: var(--ptv-text); }
+.ptv-room-avatar { display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; width: 56px; height: 56px; overflow: hidden; border: 1px solid var(--ptv-line); border-radius: 50%; background: var(--ptv-soft); color: var(--ptv-muted); }
+.ptv-room-avatar img { width: 100%; height: 100%; object-fit: cover; }
+.ptv-room-copy { flex: 1; min-width: 0; }
+.ptv-room-heading { display: flex; align-items: flex-start; gap: 12px; }
+.ptv-room-heading h2 { min-width: 0; margin: 0; font-size: clamp(17px, 1.3vw, 21px); font-weight: 650; line-height: 1.45; overflow-wrap: anywhere; }
+.ptv-room-state { display: inline-flex; align-items: center; gap: 5px; flex-shrink: 0; margin-top: 4px; color: var(--ptv-muted); font-size: 11px; line-height: 20px; }
+.ptv-room-state::before { content: ''; width: 5px; height: 5px; border-radius: 50%; background: currentColor; }
+.ptv-room-state[data-state='ready'] { color: var(--ptv-accent); }
+.ptv-room-state[data-state='error'] { color: #b4533c; }
+.ptv-room-owner { margin-top: 4px; font-size: 14px; line-height: 1.6; overflow-wrap: anywhere; }
+.ptv-room-meta { display: flex; align-items: center; flex-wrap: wrap; gap: 6px 12px; margin-top: 8px; font-size: 12px; line-height: 1.6; color: var(--ptv-muted); }
+.ptv-room-platform { color: var(--ptv-accent); font-weight: 600; }
+.ptv-room-id { overflow-wrap: anywhere; }
+.ptv-room-tools { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px clamp(16px, 2vw, 24px); border-top: 1px solid var(--ptv-line); }
+.ptv-room-tools-label { flex-shrink: 0; color: var(--ptv-muted); font-size: 12px; }
+.ptv-room-tools button { box-shadow: none; background: transparent; transition: color 160ms, background-color 160ms; }
+.ptv-room-tools button:hover { background: var(--ptv-selected); }
+.ptv-room-tools button span { display: none; }
+.ptv-room-tools button svg { color: var(--ptv-muted); }
+.ptv-player-panel .ptv-room-avatar { width: 40px; height: 40px; border-radius: 10px; }
+@media (max-width: 479px) {
+  .ptv-room-info { gap: 12px; padding-block: 16px; }
+  .ptv-room-info > .ptv-room-avatar { width: 44px; height: 44px; }
+  .ptv-room-heading { flex-wrap: wrap; gap: 2px 10px; }
+  .ptv-room-state { margin-top: 0; }
+}
 .ptv-player-more { position: relative; }
 .ptv-player-more summary { cursor: pointer; list-style: none; }
 .ptv-player-more summary::-webkit-details-marker { display: none; }
