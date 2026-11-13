@@ -4736,6 +4736,27 @@ function PlayPageClient() {
     setExternalPlayerAdBlock(!externalPlayerAdBlock);
   };
 
+  const launchExternal = (toHref: (url: string) => string, appName: string) => {
+    let urlToUse = videoUrl;
+    if (sourceProxyMode && detail?.episodes && currentEpisodeIndex < detail.episodes.length) {
+      urlToUse = detail.episodes[currentEpisodeIndex];
+    }
+    const tokenParam = proxyToken ? `&token=${encodeURIComponent(proxyToken)}` : '';
+    const playbackUrl = externalPlayerAdBlock
+      ? `${window.location.origin}/api/proxy-m3u8?url=${encodeURIComponent(urlToUse)}&source=${encodeURIComponent(currentSource)}${tokenParam}`
+      : urlToUse;
+    const link = document.createElement('a');
+    link.href = toHref(playbackUrl);
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    setToast({
+      message: `已交给${appName}。需要本机已安装该软件，否则页面不会再有变化。`,
+      type: 'success',
+      onClose: () => setToast(null),
+    });
+  };
+
   // Wake Lock 相关函数
   const requestWakeLock = async () => {
     try {
@@ -11065,8 +11086,8 @@ function PlayPageClient() {
               {videoUrl && !playSync.isInRoom && (
                 <div className='ptv-player-tools mt-3 px-2 lg:flex-shrink-0'>
                   <div className='bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm rounded-lg p-2 border border-gray-200/50 dark:border-gray-700/50 w-full lg:w-auto overflow-x-auto'>
-                    <div className='flex gap-1.5 flex-nowrap lg:flex-wrap items-center'>
-                      <div className='flex gap-1.5 flex-nowrap lg:flex-wrap lg:justify-end lg:flex-1'>
+                    <div className='ptv-tool-stack'>
+                      <div className='ptv-tool-row ptv-tool-primary'>
                         {/* 下载按钮 */}
                         <button
                           onClick={(e) => {
@@ -11158,8 +11179,12 @@ function PlayPageClient() {
                             e.preventDefault();
                             // 获取当前浏览器URL去除域名部分，并去除开头的/
                             const currentPath = (window.location.pathname + window.location.search).replace(/^\//, '');
-                            // 打开moontvplus协议
-                            window.open(`moontvplus://${currentPath}`, '_blank');
+                            const link = document.createElement('a');
+                            link.href = `moontvplus://${currentPath}`;
+                            document.body.appendChild(link);
+                            link.click();
+                            link.remove();
+                            setToast({ message: '已交给 ApexTV App。未安装时页面不会再有变化。', type: 'success', onClose: () => setToast(null) });
                           }}
                           className='group relative flex items-center justify-center gap-1 w-8 h-8 lg:w-auto lg:h-auto lg:px-2 lg:py-1.5 bg-blue-500 hover:bg-blue-600 dark:bg-blue-600 dark:hover:bg-blue-700 text-xs font-medium rounded-md transition-all duration-200 shadow-sm hover:shadow-md cursor-pointer overflow-hidden border border-blue-600 dark:border-blue-700 flex-shrink-0'
                           title='App打开'
@@ -11188,7 +11213,12 @@ function PlayPageClient() {
                           onClick={(e) => {
                             e.preventDefault();
                             const currentPath = (window.location.pathname + window.location.search).replace(/^\//, '');
-                            window.open(`moontvpluspc://${currentPath}`, '_blank');
+                            const link = document.createElement('a');
+                            link.href = `moontvpluspc://${currentPath}`;
+                            document.body.appendChild(link);
+                            link.click();
+                            link.remove();
+                            setToast({ message: '已交给 ApexTV 电脑客户端。未安装时页面不会再有变化。', type: 'success', onClose: () => setToast(null) });
                           }}
                           className='group relative flex items-center justify-center gap-1 w-8 h-8 lg:w-auto lg:h-auto lg:px-2 lg:py-1.5 bg-emerald-500 hover:bg-emerald-600 dark:bg-emerald-600 dark:hover:bg-emerald-700 text-xs font-medium rounded-md transition-all duration-200 shadow-sm hover:shadow-md cursor-pointer overflow-hidden border border-emerald-600 dark:border-emerald-700 flex-shrink-0'
                           title='PC Client打开'
@@ -11317,26 +11347,15 @@ function PlayPageClient() {
                             快捷键
                           </span>
                         </button>
+                      </div>
+                      <div className='ptv-tool-row ptv-tool-external'>
+                        <span className='ptv-tool-label'>用其他软件打开</span>
 
-                        <details className='ptv-player-more'>
-                        <summary>更多播放器</summary>
-                        <div className='ptv-player-more-options'>
                         {/* PotPlayer */}
                         <button
                           onClick={(e) => {
                             e.preventDefault();
-                            // 如果当前是代理播放模式，使用原始 URL；否则使用当前 videoUrl
-                            let urlToUse = videoUrl;
-                            if (sourceProxyMode && detail?.episodes && currentEpisodeIndex < detail.episodes.length) {
-                              urlToUse = detail.episodes[currentEpisodeIndex];
-                            }
-                            // 使用代理 URL
-                            const tokenParam = proxyToken ? `&token=${encodeURIComponent(proxyToken)}` : '';
-                            const proxyUrl = externalPlayerAdBlock
-                              ? `${window.location.origin}/api/proxy-m3u8?url=${encodeURIComponent(urlToUse)}&source=${encodeURIComponent(currentSource)}${tokenParam}`
-                              : urlToUse;
-                            // URL encode 避免冒号被吃掉
-                            window.open(`potplayer://${proxyUrl}`, '_blank');
+                            launchExternal((url) => `potplayer://${url}`, 'PotPlayer');
                           }}
                           className='group relative flex items-center justify-center gap-1 w-8 h-8 lg:w-auto lg:h-auto lg:px-2 lg:py-1.5 bg-white hover:bg-gray-100 dark:bg-gray-700 dark:hover:bg-gray-600 text-xs font-medium rounded-md transition-all duration-200 shadow-sm hover:shadow-md cursor-pointer overflow-hidden border border-gray-300 dark:border-gray-600 flex-shrink-0'
                           title='PotPlayer'
@@ -11355,18 +11374,7 @@ function PlayPageClient() {
                         <button
                           onClick={(e) => {
                             e.preventDefault();
-                            // 如果当前是代理播放模式，使用原始 URL；否则使用当前 videoUrl
-                            let urlToUse = videoUrl;
-                            if (sourceProxyMode && detail?.episodes && currentEpisodeIndex < detail.episodes.length) {
-                              urlToUse = detail.episodes[currentEpisodeIndex];
-                            }
-                            // 使用代理 URL
-                            const tokenParam = proxyToken ? `&token=${encodeURIComponent(proxyToken)}` : '';
-                            const proxyUrl = externalPlayerAdBlock
-                              ? `${window.location.origin}/api/proxy-m3u8?url=${encodeURIComponent(urlToUse)}&source=${encodeURIComponent(currentSource)}${tokenParam}`
-                              : urlToUse;
-                            // URL encode 避免冒号被吃掉
-                            window.open(`vlc://${proxyUrl}`, '_blank');
+                            launchExternal((url) => `vlc://${url}`, 'VLC');
                           }}
                           className='group relative flex items-center justify-center gap-1 w-8 h-8 lg:w-auto lg:h-auto lg:px-2 lg:py-1.5 bg-white hover:bg-gray-100 dark:bg-gray-700 dark:hover:bg-gray-600 text-xs font-medium rounded-md transition-all duration-200 shadow-sm hover:shadow-md cursor-pointer overflow-hidden border border-gray-300 dark:border-gray-600 flex-shrink-0'
                           title='VLC'
@@ -11385,18 +11393,7 @@ function PlayPageClient() {
                         <button
                           onClick={(e) => {
                             e.preventDefault();
-                            // 如果当前是代理播放模式，使用原始 URL；否则使用当前 videoUrl
-                            let urlToUse = videoUrl;
-                            if (sourceProxyMode && detail?.episodes && currentEpisodeIndex < detail.episodes.length) {
-                              urlToUse = detail.episodes[currentEpisodeIndex];
-                            }
-                            // 使用代理 URL
-                            const tokenParam = proxyToken ? `&token=${encodeURIComponent(proxyToken)}` : '';
-                            const proxyUrl = externalPlayerAdBlock
-                              ? `${window.location.origin}/api/proxy-m3u8?url=${encodeURIComponent(urlToUse)}&source=${encodeURIComponent(currentSource)}${tokenParam}`
-                              : urlToUse;
-                            // URL encode 避免冒号被吃掉
-                            window.open(`mpv://${proxyUrl}`, '_blank');
+                            launchExternal((url) => `mpv://${url}`, 'MPV');
                           }}
                           className='group relative flex items-center justify-center gap-1 w-8 h-8 lg:w-auto lg:h-auto lg:px-2 lg:py-1.5 bg-white hover:bg-gray-100 dark:bg-gray-700 dark:hover:bg-gray-600 text-xs font-medium rounded-md transition-all duration-200 shadow-sm hover:shadow-md cursor-pointer overflow-hidden border border-gray-300 dark:border-gray-600 flex-shrink-0'
                           title='MPV'
@@ -11415,21 +11412,9 @@ function PlayPageClient() {
                         <button
                           onClick={(e) => {
                             e.preventDefault();
-                            // 如果当前是代理播放模式，使用原始 URL；否则使用当前 videoUrl
-                            let urlToUse = videoUrl;
-                            if (sourceProxyMode && detail?.episodes && currentEpisodeIndex < detail.episodes.length) {
-                              urlToUse = detail.episodes[currentEpisodeIndex];
-                            }
-                            // 使用代理 URL
-                            const tokenParam = proxyToken ? `&token=${encodeURIComponent(proxyToken)}` : '';
-                            const proxyUrl = externalPlayerAdBlock
-                              ? `${window.location.origin}/api/proxy-m3u8?url=${encodeURIComponent(urlToUse)}&source=${encodeURIComponent(currentSource)}${tokenParam}`
-                              : urlToUse;
-                            window.open(
-                              `intent://${proxyUrl}#Intent;package=com.mxtech.videoplayer.ad;S.title=${encodeURIComponent(
-                                videoTitle
-                              )};end`,
-                              '_blank'
+                            launchExternal(
+                              (url) => `intent://${url}#Intent;package=com.mxtech.videoplayer.ad;S.title=${encodeURIComponent(videoTitle)};end`,
+                              'MX Player'
                             );
                           }}
                           className='group relative flex items-center justify-center gap-1 w-8 h-8 lg:w-auto lg:h-auto lg:px-2 lg:py-1.5 bg-white hover:bg-gray-100 dark:bg-gray-700 dark:hover:bg-gray-600 text-xs font-medium rounded-md transition-all duration-200 shadow-sm hover:shadow-md cursor-pointer overflow-hidden border border-gray-300 dark:border-gray-600 flex-shrink-0'
@@ -11449,17 +11434,7 @@ function PlayPageClient() {
                         <button
                           onClick={(e) => {
                             e.preventDefault();
-                            // 如果当前是代理播放模式，使用原始 URL；否则使用当前 videoUrl
-                            let urlToUse = videoUrl;
-                            if (sourceProxyMode && detail?.episodes && currentEpisodeIndex < detail.episodes.length) {
-                              urlToUse = detail.episodes[currentEpisodeIndex];
-                            }
-                            // 使用代理 URL
-                            const tokenParam = proxyToken ? `&token=${encodeURIComponent(proxyToken)}` : '';
-                            const proxyUrl = externalPlayerAdBlock
-                              ? `${window.location.origin}/api/proxy-m3u8?url=${encodeURIComponent(urlToUse)}&source=${encodeURIComponent(currentSource)}${tokenParam}`
-                              : urlToUse;
-                            window.open(`nplayer-${proxyUrl}`, '_blank');
+                            launchExternal((url) => `nplayer-${url}`, 'nPlayer');
                           }}
                           className='group relative flex items-center justify-center gap-1 w-8 h-8 lg:w-auto lg:h-auto lg:px-2 lg:py-1.5 bg-white hover:bg-gray-100 dark:bg-gray-700 dark:hover:bg-gray-600 text-xs font-medium rounded-md transition-all duration-200 shadow-sm hover:shadow-md cursor-pointer overflow-hidden border border-gray-300 dark:border-gray-600 flex-shrink-0'
                           title='nPlayer'
@@ -11478,22 +11453,7 @@ function PlayPageClient() {
                         <button
                           onClick={(e) => {
                             e.preventDefault();
-                            // 如果当前是代理播放模式，使用原始 URL；否则使用当前 videoUrl
-                            let urlToUse = videoUrl;
-                            if (sourceProxyMode && detail?.episodes && currentEpisodeIndex < detail.episodes.length) {
-                              urlToUse = detail.episodes[currentEpisodeIndex];
-                            }
-                            // 使用代理 URL
-                            const tokenParam = proxyToken ? `&token=${encodeURIComponent(proxyToken)}` : '';
-                            const proxyUrl = externalPlayerAdBlock
-                              ? `${window.location.origin}/api/proxy-m3u8?url=${encodeURIComponent(urlToUse)}&source=${encodeURIComponent(currentSource)}${tokenParam}`
-                              : urlToUse;
-                            window.open(
-                              `iina://weblink?url=${encodeURIComponent(
-                                proxyUrl
-                              )}`,
-                              '_blank'
-                            );
+                            launchExternal((url) => `iina://weblink?url=${encodeURIComponent(url)}`, 'IINA');
                           }}
                           className='group relative flex items-center justify-center gap-1 w-8 h-8 lg:w-auto lg:h-auto lg:px-2 lg:py-1.5 bg-white hover:bg-gray-100 dark:bg-gray-700 dark:hover:bg-gray-600 text-xs font-medium rounded-md transition-all duration-200 shadow-sm hover:shadow-md cursor-pointer overflow-hidden border border-gray-300 dark:border-gray-600 flex-shrink-0'
                           title='IINA'
@@ -11507,8 +11467,6 @@ function PlayPageClient() {
                             IINA
                           </span>
                         </button>
-                        </div>
-                        </details>
                       </div>
 
                       {/* 去广告开关 */}
