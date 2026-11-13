@@ -1,8 +1,8 @@
 import { resolveSiteName } from './site-brand';
 
 it.each([undefined, '', 'MoonTVPlus', 'PETRONAS TV', ' petronas tv ', 'ApexTV'])(
-  '站点名称 %s 统一为 ApexTV',
-  (name) => expect(resolveSiteName(name)).toBe('ApexTV')
+  '站点名称 %s 统一为 Apex TV',
+  (name) => expect(resolveSiteName(name)).toBe('Apex TV')
 );
 
 it('保留后续手动设置的其他站点名', () => {

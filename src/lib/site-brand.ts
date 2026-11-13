@@ -1,6 +1,6 @@
-export const DEFAULT_SITE_NAME = 'ApexTV';
+export const DEFAULT_SITE_NAME = 'Apex TV';
 
-const legacyNames = new Set(['moontv', 'moontvplus', 'moontv plus', 'petronas tv']);
+const legacyNames = new Set(['moontv', 'moontvplus', 'moontv plus', 'petronas tv', 'apextv']);
 
 export function resolveSiteName(value?: string | null): string {
   const name = value?.trim();

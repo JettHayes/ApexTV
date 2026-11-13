@@ -78,8 +78,7 @@ html[data-moontvplus] :is(a, button, input, select, textarea, [tabindex]):focus-
 .sidebar-offset { width: 64px; transition: none; }
 .ptv-sidebar { transition: none; }
 .ptv-sidebar button { min-width: 44px; min-height: 44px; }
-.ptv-brand { display: flex; align-items: center; min-width: 0; flex: 1; gap: 0; color: var(--ptv-accent); letter-spacing: -.035em; }
-.ptv-brand-sep { flex: 1; max-width: 36px; height: 1px; margin-inline: 12px; background: var(--ptv-line); }
+.ptv-brand { display: flex; align-items: center; min-width: 0; flex: 1; gap: 12px; color: var(--ptv-accent); letter-spacing: -.02em; }
 .ptv-brand img { flex-shrink: 0; object-fit: contain; }
 .ptv-brand span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .ptv-nav-link { min-height: 46px; border-radius: 10px; color: var(--ptv-muted); transition: background-color 160ms, color 160ms; }
@@ -283,17 +282,20 @@ html[data-moontvplus].dark .ptv-login-error { color: #fda29b; background: rgba(2
   backdrop-filter: none;
   padding: 0;
 }
-.ptv-play-page .ptv-tool-stack { display: flex; flex-direction: column; align-items: stretch; gap: 10px; width: 100%; }
+.ptv-play-page .ptv-tool-stack { display: flex; flex-flow: row wrap; align-items: center; gap: 8px; width: 100%; }
 .ptv-play-page .ptv-tool-row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
-.ptv-play-page .ptv-tool-label { color: var(--ptv-muted); font-size: 12px; font-weight: 600; letter-spacing: .04em; }
-.ptv-play-page .ptv-player-tools button {
+.ptv-play-page .ptv-tool-external { margin-left: auto; }
+.ptv-play-page .ptv-tool-external::before { content: ''; width: 1px; height: 18px; margin-right: 4px; background: var(--ptv-line); }
+.ptv-play-page .ptv-tool-label { display: none; }
+.ptv-page .ptv-play-page .ptv-player-tools button {
   width: auto;
   height: auto;
   min-height: 36px;
   padding: 6px 10px;
   border: 1px solid var(--ptv-line);
   border-radius: 8px;
-  background: var(--ptv-surface);
+  background-color: var(--ptv-surface);
+  background-image: none;
   color: var(--ptv-text);
   box-shadow: none;
 }
@@ -386,7 +388,8 @@ html[data-moontvplus]:not(.dark) .ptv-live-page :is(.ptv-player-panel, .ptv-play
   .ptv-live-page .ptv-player-grid { align-items: stretch; }
   .ptv-live-page .ptv-player-panel { height: auto; min-height: 100%; max-height: none; align-self: stretch; border-top: 0; border-left: 1px solid var(--ptv-line); }
   .ptv-play-page .ptv-player-grid { align-items: stretch; }
-  .ptv-play-page .ptv-player-grid > .ptv-player-panel { height: auto; min-height: 100%; max-height: none; align-self: stretch; border-top: 0; border-left: 1px solid var(--ptv-line); }
+  .ptv-play-page .ptv-player-grid > .ptv-player-panel { position: relative; height: auto; min-height: 0; max-height: none; overflow: hidden; align-self: stretch; border-top: 0; border-left: 1px solid var(--ptv-line); }
+  .ptv-play-page .ptv-player-panel > * { position: absolute; inset: 0; height: auto; margin: 0; }
   .ptv-player-grid-collapsed > .ptv-player-panel { display: none; }
 }
 @media (max-width: 767px) {
