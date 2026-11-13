@@ -72,7 +72,7 @@ function HomeClient() {
   const [showAIChat, setShowAIChat] = useState(false);
   const [aiEnabled, setAiEnabled] = useState(false);
   const [aiDefaultMessageNoVideo, setAiDefaultMessageNoVideo] = useState(
-    '你好！我是MoonTVPlus的AI影视助手。想看什么电影或剧集？需要推荐吗？'
+    '你好！我是ApexTV的AI影视助手。想看什么电影或剧集？需要推荐吗？'
   );
   const [sourceSearchEnabled, setSourceSearchEnabled] = useState(true);
   const [musicEnabled, setMusicEnabled] = useState(false);
@@ -885,18 +885,19 @@ function HomeClient() {
       <FireworksCanvas />
       {/* TMDB 热门轮播图 */}
       {homeBannerEnabled && (
-        <div className='w-full mb-4'>
+        <div className='ptv-home-hero-wrap'>
           <BannerCarousel delayLoad={true} />
         </div>
       )}
 
-      <div className='px-2 sm:px-10 pb-4 sm:pb-8 overflow-visible'>
-        <div className='max-w-[95%] mx-auto'>
+      <div className='ptv-home-content px-2 sm:px-10 pb-4 sm:pb-8 overflow-visible'>
+        <div className='w-full mx-auto'>
           {/* 首页内容 */}
           <>
             {/* 源站寻片和AI问片入口 */}
+            <div>
             <div
-              className={`flex items-center justify-end gap-2 mb-4 ${
+              className={`ptv-home-tools flex items-center justify-end gap-2 mb-4 ${
                 homeBannerEnabled ? '' : 'mt-[30px]'
               }`}
             >
@@ -963,6 +964,7 @@ function HomeClient() {
                   <Bot size={20} />
                 </button>
               )}
+            </div>
             </div>
 
             {/* 继续观看 */}

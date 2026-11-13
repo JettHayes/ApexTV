@@ -15,36 +15,48 @@
  */
 
 :root {
-  --music-bg: #f4f7fb;
+  --music-bg: #edf2f1;
   --music-bg-strong: rgba(255, 255, 255, 0.96);
-  --music-surface: rgba(255, 255, 255, 0.88);
-  --music-surface-soft: rgba(241, 245, 249, 0.92);
+  --music-surface: rgba(244, 247, 246, 0.96);
+  --music-surface-soft: rgba(220, 231, 229, 0.96);
   --music-overlay: rgba(15, 23, 42, 0.45);
   --music-glass: rgba(15, 23, 42, 0.06);
   --music-glass-strong: rgba(15, 23, 42, 0.1);
-  --music-border: rgba(148, 163, 184, 0.28);
-  --music-text: #0f172a;
-  --music-text-soft: #475569;
-  --music-text-muted: #64748b;
+  --music-border: rgba(83, 103, 107, 0.28);
+  --music-text: #192d30;
+  --music-text-soft: #344f51;
+  --music-text-muted: #53676b;
 }
 
 .dark {
-  --music-bg: #09090b;
-  --music-bg-strong: rgba(9, 9, 11, 0.95);
-  --music-surface: rgba(24, 24, 27, 0.9);
-  --music-surface-soft: rgba(39, 39, 42, 0.88);
+  --music-bg: #091214;
+  --music-bg-strong: rgba(9, 18, 20, 0.95);
+  --music-surface: rgba(16, 32, 35, 0.96);
+  --music-surface-soft: rgba(27, 48, 50, 0.96);
   --music-overlay: rgba(0, 0, 0, 0.72);
   --music-glass: rgba(255, 255, 255, 0.05);
   --music-glass-strong: rgba(255, 255, 255, 0.1);
   --music-border: rgba(255, 255, 255, 0.1);
-  --music-text: #f8fafc;
-  --music-text-soft: #cbd5e1;
-  --music-text-muted: #94a3b8;
+  --music-text: #edf4f2;
+  --music-text-soft: #c3d4d1;
+  --music-text-muted: #a2b5b5;
 }
 
 .music-theme {
-  background: linear-gradient(180deg, var(--music-bg) 0%, color-mix(in srgb, var(--music-bg) 82%, #22c55e 18%) 100%);
+  background-color: var(--music-bg);
+  background: linear-gradient(180deg, var(--music-bg) 0%, color-mix(in srgb, var(--music-bg) 94%, #007c76 6%) 100%);
   color: var(--music-text);
+}
+
+.music-theme :is(button, [role='button']), .music-theme-portal :is(button, [role='button']) {
+  min-width: 44px;
+  min-height: 44px;
+  touch-action: manipulation;
+}
+.music-theme :is(button, a, input, [tabindex]):focus-visible,
+.music-theme-portal :is(button, a, input, [tabindex]):focus-visible {
+  outline: 2px solid var(--theme-primary, #007c76);
+  outline-offset: 3px;
 }
 
 .music-theme :is([class*='bg-zinc-950'], [class*='bg-zinc-900']),
@@ -105,4 +117,20 @@
 .music-theme input::placeholder,
 .music-theme textarea::placeholder {
   color: var(--music-text-muted) !important;
+}
+
+.music-player-controls button {
+  min-width: 44px;
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .music-theme *, .music-theme-portal * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }

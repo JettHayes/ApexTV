@@ -1,69 +1,22 @@
 'use client';
 
-import Link from 'next/link';
-
 import { BackButton } from './BackButton';
-import { useSite } from './SiteProvider';
+import BrandLogo from './BrandLogo';
 import { ThemeToggle } from './ThemeToggle';
 import { UpdateNotification } from './UpdateNotification';
 import { UserMenu } from './UserMenu';
 
-interface MobileHeaderProps {
-  showBackButton?: boolean;
-}
-
-const MobileHeader = ({ showBackButton = false }: MobileHeaderProps) => {
-  const { siteName } = useSite();
-  return (
-    <header
-      className='md:hidden fixed top-0 left-0 right-0 z-[999] w-full bg-white/70 backdrop-blur-xl border-b border-gray-200/50 shadow-sm dark:bg-gray-900/70 dark:border-gray-700/50'
-      style={{ paddingTop: 'var(--safe-top)' }}
-    >
-      <div className='relative h-12 flex items-center justify-between px-4'>
-        {/* 左侧：搜索按钮、返回按钮和设置按钮 */}
-        <div className='flex items-center gap-2'>
-          <Link
-            href='/search'
-            className='w-10 h-10 p-2 rounded-full flex items-center justify-center text-gray-600 hover:bg-gray-200/50 dark:text-gray-300 dark:hover:bg-gray-700/50 transition-colors'
-          >
-            <svg
-              className='w-full h-full'
-              fill='none'
-              stroke='currentColor'
-              viewBox='0 0 24 24'
-              xmlns='http://www.w3.org/2000/svg'
-            >
-              <path
-                strokeLinecap='round'
-                strokeLinejoin='round'
-                strokeWidth={2}
-                d='M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z'
-              />
-            </svg>
-          </Link>
-          {showBackButton && <BackButton />}
-        </div>
-
-        {/* 右侧按钮 */}
-        <div className='flex items-center gap-2'>
-          <ThemeToggle />
-          <UserMenu />
-          <UpdateNotification />
-        </div>
-
-        {/* 中间：Logo（相对内容行居中，避免被 safe-area 顶偏） */}
-        <div className='absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2'>
-          <Link
-            href='/'
-            prefetch={false}
-            className='text-2xl font-bold text-green-600 tracking-tight hover:opacity-80 transition-opacity'
-          >
-            {siteName}
-          </Link>
-        </div>
+const MobileHeader = ({ showBackButton = false }: { showBackButton?: boolean }) => (
+  <header className='ptv-mobile-header fixed inset-x-0 top-0 z-[999] w-full border-b md:hidden' style={{ paddingTop: 'var(--safe-top)' }}>
+    <div className='flex h-14 items-center gap-1 px-3'>
+      {showBackButton && <BackButton />}
+      <div className='min-w-0 flex-1'><BrandLogo /></div>
+      <div className='flex shrink-0 items-center gap-1'>
+        <ThemeToggle />
+        <UserMenu />
+        <UpdateNotification />
       </div>
-    </header>
-  );
-};
-
+    </div>
+  </header>
+);
 export default MobileHeader;

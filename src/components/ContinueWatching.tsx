@@ -8,8 +8,8 @@ import { createPortal } from 'react-dom';
 import type { PlayRecord } from '@/lib/db.client';
 import {
   clearAllPlayRecords,
-  getCachedPlayRecordsSnapshot,
   getAllPlayRecords,
+  getCachedPlayRecordsSnapshot,
   subscribeToDataUpdates,
 } from '@/lib/db.client';
 
@@ -107,7 +107,7 @@ export default function ContinueWatching({ className }: ContinueWatchingProps) {
 
   return (
     <>
-      <section className={`mb-8 ${className || ''}`}>
+      <section className={`ptv-continue mb-8 ${className || ''}`}>
         <div className='mb-4 flex items-center justify-between'>
           <h2 className='text-xl font-bold text-gray-800 dark:text-gray-200'>
             继续观看

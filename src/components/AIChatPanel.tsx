@@ -8,8 +8,8 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import ReactMarkdown from 'react-markdown';
 
-import { getAuthInfoFromBrowserCookie } from '@/lib/auth';
 import { VideoContext } from '@/lib/ai-orchestrator';
+import { getAuthInfoFromBrowserCookie } from '@/lib/auth';
 
 interface ChatMessage {
   role: 'user' | 'assistant';
@@ -245,7 +245,7 @@ export default function AIChatPanel({
   isOpen,
   onClose,
   context,
-  welcomeMessage = '你好！我是MoonTVPlus的AI影视助手，有什么可以帮你的吗？',
+  welcomeMessage = '你好！我是ApexTV的AI影视助手，有什么可以帮你的吗？',
   onStreamingChange,
   useDrawer = false,
   drawerWidth = 'w-full md:w-[25%]',

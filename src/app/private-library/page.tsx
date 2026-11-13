@@ -94,12 +94,13 @@ export default function PrivateLibraryPage() {
   // OpenList 分类筛选（PathMeta 完全匹配后的 category）
   const [openlistCategory, setOpenlistCategory] = useState<string>('all');
   const [openlistCategories, setOpenlistCategories] = useState<string[]>([]);
-  const [librarySearchInput, setLibrarySearchInput] = useState('');
-  const [librarySearchQuery, setLibrarySearchQuery] = useState('');
+  const [librarySearchInput, setLibrarySearchInput] = useState(searchParams.get('q') || '');
+  const [librarySearchQuery, setLibrarySearchQuery] = useState(searchParams.get('q')?.trim() || '');
+  const [retryIndex, setRetryIndex] = useState(0);
   const [libraryTotal, setLibraryTotal] = useState<number | null>(null);
   const librarySearchInputRef = useRef<HTMLInputElement>(null);
   const isComposingSearchRef = useRef(false);
-  const pageSize = 20;
+  const pageSize = 100;
   const observerTarget = useRef<HTMLDivElement>(null);
   const isFetchingRef = useRef(false);
   const abortControllerRef = useRef<AbortController | null>(null);
@@ -239,8 +240,10 @@ export default function PrivateLibraryPage() {
       params.set('view', selectedView);
     }
 
+    if (librarySearchQuery) params.set('q', librarySearchQuery);
+
     router.replace(`/private-library?${params.toString()}`, { scroll: false });
-  }, [sourceType, embyKey, selectedView, router, embySourceOptions.length]);
+  }, [sourceType, embyKey, selectedView, router, embySourceOptions.length, librarySearchQuery]);
 
   // 切换源类型时重置所有状态（但不在初始化时执行）
   useEffect(() => {
@@ -549,7 +552,7 @@ export default function PrivateLibraryPage() {
             if (isInitial) {
               setVideos(newVideos);
             } else {
-              setVideos((prev) => [...prev, ...newVideos]);
+              setVideos((prev) => Array.from(new Map([...prev, ...newVideos].map((video: Video) => [video.id, video])).values()));
             }
 
             // 检查是否还有更多数据
@@ -590,7 +593,7 @@ export default function PrivateLibraryPage() {
         abortControllerRef.current.abort();
       }
     };
-  }, [sourceType, embyKey, page, selectedView, xiaoyaPath, runtimeConfig, sortBy, sortOrder, openlistCategory, librarySearchQuery]);
+  }, [sourceType, embyKey, page, selectedView, xiaoyaPath, runtimeConfig, sortBy, sortOrder, openlistCategory, librarySearchQuery, retryIndex]);
 
   const handleVideoClick = (video: Video) => {
     // 构建source参数
@@ -614,7 +617,7 @@ export default function PrivateLibraryPage() {
         const entry = entries[0];
 
         // 当目标元素可见且还有更多数据且没有正在加载时，加载下一页
-        if (entry.isIntersecting && hasMore && !loadingMore && !loading && !isFetchingRef.current) {
+        if (entry.isIntersecting && hasMore && !error && !loadingMore && !loading && !isFetchingRef.current) {
           setPage((prev) => prev + 1);
         }
       },
@@ -629,18 +632,18 @@ export default function PrivateLibraryPage() {
         observer.unobserve(currentTarget);
       }
     };
-  }, [hasMore, loadingMore, loading, page]);
+  }, [hasMore, loadingMore, loading, page, error]);
 
   return (
     <PageLayout activePath='/private-library'>
-      <div className='container mx-auto px-4 py-6'>
+      <div className='ptv-library-page'>
         <div className='mb-6 flex justify-between items-start'>
           <div>
             <h1 className='text-2xl font-bold text-gray-900 dark:text-gray-100'>
               私人影库
             </h1>
             <p className='text-sm text-gray-500 dark:text-gray-400 mt-1'>
-              观看自我收藏的高清视频吧
+              电影、剧集与自己的珍藏
             </p>
           </div>
           {mounted && (
@@ -657,7 +660,7 @@ export default function PrivateLibraryPage() {
 
         {/* 第一级：源类型选择（OpenList / Emby / 小雅） */}
         {mounted && (
-          <div className='mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between'>
+          <div className='ptv-library-tools mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between'>
             <CapsuleSwitch
               options={[
                 ...(runtimeConfig.OPENLIST_ENABLED ? [{ label: 'OpenList', value: 'openlist' }] : []),
@@ -715,14 +718,14 @@ export default function PrivateLibraryPage() {
         )}
 
         {sourceType !== 'xiaoya' && (
-          <div aria-live='polite' className='mb-5 text-sm text-gray-500 dark:text-gray-400'>
+          <div aria-live='polite' className='ptv-library-status mb-5 text-sm text-gray-500 dark:text-gray-400'>
             {loading
               ? (librarySearchQuery ? '搜索中…' : '加载中…')
               : error
-              ? '列表加载失败，请稍后重试'
+              ? (videos.length ? '后续内容加载失败，已加载的视频仍可播放' : '列表加载失败，请重试')
               : librarySearchQuery
               ? '“' + librarySearchQuery + '” · 找到 ' + (libraryTotal ?? videos.length) + ' 个条目'
-              : '全部 ' + (libraryTotal ?? videos.length) + ' 个条目'}
+              : '已加载 ' + videos.length + ' / 共 ' + (libraryTotal ?? videos.length) + ' 个条目'}
           </div>
         )}
 
@@ -974,8 +977,9 @@ export default function PrivateLibraryPage() {
         )}
 
         {error && (
-          <div className='bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4 mb-6'>
+          <div role='alert' className='bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4 mb-6'>
             <p className='text-red-800 dark:text-red-200'>{error}</p>
+            <button type='button' className='mt-3 min-h-11 rounded-lg border border-current px-4 text-red-800 dark:text-red-200' onClick={() => setRetryIndex((value) => value + 1)}>重试加载</button>
           </div>
         )}
 
@@ -998,8 +1002,8 @@ export default function PrivateLibraryPage() {
             </div>
           ) : (
             // OpenList/Emby 加载骨架屏 - 海报卡片样式
-            <div className='grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4'>
-              {Array.from({ length: pageSize }).map((_, index) => (
+            <div className='ptv-media-grid'>
+              {Array.from({ length: 12 }).map((_, index) => (
                 <div
                   key={index}
                   className='animate-pulse bg-gray-200 dark:bg-gray-700 rounded-lg aspect-[2/3]'
@@ -1228,7 +1232,7 @@ export default function PrivateLibraryPage() {
           </div>
         ) : (
           <>
-            <div className='grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4'>
+            <div className='ptv-media-grid'>
               {videos.map((video) => {
                 // 构建source参数用于VideoCard
                 // 如果是emby源且有embyKey，使用下划线格式
@@ -1242,7 +1246,7 @@ export default function PrivateLibraryPage() {
                     key={video.id}
                     id={video.id}
                     source={sourceParam}
-                    title={video.title}
+                    title={video.title || video.folder?.split('/').filter(Boolean).pop() || '未命名视频'}
                     poster={video.poster}
                     year={video.year || (video.releaseDate ? video.releaseDate.split('-')[0] : '')}
                     rate={
@@ -1259,7 +1263,7 @@ export default function PrivateLibraryPage() {
             </div>
 
             {/* 滚动加载指示器 - 始终渲染以便 observer 可以监听 */}
-            <div ref={observerTarget} className='flex justify-center items-center py-8 min-h-[100px]'>
+            <div ref={observerTarget} className='ptv-library-load' aria-live='polite'>
               {loadingMore && (
                 <div className='flex items-center gap-2 text-gray-600 dark:text-gray-400'>
                   <div className='w-5 h-5 border-2 border-blue-600 border-t-transparent rounded-full animate-spin' />
@@ -1270,6 +1274,9 @@ export default function PrivateLibraryPage() {
                 <div className='text-gray-500 dark:text-gray-400'>
                   已加载全部内容
                 </div>
+              )}
+              {hasMore && !loadingMore && !error && (
+                <button type='button' onClick={() => { if (!isFetchingRef.current) setPage((value) => value + 1); }}>加载更多</button>
               )}
             </div>
           </>

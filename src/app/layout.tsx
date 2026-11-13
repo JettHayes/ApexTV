@@ -5,10 +5,12 @@ import { Inter } from 'next/font/google';
 import { cookies } from 'next/headers';
 
 import './globals.css';
+import '../styles/petronas.css';
 
 import { parseAuthInfo } from '@/lib/auth';
 import { getConfig } from '@/lib/config';
 import { getUserFeatureAccess } from '@/lib/permissions';
+import { resolveSiteName } from '@/lib/site-brand';
 import { listEnabledSourceScripts } from '@/lib/source-script';
 
 import { StartupCacheCleanup } from '../components/DanmakuCacheCleanup';
@@ -31,13 +33,15 @@ export const dynamic = 'force-dynamic';
 export async function generateMetadata(): Promise<Metadata> {
   const storageType = process.env.NEXT_PUBLIC_STORAGE_TYPE || 'localstorage';
   const config = await getConfig();
-  let siteName = process.env.NEXT_PUBLIC_SITE_NAME || 'MoonTVPlus';
+  let siteName = resolveSiteName(process.env.NEXT_PUBLIC_SITE_NAME);
   if (storageType !== 'localstorage') {
-    siteName = config.SiteConfig.SiteName;
+    siteName = resolveSiteName(config.SiteConfig.SiteName);
   }
 
   return {
     title: siteName,
+    applicationName: siteName,
+    openGraph: { title: siteName, siteName, type: 'website' },
     description: '影视聚合',
     manifest: '/manifest.json',
     // 供配套浏览器扩展（moontvplus-extension）识别本站部署（勿删）
@@ -64,7 +68,7 @@ export default async function RootLayout({
 }) {
   const storageType = process.env.NEXT_PUBLIC_STORAGE_TYPE || 'localstorage';
 
-  let siteName = process.env.NEXT_PUBLIC_SITE_NAME || 'MoonTVPlus';
+  let siteName = resolveSiteName(process.env.NEXT_PUBLIC_SITE_NAME);
   let announcement =
     process.env.ANNOUNCEMENT ||
     '本网站仅提供影视信息搜索服务，所有内容均来自第三方网站。本站不存储任何视频资源，不对任何内容的准确性、合法性、完整性负责。';
@@ -160,7 +164,7 @@ export default async function RootLayout({
     userFeatureAccess = await getUserFeatureAccess(authInfo?.username);
 
     const config = await getConfig();
-    siteName = config.SiteConfig.SiteName;
+    siteName = resolveSiteName(config.SiteConfig.SiteName);
     announcement = config.SiteConfig.Announcement;
     announcementDisplayMode =
       config.SiteConfig.AnnouncementDisplayMode === 'every' ? 'every' : 'once';

@@ -3,6 +3,7 @@
 import {
   ChevronLeft,
   ChevronRight,
+  Pause,
   Play,
   Volume2,
   VolumeX,
@@ -17,14 +18,15 @@ import {
   useState,
 } from 'react';
 
+import { getDoubanDetail } from '@/lib/douban.client';
 import {
   type TMDBItem,
   getGenreNames,
   getTMDBImageUrl,
 } from '@/lib/tmdb.client';
-import { getDoubanDetail } from '@/lib/douban.client';
 
 import ProxyImage from '@/components/ProxyImage';
+import { useSite } from '@/components/SiteProvider';
 
 interface BannerCarouselProps {
   autoPlayInterval?: number; // 自动播放间隔（毫秒）
@@ -59,11 +61,18 @@ export default function BannerCarousel({
   delayLoad = false,
 }: BannerCarouselProps) {
   const router = useRouter();
+  const { siteName } = useSite();
   const [items, setItems] = useState<BannerItem[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [shouldLoad, setShouldLoad] = useState(!delayLoad); // 是否应该开始加载数据
   const [isPaused, setIsPaused] = useState(false);
+  const [isAutoPlayPaused, setIsAutoPlayPaused] = useState(false);
+  const [reducedMotion, setReducedMotion] = useState(false);
+  const [isFocused, setIsFocused] = useState(false);
+  const [isVisible, setIsVisible] = useState(true);
+  const [isOnscreen, setIsOnscreen] = useState(true);
+  const heroRef = useRef<HTMLElement>(null);
   const [skipNextAutoPlay, setSkipNextAutoPlay] = useState(false); // 跳过下一次自动播放
   const [isYouTubeAccessible, setIsYouTubeAccessible] = useState(false); // YouTube连通性（默认false，检查后再决定）
   const [enableTrailers, setEnableTrailers] = useState(false); // 是否启用预告片（默认关闭）
@@ -85,6 +94,14 @@ export default function BannerCarousel({
   // LocalStorage 缓存配置
   const LOCALSTORAGE_DURATION = 24 * 60 * 60 * 1000; // 1天
   const currentTitle = items[currentIndex]?.title || '';
+
+  useEffect(() => {
+    const media = window.matchMedia('(prefers-reduced-motion: reduce)');
+    const update = () => setReducedMotion(media.matches);
+    update();
+    media.addEventListener('change', update);
+    return () => media.removeEventListener('change', update);
+  }, []);
 
   // 根据数据源获取缓存key
   const getLocalStorageKey = (source: string) => {
@@ -382,7 +399,7 @@ export default function BannerCarousel({
   useEffect(() => {
     // 遍历所有视频元素
     videoRefs.current.forEach((video, index) => {
-      if (index === currentIndex) {
+      if (index === currentIndex && isVisible && isOnscreen && !isFocused) {
         // 当前显示的视频：播放并设置静音状态
         video.muted = isMuted;
         video.play().catch(() => {
@@ -393,11 +410,26 @@ export default function BannerCarousel({
         video.pause();
       }
     });
-  }, [currentIndex, isMuted]);
+  }, [currentIndex, isMuted, isVisible, isOnscreen, isFocused]);
+
+  useEffect(() => {
+    const updateVisibility = () => setIsVisible(!document.hidden);
+    document.addEventListener('visibilitychange', updateVisibility);
+    updateVisibility();
+    return () => document.removeEventListener('visibilitychange', updateVisibility);
+  }, []);
+
+  useEffect(() => {
+    const element = heroRef.current;
+    if (!element || typeof IntersectionObserver === 'undefined') return;
+    const observer = new IntersectionObserver(([entry]) => setIsOnscreen(entry.isIntersecting));
+    observer.observe(element);
+    return () => observer.disconnect();
+  }, [isLoading, items.length]);
 
   // 自动播放
   useEffect(() => {
-    if (!items.length || isPaused) return;
+    if (!items.length || reducedMotion || isPaused || isAutoPlayPaused || isFocused || !isVisible || !isOnscreen) return;
 
     const timer = setInterval(() => {
       // 如果设置了跳过标志，跳过这一次自动播放
@@ -410,7 +442,7 @@ export default function BannerCarousel({
     }, autoPlayInterval);
 
     return () => clearInterval(timer);
-  }, [items.length, isPaused, autoPlayInterval, skipNextAutoPlay]);
+  }, [items.length, reducedMotion, isPaused, isAutoPlayPaused, isFocused, isVisible, isOnscreen, autoPlayInterval, skipNextAutoPlay]);
 
   const goToPrevious = useCallback(() => {
     isManualChange.current = true;
@@ -482,16 +514,20 @@ export default function BannerCarousel({
   if (isLoading || !shouldLoad) {
     return (
       <div
-        className={`relative w-full ${bannerHeightClassMap[bannerHeightScale]} bg-gradient-to-b from-gray-100 to-gray-200 dark:from-gray-800 dark:to-gray-900 overflow-hidden flex items-center justify-center`}
+        className='ptv-hero relative w-full flex flex-col gap-4 items-center justify-center'
+        style={{ '--ptv-hero-scale': Number(bannerHeightScale) } as React.CSSProperties}
+        aria-label='正在加载精选影片'
       >
         <Image
-          src='/logo.png'
-          alt='MoonTVPlus'
-          width={120}
-          height={120}
-          className='opacity-50'
+          src='/favicon.ico'
+          alt=''
+          width={56}
+          height={56}
+          className='relative z-10 opacity-70'
           priority
+          unoptimized
         />
+        <span className='relative z-10 text-lg font-semibold tracking-wide'>{siteName}</span>
       </div>
     );
   }
@@ -503,10 +539,16 @@ export default function BannerCarousel({
   const currentItem = items[currentIndex];
 
   return (
-    <div
-      className={`relative w-full ${bannerHeightClassMap[bannerHeightScale]} overflow-hidden group`}
+    <section
+      ref={heroRef}
+      style={{ '--ptv-hero-scale': Number(bannerHeightScale) } as React.CSSProperties}
+      className={`ptv-hero relative w-full ${bannerHeightClassMap[bannerHeightScale]} overflow-hidden group`}
       onMouseEnter={() => setIsPaused(true)}
       onMouseLeave={() => setIsPaused(false)}
+      onFocus={() => setIsFocused(true)}
+      onBlur={(event) => {
+        if (!event.currentTarget.contains(event.relatedTarget)) setIsFocused(false);
+      }}
       onTouchStart={handleTouchStart}
       onTouchMove={handleTouchMove}
       onTouchEnd={handleTouchEnd}
@@ -582,7 +624,7 @@ export default function BannerCarousel({
 
       {/* 内容信息 */}
       <div className='absolute inset-0 flex items-end p-8 md:p-12 pointer-events-none'>
-        <div className='max-w-2xl space-y-4'>
+        <div className='ptv-hero-content max-w-2xl space-y-4'>
           <h2
             ref={titleRef}
             className='text-3xl md:text-5xl font-bold text-white drop-shadow-lg'
@@ -643,7 +685,7 @@ export default function BannerCarousel({
               e.stopPropagation();
               handlePlay(currentItem.title);
             }}
-            className='hidden md:flex items-center gap-2 px-6 py-3 bg-gray-500/30 hover:bg-gray-500/50 backdrop-blur-sm text-white font-semibold rounded-lg transition-all pointer-events-auto'
+            className='ptv-hero-play flex items-center gap-2 px-6 py-3 bg-gray-500/30 hover:bg-gray-500/50 text-white font-semibold rounded-lg transition-all pointer-events-auto'
           >
             <Play className='w-5 h-5 fill-white' />
             立即播放
@@ -688,21 +730,26 @@ export default function BannerCarousel({
         </button>
       )}
 
+      <button type='button' className='ptv-hero-pause absolute bottom-3 right-4 z-10 flex h-11 w-11 items-center justify-center rounded-full bg-black/40 text-white' aria-label={isAutoPlayPaused ? '继续自动轮播' : '暂停自动轮播'} aria-pressed={isAutoPlayPaused} onClick={(event) => { event.stopPropagation(); setIsAutoPlayPaused((value) => !value); }}>
+        {isAutoPlayPaused ? <Play className='h-4 w-4' /> : <Pause className='h-4 w-4' />}
+      </button>
       {/* 指示器 */}
-      <div className='absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2'>
+      <div className='ptv-hero-indicators absolute bottom-3 left-1/2 -translate-x-1/2 z-10 flex gap-0'>
         {items.map((_, index) => (
           <button
             key={index}
-            onClick={() => goToSlide(index)}
-            className={`h-1.5 rounded-full transition-all duration-300 ${
-              index === currentIndex
-                ? 'w-8 bg-white'
-                : 'w-1.5 bg-white/50 hover:bg-white/80'
-            }`}
+            onClick={(event) => {
+              event.stopPropagation();
+              goToSlide(index);
+            }}
+            className='flex h-11 w-11 items-center justify-center rounded-lg'
+            aria-current={index === currentIndex ? 'true' : undefined}
             aria-label={`跳转到第 ${index + 1} 张`}
-          />
+          >
+            <span className={`h-1 rounded-full transition-colors ${index === currentIndex ? 'w-7 bg-white' : 'w-3 bg-white/50'}`} />
+          </button>
         ))}
       </div>
-    </div>
+    </section>
   );
 }

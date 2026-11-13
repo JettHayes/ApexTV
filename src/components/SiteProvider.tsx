@@ -2,6 +2,8 @@
 
 import { createContext, ReactNode, useContext } from 'react';
 
+import { DEFAULT_SITE_NAME, resolveSiteName } from '@/lib/site-brand';
+
 const SiteContext = createContext<{
   siteName: string;
   announcement?: string;
@@ -9,7 +11,7 @@ const SiteContext = createContext<{
   tmdbApiKey?: string;
 }>({
   // 默认值
-  siteName: 'MoonTVPlus',
+  siteName: DEFAULT_SITE_NAME,
   announcement:
     '本网站仅提供影视信息搜索服务，所有内容均来自第三方网站。本站不存储任何视频资源，不对任何内容的准确性、合法性、完整性负责。',
   announcementDisplayMode: 'once',
@@ -33,7 +35,7 @@ export function SiteProvider({
 }) {
   return (
     <SiteContext.Provider
-      value={{ siteName, announcement, announcementDisplayMode, tmdbApiKey }}
+      value={{ siteName: resolveSiteName(siteName), announcement, announcementDisplayMode, tmdbApiKey }}
     >
       {children}
     </SiteContext.Provider>

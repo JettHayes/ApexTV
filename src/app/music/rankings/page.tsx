@@ -4,13 +4,14 @@ import { ListMusic } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
+import { musicSources, normalizeSource } from '@/lib/music/shared';
+import type { Playlist } from '@/lib/music/types';
+
 import MusicEmpty, { MusicSleeveGridSkeleton } from '@/components/music/MusicEmpty';
 import MusicPage from '@/components/music/MusicPage';
 import MusicSwitch from '@/components/music/MusicSwitch';
 import SleeveCard from '@/components/music/SleeveCard';
 import { MUSIC_SLEEVE_GRID } from '@/components/music/tokens';
-import { musicSources, normalizeSource } from '@/lib/music/shared';
-import type { Playlist } from '@/lib/music/types';
 
 /** 榜单卡的键名方块用音源缩写，和音源切换共用一套标识。 */
 const sourceOptions = musicSources.map((item) => ({
@@ -30,11 +31,17 @@ export default function MusicRankingsPage() {
 
   useEffect(() => {
     const source = normalizeSource(searchParams.get('source'));
+    const controller = new AbortController();
+    let active = true;
     setCurrentSource(source);
     setLoading(true);
-    fetch(`/api/music/v2/discovery/boards?source=${source}`)
-      .then((res) => res.json())
+    fetch(`/api/music/v2/discovery/boards?source=${source}`, { signal: controller.signal })
+      .then((res) => {
+        if (!res.ok) throw new Error('榜单请求失败');
+        return res.json();
+      })
       .then((data) => {
+        if (!active) return;
         if (data.success) {
           setPlaylists((data.data?.list || []).map((item: any) => ({
             id: item.id,
@@ -51,8 +58,12 @@ export default function MusicRankingsPage() {
           setPlaylists([]);
         }
       })
-      .catch(() => setPlaylists([]))
-      .finally(() => setLoading(false));
+      .catch(() => { if (active) setPlaylists([]); })
+      .finally(() => { if (active) setLoading(false); });
+    return () => {
+      active = false;
+      controller.abort();
+    };
   }, [searchParams]);
 
   const currentSourceLabel =

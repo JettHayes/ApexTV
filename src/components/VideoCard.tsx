@@ -22,12 +22,12 @@ import React, {
   useEffect,
   useImperativeHandle,
   useMemo,
-  useRef,
   useState,
 } from 'react';
 
 import { isAnimeCategoryText } from '@/lib/anime-keyword-expr';
 import { getAuthInfoFromBrowserCookie } from '@/lib/auth';
+import { getBangumiSubjectUrl } from '@/lib/bangumi.client';
 import {
   deleteFavorite,
   deletePlayRecord,
@@ -36,10 +36,10 @@ import {
   saveFavorite,
   subscribeToDataUpdates,
 } from '@/lib/db.client';
-import { getBangumiSubjectUrl } from '@/lib/bangumi.client';
-import { isNetdiskSource } from '@/lib/netdisk/source';
 import { isDuanjuVerticalDisabled } from '@/lib/duanju.client';
+import { isNetdiskSource } from '@/lib/netdisk/source';
 import { appendSpecialSourceParam } from '@/lib/special-source.client';
+import type { TMDBVideoItem } from '@/lib/tmdb.client';
 import {
   base58Decode,
   clearBangumiImageFallbackCacheIfFailed,
@@ -60,7 +60,6 @@ import ImageViewer from '@/components/ImageViewer';
 import MobileActionSheet from '@/components/MobileActionSheet';
 import TrailerPickerDialog from '@/components/TrailerPickerDialog';
 import { useWatchRoomContextSafe } from '@/components/WatchRoomProvider';
-import type { TMDBVideoItem } from '@/lib/tmdb.client';
 
 export interface VideoCardProps {
   id?: string;
@@ -997,11 +996,13 @@ const VideoCard = forwardRef<VideoCardHandle, VideoCardProps>(
     return (
       <>
         <div
-          className={`group relative w-full rounded-lg bg-transparent transition-all duration-300 ease-in-out hover:scale-[1.05] hover:z-[500] ${
+          className={`ptv-video-card group relative w-full rounded-lg bg-transparent ${
             isUpcoming ? 'cursor-default' : 'cursor-pointer'
           } ${showUpcomingInfo ? 'scale-[1.05] z-[500]' : ''}`}
           onClick={handleClick}
           {...longPressProps}
+          role='group'
+          aria-label={actualTitle}
           style={
             {
               // 禁用所有默认的长按和选择效果
@@ -1041,6 +1042,12 @@ const VideoCard = forwardRef<VideoCardHandle, VideoCardProps>(
             return false;
           }}
         >
+          <button
+            type='button'
+            className='ptv-card-open absolute inset-0 rounded-lg'
+            aria-label={`${isUpcoming ? '查看' : '播放'} ${actualTitle}`}
+            onClick={(event) => { event.stopPropagation(); handleClick(); }}
+          />
           {/* 海报容器：不在外层 overflow-hidden，避免裁切来源数量浮层 */}
           <div
             className={`relative rounded-lg ${
@@ -1332,7 +1339,7 @@ const VideoCard = forwardRef<VideoCardHandle, VideoCardProps>(
               rate &&
               (rateBadgeStyle === 'flag' ? (
                 <div
-                  className={`mtv-rate mtv-rate-flag ${rateTier}`}
+                  className={`ptv-poster-score mtv-rate mtv-rate-flag ${rateTier}`}
                   style={
                     {
                       WebkitTouchCallout: 'none',
@@ -1354,7 +1361,7 @@ const VideoCard = forwardRef<VideoCardHandle, VideoCardProps>(
                 </div>
               ) : rateBadgeStyle === 'medal' ? (
                 <div
-                  className={`mtv-rate mtv-rate-medal ${rateTier}`}
+                  className={`ptv-poster-score mtv-rate mtv-rate-medal ${rateTier}`}
                   style={
                     {
                       WebkitTouchCallout: 'none',
@@ -1389,7 +1396,7 @@ const VideoCard = forwardRef<VideoCardHandle, VideoCardProps>(
                 </div>
               ) : (
                 <div
-                  className='absolute top-2 right-2 bg-pink-500 text-white text-xs font-bold w-7 h-7 rounded-full flex items-center justify-center shadow-md transition-all duration-300 ease-out group-hover:scale-110'
+                  className='ptv-poster-score absolute top-2 right-2 bg-pink-500 text-white text-xs font-bold w-7 h-7 rounded-full flex items-center justify-center shadow-md transition-all duration-300 ease-out group-hover:scale-110'
                   style={
                     {
                       WebkitUserSelect: 'none',
@@ -2086,7 +2093,7 @@ const VideoCard = forwardRef<VideoCardHandle, VideoCardProps>(
 
               {/* 标题 */}
               <div
-                className='mt-2 text-center'
+                className='ptv-video-card-title mt-2 text-center'
                 style={
                   {
                     WebkitUserSelect: 'none',
@@ -2110,7 +2117,7 @@ const VideoCard = forwardRef<VideoCardHandle, VideoCardProps>(
                   }
                 >
                   <span
-                    className='block text-sm font-semibold truncate text-gray-900 dark:text-gray-100 transition-colors duration-300 ease-in-out group-hover:text-green-600 dark:group-hover:text-green-400 peer'
+                    className='block text-sm font-semibold line-clamp-2 text-gray-900 dark:text-gray-100 transition-colors duration-300 ease-in-out group-hover:text-green-600 dark:group-hover:text-green-400 peer'
                     style={
                       {
                         WebkitUserSelect: 'none',
@@ -2153,9 +2160,29 @@ const VideoCard = forwardRef<VideoCardHandle, VideoCardProps>(
                     ></div>
                   </div>
                 </div>
+                {(actualYear || (config.showRating && rate)) && (
+                  <div className='ptv-video-card-meta'>
+                    {actualYear && actualYear !== 'unknown' && <span>{actualYear}</span>}
+                    {config.showRating && rate && <span>★ {rate}</span>}
+                  </div>
+                )}
               </div>
             </>
           )}
+          <button
+            type='button'
+            className='ptv-video-card-menu'
+            aria-label={`${actualTitle}的更多操作`}
+            onPointerDown={(event) => event.stopPropagation()}
+            onTouchStart={(event) => event.stopPropagation()}
+            onClick={(event) => {
+              event.stopPropagation();
+              setShowMobileActions(true);
+              checkSearchFavoriteStatus();
+            }}
+          >
+            <span aria-hidden='true'>···</span>
+          </button>
         </div>
 
         {/* 操作菜单 - 支持右键和长按触发 */}

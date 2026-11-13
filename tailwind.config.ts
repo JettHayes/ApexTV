@@ -80,40 +80,40 @@ const config: Config = {
         // 的东西用（按钮、选中态、焦点环、正在播放）。方向管材质，主题色管交互——
         // 换了主题你的歌单还是你的颜色。默认主题的 CSS 是空的，所以兜底色必须写。
         music: {
-          paper: '#fdf4e9',
-          card: '#fffbf5',
-          'card-2': '#f4e7d5',
-          edge: '#e7d6bd',
-          ink: '#2a1c10',
-          'ink-soft': '#5c4a37',
-          muted: '#7d6a55',
+          paper: '#edf2f1',
+          card: '#f4f7f6',
+          'card-2': '#dce7e5',
+          edge: '#becfcd',
+          ink: '#192d30',
+          'ink-soft': '#344f51',
+          muted: '#53676b',
           // 无封面时的卡纸色：比套面深一档，让"这里本该有张图"读得出来。
-          art: '#f0dcc2',
+          art: '#d2e0de',
           // 方向自带的石墨：热搜名次这类非交互的"次序"记号，不跟主题走。
           // 刻意留成一支中性暖灰而不是强调色——排名 4 名往后全刷成橘色会吵。
-          graphite: '#8a745e',
+          graphite: '#53676b',
           // 方向自带的强调：套面正中那个大号目录号。它不是控件，不跟主题走，
           // 和 theme 是两回事——换了站内主题，套面不该整体变色。
-          accent: '#b45309',
+          accent: '#007c76',
           // 主题色（可操作控件）。见上方注释，兜底不可省。
-          theme: 'var(--theme-primary, #10b981)',
-          'theme-hover': 'var(--theme-primary-hover, #059669)',
+          theme: '#007c76',
+          'theme-hover': '#00645f',
           // 压在图上的纯白（图标、封面上的字）。永远是纯白，不随明暗走——
           // 它压在封面图上，换成墨色反而糊进画面。必须是自有令牌，否则会被
           // 管理端主题层的 [class*="bg-white"] !important 染掉。
           chip: '#ffffff',
-          night: '#16100b',
-          'night-card': '#221a12',
-          'night-card-2': '#2a2118',
-          'night-edge': '#3a2e21',
-          'night-ink': '#f6ece1',
-          'night-ink-soft': '#cbb8a3',
-          'night-muted': '#a08b76',
-          'night-art': '#2e2318',
-          'night-graphite': '#b09a83',
-          'night-accent': '#fb923c',
-          'night-theme': 'var(--theme-primary, #10b981)',
-          'night-theme-hover': 'var(--theme-primary-hover, #059669)',
+          night: '#091214',
+          'night-card': '#102023',
+          'night-card-2': '#1b3032',
+          'night-edge': '#365052',
+          'night-ink': '#edf4f2',
+          'night-ink-soft': '#c3d4d1',
+          'night-muted': '#a2b5b5',
+          'night-art': '#213b3c',
+          'night-graphite': '#a2b5b5',
+          'night-accent': '#00d2be',
+          'night-theme': '#00d2be',
+          'night-theme-hover': '#71e8dc',
         },
         primary: {
           50: '#f0f9ff',
@@ -185,7 +185,7 @@ const config: Config = {
         // 盘面是烧焦的深棕而不是纯黑：压在暖色的套面旁边，纯黑会读成"一块洞"。
         // 两档取自乙的 --app-disc-lo / --app-disc-hi。
         'music-vinyl':
-          'repeating-radial-gradient(circle, transparent 0 2px, rgba(255,255,255,0.05) 2px 3px), conic-gradient(from 40deg, #170f08 0%, #412c17 12%, #1c1208 24%, #120b05 40%, #3a2714 56%, #180f07 72%, #452f18 88%, #170f08 100%)',
+          'repeating-radial-gradient(circle, transparent 0 2px, rgba(255,255,255,0.05) 2px 3px), conic-gradient(from 40deg, #091214 0%, #253b3c 12%, #101c1e 24%, #071012 40%, #243a3a 56%, #0d191a 72%, #294143 88%, #091214 100%)',
       },
     },
   },

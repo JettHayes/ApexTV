@@ -26,6 +26,7 @@ import { createPortal } from 'react-dom';
 
 import { isAnimeCategoryText } from '@/lib/anime-keyword-expr';
 import { getAuthInfoFromBrowserCookie } from '@/lib/auth';
+import { loadTraditionalToSimplifiedConverter } from '@/lib/danmaku/traditional-to-simplified';
 import {
   addSearchHistory,
   clearSearchHistory,
@@ -33,12 +34,12 @@ import {
   getSearchHistory,
   subscribeToDataUpdates,
 } from '@/lib/db.client';
-import { SearchResult } from '@/lib/types';
 import {
   appendSpecialSourceParam,
   isSpecialSourceContext,
   SPECIAL_SOURCE_PATH,
 } from '@/lib/special-source.client';
+import { SearchResult } from '@/lib/types';
 import { processImageUrl } from '@/lib/utils';
 
 import AcgSearch from '@/components/AcgSearch';
@@ -54,7 +55,6 @@ import SearchResultFilter, {
 import SearchSuggestions from '@/components/SearchSuggestions';
 import VideoCard, { VideoCardHandle } from '@/components/VideoCard';
 import VirtualScrollableGrid from '@/components/VirtualScrollableGrid';
-import { loadTraditionalToSimplifiedConverter } from '@/lib/danmaku/traditional-to-simplified';
 
 const PANSOU_CLOUD_TYPE_OPTIONS = Object.entries(CLOUD_TYPE_NAMES).map(
   ([value, label]) => ({ value, label })
@@ -118,6 +118,7 @@ export function SearchPageClient({ searchBase = '/search' }: { searchBase?: stri
   const [showResults, setShowResults] = useState(false);
   const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
+  const [showAllHistory, setShowAllHistory] = useState(false);
   const eventSourceRef = useRef<EventSource | null>(null);
   const [totalSources, setTotalSources] = useState(0);
   const [completedSources, setCompletedSources] = useState(0);
@@ -1804,10 +1805,10 @@ export function SearchPageClient({ searchBase = '/search' }: { searchBase?: stri
 
   return (
     <PageLayout activePath={searchBase}>
-      <div className='px-4 sm:px-10 py-4 sm:py-8 overflow-visible mb-10'>
+      <div className='ptv-search-page overflow-visible mb-10'>
         {/* 搜索框 */}
         <div className='mb-0'>
-          <form onSubmit={handleSearch} className='max-w-2xl mx-auto'>
+          <form onSubmit={handleSearch} role='search' aria-label='搜索影片' className='ptv-search-form mx-auto'>
             <div className='relative'>
               <Search className='absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400 dark:text-gray-500' />
               <input
@@ -1817,6 +1818,7 @@ export function SearchPageClient({ searchBase = '/search' }: { searchBase?: stri
                 onChange={handleInputChange}
                 onFocus={handleInputFocus}
                 placeholder='搜索电影、电视剧...'
+                aria-label='搜索片名、剧集或演唱会'
                 autoComplete='off'
                 className='w-full h-12 rounded-lg bg-gray-50/80 py-3 pl-10 pr-12 text-sm text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-green-400 focus:bg-white border border-gray-200/50 shadow-sm dark:bg-gray-800 dark:text-gray-300 dark:placeholder-gray-500 dark:focus:bg-gray-700 dark:border-gray-700'
               />
@@ -1830,7 +1832,7 @@ export function SearchPageClient({ searchBase = '/search' }: { searchBase?: stri
                     setShowSuggestions(false);
                     document.getElementById('searchInput')?.focus();
                   }}
-                  className='absolute right-3 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors dark:text-gray-500 dark:hover:text-gray-300'
+                  className='ptv-search-clear absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors dark:text-gray-500 dark:hover:text-gray-300'
                   aria-label='清除搜索内容'
                 >
                   <X className='h-5 w-5' />
@@ -1863,6 +1865,7 @@ export function SearchPageClient({ searchBase = '/search' }: { searchBase?: stri
                 }}
               />
             </div>
+            <button type='submit' className='ptv-search-submit'>搜索</button>
           </form>
 
           {/* 选项卡：特殊源入口（/under）只有影视搜索，整块隐藏 */}
@@ -2094,7 +2097,7 @@ export function SearchPageClient({ searchBase = '/search' }: { searchBase?: stri
           }`}
         >
           {showResults ? (
-            <section className='mb-12'>
+            <section className='ptv-search-history mb-12'>
               {activeTab === 'video' ? (
                 <>
                   {/* 影视搜索结果 */}
@@ -2518,7 +2521,7 @@ export function SearchPageClient({ searchBase = '/search' }: { searchBase?: stri
                 )}
               </h2>
               <div className='flex flex-wrap gap-2'>
-                {searchHistory.map((item) => (
+                {(showAllHistory ? searchHistory : searchHistory.slice(0, 8)).map((item) => (
                   <div key={item} className='relative group'>
                     <button
                       onClick={() => {
@@ -2565,13 +2568,14 @@ export function SearchPageClient({ searchBase = '/search' }: { searchBase?: stri
                         e.preventDefault();
                         deleteSearchHistory(item); // 事件监听会自动更新界面
                       }}
-                      className='absolute -top-1 -right-1 w-4 h-4 opacity-0 group-hover:opacity-100 bg-gray-400 hover:bg-red-500 text-white rounded-full flex items-center justify-center text-[10px] transition-colors'
+                      className='ptv-history-delete absolute -top-1 -right-1 h-6 w-6 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 bg-gray-400 hover:bg-red-500 text-white rounded-full flex items-center justify-center text-[10px] transition-colors'
                     >
                       <X className='w-3 h-3' />
                     </button>
                   </div>
                 ))}
               </div>
+              {searchHistory.length > 8 && <button type='button' className='ptv-search-history-more' aria-expanded={showAllHistory} onClick={() => setShowAllHistory((value) => !value)}>{showAllHistory ? '收起历史' : `展开全部 ${searchHistory.length} 条历史`}</button>}
             </section>
               )}
             </>

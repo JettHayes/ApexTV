@@ -30,6 +30,11 @@ import {
   searchAnime,
 } from '@/lib/danmaku/api';
 import {
+  getCachedDanmakuEpisodes,
+  setCachedDanmakuEpisodes,
+} from '@/lib/danmaku/episodes-cache';
+import { cleanEpisodeDisplayName } from '@/lib/danmaku/format';
+import {
   getDanmakuAnimeId,
   getDanmakuSearchKeyword,
   getDanmakuSourceIndex,
@@ -39,17 +44,7 @@ import {
   saveDanmakuSourceIndex,
   saveManualDanmakuSelection,
 } from '@/lib/danmaku/selection-memory';
-import { cleanEpisodeDisplayName } from '@/lib/danmaku/format';
-import {
-  getCachedDanmakuEpisodes,
-  setCachedDanmakuEpisodes,
-} from '@/lib/danmaku/episodes-cache';
 import type { DanmakuAnime, DanmakuComment, DanmakuSelection, DanmakuSettings } from '@/lib/danmaku/types';
-import type { EpisodeTitleCorrection } from '@/lib/episode-title-correction';
-import {
-  EPISODE_TITLE_CORRECTION_EVENT,
-  getEpisodeTitleCorrection,
-} from '@/lib/episode-title-correction';
 import {
   deleteFavorite,
   deleteSkipConfig,
@@ -66,14 +61,27 @@ import {
   subscribeToDataUpdates,
 } from '@/lib/db.client';
 import { getDoubanDetail } from '@/lib/douban.client';
+import {
+  isDuanjuTypeName,
+  isDuanjuVerticalDisabled,
+} from '@/lib/duanju.client';
 import { isEpisodeHiddenByFilter, normalizeEpisodeFilterConfig } from '@/lib/episode-filter';
-import { appendSpecialSourceParam, isSpecialSourceContext } from '@/lib/special-source.client';
 import {
   buildEpisodeProgressContentKey,
   loadLocalEpisodeProgress,
   pruneLocalEpisodeProgressStorage,
   saveLocalEpisodeProgress,
 } from '@/lib/episode-progress';
+import type { EpisodeTitleCorrection } from '@/lib/episode-title-correction';
+import {
+  EPISODE_TITLE_CORRECTION_EVENT,
+  getEpisodeTitleCorrection,
+} from '@/lib/episode-title-correction';
+import {
+  createAdFilteringHlsLoader,
+  loadCustomAdFilterCode,
+} from '@/lib/hls-ad-filter.client';
+import { getIndexedDBVideoPlaybackUrl } from '@/lib/indexeddb-video-cache';
 import { isNetdiskSource, normalizeNetdiskSource } from '@/lib/netdisk/source';
 import {
   calculateSeekTime,
@@ -89,7 +97,7 @@ import {
   recommendationCacheKeys,
   setRecommendationCache,
 } from '@/lib/recommendations/cache';
-import { getIndexedDBVideoPlaybackUrl } from '@/lib/indexeddb-video-cache';
+import { appendSpecialSourceParam, isSpecialSourceContext } from '@/lib/special-source.client';
 import {
   convertSubtitleFileToVttObjectUrl,
   CUSTOM_SUBTITLE_ACCEPT,
@@ -97,17 +105,8 @@ import {
 import { getTMDBImageUrl } from '@/lib/tmdb.search';
 import { DanmakuFilterConfig, EpisodeFilterConfig, SearchResult } from '@/lib/types';
 import { base58Decode, getVideoResolutionFromM3u8, processImageUrl } from '@/lib/utils';
-import {
-  isDuanjuTypeName,
-  isDuanjuVerticalDisabled,
-} from '@/lib/duanju.client';
-import {
-  createAdFilteringHlsLoader,
-  loadCustomAdFilterCode,
-} from '@/lib/hls-ad-filter.client';
 import { useEnableAIComments } from '@/hooks/useEnableAIComments';
 import { useEnableComments } from '@/hooks/useEnableComments';
-import { useWatchRoomContextSafe } from '@/components/WatchRoomProvider';
 import {
   getRoomRemotePlaybackRate,
   isRemoteRoomRateActive,
@@ -124,8 +123,8 @@ import DownloadEpisodeSelector from '@/components/DownloadEpisodeSelector';
 import Drawer from '@/components/Drawer';
 import EpisodeSelector from '@/components/EpisodeSelector';
 import LoadingStyle, {
-  LoadingErrorStyle,
   type LoadingStep,
+  LoadingErrorStyle,
 } from '@/components/LoadingStyle';
 import PageLayout from '@/components/PageLayout';
 import PansouSearch from '@/components/PansouSearch';
@@ -134,6 +133,7 @@ import { useSite } from '@/components/SiteProvider';
 import SmartRecommendations from '@/components/SmartRecommendations';
 import Toast, { ToastProps } from '@/components/Toast';
 import VideoCard from '@/components/VideoCard';
+import { useWatchRoomContextSafe } from '@/components/WatchRoomProvider';
 
 import { useDownload } from '@/contexts/DownloadContext';
 
@@ -3780,7 +3780,7 @@ function PlayPageClient() {
   const refreshXiaoyaUrl = async (
     preferredHls?: any,
     preferredVideo?: HTMLVideoElement,
-    isScheduled: boolean = false
+    isScheduled = false
   ) => {
     // 防抖：距离上次刷新不足3秒则不刷新
     const now = Date.now();
@@ -10139,7 +10139,7 @@ function PlayPageClient() {
               try {
                 const playPromise = fallbackVideo.play();
                 if (playPromise && typeof playPromise.catch === 'function') {
-                  playPromise.catch(() => {});
+                  playPromise.catch(() => { /* Autoplay may require a user gesture. */ });
                 }
               } catch {
                 // ignore
@@ -10654,10 +10654,11 @@ function PlayPageClient() {
 
   return (
     <PageLayout activePath='/play' hideNavigation={isWebFullscreen}>
+      <div className='ptv-play-page'>
       {/* TMDB背景图 */}
       {tmdbBackdrop && (
         <div
-          className='fixed inset-0 z-0'
+          className='ptv-play-backdrop fixed inset-0 z-0'
           style={{
             backgroundImage: `url(${tmdbBackdrop})`,
             backgroundSize: 'cover',
@@ -10880,19 +10881,13 @@ function PlayPageClient() {
             </button>
           </div>
 
-          <div
-            className={`grid gap-4 lg:h-[500px] xl:h-[650px] 2xl:h-[750px] transition-all duration-300 ease-in-out ${isEpisodeSelectorCollapsed
-              ? 'grid-cols-1'
-              : 'grid-cols-1 md:grid-cols-4'
-              }`}
-          >
+          <div className={`ptv-player-grid ${isEpisodeSelectorCollapsed ? 'ptv-player-grid-collapsed' : ''}`}>
             {/* 播放器 */}
             <div
-              className={`transition-all duration-300 ease-in-out rounded-xl border border-white/0 dark:border-white/30 flex flex-col ${isEpisodeSelectorCollapsed ? 'col-span-1' : 'md:col-span-3'
-                }`}
+              className='ptv-player-stage flex flex-col'
             >
               {/* 播放器容器 */}
-              <div className='relative w-full h-[300px] lg:flex-1 lg:min-h-0'>
+              <div className='ptv-player-canvas relative w-full aspect-video'>
                 <div
                   ref={artRef}
                   className='bg-black w-full h-full rounded-xl overflow-hidden shadow-lg'
@@ -11068,7 +11063,7 @@ function PlayPageClient() {
 
               {/* 第三方应用打开按钮 - 观影室同步状态下隐藏 */}
               {videoUrl && !playSync.isInRoom && (
-                <div className='mt-3 px-2 lg:flex-shrink-0'>
+                <div className='ptv-player-tools mt-3 px-2 lg:flex-shrink-0'>
                   <div className='bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm rounded-lg p-2 border border-gray-200/50 dark:border-gray-700/50 w-full lg:w-auto overflow-x-auto'>
                     <div className='flex gap-1.5 flex-nowrap lg:flex-wrap items-center'>
                       <div className='flex gap-1.5 flex-nowrap lg:flex-wrap lg:justify-end lg:flex-1'>
@@ -11323,6 +11318,9 @@ function PlayPageClient() {
                           </span>
                         </button>
 
+                        <details className='ptv-player-more'>
+                        <summary>更多播放器</summary>
+                        <div className='ptv-player-more-options'>
                         {/* PotPlayer */}
                         <button
                           onClick={(e) => {
@@ -11509,6 +11507,8 @@ function PlayPageClient() {
                             IINA
                           </span>
                         </button>
+                        </div>
+                        </details>
                       </div>
 
                       {/* 去广告开关 */}
@@ -11652,10 +11652,7 @@ function PlayPageClient() {
 
             {/* 选集和换源 - 在移动端始终显示，在 lg 及以上可折叠 */}
             <div
-              className={`relative z-10 h-[350px] lg:h-full md:overflow-hidden transition-all duration-300 ease-in-out ${isEpisodeSelectorCollapsed
-                ? 'md:col-span-1 lg:hidden lg:opacity-0 lg:scale-95'
-                : 'md:col-span-1 lg:opacity-100 lg:scale-100'
-                }`}
+              className='ptv-player-panel relative z-10 h-[350px] overflow-hidden'
             >
               <EpisodeSelector
                 totalEpisodes={totalEpisodes}
@@ -12272,6 +12269,7 @@ function PlayPageClient() {
           drawerWidth='w-[400px]'
         />
       )}
+      </div>
     </PageLayout>
   );
 }

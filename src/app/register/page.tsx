@@ -2,7 +2,7 @@
 
 'use client';
 
-import { AlertCircle, CheckCircle, Eye, EyeOff, Send, User, Lock } from 'lucide-react';
+import { AlertCircle, CheckCircle, Eye, EyeOff, Lock,Send, User } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Suspense, useEffect, useState } from 'react';
 
@@ -35,7 +35,7 @@ function VersionDisplay() {
   return (
     <button
       onClick={() =>
-        window.open('https://github.com/mtvpls/MoonTVPlus', '_blank')
+        window.open('https://github.com/JettHayes/ApexTV', '_blank')
       }
       className='absolute bottom-4 left-1/2 transform -translate-x-1/2 flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400 transition-colors cursor-pointer'
     >
@@ -259,7 +259,7 @@ function RegisterPageClient() {
 
   return (
     <div
-      className='relative min-h-screen flex items-center justify-center px-4 overflow-hidden'
+      className='ptv-auth relative min-h-screen flex items-center justify-center px-4 overflow-hidden'
       style={backgroundImage ? {
         backgroundImage: `url(${backgroundImage})`,
         backgroundSize: 'cover',
@@ -270,7 +270,7 @@ function RegisterPageClient() {
       <div className='absolute top-4 right-4'>
         <ThemeToggle />
       </div>
-      <div className='relative z-10 w-full max-w-md rounded-3xl bg-gradient-to-b from-white/90 via-white/70 to-white/40 dark:from-zinc-900/90 dark:via-zinc-900/70 dark:to-zinc-900/40 shadow-2xl p-10 dark:border dark:border-zinc-800'>
+      <div className='ptv-auth-panel relative z-10 w-full max-w-md rounded-3xl p-10'>
         <h1 className='text-green-600 tracking-tight text-center text-3xl font-extrabold mb-2 bg-clip-text drop-shadow-sm'>
           {siteName}
         </h1>

@@ -1,9 +1,10 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
+import { usePathname } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
-import { BackButton } from './BackButton';
+import { BackButton, recordNavigation } from './BackButton';
 import MobileBottomNav from './MobileBottomNav';
 import MobileHeader from './MobileHeader';
 import Sidebar from './Sidebar';
@@ -20,8 +21,15 @@ interface PageLayoutProps {
 
 const PageLayout = ({ children, activePath = '/', hideNavigation = false }: PageLayoutProps) => {
   const router = useRouter();
+  const pathname = usePathname();
   const [backgroundImage, setBackgroundImage] = useState('');
   const shouldShowSharedBackground = !hideNavigation && activePath !== '/play';
+  const page = pathname === '/' ? 'home' : pathname.startsWith('/search') ? 'search' : pathname.startsWith('/private-library') ? 'library' : pathname.startsWith('/play') ? 'play' : pathname.startsWith('/live') || pathname.startsWith('/web-live') ? 'live' : pathname.startsWith('/admin') ? 'admin' : 'other';
+  const showBackButton = ['/play', '/live', '/web-live'].some((path) => pathname === path || pathname.startsWith(path + '/'));
+
+  useEffect(() => {
+    recordNavigation(pathname);
+  }, [pathname]);
 
   useEffect(() => {
     router.prefetch('/search');
@@ -62,20 +70,20 @@ const PageLayout = ({ children, activePath = '/', hideNavigation = false }: Page
 
   return (
     <VersionCheckProvider>
-      <div className='relative w-full min-h-screen overflow-hidden'>
+      <div className='ptv-page relative w-full min-h-dvh overflow-hidden' data-page={page}>
         {shouldShowSharedBackground && backgroundImage && (
           <>
             <div
-              className='absolute inset-0 pointer-events-none bg-cover bg-center bg-no-repeat opacity-45'
+              className='ptv-wallpaper absolute inset-0 pointer-events-none'
               style={{ backgroundImage: `url(${backgroundImage})` }}
             />
-            <div className='absolute inset-0 pointer-events-none bg-white/50 dark:bg-gray-950/50' />
+            <div className='ptv-wallpaper-overlay absolute inset-0 pointer-events-none' />
           </>
         )}
 
         {/* 移动端头部 */}
         {!hideNavigation && (
-          <MobileHeader showBackButton={['/play', '/live'].includes(activePath)} />
+          <MobileHeader showBackButton={showBackButton} />
         )}
 
         {/* 主要布局容器 */}
@@ -90,7 +98,7 @@ const PageLayout = ({ children, activePath = '/', hideNavigation = false }: Page
           {/* 主内容区域 */}
           <div className='relative min-w-0 flex-1 transition-all duration-300'>
             {/* 桌面端左上角返回按钮 */}
-            {!hideNavigation && ['/play', '/live'].includes(activePath) && (
+            {!hideNavigation && showBackButton && (
               <div className='absolute top-3 left-1 z-20 hidden md:flex'>
                 <BackButton />
               </div>
@@ -107,10 +115,7 @@ const PageLayout = ({ children, activePath = '/', hideNavigation = false }: Page
 
             {/* 主内容 */}
             <main
-              className='flex-1 md:min-h-0 mb-14 md:mb-0 md:mt-0 mt-[calc(3rem+var(--safe-top))]'
-              style={{
-                paddingBottom: 'calc(3.5rem + env(safe-area-inset-bottom))',
-              }}
+              className={hideNavigation ? 'flex-1 md:min-h-0' : 'ptv-page-main flex-1 md:min-h-0'}
             >
               {children}
             </main>

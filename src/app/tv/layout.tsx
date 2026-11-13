@@ -1,11 +1,12 @@
-import { ReactNode } from 'react';
 import { notFound } from 'next/navigation';
+import { ReactNode } from 'react';
 
-import TVRemoteReceiver from '@/components/tv/TVRemoteReceiver';
 import { isTVModeEnabled } from '@/lib/tv-mode';
 
+import TVRemoteReceiver from '@/components/tv/TVRemoteReceiver';
+
 export const metadata = {
-  title: 'TV - MoonTV Plus',
+  title: 'TV - ApexTV',
 };
 
 export default function Layout({ children }: { children: ReactNode }) {

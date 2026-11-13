@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, no-console, @typescript-eslint/no-non-null-assertion */
 
 import { db } from '@/lib/db';
+import { DEFAULT_SITE_NAME, resolveSiteName } from '@/lib/site-brand';
 import { normalizeApiBaseUrl } from '@/lib/url';
 
 import { AdminConfig } from './admin.types';
@@ -290,7 +291,7 @@ async function getInitConfig(
     ConfigFile: configSource,
     ConfigSubscribtion: subConfig,
     SiteConfig: {
-      SiteName: process.env.NEXT_PUBLIC_SITE_NAME || 'MoonTVPlus',
+      SiteName: resolveSiteName(process.env.NEXT_PUBLIC_SITE_NAME),
       Announcement:
         process.env.ANNOUNCEMENT ||
         '本网站仅提供影视信息搜索服务，所有内容均来自第三方网站。本站不存储任何视频资源，不对任何内容的准确性、合法性、完整性负责。',
@@ -546,7 +547,7 @@ export function configSelfCheck(adminConfig: AdminConfig): AdminConfig {
   // 确保必要的属性存在和初始化
   if (!adminConfig.SiteConfig) {
     adminConfig.SiteConfig = {
-      SiteName: 'MoonTVPlus',
+      SiteName: DEFAULT_SITE_NAME,
       Announcement: '',
       SearchDownstreamMaxPage: 5,
       SiteInterfaceCacheTime: 7200,
@@ -581,6 +582,7 @@ export function configSelfCheck(adminConfig: AdminConfig): AdminConfig {
       DefaultUserTags: [],
     };
   }
+  adminConfig.SiteConfig.SiteName = resolveSiteName(adminConfig.SiteConfig.SiteName);
   // 确保弹幕配置存在
   if (adminConfig.SiteConfig.DanmakuSourceType === undefined) {
     adminConfig.SiteConfig.DanmakuSourceType = 'custom';

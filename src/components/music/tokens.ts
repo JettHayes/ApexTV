@@ -1,19 +1,19 @@
 /**
  * 音乐模块「唱片店」视觉语言的唯一定义处。
  *
- * 日间是牛皮纸 + 焦糖，夜间是烧焦的深棕 + 炽橘；榜单卡是唱片套，封面从套子右侧
+ * 日间是银灰与青绿，夜间是深灰与青绿；榜单卡是唱片套，封面从套子右侧
  * 探出半个身位；歌曲行在播放时转成一张黑胶。色板在 tailwind.config.ts 的
  * colors.music 下，字体由 src/app/music/layout.tsx 里的 next/font 注入。
  * 页面那层底不在这里——那是外壳 MusicClient 自己铺的渐变底，模块不去盖它。
  *
  * 动手改这里之前先读两条边界：
  *
- * 一、**材质归方向，交互归主题色**。黑胶、暖棕、卡纸、窄体字、方角这些写死在
- *     music-* 令牌里，不跟站内主题走；按钮、选中态、焦点环、正在播放那一道线
- *     走 music-theme（= var(--theme-primary)），换主题时跟着变。所以同一处
+ * 一、**材质归方向，交互归主题色**。黑胶、银灰、封套、窄体字、方角这些写死在
+ *     music-* 令牌里；按钮、选中态、焦点环、正在播放那一道线
+ *     走 music-theme。所以同一处
  *     如果需要"被点亮"，用 MUSIC_*_THEME 那组，别顺手拿 graphite。
  *     套面正中那个大号目录号是例外里的例外：它走 music-accent（方向自带的
- *     焦糖/炽橘）而**不是** music-theme——换站内主题，套面不该整体变色。
+ *     青绿）而**不是** music-theme。
  *
  * 二、**不复用 bg-white / bg-zinc-* / bg-gray-***。管理端主题层会对这些类名做
  *     !important 覆盖（src/styles/themes.ts），音乐区只能自成一套命名。
@@ -122,13 +122,13 @@ export const MUSIC_BAR_SUB = MUSIC_LABEL;
  * text-white，否则会被管理端主题层染掉。
  */
 export const MUSIC_BUTTON = cn(
-  'inline-flex items-center gap-2 rounded-[3px] bg-music-theme px-3.5 py-2 font-music-mono text-[calc(11*var(--music-px))] font-semibold uppercase tracking-[0.1em] text-music-chip transition-colors duration-200 hover:bg-music-theme-hover disabled:cursor-not-allowed disabled:opacity-40 dark:bg-music-night-theme dark:hover:bg-music-night-theme-hover',
+  'inline-flex min-h-11 items-center gap-2 rounded-[3px] bg-music-theme px-3.5 py-2 font-music-mono text-[calc(11*var(--music-px))] font-semibold uppercase tracking-[0.1em] text-music-chip transition-colors duration-200 hover:bg-music-theme-hover disabled:cursor-not-allowed disabled:opacity-40 dark:bg-music-night-theme dark:text-[#062421] dark:hover:bg-music-night-theme-hover',
   MUSIC_FOCUS
 );
 
 /** 描边按钮：次要动作（删除歌单、上一页）。 */
 export const MUSIC_GHOST_BUTTON = cn(
-  'inline-flex items-center gap-2 rounded-[3px] border border-music-edge bg-music-card px-3.5 py-2 font-music-mono text-[calc(11*var(--music-px))] font-semibold uppercase tracking-[0.1em] text-music-ink transition-colors duration-200 hover:border-music-ink-soft hover:text-music-ink-soft disabled:cursor-not-allowed disabled:opacity-40 dark:border-music-night-edge dark:bg-music-night-card dark:text-music-night-ink dark:hover:border-music-night-ink-soft dark:hover:text-music-night-ink-soft',
+  'inline-flex min-h-11 items-center gap-2 rounded-[3px] border border-music-edge bg-music-card px-3.5 py-2 font-music-mono text-[calc(11*var(--music-px))] font-semibold uppercase tracking-[0.1em] text-music-ink transition-colors duration-200 hover:border-music-ink-soft hover:text-music-ink-soft disabled:cursor-not-allowed disabled:opacity-40 dark:border-music-night-edge dark:bg-music-night-card dark:text-music-night-ink dark:hover:border-music-night-ink-soft dark:hover:text-music-night-ink-soft',
   MUSIC_FOCUS
 );
 
@@ -140,13 +140,13 @@ export const MUSIC_DANGER_BUTTON = cn(
 
 /** 行内图标按钮（收藏 / 稍后播放 / 移除）。 */
 export const MUSIC_ICON_BUTTON = cn(
-  'inline-flex h-7 w-7 shrink-0 cursor-pointer items-center justify-center rounded-full text-music-muted transition-colors duration-200 hover:bg-music-card-2 hover:text-music-theme dark:text-music-night-muted dark:hover:bg-music-night-card-2 dark:hover:text-music-night-theme',
+  'inline-flex h-11 w-11 shrink-0 cursor-pointer items-center justify-center rounded-full text-music-muted transition-colors duration-200 hover:bg-music-card-2 hover:text-music-theme dark:text-music-night-muted dark:hover:bg-music-night-card-2 dark:hover:text-music-night-theme',
   MUSIC_FOCUS
 );
 
 /** 同上，危险动作。 */
 export const MUSIC_ICON_BUTTON_DANGER = cn(
-  'inline-flex h-7 w-7 shrink-0 cursor-pointer items-center justify-center rounded-full text-music-muted transition-colors duration-200 hover:bg-music-card-2 hover:text-red-600 disabled:opacity-40 dark:text-music-night-muted dark:hover:bg-music-night-card-2 dark:hover:text-red-400',
+  'inline-flex h-11 w-11 shrink-0 cursor-pointer items-center justify-center rounded-full text-music-muted transition-colors duration-200 hover:bg-music-card-2 hover:text-red-600 disabled:opacity-40 dark:text-music-night-muted dark:hover:bg-music-night-card-2 dark:hover:text-red-400',
   MUSIC_FOCUS
 );
 
@@ -159,7 +159,7 @@ export const MUSIC_ICON_BUTTON_DANGER = cn(
  * 身份和状态不共用同一个通道：方块不随选中变色，底下菜单里才用主题色标状态。
  */
 export const MUSIC_SWITCH = cn(
-  'inline-flex cursor-pointer items-center gap-0 border border-music-edge bg-music-card font-music-mono text-[calc(11*var(--music-px))] leading-none text-music-ink transition-colors duration-150 hover:border-music-ink-soft dark:border-music-night-edge dark:bg-music-night-card dark:text-music-night-ink dark:hover:border-music-night-ink-soft',
+  'inline-flex min-h-11 cursor-pointer items-center gap-0 border border-music-edge bg-music-card font-music-mono text-[calc(11*var(--music-px))] leading-none text-music-ink transition-colors duration-150 hover:border-music-ink-soft dark:border-music-night-edge dark:bg-music-night-card dark:text-music-night-ink dark:hover:border-music-night-ink-soft',
   MUSIC_FOCUS
 );
 
@@ -179,7 +179,7 @@ export const MUSIC_MENU =
   'absolute right-0 top-[calc(100%+6px)] z-[60] grid w-[168px] gap-0.5 rounded-[4px] border border-music-edge bg-music-paper p-1 shadow-[0_14px_32px_-14px_rgba(0,0,0,0.55)] dark:border-music-night-edge dark:bg-music-night-card';
 
 export const MUSIC_MENU_ITEM = cn(
-  'flex w-full cursor-pointer items-center gap-2.5 rounded-[3px] px-2 py-1.5 text-left font-music-mono text-[calc(11*var(--music-px))] text-music-ink transition-colors duration-150',
+  'flex min-h-11 w-full cursor-pointer items-center gap-2.5 rounded-[3px] px-2 py-1.5 text-left font-music-mono text-[calc(11*var(--music-px))] text-music-ink transition-colors duration-150',
   MUSIC_FOCUS
 );
 

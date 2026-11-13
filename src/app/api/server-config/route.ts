@@ -3,6 +3,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 import { getConfig } from '@/lib/config';
+import { resolveSiteName } from '@/lib/site-brand';
 import { CURRENT_VERSION } from '@/lib/version';
 
 export const runtime = 'nodejs';
@@ -33,7 +34,7 @@ export async function GET(request: NextRequest) {
   // 如果使用 localStorage，返回默认配置
   if (storageType === 'localstorage') {
     return NextResponse.json({
-      SiteName: process.env.NEXT_PUBLIC_SITE_NAME || 'MoonTVPlus',
+      SiteName: resolveSiteName(process.env.NEXT_PUBLIC_SITE_NAME),
       StorageType: 'localstorage',
       Version: CURRENT_VERSION,
       TVModeEnabled: process.env.ENABLE_TV_MODE !== 'false',
@@ -48,7 +49,7 @@ export async function GET(request: NextRequest) {
   // 非 localStorage 模式，从数据库读取配置
   const config = await getConfig();
   const result = {
-    SiteName: config.SiteConfig.SiteName,
+    SiteName: resolveSiteName(config.SiteConfig.SiteName),
     StorageType: storageType,
     Version: CURRENT_VERSION,
     TVModeEnabled: process.env.ENABLE_TV_MODE !== 'false',
