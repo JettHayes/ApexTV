@@ -1,44 +1,118 @@
-name: Fork Sync
+name: Upstream Sync
 
 permissions:
     contents: write
+    pull-requests: write
 
 on:
     schedule:
         - cron: "0 18 * * *"  # UTC 18:00，即北京时间凌晨 2 点执行
     workflow_dispatch:  # 允许手动触发
 
+concurrency:
+    group: upstream-sync
+    cancel-in-progress: false
+
+env:
+    UPSTREAM_REPO: mtvpls/MoonTVPlus
+    UPSTREAM_BRANCH: main
+    TARGET_BRANCH: main
+    SYNC_BRANCH: upstream-sync
+
 jobs:
     sync_with_upstream:
         name: Sync with Upstream
         runs-on: ubuntu-latest
-        if: ${{ github.event.repository.fork }}
 
         steps:
             - name: Checkout target repo
               uses: actions/checkout@v5
               with:
-                token: ${{ secrets.SYNC_TOKEN }}
+                  token: ${{ secrets.SYNC_TOKEN }}
+                  fetch-depth: 0
 
-            - name: Sync Upstream
-              uses: aormsby/Fork-Sync-With-Upstream-action@v3.4.3
-              with:
-                  target_repo_token: ${{ secrets.SYNC_TOKEN }}
-                  upstream_sync_repo: mtvpls/MoonTVPlus
-                  upstream_sync_branch: main
-                  target_sync_branch: main
-                  test_mode: false
-
-            - name: Check for new commits
-              if: success()
-              run: echo "Sync completed successfully"
-
-            - name: Check for Failure
-              if: failure()
+            - name: Fetch upstream
               run: |
-                  echo "[Error] Sync failed. This might be due to:"
-                  echo "1. Changes in the upstream workflow file"
-                  echo "2. Merge conflicts that need manual resolution"
-                  echo "3. Network issues"
-                  echo "Please check the logs and consider manual sync if needed."
-                  exit 1
+                  git config user.name "github-actions[bot]"
+                  git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+                  git remote add upstream "https://github.com/${UPSTREAM_REPO}.git"
+                  git fetch upstream "${UPSTREAM_BRANCH}"
+                  git fetch origin "${TARGET_BRANCH}"
+
+            - name: Check for upstream updates
+              id: check
+              run: |
+                  if git merge-base --is-ancestor "upstream/${UPSTREAM_BRANCH}" "origin/${TARGET_BRANCH}"; then
+                      echo "上游没有新提交，跳过同步"
+                      echo "has_updates=false" >> "$GITHUB_OUTPUT"
+                  else
+                      echo "has_updates=true" >> "$GITHUB_OUTPUT"
+                  fi
+
+            - name: Prepare sync branch
+              if: steps.check.outputs.has_updates == 'true'
+              env:
+                  GH_TOKEN: ${{ secrets.SYNC_TOKEN }}
+              run: |
+                  PR_NUMBER=$(gh pr list --head "${SYNC_BRANCH}" --base "${TARGET_BRANCH}" --state open --json number --jq '.[0].number // empty')
+                  echo "PR_NUMBER=${PR_NUMBER}" >> "$GITHUB_ENV"
+
+                  MERGING=false
+                  if [ -n "${PR_NUMBER}" ] && git fetch origin "${SYNC_BRANCH}"; then
+                      # 已有待合并的 PR 时在原分支上追加，保留在网页上解决过的冲突
+                      git checkout -B "${SYNC_BRANCH}" "origin/${SYNC_BRANCH}"
+                      if git merge-base --is-ancestor "upstream/${UPSTREAM_BRANCH}" HEAD; then
+                          echo "同步分支已包含上游最新提交"
+                          echo "SKIP_PUSH=true" >> "$GITHUB_ENV"
+                          exit 0
+                      fi
+                      MERGING=true
+                      git merge --no-edit --no-commit --no-ff "upstream/${UPSTREAM_BRANCH}" || true
+                  else
+                      git checkout -B "${SYNC_BRANCH}" "upstream/${UPSTREAM_BRANCH}"
+                  fi
+
+                  # 工作流目录始终沿用 ApexTV 的配置，避免上游改动工作流引起冲突
+                  git rm -r -q --cached --ignore-unmatch .github/workflows
+                  rm -rf .github/workflows
+                  git checkout "origin/${TARGET_BRANCH}" -- .github/workflows
+                  git add -A .github/workflows
+
+                  if [ -n "$(git diff --name-only --diff-filter=U)" ]; then
+                      echo "[Error] 同步分支与上游新提交存在冲突，请在本地处理 PR #${PR_NUMBER}"
+                      git diff --name-only --diff-filter=U
+                      exit 1
+                  fi
+
+                  if [ "${MERGING}" = "true" ]; then
+                      git commit --no-edit
+                  elif ! git diff --cached --quiet; then
+                      git commit -m "chore(ci): 保留 ApexTV 工作流配置"
+                  fi
+
+            - name: Push sync branch
+              if: steps.check.outputs.has_updates == 'true' && env.SKIP_PUSH != 'true'
+              run: |
+                  if [ -n "${PR_NUMBER}" ]; then
+                      git push origin "${SYNC_BRANCH}"
+                  else
+                      git push --force origin "${SYNC_BRANCH}"
+                  fi
+
+            - name: Create pull request
+              if: steps.check.outputs.has_updates == 'true' && env.PR_NUMBER == ''
+              env:
+                  GH_TOKEN: ${{ secrets.SYNC_TOKEN }}
+              run: |
+                  gh pr create \
+                      --base "${TARGET_BRANCH}" \
+                      --head "${SYNC_BRANCH}" \
+                      --title "chore: 同步上游 ${UPSTREAM_REPO} 更新" \
+                      --body "$(cat <<EOF
+                  自动检测到上游 [${UPSTREAM_REPO}](https://github.com/${UPSTREAM_REPO}) 有新提交。
+
+                  - 合并时请选择 **Create a merge commit**，不要使用 Squash 或 Rebase，否则下次同步会重复出现已合并的提交。
+                  - 若提示存在冲突，可在网页上解决简单冲突；复杂冲突需在本地处理。合并前 main 不会被修改。
+                  - 工作流目录 \`.github/workflows\` 保持 ApexTV 当前配置，不跟随上游变化。
+                  EOF
+                  )"
