@@ -7118,7 +7118,6 @@ function PlayPageClient() {
     const handleBeforeUnload = () => {
       saveCurrentPlayProgress();
       releaseWakeLock();
-      cleanupPlayer();
     };
 
     // 页面可见性变化时保存播放进度和释放 Wake Lock
