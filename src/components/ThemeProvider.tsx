@@ -8,9 +8,10 @@ export function ThemeProvider({ children, ...props }: ThemeProviderProps) {
   return (
     <NextThemesProvider
       attribute='class'
-      defaultTheme='system'
-      enableSystem
       {...props}
+      defaultTheme='light'
+      enableSystem={false}
+      storageKey='apextv-theme'
     >
       {children}
     </NextThemesProvider>

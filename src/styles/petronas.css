@@ -84,10 +84,11 @@ html[data-moontvplus] :is(a, button, input, select, textarea, [tabindex]):focus-
 .ptv-brand-copy { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
 .ptv-brand-name { font-size: 20px; font-weight: 750; line-height: 1.15; letter-spacing: -.045em; }
 .ptv-brand-caption { color: var(--ptv-muted); font-size: 10px; font-weight: 500; letter-spacing: .12em; line-height: 1.5; }
-.ptv-sidebar-brand { display: flex; align-items: center; gap: 4px; min-height: 88px; padding: 14px 12px 14px 16px; margin-bottom: 6px; border-bottom: 1px solid var(--ptv-line); }
-.ptv-sidebar-brand .ptv-brand { gap: 8px; }
+.ptv-sidebar-brand { display: flex; align-items: center; gap: 2px; min-height: 88px; padding: 14px 8px 14px 12px; margin-bottom: 6px; border-bottom: 1px solid var(--ptv-line); }
+.ptv-sidebar-brand .ptv-brand { flex: 0 1 auto; gap: 8px; }
 .ptv-sidebar-brand .ptv-brand img { width: 40px; height: 40px; }
-.ptv-sidebar-brand .ptv-brand-name { font-size: 24px; }
+.ptv-sidebar-brand .ptv-brand-name { font-size: 30px; letter-spacing: -.05em; }
+.ptv-sidebar-brand .ptv-brand-caption { font-size: 11px; letter-spacing: .15em; }
 .ptv-sidebar-toggle { width: 44px; height: 44px; color: var(--ptv-muted); transition: color 160ms, background-color 160ms; }
 .ptv-sidebar-toggle:hover { background: var(--ptv-selected); color: var(--ptv-accent); }
 .ptv-sidebar[data-collapsed='true'] .ptv-sidebar-brand { justify-content: center; min-height: 88px; padding-inline: 10px; }
@@ -97,9 +98,13 @@ html[data-moontvplus] :is(a, button, input, select, textarea, [tabindex]):focus-
 .ptv-mobile-header :is(button, a:not(.ptv-brand)) { min-width: 44px; min-height: 44px; }
 .ptv-mobile-nav a { min-height: 56px; color: var(--ptv-muted); }
 .ptv-mobile-nav a[aria-current='page'] { color: var(--ptv-accent); }
-.ptv-theme-options { position: absolute; top: calc(100% + 8px); right: 0; z-index: 1100; min-width: 168px; padding: 6px; border: 1px solid var(--ptv-line); border-radius: 12px; background: var(--ptv-surface); color: var(--ptv-text); box-shadow: var(--ptv-shadow); }
-.ptv-theme-options button { display: flex; align-items: center; gap: 10px; width: 100%; min-height: 44px; padding: 8px 10px; border-radius: 8px; text-align: left; }
-.ptv-theme-options button[aria-pressed='true'] { background: var(--ptv-selected); color: var(--ptv-accent); }
+.ptv-theme-icon { display: inline-flex; align-items: center; justify-content: center; }
+html[data-theme-switching] .ptv-theme-icon { animation: ptv-theme-icon-in 260ms var(--ptv-ease) both; }
+html[data-theme-switching],
+html[data-theme-switching] :is(body, .ptv-page, .ptv-sidebar, .ptv-mobile-header, .ptv-mobile-nav, .ptv-brand, .ptv-nav-link, .ptv-more-card, .ptv-more-link, .ptv-theme-toggle, .ptv-auth, .ptv-auth-panel, .ptv-player-panel, .ptv-player-tools, .ptv-room-info, .ptv-room-tools, .music-theme, .music-theme-portal) {
+  transition: background-color 280ms ease-out, color 280ms ease-out, border-color 280ms ease-out !important;
+}
+@keyframes ptv-theme-icon-in { from { opacity: 0; transform: rotate(-60deg) scale(.75); } to { opacity: 1; transform: rotate(0) scale(1); } }
 .ptv-more, .ptv-more-page, .ptv-search-page, .ptv-library-page { width: 100%; max-width: var(--ptv-max); margin-inline: auto; padding: 24px var(--ptv-gutter) 40px; }
 .ptv-more-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; }
 .ptv-more-link, .ptv-more-card { display: flex; align-items: center; gap: 12px; min-height: 64px; padding: 16px; border: 1px solid var(--ptv-line); border-radius: 12px; background: var(--ptv-surface); }
@@ -380,7 +385,6 @@ html[data-moontvplus]:not(.dark) .ptv-live-page :is(.ptv-player-panel, .ptv-play
 
 #nprogress .bar { background: var(--ptv-accent); box-shadow: none; }
 #nprogress .peg { box-shadow: none; }
-::view-transition-old(root), ::view-transition-new(root) { animation-duration: 300ms; animation-timing-function: var(--ptv-ease); }
 
 @keyframes ptv-reveal { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
 .ptv-hero-content { animation: ptv-reveal 460ms var(--ptv-ease) both; }
@@ -449,5 +453,6 @@ html[data-moontvplus]:not(.dark) .ptv-live-page :is(.ptv-player-panel, .ptv-play
 @media (prefers-reduced-motion: reduce) {
   .ptv-page *, .ptv-page *::before, .ptv-page *::after, .ptv-action-sheet, .ptv-auth *, .ptv-auth *::before, .ptv-auth *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
   .ptv-video-card:hover, .ptv-video-card:active { transform: none !important; }
-  ::view-transition-old(root), ::view-transition-new(root) { animation: none !important; }
+  html[data-theme-switching], html[data-theme-switching] :is(body, .ptv-page, .ptv-sidebar, .ptv-mobile-header, .ptv-mobile-nav, .ptv-brand, .ptv-nav-link, .ptv-more-card, .ptv-more-link, .ptv-theme-toggle, .ptv-auth, .ptv-auth-panel, .ptv-player-panel, .ptv-player-tools, .ptv-room-info, .ptv-room-tools, .music-theme, .music-theme-portal) { transition: none !important; }
+  .ptv-theme-icon { animation: none !important; }
 }

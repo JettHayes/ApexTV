@@ -447,12 +447,7 @@ export default async function RootLayout({
       <body
         className={`${misans.className} min-h-screen bg-white text-gray-900 dark:bg-black dark:text-gray-200`}
       >
-        <ThemeProvider
-          attribute='class'
-          defaultTheme='system'
-          enableSystem
-          disableTransitionOnChange
-        >
+        <ThemeProvider>
           <TopProgressBar />
           <RouteScrollReset />
           <TokenRefreshManager />
