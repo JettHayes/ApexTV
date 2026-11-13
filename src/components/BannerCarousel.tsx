@@ -519,7 +519,7 @@ export default function BannerCarousel({
         aria-label='正在加载精选影片'
       >
         <Image
-          src='/favicon.ico'
+          src='/logo.svg'
           alt=''
           width={56}
           height={56}

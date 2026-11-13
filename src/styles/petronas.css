@@ -386,7 +386,8 @@ html[data-moontvplus]:not(.dark) .ptv-live-page :is(.ptv-player-panel, .ptv-play
   .ptv-player-grid.ptv-player-grid-collapsed { grid-template-columns: minmax(0, 1fr); }
   .ptv-player-grid > .ptv-player-panel { height: auto; min-height: 350px; max-height: 650px; align-self: stretch; }
   .ptv-live-page .ptv-player-grid { align-items: stretch; }
-  .ptv-live-page .ptv-player-panel { height: auto; min-height: 100%; max-height: none; align-self: stretch; border-top: 0; border-left: 1px solid var(--ptv-line); }
+  .ptv-live-page .ptv-player-grid > .ptv-player-panel { position: relative; height: auto; min-height: 0; max-height: none; overflow: hidden; align-self: stretch; border-top: 0; border-left: 1px solid var(--ptv-line); }
+  .ptv-live-page .ptv-player-panel > * { position: absolute; inset: 0; height: auto; margin: 0; }
   .ptv-play-page .ptv-player-grid { align-items: stretch; }
   .ptv-play-page .ptv-player-grid > .ptv-player-panel { position: relative; height: auto; min-height: 0; max-height: none; overflow: hidden; align-self: stretch; border-top: 0; border-left: 1px solid var(--ptv-line); }
   .ptv-play-page .ptv-player-panel > * { position: absolute; inset: 0; height: auto; margin: 0; }

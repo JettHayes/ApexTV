@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 452 452" role="img" aria-label="ApexTV original high-speed A emblem">
+  <g transform="translate(18 62)">
+    <!-- Main aerodynamic letter A, flat solid cool silver -->
+    <path fill="#A5B3BD" d="
+      M 10 261
+      L 211 88
+      C 226 74, 242 67, 257 67
+      L 400 67
+      L 352 148
+      L 398 261
+      L 316 261
+      L 295 204
+      L 237 204
+      L 306 162
+      Q 313 158, 309 154
+      L 244 120
+      Q 239 117, 239 123
+      L 239 181
+      L 186 181
+      Q 182 181, 178 184
+      L 88 261
+      Z"/>
+    <!-- Dark teal upper aerodynamic slash -->
+    <path fill="#187B7B" d="M 46 183 L 137 97 L 186 97 L 85 183 Z"/>
+    <!-- Mint lower forward-leaning blade -->
+    <path fill="#28D1B3" d="M 102 261 L 169 205 L 296 205 L 241 261 Z"/>
+  </g>
+</svg>

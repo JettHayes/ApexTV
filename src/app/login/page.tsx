@@ -353,7 +353,7 @@ function LoginPageClient() {
       </div>
       <div className='ptv-auth-panel ptv-login-panel z-10 w-full max-w-md'>
         <div className='ptv-login-brand'>
-          <Image src='/favicon.ico' alt='' width={44} height={44} unoptimized priority />
+          <Image src='/logo.svg' alt='' width={44} height={44} unoptimized priority />
           <p className='ptv-login-eyebrow'>SIGN IN</p>
           <h1>{siteName}</h1>
           <p className='ptv-login-subtitle'>登录后继续你的观影进度</p>
