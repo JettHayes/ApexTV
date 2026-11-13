@@ -89,7 +89,7 @@ const Sidebar = ({ onToggle }: { onToggle?: (collapsed: boolean) => void; active
         <aside data-sidebar data-collapsed={isCollapsed} className={`ptv-sidebar fixed left-0 top-0 z-40 h-screen border-r transition-[width] duration-300 ${isCollapsed ? 'w-16' : 'w-64'}`}>
           <div className='flex h-full flex-col'>
             <div className='ptv-sidebar-brand'>
-              {!isCollapsed && <BrandLogo detailed />}
+              {!isCollapsed && <BrandLogo />}
               <button type='button' onClick={handleToggle} aria-label={isCollapsed ? '展开导航' : '收起导航'} aria-expanded={!isCollapsed}
                 className='ptv-sidebar-toggle flex shrink-0 items-center justify-center rounded-lg'>
                 <Menu className='h-5 w-5' />

@@ -81,17 +81,14 @@ html[data-moontvplus] :is(a, button, input, select, textarea, [tabindex]):focus-
 .ptv-brand { display: flex; align-items: center; min-width: 0; flex: 1; gap: 12px; color: var(--ptv-accent); letter-spacing: -.02em; }
 .ptv-brand img { flex-shrink: 0; object-fit: contain; }
 .ptv-brand span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.ptv-brand-copy { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
-.ptv-brand-name { font-size: 20px; font-weight: 750; line-height: 1.15; letter-spacing: -.045em; }
-.ptv-brand-caption { color: var(--ptv-muted); font-size: 10px; font-weight: 500; letter-spacing: .12em; line-height: 1.5; }
-.ptv-sidebar-brand { display: flex; align-items: center; gap: 2px; min-height: 88px; padding: 14px 8px 14px 12px; margin-bottom: 6px; border-bottom: 1px solid var(--ptv-line); }
-.ptv-sidebar-brand .ptv-brand { flex: 0 1 auto; gap: 8px; }
-.ptv-sidebar-brand .ptv-brand img { width: 40px; height: 40px; }
-.ptv-sidebar-brand .ptv-brand-name { font-size: 30px; letter-spacing: -.05em; }
-.ptv-sidebar-brand .ptv-brand-caption { font-size: 11px; letter-spacing: .15em; }
+.ptv-brand-name { font-size: 20px; font-weight: 650; line-height: 1.2; letter-spacing: -.025em; }
+.ptv-sidebar-brand { display: flex; align-items: center; gap: 8px; min-height: 72px; padding: 12px 12px 12px 16px; margin-bottom: 6px; border-bottom: 1px solid var(--ptv-line); }
+.ptv-sidebar-brand .ptv-brand { gap: 8px; }
+.ptv-sidebar-brand .ptv-brand img { width: 32px; height: 32px; }
+.ptv-sidebar-brand .ptv-brand-name { font-size: 22px; color: var(--ptv-text); }
 .ptv-sidebar-toggle { width: 44px; height: 44px; color: var(--ptv-muted); transition: color 160ms, background-color 160ms; }
 .ptv-sidebar-toggle:hover { background: var(--ptv-selected); color: var(--ptv-accent); }
-.ptv-sidebar[data-collapsed='true'] .ptv-sidebar-brand { justify-content: center; min-height: 88px; padding-inline: 10px; }
+.ptv-sidebar[data-collapsed='true'] .ptv-sidebar-brand { justify-content: center; padding-inline: 10px; }
 .ptv-nav-link { min-height: 46px; border-radius: 10px; color: var(--ptv-muted); transition: background-color 160ms, color 160ms; }
 .ptv-nav-link:is([data-active='true'], [aria-current='page']) { color: var(--ptv-accent); background: var(--ptv-selected); }
 .ptv-mobile-header, .ptv-mobile-nav { background: var(--ptv-surface) !important; border-color: var(--ptv-line) !important; box-shadow: none !important; }
