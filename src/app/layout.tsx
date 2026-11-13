@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 import type { Metadata, Viewport } from 'next';
-import { Inter } from 'next/font/google';
+import localFont from 'next/font/local';
 import { cookies } from 'next/headers';
 
 import './globals.css';
@@ -26,7 +26,12 @@ import ChatFloatingWindow from '../components/watch-room/ChatFloatingWindow';
 import { WatchRoomProvider } from '../components/WatchRoomProvider';
 import { DownloadProvider } from '../contexts/DownloadContext';
 
-const inter = Inter({ subsets: ['latin'] });
+const misans = localFont({
+  src: '../fonts/MiSans-Regular.otf',
+  weight: '400',
+  display: 'swap',
+  fallback: ['system-ui', 'sans-serif'],
+});
 export const dynamic = 'force-dynamic';
 
 // 动态生成 metadata，支持配置更新后的标题变化
@@ -440,7 +445,7 @@ export default async function RootLayout({
         )}
       </head>
       <body
-        className={`${inter.className} min-h-screen bg-white text-gray-900 dark:bg-black dark:text-gray-200`}
+        className={`${misans.className} min-h-screen bg-white text-gray-900 dark:bg-black dark:text-gray-200`}
       >
         <ThemeProvider
           attribute='class'

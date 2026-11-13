@@ -88,7 +88,7 @@ const Sidebar = ({ onToggle }: { onToggle?: (collapsed: boolean) => void; active
       <div className='hidden md:flex'>
         <aside data-sidebar data-collapsed={isCollapsed} className={`ptv-sidebar fixed left-0 top-0 z-40 h-screen border-r transition-[width] duration-300 ${isCollapsed ? 'w-16' : 'w-64'}`}>
           <div className='flex h-full flex-col'>
-            <div className='flex h-16 items-center justify-between gap-2 px-3'>
+            <div className='flex h-16 w-full items-center gap-3 px-4'>
               {!isCollapsed && <BrandLogo />}
               <button type='button' onClick={handleToggle} aria-label={isCollapsed ? '展开导航' : '收起导航'} aria-expanded={!isCollapsed}
                 className='flex h-10 w-10 shrink-0 items-center justify-center rounded-lg'>
