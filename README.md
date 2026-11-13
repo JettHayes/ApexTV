@@ -1,20 +1,36 @@
-**简体中文** | [English](README.en.md)
+<a id="top"></a>
 
-![Apex TV 项目封面](docs/images/apextv-cover.png)
+<p align="center">
+  <img src="docs/images/apextv-cover.png" alt="Apex TV 项目封面" width="100%">
+</p>
 
-# Apex TV
+<h1 align="center">Apex TV</h1>
+
+<p align="center">
+  <img src="https://img.shields.io/badge/%E7%AE%80%E4%BD%93%E4%B8%AD%E6%96%87-007c76?style=for-the-badge" alt="简体中文">
+  &nbsp;
+  <a href="README.en.md"><img src="https://img.shields.io/badge/English-102023?style=for-the-badge" alt="English"></a>
+</p>
+
+<p align="center">
+  <a href="https://nextjs.org/"><img src="https://img.shields.io/badge/Next.js-14-102023?style=flat-square&amp;logo=nextdotjs" alt="Next.js"></a>
+  <a href="https://react.dev/"><img src="https://img.shields.io/badge/React-18-007c76?style=flat-square&amp;logo=react" alt="React"></a>
+  <a href="https://www.typescriptlang.org/"><img src="https://img.shields.io/badge/TypeScript-4.9-102023?style=flat-square&amp;logo=typescript" alt="TypeScript"></a>
+  <a href="https://vercel.com/"><img src="https://img.shields.io/badge/Vercel-Deployment-007c76?style=flat-square&amp;logo=vercel" alt="Vercel"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/License-CC_BY--NC--SA_4.0-102023?style=flat-square" alt="CC BY-NC-SA 4.0"></a>
+</p>
+
+<p align="center">
+  <a href="#features">功能介绍</a> &nbsp;·&nbsp; <a href="#interface">界面与设备</a> &nbsp;·&nbsp; <a href="#deploy">快速部署</a> &nbsp;·&nbsp; <a href="#services">服务接入</a>
+  <br>
+  <a href="#development">本地开发</a> &nbsp;·&nbsp; <a href="#updates">更新维护</a> &nbsp;·&nbsp; <a href="#scope">使用范围</a> &nbsp;·&nbsp; <a href="#license">许可致谢</a>
+</p>
+
+---
 
 Apex TV 是一个可自行部署的媒体聚合播放器，基于 [MoonTVPlus](https://github.com/mtvpls/MoonTVPlus) 定制。它将影视搜索、私人影库、直播和音乐整合到同一套界面中，适合管理自己的媒体服务和收藏。
 
 本分支围绕 Vercel 部署维护，主要调整了品牌、主题、导航，以及影库、直播和音乐的使用体验。界面采用银灰与青绿配色，支持电脑、手机和平板。
-
-[![Next.js](https://img.shields.io/badge/Next.js-14-102023?logo=nextdotjs)](https://nextjs.org/)
-[![React](https://img.shields.io/badge/React-18-007c76?logo=react)](https://react.dev/)
-[![TypeScript](https://img.shields.io/badge/TypeScript-4.9-3178c6?logo=typescript)](https://www.typescriptlang.org/)
-[![部署](https://img.shields.io/badge/部署-Vercel-102023?logo=vercel)](https://vercel.com/)
-[![许可证](https://img.shields.io/badge/许可证-CC_BY--NC--SA_4.0-007c76)](LICENSE)
-
-[功能介绍](#features) · [部署说明](#deploy) · [服务接入](#services) · [本地开发](#development) · [更新记录](CHANGELOG)
 
 > [!IMPORTANT]
 > 仓库不附带影视、直播或音乐资源，也不提供第三方服务账号和访问凭据。部署后需要自行配置有权使用的数据源。
@@ -48,7 +64,9 @@ Apex TV 是一个可自行部署的媒体聚合播放器，基于 [MoonTVPlus](h
 
 </details>
 
-## 界面与设备
+<a id="interface"></a>
+
+## 🎨 界面与设备
 
 首页以推荐海报和继续观看为主，搜索使用独立页面。手机通过底部导航切换主要功能，平板会根据宽度调整侧栏和播放布局。
 
@@ -60,7 +78,7 @@ Apex TV 是一个可自行部署的媒体聚合播放器，基于 [MoonTVPlus](h
 
 ## 🚀 部署到 Vercel
 
-### 准备与导入
+### 1. 准备与导入
 
 准备 Vercel 账号和持久化数据库。下面以 Upstash Redis REST 接口为例。
 
@@ -77,7 +95,7 @@ Apex TV 是一个可自行部署的媒体聚合播放器，基于 [MoonTVPlus](h
 | Build Command | `pnpm build` |
 | Output Directory | Next.js 默认设置 |
 
-### 必需的环境变量
+### 2. 配置环境变量
 
 在 Vercel 的 **Settings → Environment Variables** 中填写：
 
@@ -91,10 +109,12 @@ Apex TV 是一个可自行部署的媒体聚合播放器，基于 [MoonTVPlus](h
 
 凭据只填写在部署环境或后台，不要提交到仓库。修改环境变量后需要重新部署。
 
+### 3. 登录与配置
+
 部署完成后，使用站长账号登录，从用户菜单或 `/admin` 进入管理后台，配置需要的来源与服务。自定义域名可在 Vercel 的 **Settings → Domains** 中添加。
 
 <details>
-<summary>其他存储方式与部署注意事项</summary>
+<summary>🗃️ 其他存储方式与部署边界</summary>
 
 代码还保留了 Redis、Kvrocks、Postgres、Turso 和 D1／SQLite 适配器，入口见 [src/lib/db.ts](src/lib/db.ts)。采用其他存储方式前，需要核对连接配置与表结构。本分支未保留上游的数据库初始化脚本。
 
@@ -112,7 +132,7 @@ Vercel 部署还需留意：
 
 <a id="services"></a>
 
-## 服务接入
+## 🔌 服务接入
 
 所有服务均由部署者自行配置。建议先在原服务中确认内容能正常访问，再接入 Apex TV。
 
@@ -131,7 +151,7 @@ Vercel 部署还需留意：
 第三方服务的接口、权限和访问规则可能变化。本项目不承诺所有来源、地区或设备始终可用。
 
 <details>
-<summary>常用可选环境变量</summary>
+<summary>⚙️ 常用可选环境变量</summary>
 
 多数日常设置可以在后台完成。下面列出常用的部署配置，详细字段见 [配置代码](src/lib/config.ts) 和 [配置类型](src/lib/admin.types.ts)。
 
@@ -185,7 +205,9 @@ pnpm dev
 
 页面与 API 位于 `src/app`，通用组件位于 `src/components`，服务与存储逻辑位于 `src/lib`，主题样式位于 `src/styles`。
 
-## 更新与维护
+<a id="updates"></a>
+
+## 🔄 更新与维护
 
 仓库保留 [Upstream Sync](.github/workflows/sync_fork.yml) 工作流，用于检查 MoonTVPlus 更新并准备同步 PR。需要配置 `SYNC_TOKEN` 及相应权限，不会直接合入 `main`。
 
@@ -193,14 +215,20 @@ pnpm dev
 
 更新和切换数据库前，先备份重要配置与数据。
 
-## 使用范围
+<a id="scope"></a>
+
+## 📌 使用范围
 
 项目提供媒体检索和播放界面，第三方服务名称仅用于说明兼容关系，不代表官方合作、授权或背书。
 
 使用接口、媒体内容及相关图片时，应遵守相应服务条款和授权条件。仓库许可证不授予第三方内容或商标的使用权；第三方依赖和素材仍适用各自的许可条件。
 
-## 许可与致谢
+<a id="license"></a>
+
+## 📄 许可与致谢
 
 本项目采用 **[CC BY-NC-SA 4.0](LICENSE)** 许可证。
 
 感谢 **[MoonTVPlus](https://github.com/mtvpls/MoonTVPlus)** 提供的基础实现。
+
+<p align="center"><a href="#top">↑ 回到顶部</a></p>
