@@ -25,7 +25,7 @@ export const LIBRARY_SERIF = 'font-book';
 
 /** 赭石强调：实心按钮。 */
 export const LIBRARY_BUTTON =
-  'inline-flex items-center justify-center gap-2 rounded-md bg-library-ochre px-4 py-2.5 text-sm font-medium text-white transition-colors duration-200 hover:bg-library-ochre-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-library-ochre focus-visible:ring-offset-2 focus-visible:ring-offset-library-paper dark:bg-library-night-ochre dark:hover:bg-library-night-ochre/90 dark:focus-visible:ring-library-night-ochre dark:focus-visible:ring-offset-library-night';
+  'inline-flex items-center justify-center gap-2 rounded-md bg-library-ochre px-4 py-2.5 text-sm font-medium text-white transition-colors duration-200 hover:bg-library-ochre-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-library-ochre focus-visible:ring-offset-2 focus-visible:ring-offset-library-paper dark:bg-library-night-ochre dark:text-library-night dark:hover:bg-library-night-ochre/90 dark:focus-visible:ring-library-night-ochre dark:focus-visible:ring-offset-library-night';
 
 /** 赭石强调：描边按钮。 */
 export const LIBRARY_GHOST_BUTTON =
@@ -41,15 +41,15 @@ export const LIBRARY_FIELD =
 
 /** 圆形图标按钮（缓存管理、清空这类工具栏按钮）。 */
 export const LIBRARY_ICON_BUTTON =
-  'inline-flex h-9 w-9 shrink-0 cursor-pointer items-center justify-center rounded-full border border-library-edge text-library-muted transition-colors duration-200 hover:border-library-ochre hover:text-library-ochre dark:border-library-night-edge dark:text-library-night-muted dark:hover:border-library-night-ochre dark:hover:text-library-night-ochre';
+  'inline-flex h-11 w-11 shrink-0 cursor-pointer items-center justify-center rounded-full border border-library-edge text-library-muted transition-colors duration-200 hover:border-library-ochre hover:text-library-ochre dark:border-library-night-edge dark:text-library-night-muted dark:hover:border-library-night-ochre dark:hover:text-library-night-ochre';
 
 /** 同上，危险操作（删除 / 清空）。 */
 export const LIBRARY_ICON_BUTTON_DANGER =
-  'inline-flex h-9 w-9 shrink-0 cursor-pointer items-center justify-center rounded-full border border-library-edge text-library-muted transition-colors duration-200 hover:border-red-400 hover:text-red-600 dark:border-library-night-edge dark:text-library-night-muted dark:hover:border-red-500/60 dark:hover:text-red-400';
+  'inline-flex h-11 w-11 shrink-0 cursor-pointer items-center justify-center rounded-full border border-library-edge text-library-muted transition-colors duration-200 hover:border-red-400 hover:text-red-600 dark:border-library-night-edge dark:text-library-night-muted dark:hover:border-red-500/60 dark:hover:text-red-400';
 
 /** 无边框圆图标按钮：顶栏里的工具按钮（章节、设置、更多）。 */
 export const LIBRARY_ICON_BUTTON_GHOST =
-  'inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-library-muted transition-colors duration-200 hover:bg-library-ochre-tint hover:text-library-ochre dark:text-library-night-muted dark:hover:bg-library-night-ochre-tint dark:hover:text-library-night-ochre';
+  'inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-library-muted transition-colors duration-200 hover:bg-library-ochre-tint hover:text-library-ochre dark:text-library-night-muted dark:hover:bg-library-night-ochre-tint dark:hover:text-library-night-ochre';
 
 /** 下拉菜单里的一项。 */
 export const LIBRARY_MENU_ITEM =
@@ -112,7 +112,7 @@ export const BOOK_RAIL_ITEM = 'w-24 shrink-0 snap-start sm:w-28';
  * [class*="bg-white"] !important 覆盖掉。
  */
 export const SHELF_CHIP =
-  'inline-flex h-8 w-8 items-center justify-center rounded-full border-transparent p-0 text-library-chip shadow-md backdrop-blur-sm transition-colors duration-200';
+  'inline-flex h-11 w-11 items-center justify-center rounded-full border-transparent p-0 text-library-chip shadow-md backdrop-blur-sm transition-colors duration-200';
 
 /** 书脊标签（书源 / 分类切换）：方角 + 选中时底部一道赭石。 */
 export const SPINE_TAB =
@@ -152,7 +152,7 @@ export const READER_SEGMENT = cn(
   LIBRARY_FOCUS
 );
 export const READER_SEGMENT_ACTIVE =
-  'border-library-ochre bg-library-ochre font-medium text-white dark:border-library-night-ochre dark:bg-library-night-ochre';
+  'border-library-ochre bg-library-ochre font-medium text-white dark:border-library-night-ochre dark:bg-library-night-ochre dark:text-library-night';
 export const READER_SEGMENT_IDLE =
   'border-library-edge bg-library-paper text-library-ink hover:border-library-ochre hover:bg-library-ochre-tint hover:text-library-ochre dark:border-library-night-edge dark:bg-library-night-edge dark:text-library-night-ink dark:hover:border-library-night-ochre dark:hover:bg-library-night-ochre-tint dark:hover:text-library-night-ochre';
 
@@ -169,7 +169,7 @@ export const READER_ICON_BUTTON =
 
 /** 阅读器的圆形播放钮（TTS 主键）。尺寸由调用方给：h-10 w-10 / h-14 w-14。 */
 export const READER_PLAY_BUTTON =
-  'inline-flex shrink-0 cursor-pointer items-center justify-center rounded-full bg-library-ochre text-white transition-colors duration-200 hover:bg-library-ochre-hover disabled:opacity-50 dark:bg-library-night-ochre dark:hover:bg-library-night-ochre/90';
+  'inline-flex shrink-0 cursor-pointer items-center justify-center rounded-full bg-library-ochre text-white transition-colors duration-200 hover:bg-library-ochre-hover disabled:opacity-50 dark:bg-library-night-ochre dark:text-library-night dark:hover:bg-library-night-ochre/90';
 
 /** 压在图像上的读数胶囊（页码、进度提示）：深墨半透 + 纸白字。 */
 export const READER_HUD =

@@ -130,7 +130,7 @@ export const FavoritesPanel: React.FC<FavoritesPanelProps> = ({
       />
 
       {/* 收藏面板 */}
-      <div className='fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-4xl max-h-[85vh] bg-white dark:bg-gray-900 rounded-xl shadow-xl z-[1001] flex flex-col overflow-hidden'>
+      <div className='ptv-dialog fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[calc(100%-2rem)] max-w-4xl max-h-[calc(100dvh-2rem)] bg-white dark:bg-gray-900 rounded-xl shadow-xl z-[1001] flex flex-col overflow-hidden'>
         {/* 标题栏 */}
         <div className='flex items-center justify-between px-6 py-4 border-b border-gray-200 dark:border-gray-700'>
           <div className='flex items-center gap-2'>
@@ -164,7 +164,7 @@ export const FavoritesPanel: React.FC<FavoritesPanelProps> = ({
         </div>
 
         {/* 收藏列表 */}
-        <div className='flex-1 overflow-y-auto p-6'>
+        <div className='min-h-0 flex-1 overflow-y-auto p-6'>
           {loading ? (
             <div className='flex items-center justify-center py-12'>
               <div className='w-8 h-8 border-4 border-yellow-500 border-t-transparent rounded-full animate-spin'></div>

@@ -1,0 +1,9 @@
+.book-reader-height {
+  height: calc(100vh - var(--book-header-height));
+}
+
+@supports (height: 100dvh) {
+  .book-reader-height {
+    height: calc(100dvh - var(--book-header-height));
+  }
+}

@@ -38,7 +38,7 @@ function VersionDisplay() {
       onClick={() =>
         window.open('https://github.com/JettHayes/ApexTV', '_blank')
       }
-      className='ptv-login-version z-10 cursor-pointer'
+      className='ptv-login-version relative z-10 cursor-pointer'
     >
       <span className='font-mono'>v{CURRENT_VERSION}</span>
       {!isChecking && updateStatus !== UpdateStatus.FETCH_FAILED && (
@@ -339,7 +339,7 @@ function LoginPageClient() {
 
   return (
     <div
-      className='ptv-auth relative min-h-screen flex items-center justify-center px-4 overflow-hidden'
+      className='ptv-auth relative min-h-screen min-h-[100dvh] flex flex-col items-center justify-center px-4 py-16'
       style={backgroundImage ? {
         backgroundImage: `url(${backgroundImage})`,
         backgroundSize: 'cover',

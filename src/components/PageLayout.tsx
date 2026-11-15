@@ -76,9 +76,10 @@ const PageLayout = ({ children, activePath = '/', hideNavigation = false }: Page
           <>
             <div
               className='ptv-wallpaper pointer-events-none'
+              data-page={page}
               style={{ backgroundImage: `url(${backgroundImage})` }}
             />
-            <div className='ptv-wallpaper-overlay pointer-events-none' />
+            <div className='ptv-wallpaper-overlay pointer-events-none' data-page={page} />
           </>,
           document.body
         )}

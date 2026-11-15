@@ -50,7 +50,7 @@ export function PersonalCenterPanel({
         style={{ touchAction: 'none' }}
       />
 
-      <div className='fixed top-1/2 left-1/2 z-[1001] w-[calc(100%-2rem)] max-w-md -translate-x-1/2 -translate-y-1/2 overflow-hidden rounded-2xl bg-white shadow-xl dark:bg-gray-900'>
+      <div className='ptv-dialog fixed top-1/2 left-1/2 z-[1001] max-h-[calc(100dvh-2rem)] w-[calc(100%-2rem)] max-w-md -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-2xl bg-white shadow-xl dark:bg-gray-900'>
         <div
           className='p-6'
           data-panel-content

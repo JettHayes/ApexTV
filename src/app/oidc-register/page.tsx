@@ -78,7 +78,7 @@ function OIDCRegisterPageClient() {
   }
 
   return (
-    <div className='relative min-h-screen flex items-center justify-center px-4 overflow-hidden'>
+    <div className='relative min-h-screen min-h-[100dvh] flex flex-col items-center justify-center px-4 py-16'>
       <div className='absolute top-4 right-4'>
         <ThemeToggle />
       </div>
@@ -160,7 +160,7 @@ function OIDCRegisterPageClient() {
       </div>
 
       {/* 版本信息 */}
-      <div className='absolute bottom-4 left-1/2 transform -translate-x-1/2 text-xs text-gray-500 dark:text-gray-400'>
+      <div className='relative z-10 mt-6 text-xs text-gray-500 dark:text-gray-400'>
         <span className='font-mono'>v{CURRENT_VERSION}</span>
       </div>
     </div>

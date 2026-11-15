@@ -370,8 +370,8 @@ function WatchRoomPageContent() {
         {/* 房员等待提示 */}
         {currentRoom && !isOwner && (
           <div className="mb-4 bg-gradient-to-r from-blue-500 to-purple-600 rounded-xl p-6 shadow-lg">
-            <div className="flex items-center justify-between gap-4 text-white">
-              <div className="flex items-center gap-4 flex-1">
+            <div className="flex flex-wrap items-center justify-between gap-4 text-white">
+              <div className="flex min-w-0 items-center gap-4 flex-1">
                 <div className="relative">
                   <div className="w-12 h-12 border-4 border-white/30 border-t-white rounded-full animate-spin" />
                 </div>
@@ -454,14 +454,14 @@ function WatchRoomPageContent() {
         </div>
 
         {/* 选项卡 */}
-        <div className="flex border-b border-gray-200 dark:border-gray-700">
+        <div className="flex overflow-x-auto border-b border-gray-200 dark:border-gray-700">
           {tabs.map((tab) => {
             const Icon = tab.icon;
             return (
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`flex items-center gap-2 px-6 py-3 text-sm font-medium transition-colors relative
+                className={`flex shrink-0 items-center gap-2 px-6 py-3 text-sm font-medium transition-colors relative
                   ${
                     activeTab === tab.id
                       ? 'text-blue-600 dark:text-blue-400'

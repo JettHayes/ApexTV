@@ -124,7 +124,7 @@ export function DownloadPanel() {
 
   return (
     <div className='fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 p-3 backdrop-blur-sm sm:p-6'>
-      <div className='flex max-h-[86vh] w-full max-w-6xl flex-col overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-2xl dark:border-slate-700/80 dark:bg-slate-950'>
+      <div className='ptv-dialog flex max-h-[calc(100dvh-2rem)] w-full max-w-6xl flex-col overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-2xl dark:border-slate-700/80 dark:bg-slate-950'>
         {/* 标题栏 */}
         <div className='flex items-center justify-between border-b border-gray-200 bg-white/90 p-4 dark:border-slate-800 dark:bg-slate-950/90'>
           <div>
@@ -143,7 +143,7 @@ export function DownloadPanel() {
         </div>
 
         {/* 任务列表 */}
-        <div className='flex-1 overflow-y-auto p-4 space-y-3'>
+        <div className='min-h-0 flex-1 overflow-y-auto p-4 space-y-3'>
           {tasks.length === 0 ? (
             <div className='flex min-h-[320px] flex-col items-center justify-center text-gray-500 dark:text-slate-400'>
               <svg className='mb-4 h-16 w-16' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
@@ -300,7 +300,7 @@ export function DownloadPanel() {
 
       {logTask && (
         <div className='fixed inset-0 z-[10000] flex items-center justify-center bg-black/50 p-3 backdrop-blur-sm sm:p-6'>
-          <div className='flex max-h-[82vh] w-full max-w-5xl flex-col overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-2xl dark:border-slate-700 dark:bg-slate-950'>
+          <div className='ptv-dialog flex max-h-[calc(100dvh-2rem)] w-full max-w-5xl flex-col overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-2xl dark:border-slate-700 dark:bg-slate-950'>
             <div className='border-b border-gray-200 bg-white/95 p-4 dark:border-slate-800 dark:bg-slate-950/95'>
               <div className='flex items-start justify-between gap-4'>
                 <div className='min-w-0'>

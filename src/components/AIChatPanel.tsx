@@ -248,7 +248,7 @@ export default function AIChatPanel({
   welcomeMessage = '你好！我是ApexTV的AI影视助手，有什么可以帮你的吗？',
   onStreamingChange,
   useDrawer = false,
-  drawerWidth = 'w-full md:w-[25%]',
+  drawerWidth = 'w-full md:w-[min(420px,50vw)]',
 }: AIChatPanelProps) {
   const pathname = usePathname();
 
@@ -868,7 +868,7 @@ export default function AIChatPanel({
       }`}
     >
       <div
-        className={`relative ${drawerWidth} h-full bg-white dark:bg-gray-900 shadow-2xl flex flex-col transition-transform duration-300 ease-out pointer-events-auto ${
+        className={`ptv-dialog relative ${drawerWidth} h-full bg-white dark:bg-gray-900 shadow-2xl flex flex-col transition-transform duration-300 ease-out pointer-events-auto ${
           isOpen ? 'translate-x-0' : 'translate-x-full'
         }`}
       >
@@ -997,7 +997,7 @@ export default function AIChatPanel({
         </div>
 
         {/* 输入区域 */}
-        <div className='border-t border-gray-200 p-4 dark:border-gray-700'>
+        <div className='border-t border-gray-200 p-4 pb-[max(1rem,env(safe-area-inset-bottom))] dark:border-gray-700'>
           <div className='flex gap-2'>
             <button
               onClick={handleClearContext}
@@ -1099,7 +1099,7 @@ export default function AIChatPanel({
         }
       }}
     >
-      <div className='relative mx-4 my-auto flex h-[85vh] sm:h-[80vh] max-h-[90vh] sm:max-h-[600px] w-full max-w-3xl flex-col rounded-2xl bg-white shadow-2xl dark:bg-gray-900'>
+      <div className='ptv-dialog relative mx-4 my-auto flex h-[85vh] supports-[height:100dvh]:h-[85dvh] max-h-[min(600px,calc(100vh-2rem))] supports-[height:100dvh]:max-h-[min(600px,calc(100dvh-2rem))] w-full max-w-3xl flex-col rounded-2xl bg-white shadow-2xl dark:bg-gray-900'>
         {/* 头部 */}
         <div className='flex items-center justify-between border-b border-gray-200 p-4 dark:border-gray-700'>
           <div className='flex items-center gap-3 min-w-0 flex-1'>

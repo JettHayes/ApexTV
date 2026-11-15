@@ -89,18 +89,18 @@
   border-color: var(--music-border) !important;
 }
 
-.music-theme :is([class*='text-white'], [class*='text-zinc-200']),
-.music-theme-portal :is([class*='text-white'], [class*='text-zinc-200']) {
+.music-theme :is([class~='text-white'], [class~='text-zinc-200']),
+.music-theme-portal :is([class~='text-white'], [class~='text-zinc-200']) {
   color: var(--music-text) !important;
 }
 
-.music-theme :is([class*='text-zinc-300'], [class*='text-zinc-400']),
-.music-theme-portal :is([class*='text-zinc-300'], [class*='text-zinc-400']) {
+.music-theme :is([class~='text-zinc-300'], [class~='text-zinc-400']),
+.music-theme-portal :is([class~='text-zinc-300'], [class~='text-zinc-400']) {
   color: var(--music-text-soft) !important;
 }
 
-.music-theme :is([class*='text-zinc-500'], [class*='text-zinc-600']),
-.music-theme-portal :is([class*='text-zinc-500'], [class*='text-zinc-600']) {
+.music-theme :is([class~='text-zinc-500'], [class~='text-zinc-600']),
+.music-theme-portal :is([class~='text-zinc-500'], [class~='text-zinc-600']) {
   color: var(--music-text-muted) !important;
 }
 

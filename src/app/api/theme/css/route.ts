@@ -43,7 +43,7 @@ export async function GET(request: NextRequest) {
       : 'no-store';
 
     // 添加版本号到ETag
-    const etag = `"${themeConfig.cacheVersion}"`;
+    const etag = `"palette-2-${themeConfig.cacheVersion}"`;
 
     // 检查客户端缓存
     const ifNoneMatch = request.headers.get('if-none-match');

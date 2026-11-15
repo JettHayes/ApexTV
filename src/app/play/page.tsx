@@ -10829,11 +10829,11 @@ function PlayPageClient() {
       <div className='relative z-10 flex flex-col gap-3 py-4 px-5 lg:px-[3rem] 2xl:px-20'>
         {/* 第一行：影片标题 */}
         <div className='py-1'>
-          <h1 className={`text-xl font-semibold flex items-center gap-2 flex-wrap ${tmdbBackdrop ? 'text-white' : 'text-gray-900 dark:text-gray-100'}`}>
+          <h1 className='text-xl font-semibold flex items-center gap-2 flex-wrap text-[color:var(--ptv-text)]'>
             <span>
               {videoTitle || '影片标题'}
               {shouldShowEpisodeLabel && (
-                <span className={tmdbBackdrop ? 'text-white opacity-80' : 'text-gray-500 dark:text-gray-400'}>
+                <span className='text-[color:var(--ptv-muted)]'>
                   {` > ${episodeLabel}`}
                 </span>
               )}
@@ -11250,6 +11250,7 @@ function PlayPageClient() {
                               handleCreateWatchRoom();
                             }}
                             disabled={isCreatingRoom}
+                            data-state={isCreatingRoom ? 'loading' : undefined}
                             className='group relative flex items-center justify-center gap-1 w-8 h-8 lg:w-auto lg:h-auto lg:px-2 lg:py-1.5 bg-purple-500 hover:bg-purple-600 dark:bg-purple-600 dark:hover:bg-purple-700 text-xs font-medium rounded-md transition-all duration-200 shadow-sm hover:shadow-md cursor-pointer overflow-hidden border border-purple-600 dark:border-purple-700 flex-shrink-0 disabled:opacity-60 disabled:cursor-wait'
                             title='创建观影室'
                           >
@@ -11271,6 +11272,7 @@ function PlayPageClient() {
                               await handleCreateTranscodeSession();
                             }}
                             disabled={isTranscoding}
+                            data-state={isTranscoding ? 'loading' : undefined}
                             className={`group relative flex items-center justify-center gap-1 w-8 h-8 lg:w-auto lg:h-auto lg:px-2 lg:py-1.5 text-xs font-medium rounded-md transition-all duration-200 shadow-sm hover:shadow-md overflow-hidden border flex-shrink-0 ${
                               isTranscoding
                                 ? 'bg-amber-400 text-white border-amber-400 cursor-wait'
@@ -11472,6 +11474,7 @@ function PlayPageClient() {
                       {/* 去广告开关 */}
                       <button
                         onClick={toggleToolbarAdBlock}
+                        aria-pressed={externalPlayerAdBlock}
                         className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-all duration-200 shadow-sm hover:shadow-md cursor-pointer border flex-shrink-0 ${externalPlayerAdBlock
                           ? 'bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white border-blue-400'
                           : 'bg-white hover:bg-gray-100 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 border-gray-300 dark:border-gray-600'
@@ -11629,7 +11632,6 @@ function PlayPageClient() {
                 sourceSearchError={sourceSearchError}
                 backgroundSourcesLoading={backgroundSourcesLoading}
                 precomputedVideoInfo={precomputedVideoInfo}
-                useLightTextOnBackdrop={!!tmdbBackdrop}
                 onDanmakuSelect={(selection) => handleDanmakuSelect(selection, true)}
                 onDanmakuEpisodesLoaded={applyDanmakuEpisodes}
                 currentDanmakuSelection={currentDanmakuSelection}
@@ -11652,7 +11654,7 @@ function PlayPageClient() {
               <div className='md:col-span-4 lg:col-span-5'>
                 <div className='p-6 flex flex-col min-h-0'>
                   {/* 标题 */}
-                  <h1 className={`text-3xl font-bold mb-2 tracking-wide flex items-center flex-shrink-0 text-center md:text-left w-full flex-wrap gap-2 ${tmdbBackdrop ? 'text-white' : 'text-gray-900 dark:text-gray-100'}`}>
+                  <h1 className='text-3xl font-bold mb-2 tracking-wide flex items-center flex-shrink-0 text-center md:text-left w-full flex-wrap gap-2 text-[color:var(--ptv-text)]'>
                     <span className={doubanAka.length > 0 ? 'relative group cursor-help' : ''}>
                       {videoTitle || '影片标题'}
                       {/* aka 悬浮提示 */}
@@ -11786,11 +11788,11 @@ function PlayPageClient() {
                           })}
                         </div>
                         {/* 评分数值 */}
-                        <span className={`font-semibold ${tmdbBackdrop ? 'text-white' : 'text-gray-700 dark:text-gray-300'}`}>
+                        <span className='font-semibold text-[color:var(--ptv-text)]'>
                           {doubanRating.value.toFixed(1)}
                         </span>
                         {/* 评分人数 */}
-                        <span className={`text-sm ${tmdbBackdrop ? 'text-white/80' : 'text-gray-500 dark:text-gray-400'}`}>
+                        <span className='text-sm text-[color:var(--ptv-muted)]'>
                           ({doubanRating.count.toLocaleString()}人评价)
                         </span>
                       </div>
@@ -11798,7 +11800,7 @@ function PlayPageClient() {
                   </h1>
 
                   {/* 关键信息行 */}
-                  <div className={`flex flex-wrap items-center gap-3 text-base mb-4 opacity-80 flex-shrink-0 ${tmdbBackdrop ? 'text-white' : ''}`}>
+                  <div className='flex flex-wrap items-center gap-3 text-base mb-4 flex-shrink-0 text-[color:var(--ptv-muted)]'>
                     {detail?.class && (
                       <span className='text-green-600 font-semibold'>
                         {detail.class}
@@ -11832,7 +11834,7 @@ function PlayPageClient() {
                   {/* 剧情简介 */}
                   {(doubanCardSubtitle || netdiskTMDBMeta?.desc || correctedDesc || detail?.desc) && (
                     <div
-                      className={`mt-0 text-base leading-relaxed opacity-90 overflow-y-auto pr-2 flex-1 min-h-0 scrollbar-hide ${tmdbBackdrop ? 'text-white' : ''}`}
+                      className='mt-0 text-base leading-relaxed overflow-y-auto pr-2 flex-1 min-h-0 scrollbar-hide text-[color:var(--ptv-text)]'
                       style={{ whiteSpace: 'pre-line' }}
                     >
                       {/* card_subtitle 在前，desc 在后 */}

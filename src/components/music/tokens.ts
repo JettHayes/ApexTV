@@ -219,7 +219,7 @@ export const MUSIC_SEG_ITEM = cn(
 );
 
 export const MUSIC_SEG_ITEM_ACTIVE =
-  'bg-music-theme font-semibold text-music-chip dark:bg-music-night-theme';
+  'bg-music-theme font-semibold text-music-chip dark:bg-music-night-theme dark:text-[#062421]';
 
 export const MUSIC_SEG_ITEM_IDLE =
   'hover:bg-music-card-2 hover:text-music-ink dark:hover:bg-music-night-card-2 dark:hover:text-music-night-ink';
@@ -550,7 +550,7 @@ export const MUSIC_TAG = cn(
 );
 
 export const MUSIC_TAG_ACTIVE =
-  'border-music-theme bg-music-theme font-medium text-music-chip dark:border-music-night-theme dark:bg-music-night-theme';
+  'border-music-theme bg-music-theme font-medium text-music-chip dark:border-music-night-theme dark:bg-music-night-theme dark:text-[#062421]';
 
 export const MUSIC_TAG_IDLE =
   'border-music-edge bg-music-card text-music-ink hover:border-music-ink-soft dark:border-music-night-edge dark:bg-music-night-card dark:text-music-night-ink dark:hover:border-music-night-ink-soft';

@@ -166,10 +166,10 @@ export const NotificationPanel: React.FC<NotificationPanelProps> = ({
       />
 
       {/* 通知面板 */}
-      <div className='fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-lg min-h-[520px] max-h-[80vh] bg-white dark:bg-gray-900 rounded-xl shadow-xl z-[1001] flex flex-col overflow-hidden max-sm:min-h-[70vh]'>
+      <div className='ptv-dialog fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[calc(100%-2rem)] max-w-lg h-[min(520px,calc(100dvh-2rem))] bg-white dark:bg-gray-900 rounded-xl shadow-xl z-[1001] flex flex-col overflow-hidden'>
         {/* 标题栏 */}
-        <div className='flex items-center justify-between px-6 py-4 border-b border-gray-200 dark:border-gray-700'>
-          <div className='flex items-center gap-2'>
+        <div className='flex shrink-0 flex-wrap items-center justify-between gap-2 px-4 py-3 sm:px-6 border-b border-gray-200 dark:border-gray-700'>
+          <div className='flex min-w-0 flex-wrap items-center gap-2'>
             <Bell className='w-5 h-5 text-gray-600 dark:text-gray-400' />
             <h3 className='text-lg font-bold text-gray-800 dark:text-gray-200'>
               通知中心
@@ -200,7 +200,7 @@ export const NotificationPanel: React.FC<NotificationPanelProps> = ({
         </div>
 
         {/* 通知列表 */}
-        <div className='flex flex-1 flex-col overflow-y-auto p-4'>
+        <div className='flex min-h-0 flex-1 flex-col overflow-y-auto p-4'>
           {onOpenNotificationSettings && (
               <button
                 type='button'
@@ -261,7 +261,7 @@ export const NotificationPanel: React.FC<NotificationPanelProps> = ({
                   </div>
 
                   {/* 操作按钮 */}
-                  <div className='absolute top-2 right-2 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity'>
+                  <div className='absolute top-2 right-2 flex items-center gap-1 opacity-100 transition-opacity sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100 [@media(hover:none)]:opacity-100'>
                     {!notification.read && (
                       <button
                         onClick={(e) => {

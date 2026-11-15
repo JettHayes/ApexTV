@@ -28,7 +28,7 @@ export function ThemeToggle() {
       meta.name = 'theme-color';
       document.head.appendChild(meta);
     }
-    meta.content = isDark ? '#091214' : '#edf2f1';
+    meta.content = isDark ? '#0d161a' : '#f4f3ee';
   }, [mounted, isDark]);
 
   const toggleTheme = () => {

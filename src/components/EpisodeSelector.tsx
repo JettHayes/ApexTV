@@ -162,7 +162,7 @@ const EpisodeButton: React.FC<EpisodeButtonProps> = ({
         canShowOriginalName ? 'select-none' : ''
       }
         ${isActive
-          ? 'bg-green-500 text-white border-green-400 shadow-lg shadow-green-500/25 dark:bg-green-600 cursor-default'
+          ? 'bg-[var(--ptv-action)] text-[color:var(--ptv-action-ink)] border-transparent cursor-default'
           : isWatched
             ? 'bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100 hover:scale-105 dark:bg-emerald-900/20 dark:text-emerald-300 dark:border-emerald-700/60 dark:hover:bg-emerald-900/30'
             : inactiveEpisodeClass
@@ -218,7 +218,7 @@ const EpisodeListItem: React.FC<EpisodeListItemProps> = ({
       title={name}
       className={`flex items-center gap-3 w-full px-3 py-2.5 rounded-lg border text-left transition-all duration-200 ${
         isActive
-          ? 'bg-green-500 text-white border-green-400 shadow-lg shadow-green-500/25 dark:bg-green-600 cursor-default'
+          ? 'bg-[var(--ptv-action)] text-[color:var(--ptv-action-ink)] border-transparent cursor-default'
           : isWatched
             ? 'bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100 dark:bg-emerald-900/20 dark:text-emerald-300 dark:border-emerald-700/60 dark:hover:bg-emerald-900/30'
             : inactiveRowClass
@@ -227,7 +227,7 @@ const EpisodeListItem: React.FC<EpisodeListItemProps> = ({
       <span
         className={`flex-shrink-0 h-7 min-w-[1.75rem] px-1.5 flex items-center justify-center rounded-md text-xs font-mono font-semibold ${
           isActive
-            ? 'bg-white/20 text-white'
+            ? 'bg-[color:color-mix(in_srgb,currentColor_15%,transparent)] text-inherit'
             : isWatched
               ? 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-300'
               : 'bg-black/5 dark:bg-white/10'
@@ -288,8 +288,6 @@ interface EpisodeSelectorProps {
   onDanmakuEpisodesLoaded?: (episodes: DanmakuEpisode[]) => void;
   /** 观影室房员状态 - 禁用选集和换源，但保留弹幕 */
   isRoomMember?: boolean;
-  /** 外层使用 TMDB 背景图时，提升深色文字对比度 */
-  useLightTextOnBackdrop?: boolean;
   /** 集数过滤配置 */
   episodeFilterConfig?: EpisodeFilterConfig | null;
   onFilterConfigUpdate?: (config: EpisodeFilterConfig) => void;
@@ -321,42 +319,21 @@ const EpisodeSelector: React.FC<EpisodeSelectorProps> = ({
   onUploadDanmaku,
   onDanmakuEpisodesLoaded,
   isRoomMember = false,
-  useLightTextOnBackdrop = false,
   episodeFilterConfig = null,
   onFilterConfigUpdate,
   onShowToast,
 }) => {
   const router = useRouter();
-  const mutedTextClass = useLightTextOnBackdrop
-    ? 'text-white/80'
-    : 'text-gray-600 dark:text-gray-300';
-  const faintTextClass = useLightTextOnBackdrop
-    ? 'text-white/65'
-    : 'text-gray-500 dark:text-gray-400';
-  const inactiveTabClass = useLightTextOnBackdrop
-    ? 'text-white/85 hover:text-white bg-white/10 dark:bg-white/5 hover:bg-white/15 dark:hover:bg-white/10'
-    : 'text-gray-700 hover:text-green-600 bg-black/5 dark:bg-white/5 dark:text-gray-300 dark:hover:text-green-400 hover:bg-black/3 dark:hover:bg-white/3';
-  const inactiveActionTextClass = useLightTextOnBackdrop
-    ? 'text-white/85 hover:text-white'
-    : 'text-gray-700 hover:text-green-600 dark:text-gray-300 dark:hover:text-green-400';
-  const iconButtonClass = useLightTextOnBackdrop
-    ? 'text-white/85 hover:text-white hover:bg-white/15'
-    : 'text-gray-700 hover:text-green-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:text-green-400 dark:hover:bg-white/20';
-  const inactiveEpisodeClass = useLightTextOnBackdrop
-    ? 'bg-white/15 text-white border-white/10 hover:bg-white/25 hover:scale-105'
-    : 'bg-gray-200 text-gray-700 border-transparent hover:bg-gray-300 hover:scale-105 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600';
-  const inactiveEpisodeRowClass = useLightTextOnBackdrop
-    ? 'bg-white/10 text-white border-white/10 hover:bg-white/20'
-    : 'bg-gray-100 text-gray-700 border-transparent hover:bg-gray-200 dark:bg-gray-800/60 dark:text-gray-200 dark:border-white/5 dark:hover:bg-gray-700/70';
-  const sourceTitleClass = useLightTextOnBackdrop
-    ? 'text-white'
-    : 'text-gray-900 dark:text-gray-100';
-  const sourcePillTextClass = useLightTextOnBackdrop
-    ? 'text-white/85'
-    : 'text-gray-700 dark:text-gray-300';
-  const disabledTextClass = useLightTextOnBackdrop
-    ? 'text-white/45 cursor-not-allowed'
-    : 'text-gray-400 dark:text-gray-500 cursor-not-allowed';
+  const mutedTextClass = 'text-[color:var(--ptv-muted)]';
+  const faintTextClass = 'text-[color:var(--ptv-muted)]';
+  const inactiveTabClass = 'text-[color:var(--ptv-muted)] bg-[var(--ptv-soft)] hover:text-[color:var(--ptv-accent)]';
+  const inactiveActionTextClass = 'text-[color:var(--ptv-muted)] hover:text-[color:var(--ptv-accent)]';
+  const iconButtonClass = 'text-[color:var(--ptv-muted)] hover:text-[color:var(--ptv-accent)] hover:bg-[var(--ptv-soft)]';
+  const inactiveEpisodeClass = 'bg-[var(--ptv-soft)] text-[color:var(--ptv-text)] border-transparent hover:bg-[var(--ptv-surface)] hover:scale-105';
+  const inactiveEpisodeRowClass = 'bg-[var(--ptv-soft)] text-[color:var(--ptv-text)] border-transparent hover:bg-[var(--ptv-surface)]';
+  const sourceTitleClass = 'text-[color:var(--ptv-text)]';
+  const sourcePillTextClass = 'text-[color:var(--ptv-text)]';
+  const disabledTextClass = 'text-[color:var(--ptv-muted)] opacity-60 cursor-not-allowed';
 
   const parseSxxExxTitle = useCallback((title?: string) => {
     const match = title?.match(/[Ss](\d+)[Ee](\d{1,4}(?:\.\d+)?)/);
@@ -1048,53 +1025,61 @@ const EpisodeSelector: React.FC<EpisodeSelectorProps> = ({
   }, [showEpisodeMenu]);
 
   return (
-    <div className='md:ml-2 px-4 py-0 h-full rounded-xl bg-black/10 dark:bg-white/5 flex flex-col border border-white/0 dark:border-white/30 overflow-hidden'>
+    <div className='px-4 py-0 h-full min-h-0 flex flex-col overflow-hidden'>
       {/* 主要的 Tab 切换 - 无缝融入设计 */}
-      <div className='flex mb-1 -mx-6 flex-shrink-0'>
+      <div className='flex mb-1 -mx-4 flex-shrink-0'>
         {/* 选集选项卡 - 仅在多集时显示 */}
         {totalEpisodes > 1 && (
-          <div
-            onClick={() => !isRoomMember && setActiveTab('episodes')}
-            className={`flex-1 py-3 px-6 text-center transition-all duration-200 font-medium relative
+          <button
+            type='button'
+            disabled={isRoomMember}
+            aria-pressed={activeTab === 'episodes'}
+            onClick={() => setActiveTab('episodes')}
+            className={`flex-1 py-3 px-3 text-center transition-all duration-200 font-medium relative border-b-2
               ${isRoomMember ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'}
               ${activeTab === 'episodes'
-                ? 'text-green-600 dark:text-green-400'
-                : inactiveTabClass
+                ? 'text-[color:var(--ptv-accent)] bg-[var(--ptv-selected)] border-[var(--ptv-accent)]'
+                : `${inactiveTabClass} border-transparent`
               }
             `.trim()}
           >
             选集
             {isRoomMember && <span className="ml-1 text-xs">🔒</span>}
-          </div>
+          </button>
         )}
 
         {/* 换源选项卡 */}
-        <div
-          onClick={() => !isRoomMember && handleSourceTabClick()}
-          className={`flex-1 py-3 px-6 text-center transition-all duration-200 font-medium relative
+        <button
+          type='button'
+          disabled={isRoomMember}
+          aria-pressed={activeTab === 'sources'}
+          onClick={handleSourceTabClick}
+          className={`flex-1 py-3 px-3 text-center transition-all duration-200 font-medium relative border-b-2
             ${isRoomMember ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'}
             ${activeTab === 'sources'
-              ? 'text-green-600 dark:text-green-400'
-              : inactiveTabClass
+              ? 'text-[color:var(--ptv-accent)] bg-[var(--ptv-selected)] border-[var(--ptv-accent)]'
+              : `${inactiveTabClass} border-transparent`
             }
           `.trim()}
         >
           换源
           {isRoomMember && <span className="ml-1 text-xs">🔒</span>}
-        </div>
+        </button>
 
         {/* 弹幕选项卡 */}
-        <div
+        <button
+          type='button'
+          aria-pressed={activeTab === 'danmaku'}
           onClick={() => setActiveTab('danmaku')}
-          className={`flex-1 py-3 px-6 text-center cursor-pointer transition-all duration-200 font-medium
+          className={`flex-1 py-3 px-3 text-center cursor-pointer transition-all duration-200 font-medium border-b-2
             ${activeTab === 'danmaku'
-              ? 'text-green-600 dark:text-green-400'
-              : inactiveTabClass
+              ? 'text-[color:var(--ptv-accent)] bg-[var(--ptv-selected)] border-[var(--ptv-accent)]'
+              : `${inactiveTabClass} border-transparent`
             }
           `.trim()}
         >
           弹幕
-        </div>
+        </button>
       </div>
 
       {/* 弹幕 Tab 内容 */}
@@ -1115,7 +1100,7 @@ const EpisodeSelector: React.FC<EpisodeSelectorProps> = ({
       {activeTab === 'episodes' && (
         <>
           {/* 分类标签 */}
-          <div className='relative z-30 flex items-center gap-4 mb-4 border-b border-gray-300 dark:border-gray-700 -mx-6 px-6 flex-shrink-0'>
+          <div className='relative z-30 flex items-center gap-4 mb-4 border-b border-gray-300 dark:border-gray-700 -mx-4 px-4 flex-shrink-0'>
             <div
               className='flex-1 overflow-x-auto'
               ref={categoryContainerRef}

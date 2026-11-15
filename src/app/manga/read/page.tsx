@@ -59,10 +59,10 @@ const SCALE_MODE_OPTIONS: Array<{ value: ScaleMode; label: string }> = [
 function MangaReadSkeleton({ readMode, pageGap }: { readMode: ReadMode; pageGap: number }) {
   if (readMode === 'horizontal') {
     return (
-      <div className='flex min-h-[calc(100vh-8rem)] overflow-hidden' style={{ gap: `${pageGap}px` }}>
+      <div className='flex min-h-[calc(100vh-8rem)] supports-[height:100dvh]:min-h-[calc(100dvh-8rem)] overflow-hidden' style={{ gap: `${pageGap}px` }}>
         {Array.from({ length: 2 }).map((_, index) => (
           <div key={index} className='flex min-w-full items-center justify-center px-1'>
-            <div className={cn('h-full min-h-[calc(100vh-8rem)] w-full', READER_CANVAS_SKELETON)} />
+            <div className={cn('h-full min-h-[calc(100vh-8rem)] supports-[height:100dvh]:min-h-[calc(100dvh-8rem)] w-full', READER_CANVAS_SKELETON)} />
           </div>
         ))}
       </div>
@@ -71,13 +71,13 @@ function MangaReadSkeleton({ readMode, pageGap }: { readMode: ReadMode; pageGap:
 
   if (readMode === 'single' || readMode === 'double') {
     return (
-      <div className='flex min-h-[calc(100vh-8rem)] items-center justify-center'>
+      <div className='flex min-h-[calc(100vh-8rem)] supports-[height:100dvh]:min-h-[calc(100dvh-8rem)] items-center justify-center'>
         <div
           className={`grid w-full max-w-6xl ${readMode === 'double' ? 'md:grid-cols-2' : 'grid-cols-1'}`}
           style={{ gap: `${pageGap}px` }}
         >
           {Array.from({ length: readMode === 'double' ? 2 : 1 }).map((_, index) => (
-            <div key={index} className={cn('min-h-[calc(100vh-8rem)]', READER_CANVAS_SKELETON)} />
+            <div key={index} className={cn('min-h-[calc(100vh-8rem)] supports-[height:100dvh]:min-h-[calc(100dvh-8rem)]', READER_CANVAS_SKELETON)} />
           ))}
         </div>
       </div>
@@ -849,7 +849,7 @@ export default function MangaReadPage() {
       return 'block mx-auto h-auto w-auto max-w-none object-none';
     }
     if (readMode === 'single' || readMode === 'double') {
-      return 'block h-auto w-full object-contain sm:mx-auto sm:max-h-[calc(100vh-8rem)] sm:w-auto sm:max-w-full';
+      return 'block h-auto w-full object-contain sm:mx-auto sm:max-h-[calc(100vh-8rem)] sm:supports-[height:100dvh]:max-h-[calc(100dvh-8rem)] sm:w-auto sm:max-w-full';
     }
     return 'block h-auto w-full object-contain';
   }, [readMode, scaleMode]);
@@ -992,7 +992,7 @@ export default function MangaReadPage() {
       {chapterListOpen && (
         <div className='fixed inset-0 z-40 bg-black/30' onClick={() => setChapterListOpen(false)}>
           <div
-            className='absolute right-0 top-14 h-[calc(100vh-3.5rem)] w-full max-w-sm overflow-y-auto border-l border-library-edge bg-library-card shadow-xl dark:border-library-night-edge dark:bg-library-night-card sm:top-16 sm:h-[calc(100vh-4rem)]'
+            className='absolute right-0 top-14 h-[calc(100vh-3.5rem)] supports-[height:100dvh]:h-[calc(100dvh-3.5rem)] w-full max-w-sm overflow-y-auto pb-[env(safe-area-inset-bottom)] border-l border-library-edge bg-library-card shadow-xl dark:border-library-night-edge dark:bg-library-night-card sm:top-16 sm:h-[calc(100vh-4rem)] sm:supports-[height:100dvh]:h-[calc(100dvh-4rem)]'
             onClick={(event) => event.stopPropagation()}
           >
             <div className='p-4'>
@@ -1045,7 +1045,7 @@ export default function MangaReadPage() {
       )}
 
       <div
-        className='relative min-h-[calc(100vh-5rem)] select-none px-0 py-3 sm:px-3'
+        className='relative min-h-[calc(100vh-5rem)] supports-[height:100dvh]:min-h-[calc(100dvh-5rem)] select-none px-0 py-3 sm:px-3'
         onClick={handleReaderClick}
       >
         {showChapterComplete && (
@@ -1154,7 +1154,7 @@ export default function MangaReadPage() {
               openJumpDialog();
             }}
             className={cn(
-              'fixed bottom-4 left-1/2 z-20 -translate-x-1/2 rounded-full px-2.5 py-0.5 text-sm font-medium',
+              'fixed bottom-[calc(1rem+env(safe-area-inset-bottom))] left-1/2 z-20 -translate-x-1/2 rounded-full px-2.5 py-0.5 text-sm font-medium',
               pages.length > 1 ? 'cursor-pointer' : 'pointer-events-none',
               READER_HUD
             )}
@@ -1200,7 +1200,7 @@ export default function MangaReadPage() {
         ) : readMode === 'horizontal' ? (
           <div
             ref={horizontalContainerRef}
-            className='flex min-h-[calc(100vh-8rem)] snap-x snap-mandatory overflow-x-auto overflow-y-hidden scrollbar-hide'
+            className='flex min-h-[calc(100vh-8rem)] supports-[height:100dvh]:min-h-[calc(100dvh-8rem)] snap-x snap-mandatory overflow-x-auto overflow-y-hidden scrollbar-hide'
             style={{ gap: `${pageGap}px` }}
           >
             {pages.map((page, index) => (
@@ -1225,7 +1225,7 @@ export default function MangaReadPage() {
             </div>
           </div>
         ) : (
-          <div className='flex min-h-[calc(100vh-8rem)] items-center justify-center'>
+          <div className='flex min-h-[calc(100vh-8rem)] supports-[height:100dvh]:min-h-[calc(100dvh-8rem)] items-center justify-center'>
             <div className={`grid w-full max-w-6xl ${readMode === 'double' ? 'md:grid-cols-2' : 'grid-cols-1'}`} style={{ gap: `${pageGap}px` }}>
               {pagedItems.map((page, index) => (
                 <div

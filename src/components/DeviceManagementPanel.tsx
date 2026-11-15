@@ -46,9 +46,9 @@ export function DeviceManagementPanel({
         style={{ touchAction: 'none' }}
       />
 
-      <div className='fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-lg bg-white dark:bg-gray-900 rounded-xl shadow-xl z-[1001] overflow-hidden'>
+      <div className='ptv-dialog fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[calc(100%-2rem)] max-w-lg bg-white dark:bg-gray-900 rounded-xl shadow-xl z-[1001] overflow-hidden'>
         <div
-          className='h-full max-h-[80vh] flex flex-col'
+          className='max-h-[calc(100dvh-2rem)] flex flex-col'
           data-panel-content
           onTouchMove={(e) => e.stopPropagation()}
           style={{ touchAction: 'auto' }}
@@ -66,7 +66,7 @@ export function DeviceManagementPanel({
             </button>
           </div>
 
-          <div className='flex-1 overflow-y-auto p-6'>
+          <div className='min-h-0 flex-1 overflow-y-auto p-6'>
             {devicesLoading ? (
               <div className='space-y-3'>
                 {[1, 2, 3].map((i) => (

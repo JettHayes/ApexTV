@@ -1,43 +1,59 @@
 html[data-moontvplus] {
-  --ptv-accent: #007c76;
-  --ptv-action: #00d2be;
-  --ptv-action-ink: #062421;
-  --ptv-text: #192d30;
-  --ptv-muted: #53676b;
-  --ptv-page: #edf2f1;
-  --ptv-panel: #f4f7f6;
-  --ptv-surface: #f7faf9;
-  --ptv-soft: #e5edeb;
-  --ptv-line: rgba(39, 77, 77, .18);
-  --ptv-selected: rgba(0, 124, 118, .10);
+  --ptv-accent: #006f68;
+  --ptv-action: #006f68;
+  --ptv-action-hover: #005b55;
+  --ptv-action-ink: #ffffff;
+  --ptv-info: #0e61ac;
+  --ptv-text: #1c2b30;
+  --ptv-muted: #53646b;
+  --ptv-page: #f4f3ee;
+  --ptv-panel: #fffcf5;
+  --ptv-surface: #fffcf5;
+  --ptv-soft: #e9eeea;
+  --ptv-line: #d4dcd7;
+  --ptv-field-line: #778984;
+  --ptv-selected: #ddeee8;
+  --ptv-error: #b42318;
+  --ptv-success: #167044;
   --ptv-shadow: 0 12px 32px rgba(10, 34, 36, .08);
   --ptv-gutter: clamp(16px, 2.6vw, 40px);
   --ptv-max: 1360px;
   --ptv-ease: cubic-bezier(.16, 1, .3, 1);
   --theme-primary: var(--ptv-accent);
-  --theme-primary-hover: #006b66;
+  --theme-primary-hover: var(--ptv-action-hover);
+  --theme-bg: var(--ptv-page);
+  --theme-bg-secondary: var(--ptv-surface);
+  --theme-text: var(--ptv-text);
+  --theme-text-secondary: var(--ptv-muted);
+  --theme-border: var(--ptv-line);
   color-scheme: light;
 }
 
 html[data-moontvplus].dark {
-  --ptv-accent: #00d2be;
-  --ptv-text: #edf4f2;
-  --ptv-muted: #a2b5b5;
-  --ptv-page: #091214;
-  --ptv-panel: #102023;
-  --ptv-surface: #14272a;
-  --ptv-soft: #193035;
-  --ptv-line: rgba(177, 216, 214, .18);
-  --ptv-selected: rgba(0, 210, 190, .12);
+  --ptv-accent: #53c7b9;
+  --ptv-action: #53c7b9;
+  --ptv-action-hover: #8ae0d2;
+  --ptv-action-ink: #082d29;
+  --ptv-info: #83b8e7;
+  --ptv-text: #e8eeeb;
+  --ptv-muted: #a5b7ba;
+  --ptv-page: #0d161a;
+  --ptv-panel: #162329;
+  --ptv-surface: #1d2d33;
+  --ptv-soft: #24363c;
+  --ptv-line: #2b3b40;
+  --ptv-field-line: #71868c;
+  --ptv-selected: #203f3d;
+  --ptv-error: #fda29b;
+  --ptv-success: #86d9a6;
   --ptv-shadow: 0 12px 32px rgba(0, 0, 0, .22);
-  --theme-primary-hover: #36e5d3;
   color-scheme: dark;
 }
 
 html[data-moontvplus] body { background: var(--ptv-page); color: var(--ptv-text); }
 html[data-moontvplus].dark body { background: var(--ptv-page); }
 html[data-moontvplus] ::selection { background: var(--ptv-action); color: var(--ptv-action-ink); }
-html[data-moontvplus] :is(a, button, input, select, textarea, [tabindex]):focus-visible {
+html[data-moontvplus] :where(.ptv-page, .ptv-auth, .ptv-dialog, .ptv-popover, .ptv-menu) :is(a, button, input, select, textarea, [tabindex]):focus-visible {
   outline: 2px solid var(--ptv-accent);
   outline-offset: 3px;
 }
@@ -47,35 +63,50 @@ html[data-moontvplus] :is(a, button, input, select, textarea, [tabindex]):focus-
 .ptv-page-main { margin-top: calc(3.5rem + var(--safe-top)); padding-bottom: calc(3.5rem + env(safe-area-inset-bottom)); }
 .ptv-wallpaper { position: fixed; inset: 0; z-index: 0; background-position: center; background-size: cover; background-repeat: no-repeat; opacity: .22; }
 .ptv-wallpaper-overlay { position: fixed; inset: 0; z-index: 0; background: color-mix(in srgb, var(--ptv-page) 35%, transparent); }
-.ptv-page[data-page='search'] .ptv-wallpaper,
-.ptv-page[data-page='library'] .ptv-wallpaper { opacity: .14; }
-.ptv-page[data-page='admin'] .ptv-wallpaper { opacity: .05; }
-.ptv-page[data-page='play'] .ptv-wallpaper,
-.ptv-page[data-page='live'] .ptv-wallpaper { opacity: .05; }
+.ptv-wallpaper:is([data-page='search'], [data-page='library']) { opacity: .10; }
+.ptv-wallpaper:is([data-page='admin'], [data-page='play'], [data-page='live']) { opacity: .04; }
 
-.ptv-page :is(.text-gray-900, .text-gray-800, .text-gray-700, .dark\:text-gray-100, .dark\:text-gray-200, .dark\:text-gray-300) { color: var(--ptv-text); }
-.ptv-page :is(.text-gray-600, .text-gray-500, .dark\:text-gray-400, .dark\:text-gray-500) { color: var(--ptv-muted); }
-.ptv-page :is(.text-green-500, .text-green-600, .text-green-700, .dark\:text-green-400) { color: var(--ptv-accent); }
-.ptv-page :is(.bg-white, .bg-gray-50, .dark\:bg-gray-800, .dark\:bg-gray-900) { background-color: var(--ptv-surface); }
-.ptv-page :is(.bg-gray-100, .bg-gray-200, .dark\:bg-gray-700) { background-color: var(--ptv-soft); }
-.ptv-page :is(.border-gray-200, .border-gray-300, .dark\:border-gray-600, .dark\:border-gray-700) { border-color: var(--ptv-line); }
-.ptv-page :is(button, a):is(.bg-green-500, .bg-green-600, .bg-blue-500, .bg-blue-600),
+html[data-moontvplus] :is(.ptv-dialog, .ptv-popover, .ptv-menu) { background-color: var(--ptv-surface); color: var(--ptv-text); border-color: var(--ptv-line); }
+:where(.ptv-page, .ptv-dialog, .ptv-popover, .ptv-menu) :is(.text-gray-900, .text-gray-800, .text-gray-700) { color: var(--ptv-text); }
+:where(.ptv-page, .ptv-dialog, .ptv-popover, .ptv-menu) :is(.text-gray-600, .text-gray-500) { color: var(--ptv-muted); }
+:where(.ptv-page, .ptv-dialog, .ptv-popover, .ptv-menu) :is(.text-blue-500, .text-blue-600, .text-blue-700) { color: var(--ptv-info); }
+:where(.ptv-page, .ptv-dialog, .ptv-popover, .ptv-menu) :is(.text-green-500, .text-green-600, .text-green-700) { color: var(--ptv-success); }
+:where(.ptv-page, .ptv-dialog, .ptv-popover, .ptv-menu) :is(.bg-white, .bg-gray-50) { background-color: var(--ptv-surface); }
+:where(.ptv-page, .ptv-dialog, .ptv-popover, .ptv-menu) :is(.bg-gray-100, .bg-gray-200) { background-color: var(--ptv-soft); }
+:where(.ptv-page, .ptv-dialog, .ptv-popover, .ptv-menu) :is(.border-gray-200, .border-gray-300) { border-color: var(--ptv-line); }
+.dark :where(.ptv-page, .ptv-dialog, .ptv-popover, .ptv-menu) :is(.dark\:text-gray-100, .dark\:text-gray-200, .dark\:text-gray-300) { color: var(--ptv-text); }
+.dark :where(.ptv-page, .ptv-dialog, .ptv-popover, .ptv-menu) :is(.dark\:text-gray-400, .dark\:text-gray-500) { color: var(--ptv-muted); }
+.dark :where(.ptv-page, .ptv-dialog, .ptv-popover, .ptv-menu) :is(.dark\:text-blue-200, .dark\:text-blue-300, .dark\:text-blue-400) { color: var(--ptv-info); }
+.dark :where(.ptv-page, .ptv-dialog, .ptv-popover, .ptv-menu) .dark\:text-green-400 { color: var(--ptv-success); }
+.dark :where(.ptv-page, .ptv-dialog, .ptv-popover, .ptv-menu) :is(.dark\:bg-gray-800, .dark\:bg-gray-900) { background-color: var(--ptv-surface); }
+.dark :where(.ptv-page, .ptv-dialog, .ptv-popover, .ptv-menu) .dark\:bg-gray-700 { background-color: var(--ptv-soft); }
+.dark :where(.ptv-page, .ptv-dialog, .ptv-popover, .ptv-menu) :is(.dark\:border-gray-600, .dark\:border-gray-700) { border-color: var(--ptv-line); }
 .ptv-primary {
   background: var(--ptv-action);
   color: var(--ptv-action-ink);
   border-color: transparent;
 }
-.ptv-page :is(input:not([type='checkbox']):not([type='radio']), select, textarea) {
+:where(.ptv-page, .ptv-dialog, .ptv-popover, .ptv-menu) :is(button, a):is(.bg-green-500, .bg-green-600) { background-color: var(--ptv-action); color: var(--ptv-action-ink); }
+:where(.ptv-page, .ptv-dialog, .ptv-popover, .ptv-menu) :is(button, a):is(.bg-blue-500, .bg-blue-600) { background-color: #0e61ac; color: #fff; }
+:where(.ptv-page, .ptv-dialog, .ptv-popover, .ptv-menu) :is(button, a).bg-red-500 { background-color: #b42318; color: #fff; }
+:where(.ptv-page, .ptv-dialog, .ptv-popover, .ptv-menu) :is(button, a).bg-yellow-500 { color: #332b00; }
+:where(.ptv-page, .ptv-dialog, .ptv-popover, .ptv-menu) :is(button, a):is(.bg-green-500, .bg-green-600, .bg-blue-500, .bg-blue-600, .bg-red-500, .bg-yellow-500) .text-white { color: inherit; }
+:where(.ptv-page, .ptv-dialog, .ptv-popover, .ptv-menu) :is(button, a):is(.bg-green-500, .bg-green-600):not(:disabled):hover { background-color: var(--ptv-action-hover); }
+:where(.ptv-page, .ptv-dialog, .ptv-popover, .ptv-menu) :is(button, a):is(.bg-blue-500, .bg-blue-600):not(:disabled):hover { background-color: #084b86; }
+:where(.ptv-page, .ptv-dialog, .ptv-popover, .ptv-menu) :is(button, a).bg-red-500:not(:disabled):hover { background-color: #912018; }
+:where(.ptv-page, .ptv-dialog, .ptv-popover, .ptv-menu) :is(input:not([type='checkbox']):not([type='radio']), select, textarea) {
   color: var(--ptv-text);
   background-color: var(--ptv-panel);
-  border-color: var(--ptv-line);
+  border-color: var(--ptv-field-line);
   accent-color: var(--ptv-accent);
 }
-.ptv-page input::placeholder { color: var(--ptv-muted); opacity: .9; }
+:where(.ptv-page, .ptv-dialog, .ptv-popover, .ptv-menu) input::placeholder { color: var(--ptv-muted); opacity: .9; }
 .ptv-page :is(button, a) { -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
 
 .ptv-sidebar { background: var(--ptv-surface) !important; border-color: var(--ptv-line) !important; box-shadow: none !important; }
-.sidebar-offset { width: 64px; transition: none; }
+.sidebar-offset { width: 256px; transition: none; }
+.ptv-sidebar[data-collapsed='true'] + .sidebar-offset { width: 64px; }
+.ptv-nav-group { margin-top: 24px; padding-top: 12px; }
 .ptv-sidebar { transition: none; }
 .ptv-sidebar button { min-width: 44px; min-height: 44px; }
 .ptv-brand { display: flex; align-items: center; min-width: 0; flex: 1; gap: 12px; color: var(--ptv-accent); letter-spacing: -.02em; }
@@ -98,7 +129,7 @@ html[data-moontvplus] :is(a, button, input, select, textarea, [tabindex]):focus-
 .ptv-theme-icon { display: inline-flex; align-items: center; justify-content: center; }
 html[data-theme-switching] .ptv-theme-icon { animation: ptv-theme-icon-in 260ms var(--ptv-ease) both; }
 html[data-theme-switching],
-html[data-theme-switching] :is(body, .ptv-page, .ptv-sidebar, .ptv-mobile-header, .ptv-mobile-nav, .ptv-brand, .ptv-nav-link, .ptv-more-card, .ptv-more-link, .ptv-theme-toggle, .ptv-auth, .ptv-auth-panel, .ptv-player-panel, .ptv-player-tools, .ptv-room-info, .ptv-room-tools, .music-theme, .music-theme-portal) {
+html[data-theme-switching] :is(body, .ptv-page, .ptv-sidebar, .ptv-mobile-header, .ptv-mobile-nav, .ptv-brand, .ptv-nav-link, .ptv-more-card, .ptv-more-link, .ptv-theme-toggle, .ptv-auth, .ptv-auth-panel, .ptv-player-panel, .ptv-player-tools, .ptv-room-info, .ptv-room-tools, .ptv-dialog, .ptv-popover, .ptv-menu, .music-theme, .music-theme-portal) {
   transition: background-color 280ms ease-out, color 280ms ease-out, border-color 280ms ease-out !important;
 }
 @keyframes ptv-theme-icon-in { from { opacity: 0; transform: rotate(-60deg) scale(.75); } to { opacity: 1; transform: rotate(0) scale(1); } }
@@ -166,7 +197,7 @@ html[data-theme-switching] :is(body, .ptv-page, .ptv-sidebar, .ptv-mobile-header
     repeating-linear-gradient(115deg, transparent 0 26px, color-mix(in srgb, var(--ptv-text) 3.5%, transparent) 26px 27px);
   color: var(--ptv-text);
 }
-.ptv-auth[data-has-bg]::before { content: ''; position: absolute; inset: 0; background: color-mix(in srgb, var(--ptv-page) 58%, transparent); }
+.ptv-auth[data-has-bg]::before { content: ''; position: absolute; inset: 0; pointer-events: none; background: color-mix(in srgb, var(--ptv-page) 58%, transparent); }
 .ptv-auth-panel { position: relative; overflow: hidden; background: var(--ptv-surface); border: 1px solid var(--ptv-line); box-shadow: inset 0 1px 0 rgba(255, 255, 255, .7), var(--ptv-shadow); border-radius: 20px; padding: clamp(24px, 5vw, 40px); }
 .ptv-auth-panel::before { content: ''; position: absolute; inset: 0 0 auto; height: 4px; background: linear-gradient(90deg, var(--ptv-action) 0 38%, #c3cecc 38% 72%, var(--ptv-accent) 72%); }
 html[data-moontvplus].dark .ptv-auth-panel { box-shadow: inset 0 1px 0 rgba(255, 255, 255, .05), var(--ptv-shadow); }
@@ -187,7 +218,7 @@ html[data-moontvplus].dark .ptv-auth-panel::before { background: linear-gradient
 .ptv-field { display: grid; gap: 8px; }
 .ptv-field-label { display: flex; align-items: center; gap: 10px; font-size: 13px; font-weight: 600; letter-spacing: .04em; color: var(--ptv-muted); }
 .ptv-field-label span { font: 600 11px/1 ui-monospace, 'Cascadia Mono', Consolas, monospace; letter-spacing: .1em; color: var(--ptv-accent); }
-.ptv-field-control { position: relative; display: flex; align-items: center; border: 1px solid var(--ptv-line); border-radius: 12px; background: var(--ptv-panel); transition: border-color 160ms, box-shadow 160ms, background-color 160ms; }
+.ptv-field-control { position: relative; display: flex; align-items: center; border: 1px solid var(--ptv-field-line); border-radius: 12px; background: var(--ptv-panel); transition: border-color 160ms, box-shadow 160ms, background-color 160ms; }
 .ptv-field-control > svg { position: absolute; left: 15px; width: 18px; height: 18px; color: var(--ptv-muted); pointer-events: none; transition: color 160ms; }
 .ptv-field-control:focus-within { border-color: var(--ptv-accent); background: var(--ptv-surface); box-shadow: 0 0 0 4px color-mix(in srgb, var(--ptv-accent) 16%, transparent); }
 .ptv-field-control:focus-within > svg { color: var(--ptv-accent); }
@@ -220,21 +251,21 @@ html[data-moontvplus].dark .ptv-login-error { color: #fda29b; background: rgba(2
 .ptv-login-divider::before, .ptv-login-divider::after { content: ''; flex: 1; height: 1px; background: var(--ptv-line); }
 .ptv-login-alt { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; min-height: 48px; border: 1px solid var(--ptv-line); border-radius: 12px; background: var(--ptv-panel); color: var(--ptv-text); font-size: 15px; font-weight: 600; transition: border-color 160ms, background-color 160ms; }
 .ptv-login-alt:disabled { cursor: not-allowed; opacity: .6; }
-.ptv-login-version { position: absolute; bottom: calc(16px + env(safe-area-inset-bottom)); left: 50%; display: inline-flex; align-items: center; gap: 8px; min-height: 32px; padding: 0 12px; transform: translateX(-50%); border: 1px solid var(--ptv-line); border-radius: 999px; background: var(--ptv-surface); color: var(--ptv-muted); font-size: 12px; }
+.ptv-login-version { display: inline-flex; align-items: center; gap: 8px; min-height: 32px; margin-top: 24px; padding: 0 12px; border: 1px solid var(--ptv-line); border-radius: 999px; background: var(--ptv-surface); color: var(--ptv-muted); font-size: 12px; }
 
-.ptv-play-page { color: var(--ptv-text); background: var(--ptv-page); min-height: 100vh; }
+.ptv-play-page { color: var(--ptv-text); background: var(--ptv-page); min-height: 100vh; min-height: 100dvh; }
 .ptv-play-backdrop { opacity: .12; pointer-events: none; }
-:is(.ptv-player-canvas, .ptv-player-panel, .ptv-player-tools) { --ptv-text: #edf4f2; --ptv-muted: #a2b5b5; --ptv-panel: #102023; --ptv-surface: #14272a; --ptv-soft: #193035; --ptv-line: rgba(177, 216, 214, .18); --ptv-accent: #00d2be; color: var(--ptv-text); }
+.ptv-player-panel, .ptv-player-tools { color: var(--ptv-text); }
 .ptv-player-grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; align-items: start; }
 .ptv-player-stage { min-width: 0; }
-.ptv-player-canvas { background: #050b0c; border-radius: 12px; overflow: hidden; }
-.ptv-player-panel { min-width: 0; border: 1px solid var(--ptv-line); border-radius: 12px; background: #102023; color: #edf4f2; }
+.ptv-player-canvas { background: #000; color: #fff; border-radius: 12px; overflow: hidden; }
+.ptv-player-panel { min-width: 0; min-height: 0; border: 1px solid var(--ptv-line); border-radius: 12px; background: var(--ptv-panel); color: var(--ptv-text); }
 .ptv-player-panel button { min-height: 44px; }
 .ptv-player-tools { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; padding-block: 12px; }
 .ptv-player-tools > :is(button, a), .ptv-player-tools summary { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-width: 44px; min-height: 44px; padding: 8px 12px; border: 1px solid var(--ptv-line); border-radius: 9px; background: transparent; color: var(--ptv-text); }
 .ptv-live-tabs { display: inline-flex; flex-wrap: wrap; gap: 4px; padding: 4px; border: 1px solid var(--ptv-line); border-radius: 12px; background: var(--ptv-panel); }
 .ptv-live-tabs a { display: inline-flex; align-items: center; justify-content: center; min-height: 44px; padding: 8px 18px; border-radius: 8px; color: var(--ptv-muted); }
-.ptv-live-tabs a[aria-current='page'] { background: var(--ptv-accent); color: var(--ptv-page); }
+.ptv-live-tabs a[aria-current='page'] { background: var(--ptv-action); color: var(--ptv-action-ink); }
 @media (min-width: 768px) { .ptv-live-tabs { display: none; } }
 .ptv-live-page .ptv-player-grid {
   gap: 0;
@@ -254,6 +285,7 @@ html[data-moontvplus].dark .ptv-login-error { color: #fda29b; background: rgba(2
   display: flex;
   flex-direction: column;
   height: min(52vh, 420px);
+  height: min(52dvh, 420px);
   max-height: none;
   min-height: 0;
   border: 0;
@@ -277,6 +309,7 @@ html[data-moontvplus].dark .ptv-login-error { color: #fda29b; background: rgba(2
   display: flex;
   flex-direction: column;
   height: min(52vh, 420px);
+  height: min(52dvh, 420px);
   max-height: none;
   border: 0;
   border-radius: 0;
@@ -303,6 +336,7 @@ html[data-moontvplus].dark .ptv-login-error { color: #fda29b; background: rgba(2
   width: auto;
   height: auto;
   min-height: 36px;
+  min-width: 36px;
   padding: 6px 10px;
   border: 1px solid var(--ptv-line);
   border-radius: 8px;
@@ -315,33 +349,11 @@ html[data-moontvplus].dark .ptv-login-error { color: #fda29b; background: rgba(2
   display: inline;
   max-width: none;
   overflow: visible;
-  color: var(--ptv-text);
+  color: inherit;
 }
-html[data-moontvplus]:not(.dark) .ptv-play-page :is(.ptv-player-panel, .ptv-player-tools) {
-  --ptv-text: #192d30;
-  --ptv-muted: #53676b;
-  --ptv-panel: #f4f7f6;
-  --ptv-surface: #f7faf9;
-  --ptv-soft: #e5edeb;
-  --ptv-line: rgba(39, 77, 77, .18);
-  --ptv-accent: #007c76;
-  color: var(--ptv-text);
-}
-html[data-moontvplus]:not(.dark) .ptv-play-page .ptv-player-panel { background: var(--ptv-panel); }
-html[data-moontvplus]:not(.dark) .ptv-play-page .ptv-player-tools { background: transparent; }
-html[data-moontvplus]:not(.dark) .ptv-live-page :is(.ptv-player-panel, .ptv-player-tools) {
-  --ptv-text: #192d30;
-  --ptv-muted: #53676b;
-  --ptv-page: #edf2f1;
-  --ptv-panel: #f4f7f6;
-  --ptv-surface: #f7faf9;
-  --ptv-soft: #e5edeb;
-  --ptv-line: rgba(39, 77, 77, .18);
-  --ptv-accent: #007c76;
-  color: var(--ptv-text);
-  background: var(--ptv-surface);
-  border-color: var(--ptv-line);
-}
+.ptv-page .ptv-play-page .ptv-player-tools button[aria-pressed='true'] { background: var(--ptv-selected); color: var(--ptv-accent); border-color: var(--ptv-accent); }
+.ptv-page .ptv-play-page .ptv-player-tools button[data-state='loading'] { background: var(--ptv-soft); color: var(--ptv-muted); cursor: wait; }
+.ptv-page .ptv-play-page .ptv-player-tools button:disabled:not([data-state='loading']) { opacity: .55; cursor: not-allowed; }
 .ptv-live-page { width: 100%; max-width: 1600px; margin-inline: auto; padding: 24px var(--ptv-gutter) 40px; }
 .ptv-live-page .ptv-player-panel { max-height: 650px; }
 .ptv-live-page button { min-width: 44px; min-height: 44px; }
@@ -354,7 +366,7 @@ html[data-moontvplus]:not(.dark) .ptv-live-page :is(.ptv-player-panel, .ptv-play
 .ptv-room-state { display: inline-flex; align-items: center; gap: 5px; flex-shrink: 0; margin-top: 4px; color: var(--ptv-muted); font-size: 11px; line-height: 20px; }
 .ptv-room-state::before { content: ''; width: 5px; height: 5px; border-radius: 50%; background: currentColor; }
 .ptv-room-state[data-state='ready'] { color: var(--ptv-accent); }
-.ptv-room-state[data-state='error'] { color: #b4533c; }
+.ptv-room-state[data-state='error'] { color: var(--ptv-error); }
 .ptv-room-owner { margin-top: 4px; font-size: 14px; line-height: 1.6; overflow-wrap: anywhere; }
 .ptv-room-meta { display: flex; align-items: center; flex-wrap: wrap; gap: 6px 12px; margin-top: 8px; font-size: 12px; line-height: 1.6; color: var(--ptv-muted); }
 .ptv-room-platform { color: var(--ptv-accent); font-weight: 600; }
@@ -380,8 +392,8 @@ html[data-moontvplus]:not(.dark) .ptv-live-page :is(.ptv-player-panel, .ptv-play
 .ptv-player-more-options :is(button, a) { display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-width: 44px; min-height: 44px; padding: 8px 12px; color: var(--ptv-text); border-radius: 8px; }
 .ptv-player-more-options button span { max-width: none !important; display: inline !important; }
 
-#nprogress .bar { background: var(--ptv-accent); box-shadow: none; }
-#nprogress .peg { box-shadow: none; }
+#nprogress .bar, .dark #nprogress .bar { background: var(--ptv-accent); box-shadow: none; }
+#nprogress .peg, .dark #nprogress .peg { box-shadow: none; }
 
 @keyframes ptv-reveal { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
 .ptv-hero-content { animation: ptv-reveal 460ms var(--ptv-ease) both; }
@@ -390,18 +402,18 @@ html[data-moontvplus]:not(.dark) .ptv-live-page :is(.ptv-player-panel, .ptv-play
   .ptv-nav-link:hover, .ptv-more-link:hover, .ptv-more-card:hover { background: var(--ptv-selected); color: var(--ptv-accent); }
   .ptv-video-card:hover { transform: translateY(-3px) scale(1.02); }
   .ptv-video-card-menu:hover { background: var(--ptv-selected); color: var(--ptv-accent); }
-  .ptv-search-submit:hover, .ptv-hero-play:hover { background: #36e5d3 !important; }
+  .ptv-search-submit:hover, .ptv-hero-play:hover { background: var(--ptv-action-hover) !important; }
   .ptv-field-control:not(:focus-within):hover { border-color: color-mix(in srgb, var(--ptv-accent) 40%, var(--ptv-line)); }
   .ptv-field-toggle:hover, .ptv-login-alt:not(:disabled):hover { color: var(--ptv-accent); background: var(--ptv-selected); }
   .ptv-login-alt:not(:disabled):hover { border-color: var(--ptv-accent); }
-  .ptv-auth-panel button.ptv-login-submit:not(:disabled):hover { background: #36e5d3; }
+  .ptv-auth-panel button.ptv-login-submit:not(:disabled):hover { background: var(--ptv-action-hover); }
   .ptv-login-submit:not(:disabled):hover::before { opacity: 1; }
   .ptv-login-submit:not(:disabled):hover svg { transform: translateX(4px); }
-  .ptv-play-page .ptv-player-tools button:hover { background: var(--ptv-selected); color: var(--ptv-accent); }
+  .ptv-page .ptv-play-page .ptv-player-tools button:not(:disabled):hover { background: var(--ptv-selected); color: var(--ptv-accent); }
 }
 @media (pointer: coarse) {
   .ptv-page :is(button, a.ptv-nav-link) { touch-action: manipulation; }
-  .ptv-player-tools > :is(button, a), .ptv-library-tools button { min-height: 48px; }
+  .ptv-page .ptv-play-page .ptv-player-tools button, .ptv-player-tools > :is(button, a), .ptv-library-tools button { min-height: 44px; min-width: 44px; }
   .ptv-video-card:active { transform: scale(.985); }
   .ptv-history-delete { position: static; width: 44px; height: 44px; opacity: 1; color: var(--ptv-muted); background: transparent; }
   .ptv-search-history .group { display: flex; align-items: center; border-radius: 24px; background: var(--ptv-soft); }
@@ -415,10 +427,9 @@ html[data-moontvplus]:not(.dark) .ptv-live-page :is(.ptv-player-panel, .ptv-play
   .ptv-library-page, .ptv-more-page { padding-top: 32px; }
   .ptv-search-page { padding-top: 72px; }
 }
-@media (min-width: 768px) and (max-width: 1199px) { .ptv-page .mtv-load-overlay { left: 4rem; } }
+@media (min-width: 768px) and (max-width: 1199px) { .ptv-page .mtv-load-overlay { left: 16rem; } html[data-sidebar-collapsed] .ptv-page .mtv-load-overlay { left: 4rem; } }
 @media (min-width: 1024px) { .ptv-player-grid-collapsed > .ptv-player-panel { display: none; } }
 @media (min-width: 1200px) {
-  html:not([data-sidebar-collapsed]) .sidebar-offset { width: 256px; }
   .ptv-media-grid { grid-template-columns: repeat(auto-fill, minmax(156px, 1fr)); }
   .ptv-player-grid { grid-template-columns: minmax(0, 1fr) 300px; }
   .ptv-player-grid.ptv-player-grid-collapsed { grid-template-columns: minmax(0, 1fr); }
@@ -450,6 +461,6 @@ html[data-moontvplus]:not(.dark) .ptv-live-page :is(.ptv-player-panel, .ptv-play
 @media (prefers-reduced-motion: reduce) {
   .ptv-page *, .ptv-page *::before, .ptv-page *::after, .ptv-action-sheet, .ptv-auth *, .ptv-auth *::before, .ptv-auth *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
   .ptv-video-card:hover, .ptv-video-card:active { transform: none !important; }
-  html[data-theme-switching], html[data-theme-switching] :is(body, .ptv-page, .ptv-sidebar, .ptv-mobile-header, .ptv-mobile-nav, .ptv-brand, .ptv-nav-link, .ptv-more-card, .ptv-more-link, .ptv-theme-toggle, .ptv-auth, .ptv-auth-panel, .ptv-player-panel, .ptv-player-tools, .ptv-room-info, .ptv-room-tools, .music-theme, .music-theme-portal) { transition: none !important; }
+  html[data-theme-switching], html[data-theme-switching] :is(body, .ptv-page, .ptv-sidebar, .ptv-mobile-header, .ptv-mobile-nav, .ptv-brand, .ptv-nav-link, .ptv-more-card, .ptv-more-link, .ptv-theme-toggle, .ptv-auth, .ptv-auth-panel, .ptv-player-panel, .ptv-player-tools, .ptv-room-info, .ptv-room-tools, .ptv-dialog, .ptv-popover, .ptv-menu, .music-theme, .music-theme-portal) { transition: none !important; }
   .ptv-theme-icon { animation: none !important; }
 }

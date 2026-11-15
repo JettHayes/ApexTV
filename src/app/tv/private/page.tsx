@@ -118,7 +118,7 @@ export default function TVPrivatePage() {
             {enabledSources.map((item) => <button key={item} onClick={() => setSource(item)} className={`cursor-pointer rounded-2xl px-6 py-4 text-2xl font-bold outline-none transition tv-focusable ${source === item ? 'bg-rose-600 text-white' : 'bg-white/8 text-slate-200 hover:bg-white/12'}`}>{sourceLabel[item]}</button>)}
           </div>
         </div>
-        {source === 'emby' && embySources.length > 1 && <div className='mt-6 flex gap-3 overflow-x-auto px-3 py-3 [scrollbar-width:none]'>{embySources.map((item) => <button key={item.key} onClick={() => setEmbyKey(item.key)} className={`cursor-pointer rounded-2xl px-5 py-3 text-xl font-bold ${embyKey === item.key ? 'bg-white text-black' : 'bg-white/10 text-white'}`}><Server className='mr-2 inline h-5 w-5' />{item.name}</button>)}</div>}
+        {source === 'emby' && embySources.length > 1 && <div className='mt-6 flex gap-3 overflow-x-auto px-3 py-3 [scrollbar-width:none]'>{embySources.map((item) => <button key={item.key} onClick={() => setEmbyKey(item.key)} className={`tv-focusable cursor-pointer rounded-2xl px-5 py-3 text-xl font-bold ${embyKey === item.key ? 'tv-focusable-light bg-white text-black' : 'bg-white/10 text-white'}`}><Server className='mr-2 inline h-5 w-5' />{item.name}</button>)}</div>}
       </section>
 
       {loading && <div className='mt-16 flex justify-center gap-4 text-2xl text-slate-300'><Loader2 className='h-8 w-8 animate-spin' />正在加载私人影库...</div>}

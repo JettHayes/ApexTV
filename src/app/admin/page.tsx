@@ -3100,7 +3100,7 @@ const UserConfig = ({
             }}
           >
             <div
-              className='bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-2xl w-full'
+              className='bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-2xl w-full max-h-[calc(100dvh-2rem)] overflow-y-auto'
               onClick={(e) => e.stopPropagation()}
             >
               <div className='p-6'>
@@ -3261,7 +3261,7 @@ const UserConfig = ({
             }}
           >
             <div
-              className='bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-2xl w-full'
+              className='bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-2xl w-full max-h-[calc(100dvh-2rem)] overflow-y-auto'
               onClick={(e) => e.stopPropagation()}
             >
               <div className='p-6'>
@@ -3354,7 +3354,7 @@ const UserConfig = ({
             }}
           >
             <div
-              className='bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-2xl w-full'
+              className='bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-2xl w-full max-h-[calc(100dvh-2rem)] overflow-y-auto'
               onClick={(e) => e.stopPropagation()}
             >
               <div className='p-6'>
@@ -15829,7 +15829,7 @@ const XiaoyaConfigComponent = ({
           />
         </div>
 
-        <div className='grid grid-cols-2 gap-4'>
+        <div className='grid grid-cols-1 sm:grid-cols-2 gap-4'>
           <div>
             <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
               用户名
@@ -18427,8 +18427,8 @@ const LiveSourceConfig = ({
     <div className='space-y-6'>
       {/* 添加直播源表单 */}
       <div className='space-y-4'>
-        <div className='flex items-end justify-between gap-3'>
-          <div className='flex items-end gap-2 flex-nowrap'>
+        <div className='flex flex-wrap items-end justify-between gap-3'>
+          <div className='flex flex-wrap items-end gap-2'>
             <div className='min-w-0'>
               <label className='block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1 whitespace-nowrap'>
                 刷新间隔（小时）

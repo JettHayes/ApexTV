@@ -288,7 +288,7 @@ export default function BookHistoryPage() {
             onClick={() => setCacheModalOpen(false)}
           >
             <div
-              className='absolute right-0 top-0 h-screen w-full max-w-lg overflow-y-auto border-l border-library-edge bg-library-paper shadow-2xl dark:border-library-night-edge dark:bg-library-night'
+              className='absolute right-0 top-0 h-screen supports-[height:100dvh]:h-[100dvh] w-full max-w-lg pb-[env(safe-area-inset-bottom)] overflow-y-auto border-l border-library-edge bg-library-paper shadow-2xl dark:border-library-night-edge dark:bg-library-night'
               onClick={(event) => event.stopPropagation()}
             >
               <div className='space-y-5 p-5'>

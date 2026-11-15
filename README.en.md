@@ -72,6 +72,8 @@ The home page focuses on featured titles and continue watching, with search on a
 
 The default theme is light. Click the appearance button to switch between light and dark; your choice is remembered. Theme changes use a short transition and respect the system's reduced-motion preference.
 
+The light theme uses silver-gray and soft ivory surfaces; the dark theme uses graphite blue-gray, with teal for primary actions. Music retains its record-inspired style, reading keeps paper tones and personal settings, and TV pages keep their cinema feel. Alerts and task statuses use colors that convey their meaning.
+
 Support for video codecs, autoplay, and opening external players varies between browsers. Installing the PWA does not download your media.
 
 <a id="deploy"></a>

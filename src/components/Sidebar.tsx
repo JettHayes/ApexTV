@@ -86,7 +86,7 @@ const Sidebar = ({ onToggle }: { onToggle?: (collapsed: boolean) => void; active
   return (
     <SidebarContext.Provider value={{ isCollapsed }}>
       <div className='hidden md:flex'>
-        <aside data-sidebar data-collapsed={isCollapsed} className={`ptv-sidebar fixed left-0 top-0 z-40 h-screen border-r transition-[width] duration-300 ${isCollapsed ? 'w-16' : 'w-64'}`}>
+        <aside data-sidebar data-collapsed={isCollapsed} className={`ptv-sidebar fixed left-0 top-0 z-40 h-dvh border-r ${isCollapsed ? 'w-16' : 'w-64'}`}>
           <div className='flex h-full flex-col'>
             <div className='ptv-sidebar-brand'>
               {!isCollapsed && <BrandLogo />}
@@ -97,11 +97,11 @@ const Sidebar = ({ onToggle }: { onToggle?: (collapsed: boolean) => void; active
             </div>
             <nav aria-label='主导航' className='flex-1 overflow-y-auto px-2 pb-4'>
               <div className='space-y-1'>{renderItems(primary)}</div>
-              <div className='mt-6 border-t pt-4'>
+              <div className='ptv-nav-group'>
                 {!isCollapsed && <p className='px-4 pb-2 text-xs font-medium opacity-60'>影视分类</p>}
                 <div className='space-y-1'>{renderItems(categories)}</div>
               </div>
-              {other.length > 0 && <div className='mt-4 border-t pt-4 space-y-1'>{renderItems(other)}</div>}
+              {other.length > 0 && <div className='ptv-nav-group space-y-1'>{renderItems(other)}</div>}
               {hasSavedChoice && !isCollapsed && <button type='button' onClick={resetChoice} className='mt-6 px-4 py-2 text-xs opacity-60 hover:opacity-100'>恢复默认导航宽度</button>}
             </nav>
           </div>

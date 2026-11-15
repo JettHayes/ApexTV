@@ -31,11 +31,9 @@ const tabs: MediaShellTab[] = [
   { href: '/books/history', label: '历史', icon: History },
 ];
 
-// 阅读页内容区样式：保持改造前的原值，仅把移动端顶栏高度对齐到外壳统一的 h-14
-// （阅读页自身按 calc(100vh-3.5rem) 计算高度，原先桌面端 h-16 会多出 0.5rem）。
-// max-w-6xl 经 cn() 覆盖外壳默认的 max-w-7xl，避免 /books/read 布局回归。
+// 与 MediaShell 顶栏的高度和安全区保持一致。
 const READER_MAIN_CLASS =
-  'max-w-6xl pt-[calc(3.5rem+var(--safe-top))] sm:pt-[calc(4rem+var(--safe-top))]';
+  'max-w-6xl [--book-header-height:calc(3.5rem+var(--safe-top))] pt-[var(--book-header-height)] sm:[--book-header-height:calc(4rem+var(--safe-top))]';
 
 type ReadHeaderPayload = {
   title?: string;

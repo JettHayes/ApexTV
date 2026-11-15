@@ -1291,7 +1291,7 @@ function ChapterReader({ manifest }: { manifest: BookReadManifest }) {
   if (error) return <div className='p-4 text-sm text-red-500'>{error}</div>;
   if (!chaptersLoaded || (loading && !chapter)) {
     return (
-      <div className={cn('flex h-[calc(100vh-3.5rem)] items-center justify-center px-4', LIBRARY_PAGE)}>
+      <div className={cn('flex book-reader-height items-center justify-center px-4', LIBRARY_PAGE)}>
         <div className='flex flex-col items-center gap-4 text-center'>
           <div className='reader-book-loader'>
             <BookOpen className='h-10 w-10' strokeWidth={1.75} />
@@ -1317,7 +1317,7 @@ function ChapterReader({ manifest }: { manifest: BookReadManifest }) {
 
   return (
     <div
-      className='relative h-[calc(100vh-3.5rem)] overflow-hidden'
+      className='relative book-reader-height overflow-hidden'
       style={{ backgroundColor: palette.panelBg, color: palette.bodyColor }}
     >
       {tocOpen && typeof document !== 'undefined'
@@ -1327,7 +1327,7 @@ function ChapterReader({ manifest }: { manifest: BookReadManifest }) {
               onClick={() => setTocOpen(false)}
             >
               <div
-                className='absolute right-0 top-0 h-screen w-[22rem] max-w-[88vw] overflow-y-auto border-l border-library-edge bg-library-card shadow-xl dark:border-library-night-edge dark:bg-library-night-card'
+                className='absolute right-0 top-0 h-screen supports-[height:100dvh]:h-[100dvh] w-[22rem] pb-[env(safe-area-inset-bottom)] max-w-[88vw] overflow-y-auto border-l border-library-edge bg-library-card shadow-xl dark:border-library-night-edge dark:bg-library-night-card'
                 onClick={(event) => event.stopPropagation()}
               >
                 <div className='space-y-2 p-4'>
@@ -1343,7 +1343,7 @@ function ChapterReader({ manifest }: { manifest: BookReadManifest }) {
                         }}
                         className={`block w-full rounded-md border px-4 py-3 text-left text-sm transition-colors duration-200 ${
                           active
-                            ? 'border-library-ochre bg-library-ochre text-white dark:border-library-night-ochre dark:bg-library-night-ochre'
+                            ? 'border-library-ochre bg-library-ochre text-white dark:border-library-night-ochre dark:bg-library-night-ochre dark:text-library-night'
                             : 'border-library-edge text-library-ink hover:bg-library-ochre-tint hover:text-library-ochre dark:border-library-night-edge dark:text-library-night-ink dark:hover:bg-library-night-ochre-tint dark:hover:text-library-night-ochre'
                         }`}
                         title={item.title}
@@ -1373,7 +1373,7 @@ function ChapterReader({ manifest }: { manifest: BookReadManifest }) {
                   <div className='text-base font-semibold text-library-ink dark:text-library-night-ink'>
                     阅读设置
                   </div>
-                  <div className='mt-1 text-xs text-library-muted'>
+                  <div className='mt-1 text-xs text-library-muted dark:text-library-night-muted'>
                     Legado 源支持翻页和滚动阅读
                   </div>
                 </div>
@@ -1574,7 +1574,7 @@ function ChapterReader({ manifest }: { manifest: BookReadManifest }) {
 
       {ttsBarVisible ? (
         <>
-          <div className='absolute inset-x-0 bottom-3 z-20 mx-auto w-[min(94vw,34rem)]'>
+          <div className='absolute inset-x-0 bottom-[calc(0.75rem+env(safe-area-inset-bottom))] z-20 mx-auto w-[min(94vw,34rem)]'>
             <div className={cn(READER_SHEET, 'overflow-hidden')}>
               <div className='px-2 pt-2'>
                 <input
@@ -1647,7 +1647,7 @@ function ChapterReader({ manifest }: { manifest: BookReadManifest }) {
                     />
                   </button>
                 </div>
-                <div className='mt-2 flex items-center justify-between text-[11px] text-library-muted'>
+                <div className='mt-2 flex items-center justify-between text-[11px] text-library-muted dark:text-library-night-muted'>
                   <span>{selectedVoice?.displayName || '默认音色'}</span>
                   <span>
                     {formatDurationTime(displayedTtsTime)} /{' '}
@@ -1658,7 +1658,7 @@ function ChapterReader({ manifest }: { manifest: BookReadManifest }) {
             </div>
           </div>
           {ttsPanelOpen ? (
-            <div className='absolute inset-x-0 bottom-20 z-30 mx-auto w-[min(94vw,34rem)]'>
+            <div className='absolute inset-x-0 bottom-[calc(5rem+env(safe-area-inset-bottom))] z-30 mx-auto w-[min(94vw,34rem)]'>
               <div className={cn(READER_SHEET, 'p-4 shadow-2xl')}>
                 <div className='mb-3 flex items-center justify-between'>
                   <div className='flex items-center gap-2 text-sm font-medium text-library-ink dark:text-library-night-ink'>
@@ -1752,7 +1752,7 @@ function ChapterReader({ manifest }: { manifest: BookReadManifest }) {
                     </option>
                   ))}
                 </select>
-                <label className='mb-3 block text-xs text-library-muted'>
+                <label className='mb-3 block text-xs text-library-muted dark:text-library-night-muted'>
                   语速 {ttsSettings.rate}
                   <input
                     type='range'
@@ -1773,7 +1773,7 @@ function ChapterReader({ manifest }: { manifest: BookReadManifest }) {
                     className={READER_SLIDER}
                   />
                 </label>
-                <label className='mb-3 block text-xs text-library-muted'>
+                <label className='mb-3 block text-xs text-library-muted dark:text-library-night-muted'>
                   音调 {ttsSettings.pitch}
                   <input
                     type='range'
@@ -1794,7 +1794,7 @@ function ChapterReader({ manifest }: { manifest: BookReadManifest }) {
                     className={READER_SLIDER}
                   />
                 </label>
-                <label className='block text-xs text-library-muted'>
+                <label className='block text-xs text-library-muted dark:text-library-night-muted'>
                   音量 {ttsSettings.volume}
                   <input
                     type='range'
@@ -3426,7 +3426,7 @@ export default function BookReadPage() {
                         : 'border-library-edge text-library-ink hover:bg-library-ochre-tint dark:border-library-night-edge dark:text-library-night-ink dark:hover:bg-library-night-ochre-tint'
                     }`
                   : active
-                  ? 'border-library-ochre bg-library-ochre text-white dark:border-library-night-ochre dark:bg-library-night-ochre'
+                  ? 'border-library-ochre bg-library-ochre text-white dark:border-library-night-ochre dark:bg-library-night-ochre dark:text-library-night'
                   : 'border-library-edge text-library-ink hover:bg-library-ochre-tint hover:text-library-ochre dark:border-library-night-edge dark:text-library-night-ink dark:hover:bg-library-night-ochre-tint dark:hover:text-library-night-ochre'
               } ${!expandable && !clickable ? 'cursor-default opacity-80' : ''}`}
               style={{ paddingLeft: `${16 + depth * 14}px` }}
@@ -3486,7 +3486,7 @@ export default function BookReadPage() {
   if (error) return <div className='p-4 text-sm text-red-500'>{error}</div>;
   if (!manifest) {
     return (
-      <div className={cn('flex h-[calc(100vh-3.5rem)] items-center justify-center px-4', LIBRARY_PAGE)}>
+      <div className={cn('flex book-reader-height items-center justify-center px-4', LIBRARY_PAGE)}>
         <div className='flex flex-col items-center gap-4 text-center'>
           <div className='reader-book-loader'>
             <BookOpen className='h-10 w-10' strokeWidth={1.75} />
@@ -3506,23 +3506,23 @@ export default function BookReadPage() {
   if (manifest.format === 'pdf') {
     if (!pdfBlobUrl)
       return (
-        <div className='p-4 text-sm text-library-muted'>
+        <div className='p-4 text-sm text-library-muted dark:text-library-night-muted'>
           PDF 加载中... {progressLabel}
         </div>
       );
     return (
       <iframe
         src={pdfBlobUrl}
-        className='h-[calc(100vh-4rem)] w-full bg-library-card dark:bg-library-night'
+        className='book-reader-height w-full bg-library-card dark:bg-library-night'
         title={manifest.book.title}
       />
     );
   }
 
   return (
-    <div className={cn('flex h-[calc(100vh-3.5rem)] flex-col', LIBRARY_PAGE)}>
+    <div className={cn('flex book-reader-height flex-col', LIBRARY_PAGE)}>
       {restoredMessage ? (
-        <div className='absolute left-1/2 top-[4.5rem] z-30 -translate-x-1/2 rounded-full bg-library-ochre px-4 py-2 text-xs text-white shadow-lg dark:bg-library-night-ochre'>
+        <div className='absolute left-1/2 top-[4.5rem] z-30 -translate-x-1/2 rounded-full bg-library-ochre px-4 py-2 text-xs text-white shadow-lg dark:bg-library-night-ochre dark:text-library-night'>
           {restoredMessage}
         </div>
       ) : null}
@@ -3595,13 +3595,13 @@ export default function BookReadPage() {
               onClick={() => setTocOpen(false)}
             >
               <div
-                className='absolute right-0 top-0 h-screen w-[22rem] max-w-[88vw] overflow-y-auto border-l border-library-edge bg-library-card shadow-xl dark:border-library-night-edge dark:bg-library-night-card'
+                className='absolute right-0 top-0 h-screen supports-[height:100dvh]:h-[100dvh] w-[22rem] pb-[env(safe-area-inset-bottom)] max-w-[88vw] overflow-y-auto border-l border-library-edge bg-library-card shadow-xl dark:border-library-night-edge dark:bg-library-night-card'
                 onClick={(event) => event.stopPropagation()}
               >
                 <div className='p-4'>
                   <div className='space-y-2' ref={tocScrollRef}>
                     {tocItems.length === 0 ? (
-                      <div className='p-3 text-sm text-library-muted'>
+                      <div className='p-3 text-sm text-library-muted dark:text-library-night-muted'>
                         当前 EPUB 未提供目录
                       </div>
                     ) : (
@@ -3629,7 +3629,7 @@ export default function BookReadPage() {
                   <div className='text-base font-semibold text-library-ink dark:text-library-night-ink'>
                     阅读设置
                   </div>
-                  <div className='mt-1 text-xs text-library-muted'>
+                  <div className='mt-1 text-xs text-library-muted dark:text-library-night-muted'>
                     可切换翻页或滚动阅读，默认翻页模式
                   </div>
                 </div>
@@ -3767,7 +3767,7 @@ export default function BookReadPage() {
 
       {manifest.format === 'epub' && ttsBarVisible ? (
         <>
-          <div className='absolute inset-x-0 bottom-3 z-20 mx-auto w-[min(94vw,34rem)]'>
+          <div className='absolute inset-x-0 bottom-[calc(0.75rem+env(safe-area-inset-bottom))] z-20 mx-auto w-[min(94vw,34rem)]'>
             <div className={cn(READER_SHEET, 'overflow-hidden')}>
               <div className='px-2 pt-2'>
                 <input
@@ -3871,7 +3871,7 @@ export default function BookReadPage() {
                     />
                   </button>
                 </div>
-                <div className='mt-2 flex items-center justify-between text-[11px] text-library-muted'>
+                <div className='mt-2 flex items-center justify-between text-[11px] text-library-muted dark:text-library-night-muted'>
                   <span>{selectedVoice?.displayName || '默认音色'}</span>
                   <span>
                     {formatDurationTime(displayedTtsTime)} /{' '}
@@ -3883,7 +3883,7 @@ export default function BookReadPage() {
           </div>
 
           {ttsPanelOpen ? (
-            <div className='absolute inset-x-0 bottom-20 z-30 mx-auto w-[min(94vw,34rem)]'>
+            <div className='absolute inset-x-0 bottom-[calc(5rem+env(safe-area-inset-bottom))] z-30 mx-auto w-[min(94vw,34rem)]'>
               <div className={cn(READER_SHEET, 'p-4 shadow-2xl')}>
                 <div className='mb-3 flex items-center justify-between'>
                   <div className='flex items-center gap-2 text-sm font-medium text-library-ink dark:text-library-night-ink'>

@@ -37,7 +37,7 @@ function VersionDisplay() {
       onClick={() =>
         window.open('https://github.com/JettHayes/ApexTV', '_blank')
       }
-      className='absolute bottom-4 left-1/2 transform -translate-x-1/2 flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400 transition-colors cursor-pointer'
+      className='relative z-10 mt-6 flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400 transition-colors cursor-pointer'
     >
       <span className='font-mono'>v{CURRENT_VERSION}</span>
       {!isChecking && updateStatus !== UpdateStatus.FETCH_FAILED && (
@@ -259,7 +259,7 @@ function RegisterPageClient() {
 
   return (
     <div
-      className='ptv-auth relative min-h-screen flex items-center justify-center px-4 overflow-hidden'
+      className='ptv-auth relative min-h-screen min-h-[100dvh] flex flex-col items-center justify-center px-4 py-16'
       style={backgroundImage ? {
         backgroundImage: `url(${backgroundImage})`,
         backgroundSize: 'cover',
@@ -267,7 +267,7 @@ function RegisterPageClient() {
         backgroundRepeat: 'no-repeat'
       } : undefined}
     >
-      <div className='absolute top-4 right-4'>
+      <div className='absolute top-4 right-4 z-20'>
         <ThemeToggle />
       </div>
       <div className='ptv-auth-panel relative z-10 w-full max-w-md rounded-3xl p-10'>

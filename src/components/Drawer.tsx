@@ -75,7 +75,7 @@ export default function Drawer({
   const content = (
     <div className='fixed inset-0 z-[10000] flex items-center justify-end pointer-events-none'>
       <div
-        className={`relative ${width} h-full bg-white dark:bg-gray-900 shadow-2xl flex flex-col transition-transform duration-300 ease-out pointer-events-auto ${
+        className={`ptv-dialog relative ${width} h-full bg-white dark:bg-gray-900 shadow-2xl flex flex-col transition-transform duration-300 ease-out pointer-events-auto ${
           position === 'right'
             ? isAnimating
               ? 'translate-x-0'
@@ -97,7 +97,7 @@ export default function Drawer({
           </button>
         </div>
 
-        <div className='flex-1 overflow-y-auto'>{children}</div>
+        <div className='min-h-0 flex-1 overflow-y-auto pb-[env(safe-area-inset-bottom)]'>{children}</div>
       </div>
     </div>
   );
