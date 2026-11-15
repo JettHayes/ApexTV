@@ -127,12 +127,35 @@ html[data-moontvplus] :is(.ptv-dialog, .ptv-popover, .ptv-menu) { background-col
 .ptv-mobile-nav a { min-height: 56px; color: var(--ptv-muted); }
 .ptv-mobile-nav a[aria-current='page'] { color: var(--ptv-accent); }
 .ptv-theme-icon { display: inline-flex; align-items: center; justify-content: center; }
-html[data-theme-switching] .ptv-theme-icon { animation: ptv-theme-icon-in 260ms var(--ptv-ease) both; }
 html[data-theme-switching],
-html[data-theme-switching] :is(body, .ptv-page, .ptv-sidebar, .ptv-mobile-header, .ptv-mobile-nav, .ptv-brand, .ptv-nav-link, .ptv-more-card, .ptv-more-link, .ptv-theme-toggle, .ptv-auth, .ptv-auth-panel, .ptv-player-panel, .ptv-player-tools, .ptv-room-info, .ptv-room-tools, .ptv-dialog, .ptv-popover, .ptv-menu, .music-theme, .music-theme-portal) {
-  transition: background-color 280ms ease-out, color 280ms ease-out, border-color 280ms ease-out !important;
+html[data-theme-switching] *,
+html[data-theme-switching] *::before,
+html[data-theme-switching] *::after,
+html[data-theme-syncing],
+html[data-theme-syncing] *,
+html[data-theme-syncing] *::before,
+html[data-theme-syncing] *::after {
+  transition: none !important;
 }
-@keyframes ptv-theme-icon-in { from { opacity: 0; transform: rotate(-60deg) scale(.75); } to { opacity: 1; transform: rotate(0) scale(1); } }
+
+html[data-theme-switching]::view-transition { pointer-events: none; }
+html[data-theme-switching]::view-transition-group(root) { animation: none; z-index: 0; }
+html[data-theme-switching]::view-transition-image-pair(root) { isolation: auto; }
+html[data-theme-switching]::view-transition-old(root) { animation: none; mix-blend-mode: normal; }
+html[data-theme-switching]::view-transition-new(root) {
+  animation: ptv-theme-reveal 420ms cubic-bezier(.4, 0, .2, 1) both;
+  mix-blend-mode: normal;
+}
+@keyframes ptv-theme-reveal {
+  from { clip-path: circle(0px at var(--ptv-theme-origin, 50% 50%)); }
+  to { clip-path: circle(var(--ptv-theme-radius, 150vmax) at var(--ptv-theme-origin, 50% 50%)); }
+}
+
+/* 播放区域使用实时的新视图，不将视频定格在旧主题快照里。 */
+html[data-theme-switching] .ptv-player-canvas { view-transition-name: ptv-theme-player; }
+html[data-theme-switching]::view-transition-group(ptv-theme-player) { animation: none; z-index: 1; }
+html[data-theme-switching]::view-transition-old(ptv-theme-player) { display: none; }
+html[data-theme-switching]::view-transition-new(ptv-theme-player) { animation: none; mix-blend-mode: normal; }
 .ptv-more, .ptv-more-page, .ptv-search-page, .ptv-library-page { width: 100%; max-width: var(--ptv-max); margin-inline: auto; padding: 24px var(--ptv-gutter) 40px; }
 .ptv-more-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; }
 .ptv-more-link, .ptv-more-card { display: flex; align-items: center; gap: 12px; min-height: 64px; padding: 16px; border: 1px solid var(--ptv-line); border-radius: 12px; background: var(--ptv-surface); }
@@ -461,6 +484,5 @@ html[data-moontvplus].dark .ptv-login-error { color: #fda29b; background: rgba(2
 @media (prefers-reduced-motion: reduce) {
   .ptv-page *, .ptv-page *::before, .ptv-page *::after, .ptv-action-sheet, .ptv-auth *, .ptv-auth *::before, .ptv-auth *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
   .ptv-video-card:hover, .ptv-video-card:active { transform: none !important; }
-  html[data-theme-switching], html[data-theme-switching] :is(body, .ptv-page, .ptv-sidebar, .ptv-mobile-header, .ptv-mobile-nav, .ptv-brand, .ptv-nav-link, .ptv-more-card, .ptv-more-link, .ptv-theme-toggle, .ptv-auth, .ptv-auth-panel, .ptv-player-panel, .ptv-player-tools, .ptv-room-info, .ptv-room-tools, .ptv-dialog, .ptv-popover, .ptv-menu, .music-theme, .music-theme-portal) { transition: none !important; }
-  .ptv-theme-icon { animation: none !important; }
+  html[data-theme-switching]::view-transition-new(root) { animation: none; }
 }

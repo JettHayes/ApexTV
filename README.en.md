@@ -70,7 +70,7 @@ This branch has removed the upstream native Android TV project and some platform
 
 The home page focuses on featured titles and continue watching, with search on a separate page. Phones use bottom navigation for the main sections. Tablet layouts adjust the sidebar and player according to available width.
 
-The default theme is light. Click the appearance button to switch between light and dark; your choice is remembered. Theme changes use a short transition and respect the system's reduced-motion preference.
+Each visit or page refresh starts with the system's color scheme. Manual changes last only for the current visit and are not saved. Supported browsers use a circular reveal across the page; reduced-motion settings and unsupported browsers use an immediate switch.
 
 The light theme uses silver-gray and soft ivory surfaces; the dark theme uses graphite blue-gray, with teal for primary actions. Music retains its record-inspired style, reading keeps paper tones and personal settings, and TV pages keep their cinema feel. Alerts and task statuses use colors that convey their meaning.
 

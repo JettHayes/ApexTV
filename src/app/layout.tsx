@@ -389,6 +389,13 @@ export default async function RootLayout({
       suppressHydrationWarning
     >
       <head>
+        <meta name='theme-color' content='#f4f3ee' />
+        {/* 首屏直接采用系统外观，不读取浏览器中保存的主题。 */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(()=>{const dark=window.matchMedia('(prefers-color-scheme: dark)').matches;const root=document.documentElement;root.classList.toggle('dark',dark);root.classList.toggle('light',!dark);root.style.colorScheme=dark?'dark':'light';document.querySelector('meta[name="theme-color"]')?.setAttribute('content',dark?'#0d161a':'#f4f3ee')})()`,
+          }}
+        />
         {/* 配套 moontvplus-extension 识别指纹；仅本项目部署站应带此标记 */}
         <meta name='moontvplus-site' content='1' />
         <meta
