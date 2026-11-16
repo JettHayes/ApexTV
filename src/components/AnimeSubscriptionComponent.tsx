@@ -638,13 +638,13 @@ export default function AnimeSubscriptionComponent({
       {/* 顶部控制 */}
       <div className='flex flex-col gap-4 md:flex-row md:items-center md:justify-between'>
         <div className='flex flex-col gap-4 sm:flex-row sm:items-center sm:gap-6'>
-          <div className='flex items-center gap-3'>
+          <div className='flex flex-wrap items-center gap-2'>
             <span className='text-sm font-medium text-gray-700 dark:text-gray-300'>
               启用追番功能
             </span>
             <Switch checked={enabled} onChange={handleToggleEnabled} disabled={loading} />
           </div>
-          <div className='flex items-center gap-3'>
+          <div className='flex flex-wrap items-center gap-2'>
             <label className='text-sm font-medium text-gray-700 dark:text-gray-300'>
               下载方式
             </label>
@@ -1019,7 +1019,7 @@ export default function AnimeSubscriptionComponent({
               </p>
             </div>
             <div className='flex flex-col sm:flex-row sm:items-center gap-4 flex-wrap'>
-              <div className='flex items-center gap-3'>
+              <div className='flex flex-wrap items-center gap-2'>
                 <span className='text-sm font-medium text-gray-700 dark:text-gray-300'>
                   启用此订阅
                 </span>
@@ -1028,7 +1028,7 @@ export default function AnimeSubscriptionComponent({
                   onChange={(checked) => setFormData({ ...formData, enabled: checked })}
                 />
               </div>
-              <div className='flex items-center gap-3'>
+              <div className='flex flex-wrap items-center gap-2'>
                 <span className='text-sm font-medium text-gray-700 dark:text-gray-300'>
                   单集只下载一次
                 </span>
@@ -1037,7 +1037,7 @@ export default function AnimeSubscriptionComponent({
                   onChange={(checked) => setFormData({ ...formData, onePerEpisode: checked })}
                 />
               </div>
-              <div className='flex items-center gap-3'>
+              <div className='flex flex-wrap items-center gap-2'>
                 <span className='text-sm font-medium text-gray-700 dark:text-gray-300'>
                   缺集重新检索
                 </span>
@@ -1083,13 +1083,13 @@ export default function AnimeSubscriptionComponent({
           {subscriptions.map((sub) => (
             <div
               key={sub.id}
-              className='bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4'
+              className='min-w-0 bg-[var(--ptv-panel)] border border-[var(--ptv-line)] rounded-xl p-4 sm:p-5'
             >
               {/* 桌面端布局 */}
               <div className='hidden md:flex items-start justify-between gap-4'>
-                <div className='flex-1 space-y-2'>
-                  <div className='flex items-center gap-3'>
-                    <h3 className='text-lg font-medium text-gray-900 dark:text-gray-100'>
+                <div className='flex-1 min-w-0 space-y-3'>
+                  <div className='flex flex-wrap items-center gap-2'>
+                    <h3 className='min-w-0 break-words text-lg font-semibold text-gray-900 dark:text-gray-100'>
                       {sub.title}
                     </h3>
                     <span className='px-2 py-0.5 text-xs rounded-full bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-200'>
@@ -1106,7 +1106,7 @@ export default function AnimeSubscriptionComponent({
                       </span>
                     ) : null}
                   </div>
-                  <div className='text-sm text-gray-600 dark:text-gray-400 space-y-1'>
+                  <div className='min-w-0 break-words [overflow-wrap:anywhere] text-sm leading-relaxed text-gray-600 dark:text-gray-400 space-y-1'>
                     <p>过滤条件：{sub.filterText}</p>
                     {sub.excludeText ? <p>排除条件：{sub.excludeText}</p> : null}
                     {sub.episodeRegex ? <p>集数正则：{sub.episodeRegex}</p> : null}
@@ -1126,7 +1126,7 @@ export default function AnimeSubscriptionComponent({
                   <button
                     onClick={() => handleCheckSubscription(sub.id)}
                     disabled={checkingId === sub.id}
-                    className='p-2 text-blue-600 hover:bg-blue-50 dark:text-blue-400 dark:hover:bg-blue-900/20 rounded-lg transition-colors disabled:opacity-50'
+                    className='p-3 text-blue-600 hover:bg-blue-50 dark:text-blue-400 dark:hover:bg-blue-900/20 rounded-lg transition-colors disabled:opacity-50'
                     title='立即检查'
                   >
                     {checkingId === sub.id ? (
@@ -1138,7 +1138,7 @@ export default function AnimeSubscriptionComponent({
                   <button
                     onClick={() => handleEdit(sub)}
                     disabled={loading}
-                    className='p-2 text-green-600 hover:bg-green-50 dark:text-green-400 dark:hover:bg-green-900/20 rounded-lg transition-colors disabled:opacity-50'
+                    className='p-3 text-green-600 hover:bg-green-50 dark:text-green-400 dark:hover:bg-green-900/20 rounded-lg transition-colors disabled:opacity-50'
                     title='编辑'
                   >
                     <svg className='w-[18px] h-[18px]' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
@@ -1148,7 +1148,7 @@ export default function AnimeSubscriptionComponent({
                   <button
                     onClick={() => handleDelete(sub.id, sub.title)}
                     disabled={loading}
-                    className='p-2 text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/20 rounded-lg transition-colors disabled:opacity-50'
+                    className='p-3 text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/20 rounded-lg transition-colors disabled:opacity-50'
                     title='删除'
                   >
                     <Trash2 size={18} />
@@ -1160,7 +1160,7 @@ export default function AnimeSubscriptionComponent({
               <div className='md:hidden space-y-3'>
                 <div className='flex items-start justify-between gap-2'>
                   <div className='flex-1 min-w-0'>
-                    <h3 className='text-base font-medium text-gray-900 dark:text-gray-100 truncate'>
+                    <h3 className='text-base font-semibold text-gray-900 dark:text-gray-100 break-words'>
                       {sub.title}
                     </h3>
                     <div className='flex flex-wrap gap-1 mt-1'>
@@ -1185,7 +1185,7 @@ export default function AnimeSubscriptionComponent({
                     disabled={loading}
                   />
                 </div>
-                <div className='text-sm text-gray-600 dark:text-gray-400 space-y-1'>
+                <div className='min-w-0 break-words [overflow-wrap:anywhere] text-sm leading-relaxed text-gray-600 dark:text-gray-400 space-y-1'>
                   <p className='break-all'>过滤：{sub.filterText}</p>
                   {sub.excludeText ? (
                     <p className='break-all'>排除：{sub.excludeText}</p>
@@ -1202,7 +1202,7 @@ export default function AnimeSubscriptionComponent({
                   <button
                     onClick={() => handleCheckSubscription(sub.id)}
                     disabled={checkingId === sub.id}
-                    className='flex-1 flex items-center justify-center gap-1.5 px-3 py-2 text-sm text-blue-600 bg-blue-50 hover:bg-blue-100 dark:text-blue-400 dark:bg-blue-900/20 dark:hover:bg-blue-900/30 rounded-lg transition-colors disabled:opacity-50'
+                    className='flex-1 flex items-center justify-center gap-1.5 px-3 py-2.5 text-sm text-blue-600 bg-blue-50 hover:bg-blue-100 dark:text-blue-400 dark:bg-blue-900/20 dark:hover:bg-blue-900/30 rounded-lg transition-colors disabled:opacity-50'
                   >
                     {checkingId === sub.id ? (
                       <>
@@ -1219,7 +1219,7 @@ export default function AnimeSubscriptionComponent({
                   <button
                     onClick={() => handleEdit(sub)}
                     disabled={loading}
-                    className='flex-1 flex items-center justify-center gap-1.5 px-3 py-2 text-sm text-green-600 bg-green-50 hover:bg-green-100 dark:text-green-400 dark:bg-green-900/20 dark:hover:bg-green-900/30 rounded-lg transition-colors disabled:opacity-50'
+                    className='flex-1 flex items-center justify-center gap-1.5 px-3 py-2.5 text-sm text-green-600 bg-green-50 hover:bg-green-100 dark:text-green-400 dark:bg-green-900/20 dark:hover:bg-green-900/30 rounded-lg transition-colors disabled:opacity-50'
                   >
                     <svg className='w-4 h-4' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
                       <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z' />
@@ -1229,7 +1229,7 @@ export default function AnimeSubscriptionComponent({
                   <button
                     onClick={() => handleDelete(sub.id, sub.title)}
                     disabled={loading}
-                    className='flex-1 flex items-center justify-center gap-1.5 px-3 py-2 text-sm text-red-600 bg-red-50 hover:bg-red-100 dark:text-red-400 dark:bg-red-900/20 dark:hover:bg-red-900/30 rounded-lg transition-colors disabled:opacity-50'
+                    className='flex-1 flex items-center justify-center gap-1.5 px-3 py-2.5 text-sm text-red-600 bg-red-50 hover:bg-red-100 dark:text-red-400 dark:bg-red-900/20 dark:hover:bg-red-900/30 rounded-lg transition-colors disabled:opacity-50'
                   >
                     <Trash2 size={16} />
                     <span>删除</span>

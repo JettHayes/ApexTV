@@ -381,9 +381,9 @@ const DataMigration = ({ onRefreshConfig }: DataMigrationProps) => {
 
   return (
     <>
-      <div className="max-w-6xl mx-auto space-y-6">
+      <div className="max-w-6xl mx-auto space-y-5">
         {/* 简洁警告提示 */}
-        <div className="flex items-center gap-3 p-4 border border-amber-200 dark:border-amber-700 rounded-lg bg-amber-50/30 dark:bg-amber-900/5">
+        <div className="flex items-start gap-3 px-5 py-4 border border-amber-200 dark:border-amber-700 rounded-xl bg-amber-50/30 dark:bg-amber-900/5">
           <AlertTriangle className="w-5 h-5 text-amber-600 dark:text-amber-400 flex-shrink-0" />
           <p className="text-sm text-amber-800 dark:text-amber-200">
             数据迁移操作请谨慎，确保已备份重要数据
@@ -391,12 +391,12 @@ const DataMigration = ({ onRefreshConfig }: DataMigrationProps) => {
         </div>
 
         {/* 主要操作区域 - 响应式布局 */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-5">
           {/* 数据导出 */}
-          <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-6 bg-white dark:bg-gray-800 hover:shadow-sm transition-shadow flex flex-col">
-            <div className="flex items-center gap-3 mb-6">
-              <div className="w-8 h-8 rounded-lg bg-blue-50 dark:bg-blue-900/20 flex items-center justify-center">
-                <Download className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+          <div className="min-w-0 border border-[var(--ptv-line)] rounded-xl p-5 sm:p-6 bg-[var(--ptv-panel)] flex flex-col">
+            <div className="flex items-center gap-3 mb-6 pb-5 border-b border-[var(--ptv-line)]">
+              <div className="w-10 h-10 rounded-lg bg-[var(--ptv-soft)] flex items-center justify-center">
+                <Download className="w-5 h-5 text-[var(--ptv-accent)]" />
               </div>
               <div>
                 <h3 className="font-semibold text-gray-900 dark:text-gray-100">数据导出</h3>
@@ -425,7 +425,7 @@ const DataMigration = ({ onRefreshConfig }: DataMigrationProps) => {
                   </p>
                 </div>
 
-                <div className="space-y-3 rounded-lg border border-gray-200 dark:border-gray-700 p-3">
+                <div className="space-y-3 rounded-lg border border-[var(--ptv-line)] bg-[var(--ptv-soft)] p-4">
                   <p className="text-sm font-medium text-gray-700 dark:text-gray-300">附加数据</p>
                   <label className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
                     <input
@@ -467,9 +467,9 @@ const DataMigration = ({ onRefreshConfig }: DataMigrationProps) => {
               <button
                 onClick={handleExport}
                 disabled={isExporting || !exportPassword.trim()}
-                className={`w-full px-4 py-2.5 rounded-lg font-medium transition-colors mt-10 ${isExporting || !exportPassword.trim()
+                className={`w-full min-h-11 px-4 py-2.5 rounded-lg font-medium transition-colors mt-8 ${isExporting || !exportPassword.trim()
                   ? 'bg-gray-100 dark:bg-gray-700 cursor-not-allowed text-gray-500 dark:text-gray-400'
-                  : 'bg-blue-600 hover:bg-blue-700 text-white'
+                  : 'bg-[var(--ptv-action)] hover:bg-[var(--ptv-action-hover)] text-[var(--ptv-action-ink)]'
                   }`}
               >
                 {isExporting ? (
@@ -503,8 +503,8 @@ const DataMigration = ({ onRefreshConfig }: DataMigrationProps) => {
           </div>
 
           {/* 数据导入 */}
-          <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-6 bg-white dark:bg-gray-800 hover:shadow-sm transition-shadow flex flex-col">
-            <div className="flex items-center gap-3 mb-6">
+          <div className="min-w-0 border border-[var(--ptv-line)] rounded-xl p-5 sm:p-6 bg-[var(--ptv-panel)] flex flex-col">
+            <div className="flex items-center gap-3 mb-6 pb-5 border-b border-[var(--ptv-line)]">
               <div className="w-8 h-8 rounded-lg bg-red-50 dark:bg-red-900/20 flex items-center justify-center">
                 <Upload className="w-4 h-4 text-red-600 dark:text-red-400" />
               </div>
@@ -522,7 +522,7 @@ const DataMigration = ({ onRefreshConfig }: DataMigrationProps) => {
                     <FileCheck className="w-4 h-4" />
                     备份文件
                     {selectedFile && (
-                      <span className="ml-auto text-xs text-green-600 dark:text-green-400 font-normal">
+                      <span className="ml-auto min-w-0 break-all text-right text-xs text-green-600 dark:text-green-400 font-normal">
                         {selectedFile.name} ({(selectedFile.size / 1024).toFixed(1)} KB)
                       </span>
                     )}
@@ -559,7 +559,7 @@ const DataMigration = ({ onRefreshConfig }: DataMigrationProps) => {
               <button
                 onClick={handleImport}
                 disabled={isImporting || !selectedFile || !importPassword.trim()}
-                className={`w-full px-4 py-2.5 rounded-lg font-medium transition-colors mt-10 ${isImporting || !selectedFile || !importPassword.trim()
+                className={`w-full min-h-11 px-4 py-2.5 rounded-lg font-medium transition-colors mt-8 ${isImporting || !selectedFile || !importPassword.trim()
                   ? 'bg-gray-100 dark:bg-gray-700 cursor-not-allowed text-gray-500 dark:text-gray-400'
                   : 'bg-red-600 hover:bg-red-700 text-white'
                   }`}

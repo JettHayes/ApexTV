@@ -10,9 +10,7 @@ import MobileBottomNav from './MobileBottomNav';
 import MobileHeader from './MobileHeader';
 import Sidebar from './Sidebar';
 import { ThemeToggle } from './ThemeToggle';
-import { UpdateNotification } from './UpdateNotification';
 import { UserMenu } from './UserMenu';
-import { VersionCheckProvider } from './VersionCheckProvider';
 
 interface PageLayoutProps {
   children: React.ReactNode;
@@ -70,7 +68,7 @@ const PageLayout = ({ children, activePath = '/', hideNavigation = false }: Page
   }, [shouldShowSharedBackground]);
 
   return (
-    <VersionCheckProvider>
+    <>
       <div className='ptv-page relative w-full min-h-dvh overflow-hidden' data-page={page}>
         {shouldShowSharedBackground && backgroundImage && createPortal(
           <>
@@ -112,7 +110,6 @@ const PageLayout = ({ children, activePath = '/', hideNavigation = false }: Page
               <div className='absolute top-2 right-4 z-20 hidden md:flex items-center gap-2'>
                 <ThemeToggle />
                 <UserMenu />
-                <UpdateNotification />
               </div>
             )}
 
@@ -132,7 +129,7 @@ const PageLayout = ({ children, activePath = '/', hideNavigation = false }: Page
           </div>
         )}
       </div>
-    </VersionCheckProvider>
+    </>
   );
 };
 

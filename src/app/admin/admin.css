@@ -1,0 +1,196 @@
+.ptv-page[data-page='admin'] { overflow: clip; }
+
+.apex-admin-page {
+  width: 100%;
+  padding: 24px var(--ptv-gutter) 48px;
+  color: var(--ptv-text);
+}
+
+.apex-admin-container {
+  width: 100%;
+  max-width: 1600px;
+  margin-inline: auto;
+  container: admin / inline-size;
+}
+
+.apex-admin-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.apex-admin-title {
+  color: var(--ptv-text);
+  font-size: clamp(22px, 2vw, 28px);
+  font-weight: 650;
+  letter-spacing: -.025em;
+}
+
+.apex-admin-maintenance { display: flex; flex-wrap: wrap; gap: 8px; }
+.apex-admin-maintenance button { min-height: 40px; padding: 8px 14px; }
+.apex-admin-workspace { display: grid; grid-template-columns: minmax(0, 1fr); align-items: start; gap: 18px; }
+.apex-admin-navigation { min-width: 0; }
+.apex-admin-navigation-desktop { display: none; }
+.apex-admin-navigation-mobile { display: grid; gap: 8px; }
+.apex-admin-navigation-mobile label { color: var(--ptv-muted); font-size: 13px; font-weight: 500; }
+.apex-admin-navigation-mobile select {
+  width: 100%;
+  min-height: 48px;
+  padding: 10px 14px;
+  border: 1px solid var(--ptv-field-line);
+  border-radius: 10px;
+  background: var(--ptv-panel);
+  color: var(--ptv-text);
+  font-size: 16px;
+}
+
+.apex-admin-nav-group + .apex-admin-nav-group { margin-top: 20px; }
+.apex-admin-nav-group h2 { margin: 0 10px 8px; color: var(--ptv-muted); font-size: 12px; font-weight: 500; }
+.apex-admin-nav-group > div { display: grid; gap: 3px; }
+.apex-admin-nav-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  min-height: 44px;
+  padding: 10px;
+  border-radius: 9px;
+  color: var(--ptv-muted);
+  text-align: left;
+  font-size: 14px;
+  line-height: 1.4;
+}
+.apex-admin-nav-item > svg { flex-shrink: 0; width: 18px; height: 18px; color: inherit; }
+.apex-admin-nav-item[aria-current='page'] { background: var(--ptv-selected); color: var(--ptv-accent); font-weight: 600; }
+@media (hover: hover) {
+  .apex-admin-nav-item:hover { color: var(--ptv-text); background: var(--ptv-soft); }
+  .apex-admin-nav-item[aria-current='page']:hover { color: var(--ptv-accent); background: var(--ptv-selected); }
+}
+
+.apex-admin-section {
+  min-width: 0;
+  scroll-margin-top: calc(5rem + var(--safe-top, 0px));
+  border: 1px solid var(--ptv-line);
+  border-radius: 16px;
+  background: var(--ptv-panel);
+}
+.apex-admin-section-heading { padding: 20px 24px 18px; border-bottom: 1px solid var(--ptv-line); }
+.apex-admin-section-category { display: block; margin-bottom: 6px; color: var(--ptv-muted); font-size: 12px; }
+.apex-admin-section-heading h2 { color: var(--ptv-text); font-size: 20px; font-weight: 650; letter-spacing: -.02em; }
+.apex-admin-content { min-width: 0; padding: 24px; }
+.apex-admin-section[data-layout='form'] .apex-admin-content { max-width: 1080px; }
+.apex-admin-fields { min-width: 0; }
+.apex-admin-fields > :is(.space-y-4, .space-y-6) { min-width: 0; }
+.apex-admin-content :is(p, label) { overflow-wrap: anywhere; }
+.apex-admin-content p { line-height: 1.65; }
+.apex-admin-content :is(h3, h4) { line-height: 1.45; }
+.apex-admin-content :is(h3, h4) + p { margin-top: 6px; }
+
+/* Neutral sections are quiet; warning, success and error surfaces keep their own colours. */
+.apex-admin-fields > :is(.bg-white, .bg-gray-50) {
+  background-color: var(--ptv-surface);
+  box-shadow: none;
+}
+.apex-admin-content details {
+  border-color: var(--ptv-line);
+  scroll-margin-top: 5rem;
+}
+.apex-admin-content details > summary {
+  min-height: 44px;
+  padding-block: 10px;
+  color: var(--ptv-text);
+  line-height: 1.6;
+}
+.apex-admin-content details[open] > summary { color: var(--ptv-accent); }
+.apex-admin-content details > summary::marker { color: var(--ptv-muted); }
+.apex-admin-section[data-section='netDiskConfig'] .apex-admin-fields > details {
+  padding: 12px 18px;
+  border: 1px solid var(--ptv-line);
+  border-radius: 12px;
+  background: var(--ptv-surface);
+}
+.apex-admin-section[data-section='netDiskConfig'] .apex-admin-fields > details > summary { font-size: 15px; }
+
+.apex-admin-content :is(input:not([type='checkbox']):not([type='radio']):not([type='range']):not([type='color']):not([type='file']), select) {
+  min-width: 0;
+  min-height: 44px;
+  line-height: 1.5;
+}
+.apex-admin-content textarea { min-width: 0; max-width: 100%; line-height: 1.65; }
+.apex-admin-content :is(input, select, textarea):disabled { cursor: not-allowed; }
+.apex-admin-content button:is(.px-2, .px-3, .px-4, .px-6) {
+  min-height: 36px;
+  white-space: normal;
+  line-height: 1.4;
+}
+.apex-admin-content button:disabled { cursor: not-allowed; }
+.apex-admin-content .relative.inline-flex { flex-shrink: 0; }
+.apex-admin-content label.relative.inline-flex { min-height: 44px; }
+.apex-admin-content label.relative.inline-flex > div { position: relative; }
+
+.apex-admin-table-scroll { max-width: 100%; border: 1px solid var(--ptv-line); border-radius: 10px; overscroll-behavior-x: contain; }
+.apex-admin-table-scroll > table { min-width: 40rem; }
+.apex-admin-content :is(th, td) { padding: 12px 14px; }
+.apex-admin-content th { font-weight: 600; letter-spacing: 0; }
+.apex-admin-content td { overflow-wrap: anywhere; }
+.apex-admin-content td button { white-space: nowrap; }
+
+.apex-admin-script-workspace { display: grid; grid-template-columns: minmax(0, 1fr); gap: 24px; }
+.apex-admin-script-list, .apex-admin-script-editor { min-width: 0; }
+.apex-admin-script-list { padding-bottom: 20px; border-bottom: 1px solid var(--ptv-line); }
+html[data-moontvplus] .apex-admin-content .apex-admin-code,
+html[data-moontvplus] .apex-admin-section[data-section='configFile'] textarea,
+html[data-moontvplus] .apex-admin-section[data-section='customAdFilter'] textarea,
+html[data-moontvplus] .apex-admin-section[data-section='themeConfig'] textarea.font-mono {
+  border-color: #40565e;
+  background: #101b20;
+  color: #e3eeeb;
+  tab-size: 2;
+  line-height: 1.7;
+}
+.apex-admin-section[data-section='openListConfig'] .apex-admin-fields > div:last-of-type,
+.apex-admin-section[data-section='movieRequests'] .apex-admin-fields > div + div {
+  padding-top: 24px;
+  border-top: 1px solid var(--ptv-line);
+}
+
+/* Theme scope travels with portal content, while the overlay remains translucent. */
+html[data-moontvplus] .ptv-dialog.apex-admin-overlay { background-color: rgb(7 18 23 / .58); backdrop-filter: none; }
+.apex-admin-overlay { padding: max(16px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) max(16px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left)); }
+.apex-admin-overlay > div:not(.fixed) { max-height: calc(100dvh - 32px - env(safe-area-inset-top) - env(safe-area-inset-bottom)); overflow-y: auto; overscroll-behavior-y: contain; }
+.apex-admin-overlay button:is(.px-2, .px-3, .px-4, .px-6) { min-height: 40px; }
+
+@container admin (min-width: 58rem) {
+  .apex-admin-workspace { grid-template-columns: 208px minmax(0, 1fr); gap: 24px; }
+  .apex-admin-navigation { position: sticky; top: calc(5rem + var(--safe-top, 0px)); max-height: calc(100dvh - 6rem - var(--safe-top, 0px)); overflow-y: auto; scrollbar-width: thin; padding-right: 8px; }
+  .apex-admin-navigation-desktop { display: block; }
+  .apex-admin-navigation-mobile { display: none; }
+}
+
+@container admin (min-width: 75rem) {
+  .apex-admin-script-workspace { grid-template-columns: 240px minmax(0, 1fr); }
+  .apex-admin-script-list { padding: 0 20px 0 0; border-bottom: 0; border-right: 1px solid var(--ptv-line); }
+  .apex-admin-emby[data-editing='true'] { display: grid; grid-template-columns: minmax(260px, .8fr) minmax(0, 1.2fr); align-items: start; gap: 24px; }
+  .apex-admin-content .apex-admin-emby[data-editing='true'] > div { min-width: 0; margin-top: 0; }
+  .apex-admin-emby[data-editing='true'] > div:last-of-type { padding: 20px; }
+}
+
+@container admin (max-width: 40rem) {
+  .apex-admin-section-heading { padding: 18px 16px 16px; }
+  .apex-admin-content { padding: 18px 16px; }
+  .apex-admin-content :is(.p-6, .p-8) { padding: 16px; }
+  .apex-admin-section[data-section='netDiskConfig'] .apex-admin-fields > details { padding-inline: 14px; }
+  .apex-admin-content :is(input:not([type='checkbox']):not([type='radio']):not([type='range']):not([type='color']):not([type='file']), select, textarea) { font-size: 16px; }
+}
+
+@media (pointer: coarse) {
+  .apex-admin-content button:is(.px-2, .px-3, .px-4, .px-6),
+  .apex-admin-overlay button:is(.px-2, .px-3, .px-4, .px-6) { min-height: 44px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .apex-admin-page *, .apex-admin-overlay * { scroll-behavior: auto; }
+}

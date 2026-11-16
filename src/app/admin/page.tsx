@@ -61,7 +61,6 @@ import {
 } from 'lucide-react';
 import { GripVertical } from 'lucide-react';
 import {
-  Fragment,
   memo,
   Suspense,
   useCallback,
@@ -86,6 +85,8 @@ import CorrectDialog from '@/components/CorrectDialog';
 import DataMigration from '@/components/DataMigration';
 import OpenListPathInput from '@/components/OpenListPathInput';
 import PageLayout from '@/components/PageLayout';
+
+import './admin.css';
 
 // 统一按钮样式系统
 const buttonStyles = {
@@ -229,7 +230,7 @@ const AlertModal = ({
 
   return createPortal(
     <div
-      className={`fixed inset-0 bg-black bg-opacity-50 z-[10050] flex items-center justify-center p-4 transition-opacity duration-200 ${
+      className={`ptv-dialog apex-admin-overlay fixed inset-0 bg-black bg-opacity-50 z-[10050] flex items-center justify-center p-4 transition-opacity duration-200 ${
         isVisible ? 'opacity-100' : 'opacity-0'
       }`}
     >
@@ -478,72 +479,6 @@ interface CustomCategory {
   disabled?: boolean;
   from: 'config' | 'custom';
 }
-
-// 可折叠标签组件
-interface CollapsibleTabProps {
-  title: string;
-  icon?: React.ReactNode;
-  isExpanded: boolean;
-  onToggle: () => void;
-  children: React.ReactNode;
-  isParent?: boolean;
-}
-
-const CollapsibleTab = ({
-  title,
-  icon,
-  isExpanded,
-  onToggle,
-  children,
-  isParent = false,
-}: CollapsibleTabProps) => {
-  return (
-    <div
-      className={`rounded-xl shadow-sm mb-4 overflow-hidden ${
-        isParent
-          ? 'bg-gradient-to-r from-yellow-50 to-amber-50 dark:from-yellow-900/20 dark:to-amber-900/20 ring-2 ring-yellow-400/50 dark:ring-yellow-600/50'
-          : 'bg-white/80 backdrop-blur-md dark:bg-gray-800/50 dark:ring-1 dark:ring-gray-700'
-      }`}
-    >
-      <button
-        onClick={onToggle}
-        className={`w-full px-6 py-4 flex items-center justify-between transition-colors ${
-          isParent
-            ? 'bg-yellow-100/50 dark:bg-yellow-900/30 hover:bg-yellow-100/70 dark:hover:bg-yellow-900/40'
-            : 'bg-gray-50/70 dark:bg-gray-800/60 hover:bg-gray-100/80 dark:hover:bg-gray-700/60'
-        }`}
-      >
-        <div className='flex items-center gap-3'>
-          {icon}
-          <h3
-            className={`text-lg font-medium ${
-              isParent
-                ? 'text-yellow-900 dark:text-yellow-200'
-                : 'text-gray-900 dark:text-gray-100'
-            }`}
-          >
-            {title}
-          </h3>
-        </div>
-        <div
-          className={
-            isParent
-              ? 'text-yellow-700 dark:text-yellow-400'
-              : 'text-gray-500 dark:text-gray-400'
-          }
-        >
-          {isExpanded ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
-        </div>
-      </button>
-
-      {isExpanded && (
-        <div className={isParent ? 'px-0.5 md:px-6 py-4' : 'px-6 py-4'}>
-          {children}
-        </div>
-      )}
-    </div>
-  );
-};
 
 // 用户配置组件
 interface UserConfigProps {
@@ -1221,7 +1156,7 @@ const UserConfig = ({
   }
 
   return (
-    <div className='space-y-6'>
+    <div className='apex-admin-fields space-y-6'>
       {/* 用户统计 */}
       <div>
         <h4 className='text-sm font-medium text-gray-700 dark:text-gray-300 mb-3'>
@@ -1336,7 +1271,7 @@ const UserConfig = ({
         </div>
 
         {/* 用户组列表 */}
-        <div className='border border-gray-200 dark:border-gray-700 rounded-lg max-h-[20rem] overflow-y-auto overflow-x-auto relative'>
+        <div className='apex-admin-table-scroll border border-gray-200 dark:border-gray-700 rounded-lg max-h-[20rem] overflow-y-auto overflow-x-auto relative'>
           <table className='min-w-full divide-y divide-gray-200 dark:divide-gray-700'>
             <thead className='bg-gray-50 dark:bg-gray-900 sticky top-0 z-10'>
               <tr>
@@ -1671,7 +1606,7 @@ const UserConfig = ({
               </div>
             )}
           <div
-            className='border border-gray-200 dark:border-gray-700 rounded-lg max-h-[28rem] overflow-y-auto overflow-x-auto relative'
+            className='apex-admin-table-scroll border border-gray-200 dark:border-gray-700 rounded-lg max-h-[28rem] overflow-y-auto overflow-x-auto relative'
             data-table='user-list'
           >
             <table className='min-w-full divide-y divide-gray-200 dark:divide-gray-700'>
@@ -2109,7 +2044,7 @@ const UserConfig = ({
         selectedDeviceUsername &&
         createPortal(
           <div
-            className='fixed inset-0 bg-black bg-opacity-50 z-[10002] flex items-center justify-center p-4'
+            className='ptv-dialog apex-admin-overlay fixed inset-0 bg-black bg-opacity-50 z-[10002] flex items-center justify-center p-4'
             onClick={() => {
               setShowUserDevicesModal(false);
               setSelectedDeviceUsername(null);
@@ -2262,7 +2197,7 @@ const UserConfig = ({
         selectedUser &&
         createPortal(
           <div
-            className='fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4'
+            className='ptv-dialog apex-admin-overlay fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4'
             onClick={() => {
               setShowConfigureApisModal(false);
               setSelectedUser(null);
@@ -2274,7 +2209,7 @@ const UserConfig = ({
               onClick={(e) => e.stopPropagation()}
             >
               <div className='p-6'>
-                <div className='flex items-center justify-between mb-6'>
+                <div className='flex flex-wrap items-center justify-between gap-3 mb-6'>
                   <h3 className='text-xl font-semibold text-gray-900 dark:text-gray-100'>
                     配置用户采集源权限 - {selectedUser.username}
                   </h3>
@@ -2438,7 +2373,7 @@ const UserConfig = ({
       {showAddUserGroupForm &&
         createPortal(
           <div
-            className='fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4'
+            className='ptv-dialog apex-admin-overlay fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4'
             onClick={() => {
               setShowAddUserGroupForm(false);
               setNewUserGroup({
@@ -2453,7 +2388,7 @@ const UserConfig = ({
               onClick={(e) => e.stopPropagation()}
             >
               <div className='p-6'>
-                <div className='flex items-center justify-between mb-6'>
+                <div className='flex flex-wrap items-center justify-between gap-3 mb-6'>
                   <h3 className='text-xl font-semibold text-gray-900 dark:text-gray-100'>
                     添加新用户组
                   </h3>
@@ -2704,7 +2639,7 @@ const UserConfig = ({
         editingUserGroup &&
         createPortal(
           <div
-            className='fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4'
+            className='ptv-dialog apex-admin-overlay fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4'
             onClick={() => {
               setShowEditUserGroupForm(false);
               setEditingUserGroup(null);
@@ -2715,7 +2650,7 @@ const UserConfig = ({
               onClick={(e) => e.stopPropagation()}
             >
               <div className='p-6'>
-                <div className='flex items-center justify-between mb-6'>
+                <div className='flex flex-wrap items-center justify-between gap-3 mb-6'>
                   <h3 className='text-xl font-semibold text-gray-900 dark:text-gray-100'>
                     编辑用户组 - {editingUserGroup.name}
                   </h3>
@@ -2954,7 +2889,7 @@ const UserConfig = ({
         selectedUserForGroup &&
         createPortal(
           <div
-            className='fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4'
+            className='ptv-dialog apex-admin-overlay fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4'
             onClick={() => {
               setShowConfigureUserGroupModal(false);
               setSelectedUserForGroup(null);
@@ -2966,7 +2901,7 @@ const UserConfig = ({
               onClick={(e) => e.stopPropagation()}
             >
               <div className='p-6'>
-                <div className='flex items-center justify-between mb-6'>
+                <div className='flex flex-wrap items-center justify-between gap-3 mb-6'>
                   <h3 className='text-xl font-semibold text-gray-900 dark:text-gray-100'>
                     配置用户组 - {selectedUserForGroup.username}
                   </h3>
@@ -3093,7 +3028,7 @@ const UserConfig = ({
         deletingUserGroup &&
         createPortal(
           <div
-            className='fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4'
+            className='ptv-dialog apex-admin-overlay fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4'
             onClick={() => {
               setShowDeleteUserGroupModal(false);
               setDeletingUserGroup(null);
@@ -3104,7 +3039,7 @@ const UserConfig = ({
               onClick={(e) => e.stopPropagation()}
             >
               <div className='p-6'>
-                <div className='flex items-center justify-between mb-6'>
+                <div className='flex flex-wrap items-center justify-between gap-3 mb-6'>
                   <h3 className='text-xl font-semibold text-gray-900 dark:text-gray-100'>
                     确认删除用户组
                   </h3>
@@ -3254,7 +3189,7 @@ const UserConfig = ({
         deletingUser &&
         createPortal(
           <div
-            className='fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4'
+            className='ptv-dialog apex-admin-overlay fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4'
             onClick={() => {
               setShowDeleteUserModal(false);
               setDeletingUser(null);
@@ -3265,7 +3200,7 @@ const UserConfig = ({
               onClick={(e) => e.stopPropagation()}
             >
               <div className='p-6'>
-                <div className='flex items-center justify-between mb-6'>
+                <div className='flex flex-wrap items-center justify-between gap-3 mb-6'>
                   <h3 className='text-xl font-semibold text-gray-900 dark:text-gray-100'>
                     确认删除用户
                   </h3>
@@ -3347,7 +3282,7 @@ const UserConfig = ({
       {showBatchUserGroupModal &&
         createPortal(
           <div
-            className='fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4'
+            className='ptv-dialog apex-admin-overlay fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4'
             onClick={() => {
               setShowBatchUserGroupModal(false);
               setSelectedUserGroup('');
@@ -3358,7 +3293,7 @@ const UserConfig = ({
               onClick={(e) => e.stopPropagation()}
             >
               <div className='p-6'>
-                <div className='flex items-center justify-between mb-6'>
+                <div className='flex flex-wrap items-center justify-between gap-3 mb-6'>
                   <h3 className='text-xl font-semibold text-gray-900 dark:text-gray-100'>
                     批量设置用户组
                   </h3>
@@ -3946,7 +3881,7 @@ const OpenListConfigComponent = ({
   };
 
   return (
-    <div className='space-y-6'>
+    <div className='apex-admin-fields space-y-6'>
       {/* 使用说明 */}
       <div className='bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4'>
         <div className='flex items-center gap-2 mb-2'>
@@ -4031,7 +3966,7 @@ const OpenListConfigComponent = ({
             />
           </div>
 
-          <div className='grid grid-cols-2 gap-4'>
+          <div className='grid grid-cols-1 sm:grid-cols-2 gap-4'>
             <div>
               <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
                 账号
@@ -4088,7 +4023,7 @@ const OpenListConfigComponent = ({
         {extraSourcesDialogOpen &&
           createPortal(
             <div
-              className='fixed inset-0 bg-black bg-opacity-50 z-[10002] flex items-center justify-center p-4'
+              className='ptv-dialog apex-admin-overlay fixed inset-0 bg-black bg-opacity-50 z-[10002] flex items-center justify-center p-4'
               onClick={() => setExtraSourcesDialogOpen(false)}
               onTouchMove={(e) => e.preventDefault()}
               onWheel={(e) => e.preventDefault()}
@@ -4530,7 +4465,7 @@ const OpenListConfigComponent = ({
         {pathMetaDialogOpen &&
           createPortal(
             <div
-              className='fixed inset-0 bg-black bg-opacity-50 z-[10002] flex items-center justify-center p-4'
+              className='ptv-dialog apex-admin-overlay fixed inset-0 bg-black bg-opacity-50 z-[10002] flex items-center justify-center p-4'
               onClick={() => setPathMetaDialogOpen(false)}
               onTouchMove={(e) => e.preventDefault()}
               onWheel={(e) => e.preventDefault()}
@@ -4827,7 +4762,7 @@ const OpenListConfigComponent = ({
             document.body
           )}
 
-        <div className='flex gap-3'>
+        <div className='flex flex-wrap gap-3'>
           <button
             onClick={handleCheckConnectivity}
             disabled={
@@ -4857,7 +4792,7 @@ const OpenListConfigComponent = ({
         config?.OpenListConfig?.Username &&
         config?.OpenListConfig?.Password && (
           <div className='space-y-4'>
-            <div className='flex items-center justify-between'>
+            <div className='flex flex-wrap items-center justify-between gap-3'>
               <div>
                 <h3 className='text-lg font-medium text-gray-900 dark:text-gray-100'>
                   视频列表
@@ -4873,7 +4808,7 @@ const OpenListConfigComponent = ({
                   </span>
                 </div>
               </div>
-              <div className='flex gap-3'>
+              <div className='flex flex-wrap gap-3'>
                 <button
                   onClick={() => handleRefresh(true)}
                   disabled={refreshing || videosLoading}
@@ -4931,7 +4866,7 @@ const OpenListConfigComponent = ({
                 加载中...
               </div>
             ) : videos.length > 0 ? (
-              <div className='overflow-x-auto'>
+              <div className='apex-admin-table-scroll overflow-x-auto'>
                 <table className='min-w-full divide-y divide-gray-200 dark:divide-gray-700'>
                   <thead className='bg-gray-50 dark:bg-gray-800'>
                     <tr>
@@ -5461,7 +5396,7 @@ const NetDiskConfigComponent = ({
   };
 
   return (
-    <div className='space-y-6'>
+    <div className='apex-admin-fields space-y-6'>
       <details className='pt-4 border-t border-gray-200 dark:border-gray-700'>
         <summary className='text-sm font-semibold text-gray-900 dark:text-gray-100 cursor-pointer'>
           夸克网盘
@@ -5560,7 +5495,7 @@ const NetDiskConfigComponent = ({
             </label>
           </div>
 
-          <div className='flex gap-3'>
+          <div className='flex flex-wrap gap-3'>
             <button
               onClick={handleValidate}
               disabled={!enabled || !cookie || isLoading('validateNetDisk')}
@@ -5618,7 +5553,7 @@ const NetDiskConfigComponent = ({
             />
           </div>
 
-          <div className='flex gap-3'>
+          <div className='flex flex-wrap gap-3'>
             <button
               onClick={handleValidateMobile}
               disabled={
@@ -5682,7 +5617,7 @@ const NetDiskConfigComponent = ({
             />
           </div>
 
-          <div className='flex gap-3'>
+          <div className='flex flex-wrap gap-3'>
             <button
               onClick={handleValidateBaidu}
               disabled={
@@ -5764,7 +5699,7 @@ const NetDiskConfigComponent = ({
             />
           </div>
 
-          <div className='flex gap-3'>
+          <div className='flex flex-wrap gap-3'>
             <button
               onClick={handleValidateTianyi}
               disabled={
@@ -5843,7 +5778,7 @@ const NetDiskConfigComponent = ({
             />
           </div>
 
-          <div className='flex gap-3'>
+          <div className='flex flex-wrap gap-3'>
             <button
               onClick={handleValidatePan123}
               disabled={
@@ -5936,7 +5871,7 @@ const NetDiskConfigComponent = ({
             />
           </div>
 
-          <div className='flex gap-3'>
+          <div className='flex flex-wrap gap-3'>
             <button
               onClick={handleValidateUC}
               disabled={
@@ -5996,7 +5931,7 @@ const NetDiskConfigComponent = ({
             />
           </div>
 
-          <div className='flex gap-3'>
+          <div className='flex flex-wrap gap-3'>
             <button
               onClick={handleValidatePan115}
               disabled={
@@ -6505,7 +6440,10 @@ const EmbyConfigComponent = ({
   };
 
   return (
-    <div className='space-y-6'>
+    <div
+      className='apex-admin-fields apex-admin-emby space-y-6'
+      data-editing={Boolean(showAddForm || editingSource)}
+    >
       <AlertModal
         isOpen={alertModal.isOpen}
         onClose={hideAlert}
@@ -6519,7 +6457,7 @@ const EmbyConfigComponent = ({
 
       {/* 源列表 */}
       <div className='space-y-4'>
-        <div className='flex items-center justify-between'>
+        <div className='flex flex-wrap items-center justify-between gap-3'>
           <h3 className='text-lg font-medium text-gray-900 dark:text-gray-100'>
             Emby 源列表 ({sources.length})
           </h3>
@@ -6847,7 +6785,7 @@ const EmbyConfigComponent = ({
             )}
 
             {/* 启用开关 */}
-            <div className='flex items-center justify-between'>
+            <div className='flex flex-wrap items-center justify-between gap-3'>
               <label className='text-sm font-medium text-gray-700 dark:text-gray-300'>
                 启用此源
               </label>
@@ -8228,7 +8166,7 @@ const VideoSourceConfig = ({
   }
 
   return (
-    <div className='space-y-6'>
+    <div className='apex-admin-fields space-y-6'>
       {/* 添加视频源表单 */}
       <div className='flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4'>
         <h4 className='shrink-0 whitespace-nowrap text-sm font-medium text-gray-700 dark:text-gray-300'>
@@ -8506,7 +8444,7 @@ const VideoSourceConfig = ({
       {/* 编辑视频源表单 */}
       {editingSource && (
         <div className='p-4 bg-gray-50 dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700 space-y-4'>
-          <div className='flex items-center justify-between'>
+          <div className='flex flex-wrap items-center justify-between gap-3'>
             <h5 className='text-sm font-medium text-gray-700 dark:text-gray-300'>
               编辑视频源: {editingSource.name}
             </h5>
@@ -8606,7 +8544,7 @@ const VideoSourceConfig = ({
 
       {/* 视频源表格 */}
       <div
-        className='border border-gray-200 dark:border-gray-700 rounded-lg max-h-[28rem] overflow-y-auto overflow-x-auto relative'
+        className='apex-admin-table-scroll border border-gray-200 dark:border-gray-700 rounded-lg max-h-[28rem] overflow-y-auto overflow-x-auto relative'
         data-table='source-list'
       >
         <table className='min-w-full divide-y divide-gray-200 dark:divide-gray-700'>
@@ -8658,7 +8596,7 @@ const VideoSourceConfig = ({
       {showSpecialSourcesModal &&
         createPortal(
           <div
-            className='fixed inset-0 z-[10000] flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm'
+            className='ptv-dialog apex-admin-overlay fixed inset-0 z-[10000] flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm'
             onClick={closeSpecialSourcesModal}
           >
             <div
@@ -8780,7 +8718,7 @@ const VideoSourceConfig = ({
       {showClientAdSourcesModal &&
         createPortal(
           <div
-            className='fixed inset-0 z-[10000] flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm'
+            className='ptv-dialog apex-admin-overlay fixed inset-0 z-[10000] flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm'
             onClick={closeClientAdSourcesModal}
           >
             <div
@@ -8894,7 +8832,7 @@ const VideoSourceConfig = ({
         createPortal(
           <>
             <div
-              className='fixed inset-0 bg-black/60 backdrop-blur-sm z-[10000]'
+              className='ptv-dialog apex-admin-overlay fixed inset-0 bg-black/60 backdrop-blur-sm z-[10000]'
               onClick={handleCloseWeightModal}
               onTouchMove={(e) => {
                 e.preventDefault();
@@ -8907,7 +8845,7 @@ const VideoSourceConfig = ({
               }}
             />
             <div
-              className='fixed left-1/2 top-1/2 z-[10001] flex w-[calc(100%-1rem)] max-w-6xl max-h-[90vh] -translate-x-1/2 -translate-y-1/2 flex-col overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-2xl dark:border-gray-700 dark:bg-gray-800'
+              className='ptv-dialog fixed left-1/2 top-1/2 z-[10001] flex w-[calc(100%-1rem)] max-w-6xl max-h-[90dvh] -translate-x-1/2 -translate-y-1/2 flex-col overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-2xl dark:border-gray-700 dark:bg-gray-800'
               onClick={(e) => e.stopPropagation()}
             >
               <div className='flex items-start justify-between gap-4 border-b border-gray-200 dark:border-gray-700 px-6 py-5'>
@@ -8962,7 +8900,7 @@ const VideoSourceConfig = ({
                 </div>
 
                 <div className='px-6 pb-6'>
-                  <div className='overflow-x-auto'>
+                  <div className='apex-admin-table-scroll overflow-x-auto'>
                     <div className='grid min-w-[820px] grid-cols-[88px_minmax(0,1fr)_112px_112px_220px] gap-3 px-4 pb-3 text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400'>
                       <div>排序</div>
                       <div>视频源</div>
@@ -9038,7 +8976,7 @@ const VideoSourceConfig = ({
       {showValidationModal &&
         createPortal(
           <div
-            className='fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50'
+            className='ptv-dialog apex-admin-overlay fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50'
             onClick={() => setShowValidationModal(false)}
           >
             <div
@@ -9103,7 +9041,7 @@ const VideoSourceConfig = ({
       {confirmModal.isOpen &&
         createPortal(
           <div
-            className='fixed inset-0 bg-black bg-opacity-50 z-[10020] flex items-center justify-center p-4'
+            className='ptv-dialog apex-admin-overlay fixed inset-0 bg-black bg-opacity-50 z-[10020] flex items-center justify-center p-4'
             onClick={confirmModal.onCancel}
           >
             <div
@@ -9111,7 +9049,7 @@ const VideoSourceConfig = ({
               onClick={(e) => e.stopPropagation()}
             >
               <div className='p-6'>
-                <div className='flex items-center justify-between mb-4'>
+                <div className='flex flex-wrap items-center justify-between gap-3 mb-4'>
                   <h3 className='text-lg font-semibold text-gray-900 dark:text-gray-100'>
                     {confirmModal.title}
                   </h3>
@@ -9415,9 +9353,9 @@ const CategoryConfig = ({
   }
 
   return (
-    <div className='space-y-6'>
+    <div className='apex-admin-fields space-y-6'>
       {/* 添加分类表单 */}
-      <div className='flex items-center justify-between'>
+      <div className='flex flex-wrap items-center justify-between gap-3'>
         <h4 className='text-sm font-medium text-gray-700 dark:text-gray-300'>
           自定义分类列表
         </h4>
@@ -9489,7 +9427,7 @@ const CategoryConfig = ({
       )}
 
       {/* 分类表格 */}
-      <div className='border border-gray-200 dark:border-gray-700 rounded-lg max-h-[28rem] overflow-y-auto overflow-x-auto relative'>
+      <div className='apex-admin-table-scroll border border-gray-200 dark:border-gray-700 rounded-lg max-h-[28rem] overflow-y-auto overflow-x-auto relative'>
         <table className='min-w-full divide-y divide-gray-200 dark:divide-gray-700'>
           <thead className='bg-gray-50 dark:bg-gray-900 sticky top-0 z-10'>
             <tr>
@@ -9892,10 +9830,10 @@ const VideoSourceScriptLab = () => {
   }, [testHook]);
 
   return (
-    <div className='space-y-6'>
-      <div className='flex flex-col lg:flex-row gap-6'>
-        <div className='lg:w-80 space-y-4'>
-          <div className='flex items-center justify-between'>
+    <div className='apex-admin-fields space-y-6'>
+      <div className='apex-admin-script-workspace'>
+        <div className='apex-admin-script-list space-y-4'>
+          <div className='flex flex-wrap items-center justify-between gap-3'>
             <h4 className='text-sm font-medium text-gray-700 dark:text-gray-300'>
               脚本列表
             </h4>
@@ -10005,7 +9943,7 @@ const VideoSourceScriptLab = () => {
           </div>
         </div>
 
-        <div className='flex-1 space-y-6'>
+        <div className='apex-admin-script-editor space-y-6'>
           <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
             <input
               type='text'
@@ -10053,7 +9991,7 @@ const VideoSourceScriptLab = () => {
               }
               rows={24}
               spellCheck={false}
-              className='w-full px-3 py-3 font-mono text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-950 text-gray-100'
+              className='apex-admin-code w-full px-3 py-3 font-mono text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-950 text-gray-100'
             />
           </div>
 
@@ -10349,10 +10287,10 @@ const ConfigFileComponent = ({
   }
 
   return (
-    <div className='space-y-4'>
+    <div className='apex-admin-fields space-y-4'>
       {/* 配置订阅区域 */}
       <div className='bg-white dark:bg-gray-800 rounded-lg p-6 border border-gray-200 dark:border-gray-700 shadow-sm'>
-        <div className='flex items-center justify-between mb-6'>
+        <div className='flex flex-wrap items-center justify-between gap-3 mb-6'>
           <h3 className='text-xl font-semibold text-gray-900 dark:text-gray-100'>
             配置订阅
           </h3>
@@ -10420,7 +10358,7 @@ const ConfigFileComponent = ({
           </div>
 
           {/* 自动更新开关 */}
-          <div className='flex items-center justify-between'>
+          <div className='flex flex-wrap items-center justify-between gap-3'>
             <div>
               <label className='text-sm font-medium text-gray-700 dark:text-gray-300'>
                 自动更新
@@ -10533,7 +10471,7 @@ const ConfigFileComponent = ({
           </p>
         </div>
 
-        <div className='flex items-center justify-between'>
+        <div className='flex flex-wrap items-center justify-between gap-3'>
           <div className='text-xs text-gray-500 dark:text-gray-400'>
             支持 JSON 格式，用于配置视频源和自定义分类
           </div>
@@ -10779,7 +10717,7 @@ const ThemeConfigComponent = ({
   ];
 
   return (
-    <div className='space-y-6'>
+    <div className='apex-admin-fields space-y-6'>
       {/* 主题类型选择 */}
       <div className='bg-white dark:bg-gray-800 rounded-lg p-6 border border-gray-200 dark:border-gray-700'>
         <h3 className='text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4'>
@@ -11744,25 +11682,6 @@ const SiteConfigComponent = ({
     },
   ];
 
-  // 获取感谢信息
-  const getThanksInfo = (dataSource: string) => {
-    switch (dataSource) {
-      case 'cors-proxy-zwei':
-        return {
-          text: 'Thanks to @Zwei',
-          url: 'https://github.com/bestzwei',
-        };
-      case 'cmliussss-cdn-tencent':
-      case 'cmliussss-cdn-ali':
-        return {
-          text: 'Thanks to @CMLiussss',
-          url: 'https://github.com/cmliu',
-        };
-      default:
-        return null;
-    }
-  };
-
   useEffect(() => {
     fetch('/scripts/bangumi-proxy.worker.js')
       .then((response) => (response.ok ? response.text() : ''))
@@ -11945,7 +11864,7 @@ const SiteConfigComponent = ({
   }
 
   return (
-    <div className='space-y-6'>
+    <div className='apex-admin-fields space-y-6'>
       {/* 站点名称 */}
       <div>
         <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
@@ -12083,26 +12002,6 @@ const SiteConfigComponent = ({
             选择获取豆瓣数据的方式
           </p>
 
-          {/* 感谢信息 */}
-          {getThanksInfo(siteSettings.DoubanProxyType) && (
-            <div className='mt-3'>
-              <button
-                type='button'
-                onClick={() =>
-                  window.open(
-                    getThanksInfo(siteSettings.DoubanProxyType)!.url,
-                    '_blank'
-                  )
-                }
-                className='flex items-center justify-center gap-1.5 w-full px-3 text-xs text-gray-500 dark:text-gray-400 cursor-pointer'
-              >
-                <span className='font-medium'>
-                  {getThanksInfo(siteSettings.DoubanProxyType)!.text}
-                </span>
-                <ExternalLink className='w-3.5 opacity-70' />
-              </button>
-            </div>
-          )}
         </div>
 
         {/* 豆瓣代理地址设置 - 仅在选择自定义代理时显示 */}
@@ -12193,26 +12092,6 @@ const SiteConfigComponent = ({
             选择获取豆瓣图片的方式
           </p>
 
-          {/* 感谢信息 */}
-          {getThanksInfo(siteSettings.DoubanImageProxyType) && (
-            <div className='mt-3'>
-              <button
-                type='button'
-                onClick={() =>
-                  window.open(
-                    getThanksInfo(siteSettings.DoubanImageProxyType)!.url,
-                    '_blank'
-                  )
-                }
-                className='flex items-center justify-center gap-1.5 w-full px-3 text-xs text-gray-500 dark:text-gray-400 cursor-pointer'
-              >
-                <span className='font-medium'>
-                  {getThanksInfo(siteSettings.DoubanImageProxyType)!.text}
-                </span>
-                <ExternalLink className='w-3.5 opacity-70' />
-              </button>
-            </div>
-          )}
         </div>
 
         {/* 豆瓣代理地址设置 - 仅在选择自定义代理时显示 */}
@@ -12280,7 +12159,7 @@ const SiteConfigComponent = ({
 
       {/* 禁用黄色过滤器 */}
       <div>
-        <div className='flex items-center justify-between'>
+        <div className='flex flex-wrap items-center justify-between gap-3'>
           <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
             禁用黄色过滤器
           </label>
@@ -12316,7 +12195,7 @@ const SiteConfigComponent = ({
 
       {/* 流式搜索 */}
       <div>
-        <div className='flex items-center justify-between'>
+        <div className='flex flex-wrap items-center justify-between gap-3'>
           <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
             启用流式搜索
           </label>
@@ -12540,7 +12419,7 @@ const SiteConfigComponent = ({
             </>
           )}
 
-          <div className='flex items-center justify-between'>
+          <div className='flex flex-wrap items-center justify-between gap-3'>
             <div>
               <h4 className='text-sm font-medium text-gray-700 dark:text-gray-300'>
                 默认自动加载弹幕
@@ -13082,7 +12961,7 @@ const SiteConfigComponent = ({
         <div className='mt-4 space-y-4'>
           {/* 开启评论与相似推荐 */}
           <div>
-            <div className='flex items-center justify-between'>
+            <div className='flex flex-wrap items-center justify-between gap-3'>
               <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
                 开启评论与相似推荐
               </label>
@@ -13126,7 +13005,7 @@ const SiteConfigComponent = ({
         </summary>
         <div className='mt-4 space-y-4'>
           {/* 启用开关 */}
-          <div className='flex items-center justify-between'>
+          <div className='flex flex-wrap items-center justify-between gap-3'>
             <div>
               <label className='block text-sm font-medium text-gray-700 dark:text-gray-300'>
                 启用流量统计
@@ -13333,7 +13212,7 @@ const SiteConfigComponent = ({
       {showEnableCommentsModal &&
         createPortal(
           <div
-            className='fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4'
+            className='ptv-dialog apex-admin-overlay fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4'
             onClick={() => setShowEnableCommentsModal(false)}
           >
             <div
@@ -13341,7 +13220,7 @@ const SiteConfigComponent = ({
               onClick={(e) => e.stopPropagation()}
             >
               <div className='p-6'>
-                <div className='flex items-center justify-between mb-6'>
+                <div className='flex flex-wrap items-center justify-between gap-3 mb-6'>
                   <h3 className='text-xl font-semibold text-gray-900 dark:text-gray-100'>
                     开启评论与相似推荐功能
                   </h3>
@@ -13557,7 +13436,7 @@ const RegistrationConfigComponent = ({
   }
 
   return (
-    <div className='space-y-6'>
+    <div className='apex-admin-fields space-y-6'>
       {/* 注册相关配置 */}
       <div className='space-y-4'>
         <h3 className='text-sm font-semibold text-gray-900 dark:text-gray-100'>
@@ -13573,7 +13452,7 @@ const RegistrationConfigComponent = ({
           </summary>
           <div className='mt-4 space-y-4'>
             <div>
-              <div className='flex items-center justify-between'>
+              <div className='flex flex-wrap items-center justify-between gap-3'>
                 <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
                   开启注册
                 </label>
@@ -13650,7 +13529,7 @@ const RegistrationConfigComponent = ({
           </summary>
           <div className='mt-4 space-y-4'>
             <div>
-              <div className='flex items-center justify-between'>
+              <div className='flex flex-wrap items-center justify-between gap-3'>
                 <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
                   要求注册邀请码
                 </label>
@@ -13707,7 +13586,7 @@ const RegistrationConfigComponent = ({
             </div>
 
             <div>
-              <div className='flex items-center justify-between'>
+              <div className='flex flex-wrap items-center justify-between gap-3'>
                 <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
                   注册启用Cloudflare Turnstile
                 </label>
@@ -13757,7 +13636,7 @@ const RegistrationConfigComponent = ({
             </div>
 
             <div>
-              <div className='flex items-center justify-between'>
+              <div className='flex flex-wrap items-center justify-between gap-3'>
                 <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
                   登录启用Cloudflare Turnstile
                 </label>
@@ -13858,7 +13737,7 @@ const RegistrationConfigComponent = ({
         <div className='mt-4 space-y-4'>
           {/* 启用OIDC登录 */}
           <div>
-            <div className='flex items-center justify-between'>
+            <div className='flex flex-wrap items-center justify-between gap-3'>
               <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
                 启用OIDC登录
               </label>
@@ -13894,7 +13773,7 @@ const RegistrationConfigComponent = ({
 
           {/* 启用OIDC注册 */}
           <div>
-            <div className='flex items-center justify-between'>
+            <div className='flex flex-wrap items-center justify-between gap-3'>
               <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
                 启用OIDC注册
               </label>
@@ -14235,7 +14114,7 @@ const RegistrationConfigComponent = ({
       {showEnableRegistrationModal &&
         createPortal(
           <div
-            className='fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4'
+            className='ptv-dialog apex-admin-overlay fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4'
             onClick={() => setShowEnableRegistrationModal(false)}
           >
             <div
@@ -14243,7 +14122,7 @@ const RegistrationConfigComponent = ({
               onClick={(e) => e.stopPropagation()}
             >
               <div className='p-6'>
-                <div className='flex items-center justify-between mb-6'>
+                <div className='flex flex-wrap items-center justify-between gap-3 mb-6'>
                   <h3 className='text-xl font-semibold text-gray-900 dark:text-gray-100'>
                     开启注册功能
                   </h3>
@@ -14480,7 +14359,7 @@ const CustomAdFilterConfig = ({
   }
 
   return (
-    <div className='space-y-4'>
+    <div className='apex-admin-fields space-y-4'>
       {/* 说明区域 */}
       <div className='bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4'>
         <div className='flex items-center space-x-2 mb-2'>
@@ -14521,7 +14400,7 @@ const CustomAdFilterConfig = ({
 
       {/* 代码编辑区域 */}
       <div className='space-y-3'>
-        <div className='flex items-center justify-between'>
+        <div className='flex flex-wrap items-center justify-between gap-3'>
           <label className='text-sm font-medium text-gray-700 dark:text-gray-300'>
             自定义去广告代码
           </label>
@@ -14548,7 +14427,7 @@ const CustomAdFilterConfig = ({
           />
         </div>
 
-        <div className='flex items-center justify-between'>
+        <div className='flex flex-wrap items-center justify-between gap-3'>
           <div className='text-xs text-gray-500 dark:text-gray-400'>
             修改后需保存才能生效，保存前会进行语法验证
           </div>
@@ -14702,7 +14581,7 @@ const SuwayomiConfigComponent = ({
   };
 
   return (
-    <div className='space-y-6'>
+    <div className='apex-admin-fields space-y-6'>
       <div className='bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4'>
         <h3 className='text-sm font-medium text-blue-900 dark:text-blue-100 mb-2'>
           关于漫画展馆 / Suwayomi
@@ -14755,7 +14634,7 @@ const SuwayomiConfigComponent = ({
         {/* 漫画展馆免责声明弹窗 */}
         {showMangaDisclaimer &&
           createPortal(
-            <div className='fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4'>
+            <div className='ptv-dialog apex-admin-overlay fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4'>
               <div className='bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full border border-red-200 dark:border-red-800'>
                 <div className='p-6'>
                   <div className='flex justify-center mb-4'>
@@ -14927,7 +14806,7 @@ const SuwayomiConfigComponent = ({
           />
         </div>
 
-        <div className='flex gap-3'>
+        <div className='flex flex-wrap gap-3'>
           <button
             onClick={handleTest}
             disabled={!serverURL || isLoading('testSuwayomi')}
@@ -15214,7 +15093,7 @@ const OPDSConfigComponent = ({
   };
 
   return (
-    <div className='space-y-6'>
+    <div className='apex-admin-fields space-y-6'>
       <div className='rounded-lg border border-amber-200 bg-amber-50 p-4 dark:border-amber-800 dark:bg-amber-900/20'>
         <h3 className='mb-2 text-sm font-medium text-amber-900 dark:text-amber-100'>
           关于电子书馆 / OPDS / Legado
@@ -15258,7 +15137,7 @@ const OPDSConfigComponent = ({
       {/* 电子书馆免责声明弹窗 */}
       {showBooksDisclaimer &&
         createPortal(
-          <div className='fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4'>
+          <div className='ptv-dialog apex-admin-overlay fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4'>
             <div className='bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full border border-red-200 dark:border-red-800'>
               <div className='p-6'>
                 <div className='flex justify-center mb-4'>
@@ -15450,7 +15329,7 @@ const OPDSConfigComponent = ({
       </div>
 
       <div className='space-y-4'>
-        <div className='flex items-center justify-between'>
+        <div className='flex flex-wrap items-center justify-between gap-3'>
           <h3 className='text-sm font-medium text-gray-900 dark:text-white'>
             OPDS 书源列表
           </h3>
@@ -15645,7 +15524,7 @@ const OPDSConfigComponent = ({
         </div>
       </div>
 
-      <div className='flex gap-3'>
+      <div className='flex flex-wrap gap-3'>
         <button
           onClick={handleSave}
           disabled={isLoading('saveOPDSConfig')}
@@ -15761,7 +15640,7 @@ const XiaoyaConfigComponent = ({
   };
 
   return (
-    <div className='space-y-6'>
+    <div className='apex-admin-fields space-y-6'>
       <div className='bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4'>
         <h3 className='text-sm font-medium text-blue-900 dark:text-blue-100 mb-2'>
           关于小雅
@@ -15881,7 +15760,7 @@ const XiaoyaConfigComponent = ({
           </button>
         </div>
 
-        <div className='flex gap-3'>
+        <div className='flex flex-wrap gap-3'>
           <button
             onClick={handleTest}
             disabled={!serverURL || isLoading('testXiaoya')}
@@ -16052,7 +15931,7 @@ const TelegramConfigComponent = ({
     : '';
 
   return (
-    <div className='space-y-6'>
+    <div className='apex-admin-fields space-y-6'>
       <div className='bg-sky-50 dark:bg-sky-900/20 border border-sky-200 dark:border-sky-800 rounded-lg p-4'>
         <h3 className='text-sm font-medium text-sky-900 dark:text-sky-100 mb-2'>
           关于 Telegram Bot
@@ -16314,7 +16193,7 @@ const EmailConfigComponent = ({
   };
 
   return (
-    <div className='space-y-6'>
+    <div className='apex-admin-fields space-y-6'>
       <div className='bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4'>
         <h3 className='text-sm font-medium text-blue-900 dark:text-blue-100 mb-2'>
           关于邮件通知
@@ -16546,7 +16425,7 @@ const EmailConfigComponent = ({
         </div>
 
         {/* 保存按钮 */}
-        <div className='flex gap-3'>
+        <div className='flex flex-wrap gap-3'>
           <button
             onClick={handleSave}
             disabled={isLoading('saveEmail')}
@@ -16695,14 +16574,14 @@ const MovieRequestsComponent = ({
   };
 
   return (
-    <div className='space-y-4'>
+    <div className='apex-admin-fields space-y-4'>
       {/* 求片功能设置 */}
       <div className='p-4 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700'>
         <h3 className='text-lg font-medium text-gray-900 dark:text-gray-100 mb-4'>
           求片功能设置
         </h3>
         <div className='space-y-4'>
-          <div className='flex items-center justify-between'>
+          <div className='flex flex-wrap items-center justify-between gap-3'>
             <div>
               <label className='text-sm font-medium text-gray-700 dark:text-gray-300'>
                 启用求片功能
@@ -17034,7 +16913,7 @@ const AIConfigComponent = ({
   };
 
   return (
-    <div className='space-y-6'>
+    <div className='apex-admin-fields space-y-6'>
       {/* 使用说明 */}
       <div className='bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4'>
         <div className='flex items-center gap-2 mb-2'>
@@ -17101,7 +16980,7 @@ const AIConfigComponent = ({
                 : 'border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 hover:border-gray-300 dark:hover:border-gray-600'
             }`}
           >
-            <div className='flex items-center justify-between'>
+            <div className='flex flex-wrap items-center justify-between gap-3'>
               <span className='text-sm font-semibold text-gray-900 dark:text-gray-100'>
                 旧版
               </span>
@@ -17122,7 +17001,7 @@ const AIConfigComponent = ({
                 : 'border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 hover:border-gray-300 dark:hover:border-gray-600'
             }`}
           >
-            <div className='flex items-center justify-between'>
+            <div className='flex flex-wrap items-center justify-between gap-3'>
               <span className='text-sm font-semibold text-gray-900 dark:text-gray-100'>
                 新版（工具式调用）
               </span>
@@ -17384,7 +17263,7 @@ const AIConfigComponent = ({
 
       {/* 联网搜索配置 */}
       <div className='space-y-4 p-4 border border-gray-200 dark:border-gray-700 rounded-lg'>
-        <div className='flex items-center justify-between'>
+        <div className='flex flex-wrap items-center justify-between gap-3'>
           <div>
             <h4 className='text-sm font-semibold text-gray-900 dark:text-gray-100'>
               启用联网搜索
@@ -17804,7 +17683,7 @@ const MusicConfigComponent = ({
   };
 
   return (
-    <div className='space-y-6'>
+    <div className='apex-admin-fields space-y-6'>
       <div className='bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4'>
         <div className='flex items-center gap-2 mb-2'>
           <svg
@@ -17876,7 +17755,7 @@ const MusicConfigComponent = ({
       {/* 音乐免责声明弹窗 */}
       {showMusicDisclaimer &&
         createPortal(
-          <div className='fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4'>
+          <div className='ptv-dialog apex-admin-overlay fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4'>
             <div className='bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full border border-red-200 dark:border-red-800'>
               <div className='p-6'>
                 <div className='flex justify-center mb-4'>
@@ -18424,7 +18303,7 @@ const LiveSourceConfig = ({
   }
 
   return (
-    <div className='space-y-6'>
+    <div className='apex-admin-fields space-y-6'>
       {/* 添加直播源表单 */}
       <div className='space-y-4'>
         <div className='flex flex-wrap items-end justify-between gap-3'>
@@ -18458,7 +18337,7 @@ const LiveSourceConfig = ({
             </button>
           </div>
         </div>
-        <div className='flex items-center justify-between'>
+        <div className='flex flex-wrap items-center justify-between gap-3'>
           <h4 className='text-sm font-medium text-gray-700 dark:text-gray-300'>
             直播源列表
           </h4>
@@ -18566,7 +18445,7 @@ const LiveSourceConfig = ({
       {/* 编辑直播源表单 */}
       {editingLiveSource && (
         <div className='p-4 bg-gray-50 dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700 space-y-4'>
-          <div className='flex items-center justify-between'>
+          <div className='flex flex-wrap items-center justify-between gap-3'>
             <h5 className='text-sm font-medium text-gray-700 dark:text-gray-300'>
               编辑直播源: {editingLiveSource.name}
             </h5>
@@ -18680,7 +18559,7 @@ const LiveSourceConfig = ({
 
       {/* 直播源表格 */}
       <div
-        className='border border-gray-200 dark:border-gray-700 rounded-lg max-h-[28rem] overflow-y-auto overflow-x-auto relative'
+        className='apex-admin-table-scroll border border-gray-200 dark:border-gray-700 rounded-lg max-h-[28rem] overflow-y-auto overflow-x-auto relative'
         data-table='live-source-list'
       >
         <table className='min-w-full divide-y divide-gray-200 dark:divide-gray-700'>
@@ -18903,10 +18782,10 @@ const WebLiveConfig = ({
   }
 
   return (
-    <div className='space-y-6'>
+    <div className='apex-admin-fields space-y-6'>
       {/* 功能总开关 */}
       <div className='p-4 bg-gradient-to-r from-orange-50 to-red-50 dark:from-orange-900/20 dark:to-red-900/20 rounded-lg border-2 border-orange-300 dark:border-orange-700'>
-        <div className='flex items-center justify-between'>
+        <div className='flex flex-wrap items-center justify-between gap-3'>
           <div className='flex-1'>
             <h4 className='text-sm font-semibold text-gray-900 dark:text-gray-100 mb-1'>
               网络直播功能总开关
@@ -18944,7 +18823,7 @@ const WebLiveConfig = ({
       {/* 免责声明弹窗 */}
       {showDisclaimerModal &&
         createPortal(
-          <div className='fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4'>
+          <div className='ptv-dialog apex-admin-overlay fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4'>
             <div className='bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full border border-red-200 dark:border-red-800'>
               <div className='p-6'>
                 <div className='flex justify-center mb-4'>
@@ -18996,7 +18875,7 @@ const WebLiveConfig = ({
           document.body
         )}
 
-      <div className='flex items-center justify-between'>
+      <div className='flex flex-wrap items-center justify-between gap-3'>
         <h4 className='text-sm font-medium text-gray-700 dark:text-gray-300'>
           网络直播列表
         </h4>
@@ -19069,7 +18948,7 @@ const WebLiveConfig = ({
 
       {editingSource && (
         <div className='p-4 bg-gray-50 dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700 space-y-4'>
-          <div className='flex items-center justify-between'>
+          <div className='flex flex-wrap items-center justify-between gap-3'>
             <h5 className='text-sm font-medium text-gray-700 dark:text-gray-300'>
               编辑: {editingSource.name}
             </h5>
@@ -19158,7 +19037,7 @@ const WebLiveConfig = ({
         </div>
       )}
 
-      <div className='border border-gray-200 dark:border-gray-700 rounded-lg overflow-auto'>
+      <div className='apex-admin-table-scroll border border-gray-200 dark:border-gray-700 rounded-lg overflow-auto'>
         <table className='min-w-full divide-y divide-gray-200 dark:divide-gray-700'>
           <thead className='bg-gray-50 dark:bg-gray-900'>
             <tr>
@@ -19293,44 +19172,13 @@ function AdminPageClient() {
   const [error, setError] = useState<string | null>(null);
   const [role, setRole] = useState<'owner' | 'admin' | null>(null);
   const [showResetConfigModal, setShowResetConfigModal] = useState(false);
-  const [expandedTabs, setExpandedTabs] = useState<{ [key: string]: boolean }>({
-    userConfig: false,
-    videoSource: false,
-    sourceScriptLab: false,
-    musicConfig: false,
-    mediaLibrary: false,
-    openListConfig: false,
-    netDiskConfig: false,
-    embyConfig: false,
-    xiaoyaConfig: false,
-    suwayomiConfig: false,
-    opdsConfig: false,
-    animeSubscription: false,
-    aiConfig: false,
-    liveSource: false,
-    webLive: false,
-    siteConfig: false,
-    registrationConfig: false,
-    categoryConfig: false,
-    configFile: false,
-    dataMigration: false,
-    customAdFilter: false,
-    themeConfig: false,
-    emailConfig: false,
-    telegramConfig: false,
-  });
-
-  // PC 左右布局：当前选中的区块（单选），持久化以便保存刷新后仍停留在原区块
+  // 所有屏幕共用当前区块，保存刷新后仍停留在原区块。
   const [activeKey, setActiveKey] = useState<string>(() => {
     if (typeof window === 'undefined') return 'siteConfig';
     return localStorage.getItem('admin_active_section') || 'siteConfig';
   });
-  // PC 内容区滚动容器，切换区块时回到顶部
-  const contentScrollRef = useRef<HTMLDivElement | null>(null);
-  // PC 侧边栏中分组的展开状态
-  const [expandedGroups, setExpandedGroups] = useState<{
-    [key: string]: boolean;
-  }>({ mediaLibrary: true });
+  // 切换区块时定位到内容标题，不建立第二个内容滚动区。
+  const contentScrollRef = useRef<HTMLElement | null>(null);
 
   // 获取管理员配置
   // showLoading 用于控制是否在请求期间显示整体加载骨架。
@@ -19430,27 +19278,7 @@ function AdminPageClient() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [fetchConfig]);
 
-  // PC 切换区块时，内容区滚动回顶部
-  useEffect(() => {
-    contentScrollRef.current?.scrollTo({ top: 0 });
-  }, [activeKey]);
-
-  // 切换标签展开状态
-  const toggleTab = (tabKey: string) => {
-    const wasExpanded = expandedTabs[tabKey];
-
-    setExpandedTabs((prev) => ({
-      ...prev,
-      [tabKey]: !prev[tabKey],
-    }));
-
-    // 当打开用户管理选项卡时，如果还没有加载用户列表，则加载
-    if (tabKey === 'userConfig' && !wasExpanded && !usersV2) {
-      fetchUsersV2();
-    }
-  };
-
-  // PC 左右布局：选中某个区块
+  // 共用同一入口，切换屏幕宽度不会卸载当前表单。
   const selectSection = (key: string) => {
     setActiveKey(key);
     if (typeof window !== 'undefined') {
@@ -19460,11 +19288,7 @@ function AdminPageClient() {
     if (key === 'userConfig' && !usersV2) {
       fetchUsersV2();
     }
-  };
-
-  // PC 侧边栏：切换分组展开
-  const toggleGroup = (key: string) => {
-    setExpandedGroups((prev) => ({ ...prev, [key]: !prev[key] }));
+    contentScrollRef.current?.scrollIntoView({ block: 'start' });
   };
 
   // 新增: 重置配置处理函数
@@ -19509,8 +19333,8 @@ function AdminPageClient() {
   if (loading) {
     return (
       <PageLayout activePath='/admin'>
-        <div className='px-2 sm:px-10 py-4 sm:py-8'>
-          <div className='max-w-[95%] mx-auto'>
+        <div className='apex-admin-page'>
+          <div className='apex-admin-container'>
             <h1 className='text-2xl font-bold text-gray-900 dark:text-gray-100 mb-8'>
               管理员设置
             </h1>
@@ -19565,7 +19389,7 @@ function AdminPageClient() {
     );
   }
 
-  // 管理面板区块导航配置（PC 侧边栏与移动端手风琴共用同一份数据）
+  // 每项设置只定义一次，桌面导航和窄屏选择器共用。
   type AdminNavItem = {
     key: string;
     title: string;
@@ -19839,32 +19663,44 @@ function AdminPageClient() {
     },
   ];
 
-  // 根据 key 查找区块（含分组子项）
-  const findNavItem = (key: string): AdminNavItem | undefined => {
-    for (const it of navItems) {
-      if (it.key === key) return it;
-      const child = it.children?.find((c) => c.key === key);
-      if (child) return child;
-    }
-    return undefined;
-  };
-
-  const visibleNavItems = navItems.filter(
-    (it) => !it.ownerOnly || role === 'owner'
+  const sections = navItems
+    .flatMap((item) => item.children || [item])
+    .filter((item) => !item.ownerOnly || role === 'owner');
+  const groupDefinitions = [
+    { title: '站点与外观', keys: ['siteConfig', 'themeConfig'] },
+    { title: '用户与访问', keys: ['userConfig', 'registrationConfig'] },
+    { title: '内容与播放', keys: ['videoSource', 'sourceScriptLab', 'categoryConfig', 'customAdFilter'] },
+    { title: '私人影库', keys: ['openListConfig', 'embyConfig', 'xiaoyaConfig', 'movieRequests', 'animeSubscription', 'netDiskConfig'] },
+    { title: '音乐与阅读', keys: ['musicConfig', 'suwayomiConfig', 'opdsConfig'] },
+    { title: '直播', keys: ['liveSource', 'webLive'] },
+    { title: '服务与通知', keys: ['aiConfig', 'emailConfig', 'telegramConfig'] },
+    { title: '维护', keys: ['configFile', 'dataMigration'] },
+  ];
+  const navigationGroups = groupDefinitions.map((group) => ({
+    title: group.title,
+    items: group.keys
+      .map((key) => sections.find((section) => section.key === key))
+      .filter((item): item is AdminNavItem => Boolean(item)),
+  })).filter((group) => group.items.length > 0);
+  // 本地记录无效或当前角色无权访问时，回到站点配置。
+  const activeItem = sections.find((item) => item.key === activeKey)
+    || sections.find((item) => item.key === 'siteConfig')!;
+  const activeGroup = navigationGroups.find((group) =>
+    group.items.some((item) => item.key === activeItem.key)
   );
-  const activeItem = findNavItem(activeKey);
+  const wideSections = ['userConfig', 'videoSource', 'sourceScriptLab', 'openListConfig', 'embyConfig', 'categoryConfig', 'configFile', 'liveSource', 'webLive', 'movieRequests', 'animeSubscription', 'dataMigration'];
 
   return (
     <PageLayout activePath='/admin'>
-      <div className='px-2 sm:px-10 py-4 sm:py-8'>
-        <div className='max-w-[95%] mx-auto'>
-          {/* 标题 + 重置配置按钮 */}
-          <div className='flex items-center gap-2 mb-8'>
-            <h1 className='text-2xl font-bold text-gray-900 dark:text-gray-100'>
+      <div className='apex-admin-page'>
+        <div className='apex-admin-container'>
+          {/* 标题与维护操作 */}
+          <div className='apex-admin-header'>
+            <h1 className='apex-admin-title'>
               管理员设置
             </h1>
             {config && role === 'owner' && (
-              <>
+              <div className='apex-admin-maintenance'>
                 <button
                   onClick={handleResetConfig}
                   className={`px-3 py-1 text-xs rounded-md transition-colors ${buttonStyles.dangerSmall}`}
@@ -19877,7 +19713,7 @@ function AdminPageClient() {
                 >
                   重载配置
                 </button>
-              </>
+              </div>
             )}
           </div>
 
@@ -19933,499 +19769,62 @@ function AdminPageClient() {
             </div>
           )}
 
-          {/* PC：左右结构（侧边栏 + 内容区），两栏各自独立滚动 */}
-          <div className='hidden lg:flex gap-6 lg:h-[calc(100vh-7rem)]'>
-            {/* 侧边栏 */}
-            <nav className='w-56 shrink-0 h-full overflow-y-auto pr-1'>
-              <div className='space-y-1'>
-                {visibleNavItems.map((item) =>
-                  item.children ? (
-                    <div key={item.key}>
-                      <button
-                        onClick={() => toggleGroup(item.key)}
-                        className='w-full flex items-center justify-between gap-2 px-3 py-2 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors'
-                      >
-                        <span className='flex items-center gap-2 min-w-0'>
+          <div className='apex-admin-workspace'>
+            <nav className='apex-admin-navigation' aria-label='管理设置导航'>
+              <div className='apex-admin-navigation-desktop'>
+                {navigationGroups.map((group, index) => (
+                  <div className='apex-admin-nav-group' key={group.title}>
+                    <h2 id={`admin-group-${index}`}>{group.title}</h2>
+                    <div role='group' aria-labelledby={`admin-group-${index}`}>
+                      {group.items.map((item) => (
+                        <button
+                          type='button'
+                          key={item.key}
+                          onClick={() => selectSection(item.key)}
+                          aria-current={activeItem.key === item.key ? 'page' : undefined}
+                          className='apex-admin-nav-item'
+                        >
                           {item.icon}
-                          <span className='truncate'>{item.title}</span>
-                        </span>
-                        {expandedGroups[item.key] ? (
-                          <ChevronUp size={16} />
-                        ) : (
-                          <ChevronDown size={16} />
-                        )}
-                      </button>
-                      {expandedGroups[item.key] && (
-                        <div className='mt-1 ml-3 pl-3 border-l border-gray-200 dark:border-gray-700 space-y-1'>
-                          {item.children.map((child) => (
-                            <button
-                              key={child.key}
-                              onClick={() => selectSection(child.key)}
-                              className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-colors ${
-                                activeKey === child.key
-                                  ? 'bg-green-500/10 text-green-600 dark:text-green-400 font-medium'
-                                  : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800'
-                              }`}
-                            >
-                              {child.icon}
-                              <span className='truncate'>{child.title}</span>
-                            </button>
-                          ))}
-                        </div>
-                      )}
+                          <span>{item.title}</span>
+                        </button>
+                      ))}
                     </div>
-                  ) : (
-                    <button
-                      key={item.key}
-                      onClick={() => selectSection(item.key)}
-                      className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-colors ${
-                        activeKey === item.key
-                          ? 'bg-green-500/10 text-green-600 dark:text-green-400 font-medium'
-                          : 'text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800'
-                      }`}
-                    >
-                      {item.icon}
-                      <span className='truncate'>{item.title}</span>
-                    </button>
-                  )
-                )}
+                  </div>
+                ))}
+              </div>
+              <div className='apex-admin-navigation-mobile'>
+                <label htmlFor='admin-section-select'>设置分类</label>
+                <select
+                  id='admin-section-select'
+                  value={activeItem.key}
+                  onChange={(event) => selectSection(event.target.value)}
+                >
+                  {navigationGroups.map((group) => (
+                    <optgroup key={group.title} label={group.title}>
+                      {group.items.map((item) => (
+                        <option key={item.key} value={item.key}>{item.title}</option>
+                      ))}
+                    </optgroup>
+                  ))}
+                </select>
               </div>
             </nav>
 
-            {/* 内容区（独立滚动） */}
-            <div
+            <section
               ref={contentScrollRef}
-              className='flex-1 min-w-0 h-full overflow-y-auto pr-1'
+              className='apex-admin-section'
+              data-section={activeItem.key}
+              data-layout={wideSections.includes(activeItem.key) ? 'workspace' : 'form'}
+              aria-labelledby='admin-section-title'
             >
-              {activeItem?.render?.()}
-            </div>
-          </div>
-
-          {/* 移动端 / 窄屏：保留原有手风琴 */}
-          <div className='lg:hidden'>
-          {/* 配置文件标签 - 仅站长可见 */}
-          {role === 'owner' && (
-            <CollapsibleTab
-              title='配置文件'
-              icon={
-                <FileText
-                  size={20}
-                  className='text-gray-600 dark:text-gray-400'
-                />
-              }
-              isExpanded={expandedTabs.configFile}
-              onToggle={() => toggleTab('configFile')}
-            >
-              <ConfigFileComponent
-                config={config}
-                refreshConfig={fetchConfig}
-              />
-            </CollapsibleTab>
-          )}
-
-          {/* 站点配置标签 */}
-          <CollapsibleTab
-            title='站点配置'
-            icon={
-              <Settings
-                size={20}
-                className='text-gray-600 dark:text-gray-400'
-              />
-            }
-            isExpanded={expandedTabs.siteConfig}
-            onToggle={() => toggleTab('siteConfig')}
-          >
-            <SiteConfigComponent config={config} refreshConfig={fetchConfig} />
-          </CollapsibleTab>
-
-          {/* 注册配置标签 */}
-          <CollapsibleTab
-            title='注册配置'
-            icon={
-              <UserPlus
-                size={20}
-                className='text-gray-600 dark:text-gray-400'
-              />
-            }
-            isExpanded={expandedTabs.registrationConfig}
-            onToggle={() => toggleTab('registrationConfig')}
-          >
-            <RegistrationConfigComponent
-              config={config}
-              refreshConfig={fetchConfig}
-            />
-          </CollapsibleTab>
-
-          {/* 个性化配置标签 */}
-          <CollapsibleTab
-            title='个性化配置'
-            icon={
-              <Palette size={20} className='text-gray-600 dark:text-gray-400' />
-            }
-            isExpanded={expandedTabs.themeConfig}
-            onToggle={() => toggleTab('themeConfig')}
-          >
-            <ThemeConfigComponent config={config} refreshConfig={fetchConfig} />
-          </CollapsibleTab>
-
-          <div className='space-y-4'>
-            {/* 用户管理标签 */}
-            <CollapsibleTab
-              title='用户管理'
-              icon={
-                <Users size={20} className='text-gray-600 dark:text-gray-400' />
-              }
-              isExpanded={expandedTabs.userConfig}
-              onToggle={() => toggleTab('userConfig')}
-            >
-              <UserConfig
-                config={config}
-                role={role}
-                refreshConfig={refreshConfigAndUsers}
-                usersV2={usersV2}
-                userPage={userPage}
-                userTotalPages={userTotalPages}
-                userTotal={userTotal}
-                fetchUsersV2={fetchUsersV2}
-                userListLoading={userListLoading}
-                userSearch={userSearch}
-                setUserSearch={setUserSearch}
-              />
-            </CollapsibleTab>
-
-            {/* 视频源配置标签 */}
-            <CollapsibleTab
-              title='视频源配置'
-              icon={
-                <Video size={20} className='text-gray-600 dark:text-gray-400' />
-              }
-              isExpanded={expandedTabs.videoSource}
-              onToggle={() => toggleTab('videoSource')}
-            >
-              <VideoSourceConfig config={config} refreshConfig={fetchConfig} />
-            </CollapsibleTab>
-
-            <CollapsibleTab
-              title='视频源脚本'
-              icon={
-                <Bot size={20} className='text-gray-600 dark:text-gray-400' />
-              }
-              isExpanded={expandedTabs.sourceScriptLab}
-              onToggle={() => toggleTab('sourceScriptLab')}
-            >
-              <VideoSourceScriptLab />
-            </CollapsibleTab>
-
-            <CollapsibleTab
-              title='音乐配置'
-              icon={
-                <svg
-                  width='20'
-                  height='20'
-                  viewBox='0 0 24 24'
-                  fill='none'
-                  stroke='currentColor'
-                  strokeWidth='2'
-                  strokeLinecap='round'
-                  strokeLinejoin='round'
-                  className='text-gray-600 dark:text-gray-400'
-                >
-                  <path d='M9 18V5l12-2v13' />
-                  <circle cx='6' cy='18' r='3' />
-                  <circle cx='18' cy='16' r='3' />
-                </svg>
-              }
-              isExpanded={expandedTabs.musicConfig}
-              onToggle={() => toggleTab('musicConfig')}
-            >
-              <MusicConfigComponent
-                config={config}
-                refreshConfig={fetchConfig}
-              />
-            </CollapsibleTab>
-
-            <CollapsibleTab
-              title='漫画配置'
-              icon={
-                <BookOpen
-                  size={20}
-                  className='text-gray-600 dark:text-gray-400'
-                />
-              }
-              isExpanded={expandedTabs.suwayomiConfig}
-              onToggle={() => toggleTab('suwayomiConfig')}
-            >
-              <SuwayomiConfigComponent
-                config={config}
-                refreshConfig={fetchConfig}
-              />
-            </CollapsibleTab>
-
-            <CollapsibleTab
-              title='电子书配置'
-              icon={
-                <BookMarked
-                  size={20}
-                  className='text-gray-600 dark:text-gray-400'
-                />
-              }
-              isExpanded={expandedTabs.opdsConfig}
-              onToggle={() => toggleTab('opdsConfig')}
-            >
-              <OPDSConfigComponent
-                config={config}
-                refreshConfig={fetchConfig}
-              />
-            </CollapsibleTab>
-
-            {/* 电视直播源配置标签 */}
-            <CollapsibleTab
-              title='电视直播源配置'
-              icon={
-                <Tv size={20} className='text-gray-600 dark:text-gray-400' />
-              }
-              isExpanded={expandedTabs.liveSource}
-              onToggle={() => toggleTab('liveSource')}
-            >
-              <LiveSourceConfig config={config} refreshConfig={fetchConfig} />
-            </CollapsibleTab>
-
-            {/* 网络直播配置标签 */}
-            <CollapsibleTab
-              title='网络直播配置'
-              icon={
-                <Globe size={20} className='text-gray-600 dark:text-gray-400' />
-              }
-              isExpanded={expandedTabs.webLive}
-              onToggle={() => toggleTab('webLive')}
-            >
-              <WebLiveConfig config={config} refreshConfig={fetchConfig} />
-            </CollapsibleTab>
-
-            {/* 私人影库大类 */}
-            <CollapsibleTab
-              title='私人影库'
-              icon={
-                <Database
-                  size={20}
-                  className='text-yellow-700 dark:text-yellow-400'
-                />
-              }
-              isExpanded={expandedTabs.mediaLibrary}
-              onToggle={() => toggleTab('mediaLibrary')}
-              isParent={true}
-            >
-              <div className='space-y-4'>
-                {/* Openlist配置子标签 */}
-                <CollapsibleTab
-                  title='Openlist配置'
-                  icon={
-                    <FolderOpen
-                      size={20}
-                      className='text-gray-600 dark:text-gray-400'
-                    />
-                  }
-                  isExpanded={expandedTabs.openListConfig}
-                  onToggle={() => toggleTab('openListConfig')}
-                >
-                  <OpenListConfigComponent
-                    config={config}
-                    refreshConfig={fetchConfig}
-                  />
-                </CollapsibleTab>
-
-                {/* Emby 媒体库子标签 */}
-                <CollapsibleTab
-                  title='Emby 媒体库'
-                  icon={
-                    <FolderOpen
-                      size={20}
-                      className='text-gray-600 dark:text-gray-400'
-                    />
-                  }
-                  isExpanded={expandedTabs.embyConfig}
-                  onToggle={() => toggleTab('embyConfig')}
-                >
-                  <EmbyConfigComponent
-                    config={config}
-                    refreshConfig={fetchConfig}
-                  />
-                </CollapsibleTab>
-
-                {/* 小雅配置子标签 */}
-                <CollapsibleTab
-                  title='小雅配置'
-                  icon={
-                    <FolderOpen
-                      size={20}
-                      className='text-gray-600 dark:text-gray-400'
-                    />
-                  }
-                  isExpanded={expandedTabs.xiaoyaConfig}
-                  onToggle={() => toggleTab('xiaoyaConfig')}
-                >
-                  <XiaoyaConfigComponent
-                    config={config}
-                    refreshConfig={fetchConfig}
-                  />
-                </CollapsibleTab>
-                {/* 求片管理子标签 */}
-                <CollapsibleTab
-                  title='求片管理'
-                  icon={
-                    <Video
-                      size={20}
-                      className='text-gray-600 dark:text-gray-400'
-                    />
-                  }
-                  isExpanded={expandedTabs.movieRequests}
-                  onToggle={() => toggleTab('movieRequests')}
-                >
-                  <MovieRequestsComponent
-                    config={config}
-                    refreshConfig={fetchConfig}
-                  />
-                </CollapsibleTab>
-
-                {/* 追番订阅子标签 */}
-                <CollapsibleTab
-                  title='追番订阅'
-                  icon={
-                    <Cat
-                      size={20}
-                      className='text-gray-600 dark:text-gray-400'
-                    />
-                  }
-                  isExpanded={expandedTabs.animeSubscription}
-                  onToggle={() => toggleTab('animeSubscription')}
-                >
-                  <AnimeSubscriptionComponent
-                    config={config}
-                    refreshConfig={fetchConfig}
-                  />
-                </CollapsibleTab>
-
-                <CollapsibleTab
-                  title='网盘配置'
-                  icon={
-                    <Cloud
-                      size={20}
-                      className='text-gray-600 dark:text-gray-400'
-                    />
-                  }
-                  isExpanded={expandedTabs.netDiskConfig}
-                  onToggle={() => toggleTab('netDiskConfig')}
-                >
-                  <NetDiskConfigComponent
-                    config={config}
-                    refreshConfig={fetchConfig}
-                  />
-                </CollapsibleTab>
+              <header className='apex-admin-section-heading'>
+                <span className='apex-admin-section-category'>{activeGroup?.title}</span>
+                <h2 id='admin-section-title'>{activeItem.title}</h2>
+              </header>
+              <div className='apex-admin-content'>
+                {activeItem.render?.()}
               </div>
-            </CollapsibleTab>
-
-            {/* AI配置标签 */}
-            <CollapsibleTab
-              title='AI设定'
-              icon={
-                <Bot size={20} className='text-gray-600 dark:text-gray-400' />
-              }
-              isExpanded={expandedTabs.aiConfig}
-              onToggle={() => toggleTab('aiConfig')}
-            >
-              <AIConfigComponent config={config} refreshConfig={fetchConfig} />
-            </CollapsibleTab>
-
-            {/* 邮件配置标签 */}
-            <CollapsibleTab
-              title='邮件配置'
-              icon={
-                <Mail size={20} className='text-gray-600 dark:text-gray-400' />
-              }
-              isExpanded={expandedTabs.emailConfig}
-              onToggle={() => toggleTab('emailConfig')}
-            >
-              <EmailConfigComponent
-                config={config}
-                refreshConfig={fetchConfig}
-              />
-            </CollapsibleTab>
-
-            {/* Telegram Bot 配置标签 */}
-            <CollapsibleTab
-              title='Telegram Bot'
-              icon={
-                <Send size={20} className='text-gray-600 dark:text-gray-400' />
-              }
-              isExpanded={expandedTabs.telegramConfig}
-              onToggle={() => toggleTab('telegramConfig')}
-            >
-              <TelegramConfigComponent
-                config={config}
-                refreshConfig={fetchConfig}
-              />
-            </CollapsibleTab>
-
-            {/* 分类配置标签 */}
-            <CollapsibleTab
-              title='分类配置'
-              icon={
-                <FolderOpen
-                  size={20}
-                  className='text-gray-600 dark:text-gray-400'
-                />
-              }
-              isExpanded={expandedTabs.categoryConfig}
-              onToggle={() => toggleTab('categoryConfig')}
-            >
-              <CategoryConfig config={config} refreshConfig={fetchConfig} />
-            </CollapsibleTab>
-
-            {/* 自定义去广告标签 */}
-            <CollapsibleTab
-              title='自定义去广告'
-              icon={
-                <svg
-                  width='20'
-                  height='20'
-                  viewBox='0 0 24 24'
-                  fill='none'
-                  stroke='currentColor'
-                  strokeWidth='2'
-                  strokeLinecap='round'
-                  strokeLinejoin='round'
-                  className='text-gray-600 dark:text-gray-400'
-                >
-                  <path d='M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z' />
-                  <path d='M8 12h8' />
-                </svg>
-              }
-              isExpanded={expandedTabs.customAdFilter}
-              onToggle={() => toggleTab('customAdFilter')}
-            >
-              <CustomAdFilterConfig
-                config={config}
-                refreshConfig={fetchConfig}
-              />
-            </CollapsibleTab>
-
-            {/* 数据迁移标签 - 仅站长可见 */}
-            {role === 'owner' && (
-              <CollapsibleTab
-                title='数据迁移'
-                icon={
-                  <Database
-                    size={20}
-                    className='text-gray-600 dark:text-gray-400'
-                  />
-                }
-                isExpanded={expandedTabs.dataMigration}
-                onToggle={() => toggleTab('dataMigration')}
-              >
-                <DataMigration onRefreshConfig={refreshConfigAndUsers} />
-              </CollapsibleTab>
-            )}
-          </div>
+            </section>
           </div>
         </div>
       </div>
@@ -20445,7 +19844,7 @@ function AdminPageClient() {
       {showResetConfigModal &&
         createPortal(
           <div
-            className='fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4'
+            className='ptv-dialog apex-admin-overlay fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4'
             onClick={() => setShowResetConfigModal(false)}
           >
             <div
@@ -20453,7 +19852,7 @@ function AdminPageClient() {
               onClick={(e) => e.stopPropagation()}
             >
               <div className='p-6'>
-                <div className='flex items-center justify-between mb-6'>
+                <div className='flex flex-wrap items-center justify-between gap-3 mb-6'>
                   <h3 className='text-xl font-semibold text-gray-900 dark:text-gray-100'>
                     确认重置配置
                   </h3>

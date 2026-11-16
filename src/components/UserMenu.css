@@ -1,0 +1,19 @@
+.ptv-account-menu {
+  width: min(292px, calc(100vw - 2rem - env(safe-area-inset-right)));
+  padding: 6px;
+  border-radius: 14px;
+  box-shadow: var(--ptv-shadow);
+}
+
+.ptv-account-header { padding: 4px 4px 10px; border-bottom: 1px solid var(--ptv-line); }
+.ptv-account-profile { display: flex; align-items: center; gap: 12px; width: 100%; min-height: 64px; padding: 8px; border-radius: 9px; text-align: left; }
+.ptv-account-avatar { display: grid; flex: none; place-items: center; width: 44px; height: 44px; border-radius: 50%; background: var(--ptv-selected); color: var(--ptv-accent); font-size: 18px; font-weight: 700; }
+.ptv-account-identity { display: flex; min-width: 0; flex-direction: column; align-items: flex-start; gap: 5px; }
+.ptv-account-name { color: var(--ptv-text); font-size: 14px; font-weight: 650; line-height: 1.35; overflow-wrap: anywhere; }
+.ptv-account-role { padding: 2px 7px; border-radius: 5px; background: var(--ptv-soft); color: var(--ptv-muted); font-size: 11px; line-height: 1.4; }
+.ptv-account-menu > div > button:not(.ptv-account-profile) { min-height: 44px; padding: 10px 12px; border-radius: 8px; }
+.ptv-account-menu button:hover { background: var(--ptv-selected); }
+.ptv-account-menu button:focus-visible { outline: 2px solid var(--ptv-accent); outline-offset: -2px; }
+.ptv-account-divider { margin: 6px 8px; border-top: 1px solid var(--ptv-line); }
+.ptv-personal-avatar { display: grid; flex: none; place-items: center; width: 56px; height: 56px; border-radius: 50%; background: var(--ptv-selected); color: var(--ptv-accent); font-size: 22px; font-weight: 700; }
+.ptv-personal-center button:focus-visible { outline: 2px solid var(--ptv-accent); outline-offset: 2px; }

@@ -3,7 +3,6 @@
 import { BackButton } from './BackButton';
 import BrandLogo from './BrandLogo';
 import { ThemeToggle } from './ThemeToggle';
-import { UpdateNotification } from './UpdateNotification';
 import { UserMenu } from './UserMenu';
 
 const MobileHeader = ({ showBackButton = false }: { showBackButton?: boolean }) => (
@@ -14,7 +13,6 @@ const MobileHeader = ({ showBackButton = false }: { showBackButton?: boolean }) 
       <div className='flex shrink-0 items-center gap-1'>
         <ThemeToggle />
         <UserMenu />
-        <UpdateNotification />
       </div>
     </div>
   </header>

@@ -47,8 +47,6 @@ import {
   type LocalSettingsPayload,
 } from '@/lib/local-settings-sync';
 import { clearBangumiImageFallbackCache } from '@/lib/utils';
-import { CURRENT_VERSION } from '@/lib/version';
-import { UpdateStatus } from '@/lib/version_check';
 
 import { DeviceManagementPanel } from './DeviceManagementPanel';
 import { DownloadManagementPanel } from './DownloadManagementPanel';
@@ -59,8 +57,7 @@ import { OfflineDownloadPanel } from './OfflineDownloadPanel';
 import { PersonalCenterPanel } from './PersonalCenterPanel';
 import Toast, { ToastProps } from './Toast';
 import TVRemotePanel from './tv/TVRemotePanel';
-import { useVersionCheck } from './VersionCheckProvider';
-import { VersionPanel } from './VersionPanel';
+import './UserMenu.css';
 
 interface AuthInfo {
   username?: string;
@@ -69,13 +66,11 @@ interface AuthInfo {
 
 export const UserMenu: React.FC = () => {
   const router = useRouter();
-  const { updateStatus, isChecking } = useVersionCheck();
   const [isOpen, setIsOpen] = useState(false);
   const [isProfileCenterOpen, setIsProfileCenterOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isChangePasswordOpen, setIsChangePasswordOpen] = useState(false);
   const [isSubscribeOpen, setIsSubscribeOpen] = useState(false);
-  const [isVersionPanelOpen, setIsVersionPanelOpen] = useState(false);
   const [isOfflineDownloadPanelOpen, setIsOfflineDownloadPanelOpen] =
     useState(false);
   const [isNotificationPanelOpen, setIsNotificationPanelOpen] = useState(false);
@@ -89,8 +84,6 @@ export const UserMenu: React.FC = () => {
   const [isTVRemoteOpen, setIsTVRemoteOpen] = useState(false);
   const [authInfo, setAuthInfo] = useState<AuthInfo | null>(null);
   const [storageType, setStorageType] = useState<string>('localstorage');
-  const [displayStorageType, setDisplayStorageType] =
-    useState<string>('localstorage');
   const [mounted, setMounted] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
 
@@ -618,9 +611,7 @@ export const UserMenu: React.FC = () => {
 
       const runtimeConfig = (window as any).RUNTIME_CONFIG || {};
       const type = runtimeConfig.STORAGE_TYPE || 'localstorage';
-      const displayType = runtimeConfig.DISPLAY_STORAGE_TYPE || type;
       setStorageType(type);
-      setDisplayStorageType(displayType);
     }
   }, []);
 
@@ -2200,25 +2191,6 @@ export const UserMenu: React.FC = () => {
     }
   };
 
-  // 获取感谢信息
-  const getThanksInfo = (dataSource: string) => {
-    switch (dataSource) {
-      case 'cors-proxy-zwei':
-        return {
-          text: 'Thanks to @Zwei',
-          url: 'https://github.com/bestzwei',
-        };
-      case 'cmliussss-cdn-tencent':
-      case 'cmliussss-cdn-ali':
-        return {
-          text: 'Thanks to @CMLiussss',
-          url: 'https://github.com/cmliu',
-        };
-      default:
-        return null;
-    }
-  };
-
   const handleResetSettings = () => {
     const defaultDoubanProxyType =
       (window as any).RUNTIME_CONFIG?.DOUBAN_PROXY_TYPE ||
@@ -2957,15 +2929,7 @@ export const UserMenu: React.FC = () => {
   const currentUsername = authInfo?.username || 'default';
   const currentRole = authInfo?.role || 'user';
   const currentRoleText = getRoleText(currentRole);
-  const shouldShowRoleBadge = currentRole !== 'user';
   const avatarText = currentUsername.trim().charAt(0).toUpperCase() || 'D';
-
-  const roleBadgeClassName =
-    currentRole === 'owner'
-      ? 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300'
-      : currentRole === 'admin'
-      ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300'
-      : 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300';
 
   const handleOpenProfileCenter = () => {
     setIsOpen(false);
@@ -2982,42 +2946,21 @@ export const UserMenu: React.FC = () => {
       />
 
       {/* 菜单面板 */}
-      <div className='ptv-menu fixed top-[calc(3.5rem+var(--safe-top))] right-[max(1rem,env(safe-area-inset-right))] max-h-[calc(100dvh-4.5rem-var(--safe-top)-env(safe-area-inset-bottom))] w-56 bg-white dark:bg-gray-900 rounded-lg shadow-xl z-[1001] border border-gray-200/50 dark:border-gray-700/50 overflow-y-auto select-none'>
+      <div className='ptv-menu ptv-account-menu fixed top-[calc(3.5rem+var(--safe-top))] right-[max(1rem,env(safe-area-inset-right))] max-h-[calc(100dvh-4.5rem-var(--safe-top)-env(safe-area-inset-bottom))] bg-white dark:bg-gray-900 rounded-lg shadow-xl z-[1001] border border-gray-200/50 dark:border-gray-700/50 overflow-y-auto'>
         {/* 用户信息区域 */}
-        <div className='px-3 py-1 border-b border-gray-200 dark:border-gray-700 bg-gradient-to-r from-gray-50 to-gray-100/50 dark:from-gray-800 dark:to-gray-800/50'>
-          <div className='flex items-start justify-between gap-3'>
+        <div className='ptv-account-header'>
             <button
               onClick={handleOpenProfileCenter}
-              className='flex items-center gap-3 rounded-xl px-2 py-1 text-left hover:bg-white/70 dark:hover:bg-gray-700/40 transition-colors'
+              className='ptv-account-profile'
             >
-              <div className='relative flex h-11 w-11 items-center justify-center rounded-full bg-blue-500 text-lg font-semibold text-white shadow-sm'>
+              <div className='ptv-account-avatar'>
                 <span>{avatarText}</span>
-                {shouldShowRoleBadge && (
-                  <span
-                    className={`absolute left-1/2 top-[calc(100%-6px)] z-10 -translate-x-1/2 inline-flex min-w-[26px] items-center justify-center whitespace-nowrap rounded-full px-1.5 py-[2px] text-[8px] leading-none font-medium shadow-sm ${roleBadgeClassName}`}
-                  >
-                    {currentRoleText}
-                  </span>
-                )}
               </div>
-              <div className='min-w-0'>
-                <span className='block max-w-[84px] truncate text-sm font-semibold text-gray-900 dark:text-gray-100 leading-none'>
-                  {currentUsername}
-                </span>
+              <div className='ptv-account-identity'>
+                <span className='ptv-account-name'>{currentUsername}</span>
+                <span className='ptv-account-role'>{currentRoleText}</span>
               </div>
             </button>
-
-            <div className='pt-1 text-right'>
-              <div className='text-[10px] text-gray-400 dark:text-gray-500'>
-                <div>数据存储</div>
-                <div className='mt-0.5'>
-                  {displayStorageType === 'localstorage'
-                    ? '本地'
-                    : displayStorageType}
-                </div>
-              </div>
-            </div>
-          </div>
         </div>
 
         {/* 菜单项 */}
@@ -3057,7 +3000,7 @@ export const UserMenu: React.FC = () => {
             className='w-full px-3 py-2 text-left flex items-center gap-2.5 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors text-sm'
           >
             <Settings className='w-4 h-4 text-gray-500 dark:text-gray-400' />
-            <span className='font-medium'>设置</span>
+            <span className='font-medium'>个人设置</span>
           </button>
 
           {/* 管理面板按钮 */}
@@ -3071,6 +3014,7 @@ export const UserMenu: React.FC = () => {
             </button>
           )}
 
+          <div className='ptv-account-divider' />
           {/* 离线下载按钮 */}
           {showOfflineDownload && (
             <button
@@ -3118,34 +3062,6 @@ export const UserMenu: React.FC = () => {
             <span className='font-medium'>登出</span>
           </button>
 
-          {/* 分割线 */}
-          <div className='my-1 border-t border-gray-200 dark:border-gray-700'></div>
-
-          {/* 版本信息 */}
-          <button
-            onClick={() => {
-              setIsVersionPanelOpen(true);
-              handleCloseMenu();
-            }}
-            className='w-full px-3 py-2 text-center flex items-center justify-center text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors text-xs'
-          >
-            <div className='flex items-center gap-1'>
-              <span className='font-mono'>v{CURRENT_VERSION}</span>
-              {!isChecking &&
-                updateStatus &&
-                updateStatus !== UpdateStatus.FETCH_FAILED && (
-                  <div
-                    className={`w-2 h-2 rounded-full -translate-y-2 ${
-                      updateStatus === UpdateStatus.HAS_UPDATE
-                        ? 'bg-yellow-500'
-                        : updateStatus === UpdateStatus.NO_UPDATE
-                        ? 'bg-green-400'
-                        : ''
-                    }`}
-                  ></div>
-                )}
-            </div>
-          </button>
         </div>
       </div>
     </>
@@ -3333,26 +3249,6 @@ export const UserMenu: React.FC = () => {
                       )}
                     </div>
 
-                    {/* 感谢信息 */}
-                    {getThanksInfo(doubanDataSource) && (
-                      <div className='mt-3'>
-                        <button
-                          type='button'
-                          onClick={() =>
-                            window.open(
-                              getThanksInfo(doubanDataSource)!.url,
-                              '_blank'
-                            )
-                          }
-                          className='flex items-center justify-center gap-1.5 w-full px-3 text-xs text-gray-500 dark:text-gray-400 cursor-pointer'
-                        >
-                          <span className='font-medium'>
-                            {getThanksInfo(doubanDataSource)!.text}
-                          </span>
-                          <ExternalLink className='w-3.5 opacity-70' />
-                        </button>
-                      </div>
-                    )}
                   </div>
 
                   {/* 豆瓣代理地址设置 - 仅在选择自定义代理时显示 */}
@@ -3547,26 +3443,6 @@ export const UserMenu: React.FC = () => {
                       )}
                     </div>
 
-                    {/* 感谢信息 */}
-                    {getThanksInfo(doubanImageProxyType) && (
-                      <div className='mt-3'>
-                        <button
-                          type='button'
-                          onClick={() =>
-                            window.open(
-                              getThanksInfo(doubanImageProxyType)!.url,
-                              '_blank'
-                            )
-                          }
-                          className='flex items-center justify-center gap-1.5 w-full px-3 text-xs text-gray-500 dark:text-gray-400 cursor-pointer'
-                        >
-                          <span className='font-medium'>
-                            {getThanksInfo(doubanImageProxyType)!.text}
-                          </span>
-                          <ExternalLink className='w-3.5 opacity-70' />
-                        </button>
-                      </div>
-                    )}
                   </div>
 
                   {/* 豆瓣图片代理地址设置 - 仅在选择自定义代理时显示 */}
@@ -6235,14 +6111,11 @@ export const UserMenu: React.FC = () => {
         <button
           onClick={handleMenuClick}
           className='w-10 h-10 p-2 rounded-full flex items-center justify-center text-gray-600 hover:bg-gray-200/50 dark:text-gray-300 dark:hover:bg-gray-700/50 transition-colors'
-          aria-label='User Menu'
+          aria-label='账户菜单'
+          aria-expanded={isOpen}
         >
           <User className='w-full h-full' />
         </button>
-        {/* 版本更新红点 */}
-        {updateStatus === UpdateStatus.HAS_UPDATE && (
-          <div className='absolute top-[2px] right-[2px] w-2 h-2 bg-yellow-500 rounded-full'></div>
-        )}
         {/* 未读通知红点 */}
         {unreadCount > 0 && (
           <div className='absolute top-[2px] right-[2px] w-2 h-2 bg-red-500 rounded-full'></div>
@@ -6258,9 +6131,7 @@ export const UserMenu: React.FC = () => {
         onClose={() => setIsProfileCenterOpen(false)}
         username={currentUsername}
         roleText={currentRoleText}
-        showRoleBadge={shouldShowRoleBadge}
         avatarText={avatarText}
-        roleBadgeClassName={roleBadgeClassName}
         showDeviceManagement={storageType !== 'localstorage'}
         showChangePassword={showChangePassword}
         onOpenEmailSettings={() => {
@@ -6294,12 +6165,6 @@ export const UserMenu: React.FC = () => {
       {isSubscribeOpen &&
         mounted &&
         createPortal(subscribePanel, document.body)}
-
-      {/* 版本面板 */}
-      <VersionPanel
-        isOpen={isVersionPanelOpen}
-        onClose={() => setIsVersionPanelOpen(false)}
-      />
 
       {/* 离线下载面板 */}
       <OfflineDownloadPanel

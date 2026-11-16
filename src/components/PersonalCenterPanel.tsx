@@ -9,9 +9,7 @@ interface PersonalCenterPanelProps {
   onClose: () => void;
   username: string;
   roleText: string;
-  showRoleBadge: boolean;
   avatarText: string;
-  roleBadgeClassName: string;
   showDeviceManagement: boolean;
   showChangePassword: boolean;
   onOpenEmailSettings: () => void;
@@ -25,9 +23,7 @@ export function PersonalCenterPanel({
   onClose,
   username,
   roleText,
-  showRoleBadge,
   avatarText,
-  roleBadgeClassName,
   showDeviceManagement,
   showChangePassword,
   onOpenEmailSettings,
@@ -50,7 +46,7 @@ export function PersonalCenterPanel({
         style={{ touchAction: 'none' }}
       />
 
-      <div className='ptv-dialog fixed top-1/2 left-1/2 z-[1001] max-h-[calc(100dvh-2rem)] w-[calc(100%-2rem)] max-w-md -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-2xl bg-white shadow-xl dark:bg-gray-900'>
+      <div className='ptv-dialog ptv-personal-center fixed top-1/2 left-1/2 z-[1001] max-h-[calc(100dvh-2rem-env(safe-area-inset-top)-env(safe-area-inset-bottom))] w-[calc(100%-2rem)] max-w-md -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-2xl bg-white shadow-xl dark:bg-gray-900'>
         <div
           className='p-6'
           data-panel-content
@@ -59,27 +55,21 @@ export function PersonalCenterPanel({
           }}
           style={{ touchAction: 'auto' }}
         >
-          <div className='relative mb-6 flex flex-col items-center text-center'>
+          <div className='relative mb-6 flex items-center gap-4 pr-12 text-left'>
             <button
               onClick={onClose}
-              className='absolute right-0 top-0 flex h-8 w-8 items-center justify-center rounded-full text-gray-500 transition-colors hover:bg-gray-100 dark:hover:bg-gray-800'
-              aria-label='Close'
+              className='absolute right-0 top-0 flex h-11 w-11 items-center justify-center rounded-full text-gray-500 transition-colors hover:bg-gray-100 dark:hover:bg-gray-800'
+              aria-label='关闭'
             >
               <X className='w-5 h-5' />
             </button>
-            <div className='mb-3 flex h-20 w-20 items-center justify-center rounded-full bg-blue-500 text-3xl font-semibold text-white shadow-md'>
+            <div className='ptv-personal-avatar'>
               {avatarText}
             </div>
-            {showRoleBadge && (
-              <span
-                className={`mb-2 inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium ${roleBadgeClassName}`}
-              >
-                {roleText}
-              </span>
-            )}
-            <h3 className='text-xl font-bold text-gray-900 dark:text-gray-100'>
-              {username}
-            </h3>
+            <div className='min-w-0'>
+              <h3 className='ptv-account-name'>{username}</h3>
+              <span className='ptv-account-role inline-block mt-2'>{roleText}</span>
+            </div>
           </div>
 
           <div className='space-y-3'>
