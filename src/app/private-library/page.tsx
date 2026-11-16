@@ -133,14 +133,6 @@ export default function PrivateLibraryPage() {
     librarySearchInputRef.current?.focus();
   };
 
-  useEffect(() => {
-    if (sourceType === 'xiaoya' || isComposingSearchRef.current) return;
-    const timer = setTimeout(() => {
-      if (!isComposingSearchRef.current) applyLibrarySearch(librarySearchInput);
-    }, 300);
-    return () => clearTimeout(timer);
-  }, [librarySearchInput, sourceType, applyLibrarySearch]);
-
   // 客户端挂载标记
   useEffect(() => {
     setMounted(true);
@@ -678,8 +670,9 @@ export default function PrivateLibraryPage() {
                   event.preventDefault();
                   if (!isComposingSearchRef.current) applyLibrarySearch(librarySearchInput);
                 }}
-                className='flex w-full items-center gap-2 rounded-xl border border-green-200 bg-white/80 p-1.5 pl-3 focus-within:border-green-500 focus-within:ring-2 focus-within:ring-green-500/10 dark:border-gray-600 dark:bg-gray-800/80 sm:max-w-xl'
+                className='flex w-full items-center gap-2 sm:max-w-xl'
               >
+                <div className='flex min-w-0 flex-1 items-center gap-2 rounded-lg border border-gray-200 bg-white px-3 focus-within:border-green-600 dark:border-gray-600 dark:bg-gray-800'>
                 <Search className='h-4 w-4 shrink-0 text-gray-400' aria-hidden='true' />
                 <input
                   ref={librarySearchInputRef}
@@ -687,17 +680,14 @@ export default function PrivateLibraryPage() {
                   value={librarySearchInput}
                   onChange={(event) => setLibrarySearchInput(event.target.value)}
                   onCompositionStart={() => { isComposingSearchRef.current = true; }}
-                  onCompositionEnd={(event) => {
-                    isComposingSearchRef.current = false;
-                    applyLibrarySearch(event.currentTarget.value);
-                  }}
+                  onCompositionEnd={() => { isComposingSearchRef.current = false; }}
                   onKeyDown={(event) => {
                     if (event.key === 'Escape' && !isComposingSearchRef.current) clearLibrarySearch();
                   }}
                   aria-label={sourceType === 'openlist' ? '搜索片名或原文件夹名' : '搜索片名'}
                   placeholder={sourceType === 'openlist' ? '搜索片名或原文件夹名…' : '搜索片名…'}
                   autoComplete='off'
-                  className='h-9 min-w-0 flex-1 bg-transparent text-base text-gray-900 placeholder:text-gray-400 focus:outline-none dark:text-gray-100 sm:text-sm'
+                  className='h-11 min-w-0 flex-1 border-0 bg-transparent text-base text-gray-900 shadow-none placeholder:text-gray-400 focus:outline-none focus:ring-0 focus-visible:shadow-none dark:text-gray-100 sm:text-sm'
                 />
                 {librarySearchInput && (
                   <button
@@ -709,6 +699,7 @@ export default function PrivateLibraryPage() {
                     <X className='h-4 w-4' aria-hidden='true' />
                   </button>
                 )}
+                </div>
                 <button type='submit' className='shrink-0 rounded-lg bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700'>
                   搜索
                 </button>
