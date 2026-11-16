@@ -357,7 +357,7 @@ html[data-loading-style='talisman'] .mtv-load-talisman,
 html[data-loading-style='classic'] .mtv-load-classic,
 html[data-loading-style='race-lights'] .mtv-load-race-lights,
 html[data-loading-style='race-car'] .mtv-load-race-car,
-html:not([data-loading-style]) .mtv-load-talisman {
+html:not([data-loading-style]) .mtv-load-race-lights {
   display: block;
 }
 
@@ -1140,6 +1140,10 @@ html[data-loading-style='grid'] .mtv-err-box {
 .apex-race-preview .apex-race-scene { width: 88px; }
 .apex-race-preview .apex-race-road { height: 7px; }
 .apex-race-preview .apex-race-road span { margin-top: 3px; }
+.apex-race-preview *,
+.apex-race-preview *::after { animation: none; }
+.apex-race-preview .apex-light-column i::after { opacity: 1; }
+.dark .apex-progress-thumb-icon[data-monochrome='true'] { filter: brightness(0) invert(1); }
 @media (max-width: 640px), (max-height: 500px) {
   .mtv-on-dark .apex-start-lights { width: 150px; gap: 5px; padding: 7px; }
   .mtv-on-dark .apex-light-column { gap: 4px; padding: 4px; }

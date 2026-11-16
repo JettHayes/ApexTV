@@ -79,7 +79,7 @@ export async function GET(request: NextRequest) {
     registerBackgroundImage: config.ThemeConfig?.registerBackgroundImage || '',
     homeBackgroundImage: config.ThemeConfig?.homeBackgroundImage || '',
     progressThumbType: config.ThemeConfig?.progressThumbType || 'default',
-    loadingStyle: config.ThemeConfig?.loadingStyle || 'talisman',
+    loadingStyle: config.ThemeConfig?.loadingStyle || 'race-lights',
     rateBadgeStyle: config.ThemeConfig?.rateBadgeStyle || 'flag',
     progressThumbPresetId: config.ThemeConfig?.progressThumbPresetId || '',
     progressThumbCustomUrl: config.ThemeConfig?.progressThumbCustomUrl || '',

@@ -97,6 +97,7 @@ import {
   recommendationCacheKeys,
   setRecommendationCache,
 } from '@/lib/recommendations/cache';
+import { getProgressThumbPreset } from '@/lib/progress-thumb-presets';
 import { appendSpecialSourceParam, isSpecialSourceContext } from '@/lib/special-source.client';
 import {
   convertSubtitleFileToVttObjectUrl,
@@ -8929,56 +8930,33 @@ function PlayPageClient() {
               }
 
               let thumbUrl = '';
-              let thumbColor = '#22c55e'; // 默认绿色
+              let monochrome = false;
 
-              if (config.PROGRESS_THUMB_TYPE === 'preset' && config.PROGRESS_THUMB_PRESET_ID) {
-                const presetConfig: Record<string, { url: string; color: string }> = {
-                  renako: { url: '/icons/q/renako.png', color: '#ec4899' }, // 粉色
-                  irena: { url: '/icons/q/irena.png', color: '#f8fafc' }, // 雪白色
-                  emilia: { url: '/icons/q/emilia.png', color: '#f8fafc' }, // 雪白色
-                };
-                const preset = presetConfig[config.PROGRESS_THUMB_PRESET_ID];
-                if (preset) {
-                  thumbUrl = preset.url;
-                  thumbColor = preset.color;
-                }
+              if (config.PROGRESS_THUMB_TYPE === 'preset') {
+                const preset = getProgressThumbPreset(config.PROGRESS_THUMB_PRESET_ID);
+                thumbUrl = preset.url;
+                monochrome = preset.monochrome;
               } else if (config.PROGRESS_THUMB_TYPE === 'custom' && config.PROGRESS_THUMB_CUSTOM_URL) {
                 thumbUrl = config.PROGRESS_THUMB_CUSTOM_URL;
               }
 
-              // 修改 ArtPlayer 的主题色
-              if (artPlayerRef.current) {
-                artPlayerRef.current.theme = thumbColor;
-              }
-
               if (thumbUrl) {
-                // 根据预设ID确定尺寸
-                let width = '30px';
-                let height = '30px';
-                let marginLeft = '-15px';
-
-                // renako 图标特殊处理（288x404比例，放大1.25倍）
-                if (config.PROGRESS_THUMB_TYPE === 'preset' && config.PROGRESS_THUMB_PRESET_ID === 'renako') {
-                  width = '26.875px'; // 21.5 * 1.25
-                  height = '37.5px'; // 30 * 1.25
-                  marginLeft = '-13.4375px'; // 10.75 * 1.25
-                }
-
                 // 动态设置背景图片
                 const style = document.createElement('style');
                 style.id = 'custom-progress-thumb-style';
                 style.textContent = `
                 /* 替换默认的进度条圆点为自定义图标 */
                 .art-video-player .art-progress-indicator {
-                  width: ${width} !important;
-                  height: ${height} !important;
+                  width: 30px !important;
+                  height: 30px !important;
                   background-image: url('${thumbUrl}') !important;
                   background-size: contain !important;
                   background-repeat: no-repeat !important;
                   background-position: center !important;
                   background-color: transparent !important;
                   border-radius: 0 !important;
-                  margin-left: ${marginLeft} !important;
+                  margin-left: -15px !important;
+                  filter: ${monochrome ? 'brightness(0) invert(1) drop-shadow(0 1px 2px #101820)' : 'none'} !important;
                 }
               `;
 

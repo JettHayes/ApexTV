@@ -79,6 +79,7 @@ import {
   FEATURE_PERMISSION_OPTIONS,
 } from '@/lib/feature-permissions';
 import { MAIN_SOURCE_NAME } from '@/lib/openlist-sources';
+import { getProgressThumbPreset, PROGRESS_THUMB_PRESETS } from '@/lib/progress-thumb-presets';
 import { isCustomCSSEnabled } from '@/styles/themes';
 
 import AnimeSubscriptionComponent from '@/components/AnimeSubscriptionComponent';
@@ -10521,9 +10522,9 @@ const ThemeConfigComponent = ({
     enableCache: true,
     cacheMinutes: 1440, // 默认1天（1440分钟）
     progressThumbType: 'default' as 'default' | 'preset' | 'custom',
-    progressThumbPresetId: '',
+    progressThumbPresetId: PROGRESS_THUMB_PRESETS[0].id as string,
     progressThumbCustomUrl: '',
-    loadingStyle: 'talisman' as 'classic' | 'grid' | 'talisman' | 'race-lights' | 'race-car',
+    loadingStyle: 'race-lights' as 'classic' | 'grid' | 'talisman' | 'race-lights' | 'race-car',
     rateBadgeStyle: 'flag' as 'default' | 'flag' | 'medal',
   });
   const [loginBackgroundImages, setLoginBackgroundImages] = useState<string[]>([
@@ -10544,9 +10545,9 @@ const ThemeConfigComponent = ({
         enableCache: config.ThemeConfig.enableCache !== false,
         cacheMinutes: config.ThemeConfig.cacheMinutes || 1440,
         progressThumbType: config.ThemeConfig.progressThumbType || 'default',
-        progressThumbPresetId: config.ThemeConfig.progressThumbPresetId || '',
+        progressThumbPresetId: getProgressThumbPreset(config.ThemeConfig.progressThumbPresetId).id,
         progressThumbCustomUrl: config.ThemeConfig.progressThumbCustomUrl || '',
-        loadingStyle: config.ThemeConfig.loadingStyle || 'talisman',
+        loadingStyle: config.ThemeConfig.loadingStyle || 'race-lights',
         rateBadgeStyle: config.ThemeConfig.rateBadgeStyle || 'flag',
       });
 
@@ -11080,26 +11081,7 @@ const ThemeConfigComponent = ({
               选择内置图标
             </label>
             <div className='grid grid-cols-2 md:grid-cols-3 gap-3'>
-              {[
-                {
-                  id: 'renako',
-                  name: '玲奈子',
-                  url: '/icons/q/renako.png',
-                  color: '#ec4899',
-                },
-                {
-                  id: 'irena',
-                  name: '伊蕾娜',
-                  url: '/icons/q/irena.png',
-                  color: '#f8fafc',
-                },
-                {
-                  id: 'emilia',
-                  name: '爱蜜莉雅',
-                  url: '/icons/q/emilia.png',
-                  color: '#f8fafc',
-                },
-              ].map((thumb) => (
+              {PROGRESS_THUMB_PRESETS.map((thumb) => (
                 <button
                   key={thumb.id}
                   type='button'
@@ -11119,7 +11101,8 @@ const ThemeConfigComponent = ({
                     <img
                       src={thumb.url}
                       alt={thumb.name}
-                      className='w-12 h-12 object-contain'
+                      className='apex-progress-thumb-icon w-12 h-12 object-contain'
+                      data-monochrome={thumb.monochrome}
                       onError={(e) => {
                         (e.target as HTMLImageElement).src =
                           'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="48" height="48"%3E%3Crect width="48" height="48" fill="%23ddd"/%3E%3Ctext x="50%25" y="50%25" text-anchor="middle" dy=".3em" fill="%23999"%3E?%3C/text%3E%3C/svg%3E';
@@ -11130,7 +11113,7 @@ const ThemeConfigComponent = ({
                     </span>
                     <div
                       className='w-8 h-2 rounded-full'
-                      style={{ backgroundColor: thumb.color }}
+                      style={{ backgroundColor: 'var(--ptv-action)' }}
                       title='进度条颜色'
                     />
                   </div>
@@ -11142,6 +11125,12 @@ const ThemeConfigComponent = ({
                 </button>
               ))}
             </div>
+            <p className='text-xs text-gray-500 dark:text-gray-400'>
+              图标来自{' '}
+              <a href='https://icons8.com/' target='_blank' rel='noopener noreferrer' className='underline underline-offset-2'>
+                Icons8
+              </a>
+            </p>
           </div>
         )}
 
@@ -11209,7 +11198,7 @@ const ThemeConfigComponent = ({
               {
                 id: 'race-lights',
                 name: 'F1 发车灯',
-                desc: '',
+                desc: '默认',
                 preview: (
                   <div className='apex-race-preview'>
                     <RacingLoadingGraphic variant='lights' />
@@ -11229,7 +11218,7 @@ const ThemeConfigComponent = ({
               {
                 id: 'talisman',
                 name: '魔法阵',
-                desc: '默认',
+                desc: '',
                 preview: (
                   <svg
                     viewBox='0 0 100 100'

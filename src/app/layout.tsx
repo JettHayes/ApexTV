@@ -118,7 +118,7 @@ export default async function RootLayout({
   let progressThumbType = 'default';
   let progressThumbPresetId = '';
   let progressThumbCustomUrl = '';
-  let loadingStyle = 'talisman';
+  let loadingStyle = 'race-lights';
   let rateBadgeStyle = 'flag';
   let enableRegistration = false;
   let requireRegistrationInviteCode = false;
@@ -209,7 +209,7 @@ export default async function RootLayout({
     progressThumbType = config.ThemeConfig?.progressThumbType || 'default';
     progressThumbPresetId = config.ThemeConfig?.progressThumbPresetId || '';
     progressThumbCustomUrl = config.ThemeConfig?.progressThumbCustomUrl || '';
-    // 白名单兜底：值异常时回落到魔法阵（现行默认）。
+    // 白名单兜底：未设置或值异常时使用 F1 发车灯。
     loadingStyle =
       config.ThemeConfig?.loadingStyle === 'classic' ||
       config.ThemeConfig?.loadingStyle === 'grid' ||
@@ -217,7 +217,7 @@ export default async function RootLayout({
       config.ThemeConfig?.loadingStyle === 'race-car' ||
       config.ThemeConfig?.loadingStyle === 'talisman'
         ? config.ThemeConfig.loadingStyle
-        : 'talisman';
+        : 'race-lights';
     // 白名单兜底：值异常时回落到默认锦旗徽章
     rateBadgeStyle =
       config.ThemeConfig?.rateBadgeStyle === 'default' ||

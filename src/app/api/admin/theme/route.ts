@@ -165,7 +165,7 @@ export async function POST(request: NextRequest) {
         loadingStyle === 'race-car' ||
         loadingStyle === 'talisman'
           ? loadingStyle
-          : 'talisman',
+          : 'race-lights',
       rateBadgeStyle:
         rateBadgeStyle === 'default' ||
         rateBadgeStyle === 'flag' ||
