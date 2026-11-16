@@ -7,7 +7,6 @@ import { useTheme } from './ThemeProvider';
 
 type WidgetSize = 'compact' | 'flexible';
 type TurnstileAPI = {
-  ready: (callback: () => void) => void;
   render: (container: HTMLElement, options: {
     sitekey: string;
     theme: 'light' | 'dark';
@@ -80,45 +79,44 @@ const TurnstileWidget = forwardRef<TurnstileWidgetHandle, {
     let widgetId: string | undefined;
     setStatus('loading');
     setError(null);
-    api.ready(() => {
-      if (cancelled || !containerRef.current) return;
-      try {
-        widgetId = api.render(containerRef.current, {
-          sitekey: siteKey,
-          theme: resolvedTheme,
-          size,
-          appearance: 'always',
-          callback: (token) => {
-            if (cancelled) return;
-            tokenCallbackRef.current(token);
-            setError(null);
-            setStatus('verified');
-          },
-          'error-callback': () => {
-            if (cancelled) return;
-            tokenCallbackRef.current(null);
-            setError('人机验证未能完成，请重试；持续失败时请检查站点域名与验证配置。');
-          },
-          'expired-callback': () => {
-            if (cancelled) return;
-            tokenCallbackRef.current(null);
-            setError('验证已过期，请重新验证。');
-          },
-          'timeout-callback': () => {
-            if (cancelled) return;
-            tokenCallbackRef.current(null);
-            setError('验证超时，请重试。');
-          },
-        });
-        if (widgetId === undefined) {
-          setError('人机验证初始化失败，请重试。');
-        } else {
-          setStatus((current) => current === 'verified' ? current : 'ready');
-        }
-      } catch {
+    // next/script 的 onReady 已确认脚本加载完成，直接渲染；
+    // 异步加载的 Turnstile 脚本不能再调用 turnstile.ready()。
+    try {
+      widgetId = api.render(containerRef.current, {
+        sitekey: siteKey,
+        theme: resolvedTheme,
+        size,
+        appearance: 'always',
+        callback: (token) => {
+          if (cancelled) return;
+          tokenCallbackRef.current(token);
+          setError(null);
+          setStatus('verified');
+        },
+        'error-callback': () => {
+          if (cancelled) return;
+          tokenCallbackRef.current(null);
+          setError('人机验证未能完成，请重试；持续失败时请检查站点域名与验证配置。');
+        },
+        'expired-callback': () => {
+          if (cancelled) return;
+          tokenCallbackRef.current(null);
+          setError('验证已过期，请重新验证。');
+        },
+        'timeout-callback': () => {
+          if (cancelled) return;
+          tokenCallbackRef.current(null);
+          setError('验证超时，请重试。');
+        },
+      });
+      if (widgetId === undefined) {
         setError('人机验证初始化失败，请重试。');
+      } else {
+        setStatus((current) => current === 'verified' ? current : 'ready');
       }
-    });
+    } catch {
+      setError('人机验证初始化失败，请重试。');
+    }
 
     return () => {
       cancelled = true;
