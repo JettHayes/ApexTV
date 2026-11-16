@@ -4,11 +4,12 @@
 
 import { CheckCircle, Eye, EyeOff, Lock,Send, User } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Suspense, useEffect, useState } from 'react';
+import { Suspense, useEffect, useRef, useState } from 'react';
 
 
 import { useSite } from '@/components/SiteProvider';
 import { ThemeToggle } from '@/components/ThemeToggle';
+import TurnstileWidget, { type TurnstileWidgetHandle } from '@/components/TurnstileWidget';
 
 
 function RegisterPageClient() {
@@ -23,9 +24,8 @@ function RegisterPageClient() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
-  const [turnstileLoaded, setTurnstileLoaded] = useState(false);
   const [siteConfig, setSiteConfig] = useState<any>(null);
-  const [turnstileWidgetId, setTurnstileWidgetId] = useState<string | null>(null);
+  const turnstileRef = useRef<TurnstileWidgetHandle>(null);
   const [backgroundImage, setBackgroundImage] = useState<string>('');
   const [registerSuccess, setRegisterSuccess] = useState(false);
   const [telegramBind, setTelegramBind] = useState<{ code: string; deepLink?: string } | null>(null);
@@ -67,44 +67,6 @@ function RegisterPageClient() {
       }
     }
   }, [router]);
-
-  // 加载Cloudflare Turnstile脚本
-  useEffect(() => {
-    if (!siteConfig?.RegistrationRequireTurnstile || !siteConfig?.TurnstileSiteKey) {
-      return;
-    }
-
-    const script = document.createElement('script');
-    script.src = 'https://challenges.cloudflare.com/turnstile/v0/api.js';
-    script.async = true;
-    script.defer = true;
-    script.onload = () => {
-      setTurnstileLoaded(true);
-    };
-    document.body.appendChild(script);
-
-    return () => {
-      document.body.removeChild(script);
-    };
-  }, [siteConfig]);
-
-  // 渲染Turnstile组件
-  useEffect(() => {
-    if (!turnstileLoaded || !siteConfig?.TurnstileSiteKey) {
-      return;
-    }
-
-    const container = document.getElementById('turnstile-container');
-    if (container && (window as any).turnstile) {
-      const widgetId = (window as any).turnstile.render('#turnstile-container', {
-        sitekey: siteConfig.TurnstileSiteKey,
-        callback: (token: string) => {
-          setTurnstileToken(token);
-        },
-      });
-      setTurnstileWidgetId(widgetId);
-    }
-  }, [turnstileLoaded, siteConfig]);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -165,8 +127,8 @@ function RegisterPageClient() {
         router.replace(redirect);
       } else {
         // 注册失败，重置Turnstile
-        if (siteConfig?.RegistrationRequireTurnstile && turnstileWidgetId !== null && (window as any).turnstile) {
-          (window as any).turnstile.reset(turnstileWidgetId);
+        if (siteConfig?.RegistrationRequireTurnstile) {
+          turnstileRef.current?.reset();
           setTurnstileToken(null);
         }
 
@@ -182,8 +144,8 @@ function RegisterPageClient() {
       }
     } catch (error) {
       // 网络错误，重置Turnstile
-      if (siteConfig?.RegistrationRequireTurnstile && turnstileWidgetId !== null && (window as any).turnstile) {
-        (window as any).turnstile.reset(turnstileWidgetId);
+      if (siteConfig?.RegistrationRequireTurnstile) {
+        turnstileRef.current?.reset();
         setTurnstileToken(null);
       }
       setError('网络错误，请稍后重试');
@@ -368,8 +330,12 @@ function RegisterPageClient() {
           )}
 
           {/* Cloudflare Turnstile */}
-          {siteConfig?.RegistrationRequireTurnstile && siteConfig?.TurnstileSiteKey && (
-            <div id='turnstile-container' className='flex justify-center'></div>
+          {siteConfig?.RegistrationRequireTurnstile && (
+            <TurnstileWidget
+              ref={turnstileRef}
+              siteKey={siteConfig.TurnstileSiteKey || ''}
+              onToken={setTurnstileToken}
+            />
           )}
 
           {error && (

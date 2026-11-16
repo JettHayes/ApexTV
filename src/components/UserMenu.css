@@ -17,3 +17,18 @@
 .ptv-account-divider { margin: 6px 8px; border-top: 1px solid var(--ptv-line); }
 .ptv-personal-avatar { display: grid; flex: none; place-items: center; width: 56px; height: 56px; border-radius: 50%; background: var(--ptv-selected); color: var(--ptv-accent); font-size: 22px; font-weight: 700; }
 .ptv-personal-center button:focus-visible { outline: 2px solid var(--ptv-accent); outline-offset: 2px; }
+
+.ptv-client-tools, .ptv-tv-access { background: var(--ptv-panel); color: var(--ptv-text); border-color: var(--ptv-line); box-shadow: var(--ptv-shadow); }
+.ptv-client-tools { width: min(42rem, calc(100% - 2rem)); }
+.ptv-tv-access { width: min(48rem, calc(100% - 2rem)); }
+.ptv-client-tools, .ptv-tv-access { max-height: calc(100dvh - 2rem - env(safe-area-inset-top) - env(safe-area-inset-bottom)); }
+.ptv-client-tools > div, .ptv-tv-access > div { max-height: inherit; }
+.ptv-client-tools > div > div:first-child button, .ptv-tv-access button[aria-label='Close'] { min-width: 44px; min-height: 44px; }
+.ptv-client-tools :is(.border-gray-200, .dark\:border-gray-700), .ptv-tv-access section { border-color: var(--ptv-line); }
+.ptv-client-tools .bg-gray-50, .ptv-tv-access section { background: var(--ptv-surface); }
+.ptv-client-tools :is(h3, h4), .ptv-tv-access :is(h3, h4, h5) { color: var(--ptv-text); }
+.ptv-client-tools p, .ptv-tv-access section p { color: var(--ptv-muted); }
+.ptv-client-tools a, .ptv-tv-access section a { background: var(--ptv-action); color: var(--ptv-action-ink); }
+.ptv-client-tools a:hover, .ptv-tv-access section a:hover { background: var(--ptv-action-hover); }
+.ptv-client-tools a, .ptv-tv-access .ptv-tv-open { min-height: 44px; }
+.ptv-client-tools :is(button, a):focus-visible, .ptv-tv-access :is(button, a, input):focus-visible { outline: 2px solid var(--ptv-accent); outline-offset: 2px; }

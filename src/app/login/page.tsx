@@ -5,11 +5,12 @@
 import { AlertCircle, ArrowRight, Eye, EyeOff, Lock,Send, User } from 'lucide-react';
 import Image from 'next/image';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Suspense, useEffect, useState } from 'react';
+import { Suspense, useEffect, useRef, useState } from 'react';
 
 
 import { useSite } from '@/components/SiteProvider';
 import { ThemeToggle } from '@/components/ThemeToggle';
+import TurnstileWidget, { type TurnstileWidgetHandle } from '@/components/TurnstileWidget';
 
 // 根据按钮文本识别OIDC提供商并返回对应的图标
 function getOIDCProviderIcon(buttonText: string) {
@@ -38,6 +39,7 @@ function getOIDCProviderIcon(buttonText: string) {
 }
 function LoginPageClient() {
   const router = useRouter();
+  const [logoFailed, setLogoFailed] = useState(false);
   const searchParams = useSearchParams();
   const [password, setPassword] = useState('');
   const [username, setUsername] = useState('');
@@ -47,9 +49,8 @@ function LoginPageClient() {
   const [rememberPassword, setRememberPassword] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
-  const [turnstileLoaded, setTurnstileLoaded] = useState(false);
   const [siteConfig, setSiteConfig] = useState<any>(null);
-  const [turnstileWidgetId, setTurnstileWidgetId] = useState<string | null>(null);
+  const turnstileRef = useRef<TurnstileWidgetHandle>(null);
   const [backgroundImage, setBackgroundImage] = useState<string>('');
   const [telegramLoginEnabled, setTelegramLoginEnabled] = useState(false);
   const [telegramLoginLoading, setTelegramLoginLoading] = useState(false);
@@ -118,44 +119,6 @@ function LoginPageClient() {
     }
   }, []);
 
-  // 加载Cloudflare Turnstile脚本
-  useEffect(() => {
-    if (!siteConfig?.LoginRequireTurnstile || !siteConfig?.TurnstileSiteKey) {
-      return;
-    }
-
-    const script = document.createElement('script');
-    script.src = 'https://challenges.cloudflare.com/turnstile/v0/api.js';
-    script.async = true;
-    script.defer = true;
-    script.onload = () => {
-      setTurnstileLoaded(true);
-    };
-    document.body.appendChild(script);
-
-    return () => {
-      document.body.removeChild(script);
-    };
-  }, [siteConfig]);
-
-  // 渲染Turnstile组件
-  useEffect(() => {
-    if (!turnstileLoaded || !siteConfig?.TurnstileSiteKey) {
-      return;
-    }
-
-    const container = document.getElementById('turnstile-container');
-    if (container && (window as any).turnstile) {
-      const widgetId = (window as any).turnstile.render('#turnstile-container', {
-        sitekey: siteConfig.TurnstileSiteKey,
-        callback: (token: string) => {
-          setTurnstileToken(token);
-        },
-      });
-      setTurnstileWidgetId(widgetId);
-    }
-  }, [turnstileLoaded, siteConfig]);
-
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError(null);
@@ -198,8 +161,8 @@ function LoginPageClient() {
         window.location.replace(redirect);
       } else {
         // 登录失败，重置Turnstile
-        if (siteConfig?.LoginRequireTurnstile && turnstileWidgetId !== null && (window as any).turnstile) {
-          (window as any).turnstile.reset(turnstileWidgetId);
+        if (siteConfig?.LoginRequireTurnstile) {
+          turnstileRef.current?.reset();
           setTurnstileToken(null);
         }
 
@@ -212,8 +175,8 @@ function LoginPageClient() {
       }
     } catch (error) {
       // 网络错误，重置Turnstile
-      if (siteConfig?.LoginRequireTurnstile && turnstileWidgetId !== null && (window as any).turnstile) {
-        (window as any).turnstile.reset(turnstileWidgetId);
+      if (siteConfig?.LoginRequireTurnstile) {
+        turnstileRef.current?.reset();
         setTurnstileToken(null);
       }
       setError('网络错误，请稍后重试');
@@ -295,7 +258,15 @@ function LoginPageClient() {
       </div>
       <div className='ptv-auth-panel ptv-login-panel z-10 w-full max-w-md'>
         <div className='ptv-login-brand'>
-          <Image src='/logo.svg' alt='' width={44} height={44} unoptimized priority />
+          <Image
+            src={logoFailed ? '/logo.png' : '/logo.svg'}
+            alt=''
+            width={44}
+            height={44}
+            unoptimized
+            priority
+            onError={logoFailed ? undefined : () => setLogoFailed(true)}
+          />
           <p className='ptv-login-eyebrow'>SIGN IN</p>
           <h1>{siteName}</h1>
           <p className='ptv-login-subtitle'>登录后继续你的观影进度</p>
@@ -351,8 +322,12 @@ function LoginPageClient() {
           </div>
 
           {/* Cloudflare Turnstile */}
-          {siteConfig?.LoginRequireTurnstile && siteConfig?.TurnstileSiteKey && (
-            <div id='turnstile-container' className='flex justify-center'></div>
+          {siteConfig?.LoginRequireTurnstile && (
+            <TurnstileWidget
+              ref={turnstileRef}
+              siteKey={siteConfig.TurnstileSiteKey || ''}
+              onToken={setTurnstileToken}
+            />
           )}
 
           {error && (

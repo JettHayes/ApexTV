@@ -1,5 +1,7 @@
 type AccentPair = readonly [primary: string, hover: string];
 
+export const THEME_STYLESHEET_REVISION = 'native-3';
+
 // 内置主题只提供颜色角色，不通过类名子串重写播放器、封面或独立模块。
 function paletteCSS(selector: string, [primary, hover]: AccentPair, dark: boolean): string {
   const page = dark ? '#0d161a' : '#f4f3ee';

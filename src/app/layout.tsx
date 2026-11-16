@@ -12,6 +12,7 @@ import { getConfig } from '@/lib/config';
 import { getUserFeatureAccess } from '@/lib/permissions';
 import { resolveSiteName } from '@/lib/site-brand';
 import { listEnabledSourceScripts } from '@/lib/source-script';
+import { THEME_STYLESHEET_REVISION } from '@/styles/themes';
 
 import { StartupCacheCleanup } from '../components/DanmakuCacheCleanup';
 import { DownloadBubble } from '../components/DownloadBubble';
@@ -25,6 +26,8 @@ import TopProgressBar from '../components/TopProgressBar';
 import ChatFloatingWindow from '../components/watch-room/ChatFloatingWindow';
 import { WatchRoomProvider } from '../components/WatchRoomProvider';
 import { DownloadProvider } from '../contexts/DownloadContext';
+
+const { isTVRemoteAvailable } = require('@/lib/tv-remote-hub');
 
 const misans = localFont({
   src: '../fonts/MiSans-Regular.otf',
@@ -324,6 +327,7 @@ export default async function RootLayout({
     BANGUMI_API_BASE_URL: bangumiApiBaseUrl,
     BANGUMI_IMAGE_BASE_URL: bangumiImageBaseUrl,
     ENABLE_TV_MODE: process.env.ENABLE_TV_MODE !== 'false',
+    TV_REMOTE_AVAILABLE: process.env.ENABLE_TV_MODE !== 'false' && isTVRemoteAvailable(),
     ENABLE_TVBOX_SUBSCRIBE: process.env.ENABLE_TVBOX_SUBSCRIBE === 'true',
     ENABLE_OFFLINE_DOWNLOAD:
       process.env.NEXT_PUBLIC_ENABLE_OFFLINE_DOWNLOAD === 'true',
@@ -404,7 +408,7 @@ export default async function RootLayout({
         />
         <link rel='apple-touch-icon' href='/icons/icon-192x192.png' />
         {/* 主题CSS */}
-        <link rel='stylesheet' href='/api/theme/css?v=palette-2' />
+        <link rel='stylesheet' href={`/api/theme/css?v=${THEME_STYLESHEET_REVISION}`} />
         {/* 将配置序列化后直接写入脚本，浏览器端可通过 window.RUNTIME_CONFIG 获取 */}
         {/* eslint-disable-next-line @next/next/no-sync-scripts */}
         <script

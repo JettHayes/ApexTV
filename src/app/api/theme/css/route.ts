@@ -3,8 +3,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 import { getConfig } from '@/lib/config';
-
-import { getThemeCSS } from '@/styles/themes';
+import { getThemeCSS, THEME_STYLESHEET_REVISION } from '@/styles/themes';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic'; // 禁用缓存
@@ -43,7 +42,7 @@ export async function GET(request: NextRequest) {
       : 'no-store';
 
     // 添加版本号到ETag
-    const etag = `"palette-2-${themeConfig.cacheVersion}"`;
+    const etag = `"${THEME_STYLESHEET_REVISION}-${themeConfig.cacheVersion}"`;
 
     // 检查客户端缓存
     const ifNoneMatch = request.headers.get('if-none-match');

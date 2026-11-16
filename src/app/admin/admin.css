@@ -80,9 +80,8 @@
 .apex-admin-section-heading { padding: 20px 24px 18px; border-bottom: 1px solid var(--ptv-line); }
 .apex-admin-section-category { display: block; margin-bottom: 6px; color: var(--ptv-muted); font-size: 12px; }
 .apex-admin-section-heading h2 { color: var(--ptv-text); font-size: 20px; font-weight: 650; letter-spacing: -.02em; }
-.apex-admin-content { min-width: 0; padding: 24px; }
-.apex-admin-section[data-layout='form'] .apex-admin-content { max-width: 1080px; }
-.apex-admin-fields { min-width: 0; }
+.apex-admin-content { width: 100%; min-width: 0; padding: 24px; }
+.apex-admin-fields { width: 100%; min-width: 0; }
 .apex-admin-fields > :is(.space-y-4, .space-y-6) { min-width: 0; }
 .apex-admin-content :is(p, label) { overflow-wrap: anywhere; }
 .apex-admin-content p { line-height: 1.65; }
@@ -131,8 +130,8 @@
 .apex-admin-content label.relative.inline-flex { min-height: 44px; }
 .apex-admin-content label.relative.inline-flex > div { position: relative; }
 
-.apex-admin-table-scroll { max-width: 100%; border: 1px solid var(--ptv-line); border-radius: 10px; overscroll-behavior-x: contain; }
-.apex-admin-table-scroll > table { min-width: 40rem; }
+.apex-admin-table-scroll { width: 100%; max-width: 100%; border: 1px solid var(--ptv-line); border-radius: 10px; overscroll-behavior-x: contain; }
+.apex-admin-table-scroll > table { width: 100%; min-width: 40rem; }
 .apex-admin-content :is(th, td) { padding: 12px 14px; }
 .apex-admin-content th { font-weight: 600; letter-spacing: 0; }
 .apex-admin-content td { overflow-wrap: anywhere; }

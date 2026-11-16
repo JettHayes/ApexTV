@@ -6,6 +6,8 @@ import { getConfig } from '@/lib/config';
 import { resolveSiteName } from '@/lib/site-brand';
 import { CURRENT_VERSION } from '@/lib/version';
 
+const { isTVRemoteAvailable } = require('@/lib/tv-remote-hub');
+
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic'; // 禁用缓存
 
@@ -38,6 +40,7 @@ export async function GET(request: NextRequest) {
       StorageType: 'localstorage',
       Version: CURRENT_VERSION,
       TVModeEnabled: process.env.ENABLE_TV_MODE !== 'false',
+      TV_REMOTE_AVAILABLE: process.env.ENABLE_TV_MODE !== 'false' && isTVRemoteAvailable(),
       WatchRoom: watchRoomConfig,
       EnableOfflineDownload: process.env.NEXT_PUBLIC_ENABLE_OFFLINE_DOWNLOAD === 'true',
       DanmakuAutoLoadDefault: true,
@@ -53,6 +56,7 @@ export async function GET(request: NextRequest) {
     StorageType: storageType,
     Version: CURRENT_VERSION,
     TVModeEnabled: process.env.ENABLE_TV_MODE !== 'false',
+    TV_REMOTE_AVAILABLE: process.env.ENABLE_TV_MODE !== 'false' && isTVRemoteAvailable(),
     WatchRoom: watchRoomConfig,
     EnableOfflineDownload: process.env.NEXT_PUBLIC_ENABLE_OFFLINE_DOWNLOAD === 'true',
     EnableRegistration: config.SiteConfig.EnableRegistration || false,

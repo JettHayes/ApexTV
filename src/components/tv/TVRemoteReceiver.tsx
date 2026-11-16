@@ -87,7 +87,8 @@ export default function TVRemoteReceiver() {
     window.addEventListener('moontv:local-remote-text', onLocalRemoteText);
 
     const auth = getAuthInfoFromBrowserCookie();
-    if (!auth?.username) {
+    const remoteAvailable = (window as any).RUNTIME_CONFIG?.TV_REMOTE_AVAILABLE === true;
+    if (!auth?.username || !remoteAvailable) {
       return () => {
         window.removeEventListener('hashchange', syncLocalRemoteUrl);
         window.removeEventListener('moontv:local-remote-key', onLocalRemoteKey);

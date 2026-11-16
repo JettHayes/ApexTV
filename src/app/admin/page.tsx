@@ -19688,7 +19688,6 @@ function AdminPageClient() {
   const activeGroup = navigationGroups.find((group) =>
     group.items.some((item) => item.key === activeItem.key)
   );
-  const wideSections = ['userConfig', 'videoSource', 'sourceScriptLab', 'openListConfig', 'embyConfig', 'categoryConfig', 'configFile', 'liveSource', 'webLive', 'movieRequests', 'animeSubscription', 'dataMigration'];
 
   return (
     <PageLayout activePath='/admin'>
@@ -19814,7 +19813,6 @@ function AdminPageClient() {
               ref={contentScrollRef}
               className='apex-admin-section'
               data-section={activeItem.key}
-              data-layout={wideSections.includes(activeItem.key) ? 'workspace' : 'form'}
               aria-labelledby='admin-section-title'
             >
               <header className='apex-admin-section-heading'>

@@ -90,6 +90,7 @@ export const UserMenu: React.FC = () => {
   // 订阅相关状态
   const [subscribeEnabled, setSubscribeEnabled] = useState(false);
   const [tvModeEnabled, setTvModeEnabled] = useState(true);
+  const [tvRemoteAvailable, setTvRemoteAvailable] = useState(false);
   const [subscribeUrl, setSubscribeUrl] = useState('');
   const [copySuccess, setCopySuccess] = useState(false);
   const [orionBaseUrlCopySuccess, setOrionBaseUrlCopySuccess] = useState(false);
@@ -496,6 +497,21 @@ export const UserMenu: React.FC = () => {
       setTvModeEnabled((window as any).RUNTIME_CONFIG?.ENABLE_TV_MODE !== false);
     }
   }, []);
+
+  useEffect(() => {
+    if (!isSubscribeOpen) return;
+    let active = true;
+    setTvRemoteAvailable(false);
+    fetch('/api/server-config')
+      .then((response) => response.ok ? response.json() : null)
+      .then((config) => {
+        if (active) setTvRemoteAvailable(config?.TV_REMOTE_AVAILABLE === true);
+      })
+      .catch(() => {
+        if (active) setTvRemoteAvailable(false);
+      });
+    return () => { active = false; };
+  }, [isSubscribeOpen]);
 
   // 懒加载订阅 URL - 只在打开订阅面板时请求
   const fetchSubscribeUrl = async () => {
@@ -3047,7 +3063,7 @@ export const UserMenu: React.FC = () => {
             className='w-full px-3 py-2 text-left flex items-center gap-2.5 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors text-sm'
           >
             <Package className='w-4 h-4 text-gray-500 dark:text-gray-400' />
-            <span className='font-medium'>生态应用</span>
+            <span className='font-medium'>客户端与工具</span>
           </button>
 
           {/* 分割线 */}
@@ -5334,7 +5350,7 @@ export const UserMenu: React.FC = () => {
       />
 
       {/* 电视访问面板 */}
-      <div className='fixed top-1/2 left-1/2 z-[1001] max-h-[92vh] w-full max-w-3xl -translate-x-1/2 -translate-y-1/2 overflow-hidden rounded-3xl border border-slate-200/70 bg-white shadow-2xl shadow-black/30 dark:border-white/10 dark:bg-slate-950'>
+      <div className='ptv-dialog ptv-tv-access fixed top-1/2 left-1/2 z-[1001] max-h-[92vh] w-full max-w-3xl -translate-x-1/2 -translate-y-1/2 overflow-hidden rounded-3xl border border-slate-200/70 bg-white shadow-2xl shadow-black/30 dark:border-white/10 dark:bg-slate-950'>
         <div
           className='max-h-[92vh] overflow-y-auto p-6 sm:p-7'
           data-panel-content
@@ -5569,7 +5585,7 @@ export const UserMenu: React.FC = () => {
                 </div>
               </div>
               <p className='mt-5 text-sm leading-6 text-slate-600 dark:text-slate-400'>
-                可直接作为 MoonTV Plus 电视端使用，适合安装到 Android TV / 电视盒子。
+                面向 Android TV 和电视盒子的第三方客户端，适合使用遥控器浏览与播放。连接本站后的兼容性待验证，界面由客户端提供。
               </p>
               <div className='mt-5'>
                 <h5 className='mb-2 text-sm font-bold text-slate-700 dark:text-slate-300'>
@@ -5625,14 +5641,29 @@ export const UserMenu: React.FC = () => {
                 <p className='mt-5 text-sm leading-6 text-slate-600 dark:text-slate-400'>
                 {tvModeEnabled
                   ? '电视端打开 /tv 后可扫码登录；在电视端“我的”页也可扫描局域网遥控二维码。'
-                  : '当前部署未开启 TV 模式，/tv 页面和 Web 电视遥控不可用。'}
+                  : '当前部署已关闭 TV 模式，/tv 页面和 Web 电视遥控不可用。'}
               </p>
               {!tvModeEnabled && (
                 <div className='mt-5 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-bold text-amber-800 dark:border-amber-300/20 dark:bg-amber-400/10 dark:text-amber-200'>
-                  TV 模式未开启。请在环境变量中设置 ENABLE_TV_MODE=true 后重启服务。
+                  TV 模式默认开启；环境变量 ENABLE_TV_MODE=false 会关闭该功能。
                 </div>
               )}
+              {tvModeEnabled && !tvRemoteAvailable && (
+                <p className='mt-3 text-sm text-slate-600 dark:text-slate-400'>当前部署未接入站点遥控。</p>
+              )}
+              <p className='mt-3 text-sm text-slate-600 dark:text-slate-400'>如浏览器不支持网页扫码，可使用系统相机扫描电视端二维码。</p>
               <div className='mt-5 grid gap-2 sm:grid-cols-2'>
+                {tvModeEnabled && (
+                  <a
+                    href='/tv'
+                    target='_blank'
+                    rel='noopener noreferrer'
+                    className='ptv-tv-open inline-flex min-h-11 items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-semibold sm:col-span-2'
+                  >
+                    <Monitor className='h-4 w-4' />
+                    打开 Web 电视
+                  </a>
+                )}
                 <button
                   type='button'
                   onClick={startTvQrScanner}
@@ -5645,11 +5676,11 @@ export const UserMenu: React.FC = () => {
                 <button
                   type='button'
                   onClick={() => {
-                    if (!tvModeEnabled) return;
+                    if (!tvModeEnabled || !tvRemoteAvailable) return;
                     setIsSubscribeOpen(false);
                     setIsTVRemoteOpen(true);
                   }}
-                  disabled={!tvModeEnabled}
+                  disabled={!tvModeEnabled || !tvRemoteAvailable}
                   className='inline-flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl bg-slate-950 px-4 py-3 text-sm font-black text-white transition hover:bg-slate-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-500/70 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-slate-500 dark:bg-white dark:text-slate-950 dark:hover:bg-slate-200 dark:disabled:bg-white/10 dark:disabled:text-slate-500'
                 >
                   <Sliders className='h-4 w-4' />
@@ -5882,7 +5913,7 @@ export const UserMenu: React.FC = () => {
       />
 
       {/* 生态应用面板 */}
-      <div className='fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-2xl bg-white dark:bg-gray-900 rounded-xl shadow-xl z-[1001] overflow-hidden'>
+      <div className='ptv-dialog ptv-client-tools fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-2xl bg-white dark:bg-gray-900 rounded-xl shadow-xl z-[1001] overflow-hidden'>
         <div
           className='h-full max-h-[85vh] flex flex-col'
           data-panel-content
@@ -5896,7 +5927,7 @@ export const UserMenu: React.FC = () => {
           {/* 标题栏 */}
           <div className='flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700'>
             <h3 className='text-xl font-bold text-gray-800 dark:text-gray-200'>
-              生态应用
+              客户端与工具
             </h3>
             <div className='flex items-center gap-2'>
               {/* 举报按钮 */}
@@ -5940,7 +5971,7 @@ export const UserMenu: React.FC = () => {
                       MoonTVPlus-PC客户端
                     </h4>
                     <p className='text-sm text-gray-600 dark:text-gray-400 mb-3'>
-                      专为Windows开发的客户端，完美支持私人影库mkv视频
+                      Windows 桌面客户端，使用 mpv 播放视频并处理字幕。连接本站后的具体功能兼容性待验证，界面由客户端提供。
                     </p>
                     <a
                       href='https://github.com/mtvpls/MoonTVPlus-PC/releases'
@@ -5974,7 +6005,7 @@ export const UserMenu: React.FC = () => {
                       Selene 跨平台客户端
                     </h4>
                     <p className='text-sm text-gray-600 dark:text-gray-400 mb-3'>
-                      多平台客户端
+                      面向 Android、iOS、macOS 和 Windows 的独立客户端，用于搜索与播放。安装方式和连接本站后的兼容性需按设备验证。
                     </p>
                     <div className='flex flex-wrap gap-2'>
                       <a
@@ -6010,7 +6041,7 @@ export const UserMenu: React.FC = () => {
                       OrionTV TV专用客户端
                     </h4>
                     <p className='text-sm text-gray-600 dark:text-gray-400 mb-3'>
-                      tv专用
+                      面向 Android TV 和电视盒子的第三方客户端，适合遥控器操作；连接本站后的兼容性待验证，界面由客户端提供。
                     </p>
                     <a
                       href='https://github.com/mtvpls/OrionTV_Build/tags'
@@ -6042,8 +6073,7 @@ export const UserMenu: React.FC = () => {
                       私人影库转码器
                     </h4>
                     <p className='text-sm text-gray-600 dark:text-gray-400 mb-3'>
-                      为私人影库中的 MKV
-                      视频提供转码播放能力，可解析内封字幕并解决部分视频无音频问题，但通常需要较高的本机性能配置。
+                      为私人影库中的 MKV 视频提供转码播放能力，可处理部分无音频问题，通常需要较高的本机性能。需在观看设备本机另行运行转码服务（localhost:19080）；Vercel 部署不包含此服务。内封字幕仅支持文本字幕，图片字幕不支持。
                     </p>
                     <a
                       href='https://github.com/mtvpls/moontvplus-transcoder/tags'
@@ -6075,8 +6105,7 @@ export const UserMenu: React.FC = () => {
                       MoonTVPlus 插件
                     </h4>
                     <p className='text-sm text-gray-600 dark:text-gray-400 mb-3'>
-                      为 MoonTVPlus
-                      提供增强性功能，目前拥有解决私人影库超分跨域能力
+                      桌面浏览器扩展，用于处理私人影库超分功能读取视频帧时的跨域（CORS）限制。
                     </p>
                     <a
                       href='https://github.com/mtvpls/moontvplus-extension/releases'

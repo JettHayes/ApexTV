@@ -16,6 +16,8 @@ html[data-moontvplus] {
   --ptv-error: #b42318;
   --ptv-success: #167044;
   --ptv-shadow: 0 12px 32px rgba(10, 34, 36, .08);
+  --skeleton-color: var(--ptv-soft);
+  --skeleton-highlight: var(--ptv-panel);
   --ptv-gutter: clamp(16px, 2.6vw, 40px);
   --ptv-max: 1360px;
   --ptv-ease: cubic-bezier(.16, 1, .3, 1);
@@ -101,6 +103,11 @@ html[data-moontvplus] :is(.ptv-dialog, .ptv-popover, .ptv-menu) { background-col
   accent-color: var(--ptv-accent);
 }
 :where(.ptv-page, .ptv-dialog, .ptv-popover, .ptv-menu) input::placeholder { color: var(--ptv-muted); opacity: .9; }
+:where(.ptv-page, .ptv-dialog, .ptv-popover, .ptv-menu) :is(input, select, textarea):focus-visible {
+  border-color: var(--ptv-accent);
+  box-shadow: 0 0 0 3px var(--ptv-selected);
+}
+:where(.ptv-page, .ptv-dialog, .ptv-popover, .ptv-menu) :is(input[type='checkbox'], input[type='radio']) { accent-color: var(--ptv-accent); }
 .ptv-page :is(button, a) { -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
 
 .ptv-sidebar { background: var(--ptv-surface) !important; border-color: var(--ptv-line) !important; box-shadow: none !important; }
@@ -246,7 +253,11 @@ html[data-moontvplus].dark .ptv-auth-panel::before { background: linear-gradient
 .ptv-field-control:focus-within { border-color: var(--ptv-accent); background: var(--ptv-surface); box-shadow: 0 0 0 4px color-mix(in srgb, var(--ptv-accent) 16%, transparent); }
 .ptv-field-control:focus-within > svg { color: var(--ptv-accent); }
 .ptv-auth-panel .ptv-field-control input { flex: 1; min-width: 0; min-height: 52px; padding: 0 16px 0 46px; border: 0; border-radius: 12px; background: transparent; box-shadow: none; color: var(--ptv-text); font-size: 16px; }
-.ptv-auth-panel .ptv-field-control input:focus-visible { outline: none; }
+/* 复合输入框由外层统一绘制焦点，覆盖旧自定义 CSS 的输入框独立光圈。 */
+html[data-moontvplus] .ptv-auth-panel .ptv-field-control > input:is(:focus, :focus-visible) {
+  outline: none !important;
+  box-shadow: none !important;
+}
 .ptv-field-control input::placeholder { color: var(--ptv-muted); opacity: .75; }
 .ptv-field-toggle { display: flex; flex-shrink: 0; align-items: center; justify-content: center; width: 44px; height: 44px; margin-right: 4px; border-radius: 10px; color: var(--ptv-muted); transition: color 160ms, background-color 160ms; }
 
@@ -264,6 +275,13 @@ html[data-moontvplus].dark .ptv-login-error { color: #fda29b; background: rgba(2
 .ptv-auth-panel button.ptv-login-submit { position: relative; display: flex; align-items: center; justify-content: center; gap: 10px; width: 100%; min-height: 52px; overflow: hidden; border-radius: 12px; background: var(--ptv-action); color: var(--ptv-action-ink); font-size: 16px; font-weight: 700; letter-spacing: .04em; box-shadow: 0 12px 24px -14px rgba(0, 166, 150, .9); transition: background-color 160ms, box-shadow 160ms, transform 160ms var(--ptv-ease); }
 .ptv-login-submit::before { content: ''; position: absolute; inset: 0; background: repeating-linear-gradient(115deg, transparent 0 14px, rgba(255, 255, 255, .16) 14px 16px); opacity: 0; transition: opacity 200ms; }
 .ptv-login-submit svg { transition: transform 200ms var(--ptv-ease); }
+
+.ptv-turnstile { min-width: 0; width: 100%; padding: 12px; border: 1px solid var(--ptv-line); border-radius: 12px; background: var(--ptv-panel); }
+.ptv-turnstile-caption { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; color: var(--ptv-muted); font-size: 12px; line-height: 1.5; }
+.ptv-turnstile-widget { display: flex; justify-content: center; width: 100%; min-height: 65px; }
+.ptv-turnstile-hint { margin-top: 8px; color: var(--ptv-muted); font-size: 12px; line-height: 1.6; }
+.ptv-turnstile-error { margin-top: 8px; color: var(--ptv-error); font-size: 13px; line-height: 1.6; }
+.ptv-turnstile-error button { min-height: 44px; margin-top: 6px; color: var(--ptv-accent); text-decoration: underline; text-underline-offset: 3px; }
 .ptv-auth-panel button.ptv-login-submit:not(:disabled):active { transform: scale(.985); }
 .ptv-auth-panel button.ptv-login-submit:disabled { cursor: not-allowed; background: var(--ptv-soft); color: var(--ptv-muted); box-shadow: none; }
 .ptv-login-spinner { width: 18px; height: 18px; border: 2px solid currentColor; border-right-color: transparent; border-radius: 50%; animation: ptv-spin 700ms linear infinite; }

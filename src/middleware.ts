@@ -167,6 +167,9 @@ function handleAuthFailure(
 
 // 判断是否需要跳过认证的路径
 function shouldSkipAuth(pathname: string): boolean {
+  // 登录页的品牌 SVG 与已有 PNG 一样，是无需登录的公开图片。
+  if (pathname === '/logo.svg') return true;
+
   const skipPaths = [
     '/_next',
     '/favicon.ico',

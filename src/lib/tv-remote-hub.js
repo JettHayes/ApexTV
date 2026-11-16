@@ -16,6 +16,10 @@ function attachTVRemoteIO(io) {
   hub.io = io;
 }
 
+function isTVRemoteAvailable() {
+  return Boolean(getGlobalHub().io);
+}
+
 function registerTVRemoteDevice(socketId, username, data) {
   const hub = getGlobalHub();
   const deviceId = String(data?.deviceId || '').slice(0, 128);
@@ -114,6 +118,7 @@ module.exports = {
   attachTVRemoteIO,
   cleanupTVRemoteDevices,
   clearTVRemoteHub,
+  isTVRemoteAvailable,
   listTVRemoteDevices,
   registerTVRemoteDevice,
   removeTVRemoteSocket,
