@@ -672,8 +672,8 @@ export default function PrivateLibraryPage() {
                 }}
                 className='flex w-full items-center gap-2 sm:max-w-xl'
               >
-                <div className='flex min-w-0 flex-1 items-center gap-2 rounded-lg border border-gray-200 bg-white px-3 focus-within:border-green-600 dark:border-gray-600 dark:bg-gray-800'>
-                <Search className='h-4 w-4 shrink-0 text-gray-400' aria-hidden='true' />
+                <div className='ptv-field-control'>
+                <Search aria-hidden='true' />
                 <input
                   ref={librarySearchInputRef}
                   type='text'
@@ -687,7 +687,6 @@ export default function PrivateLibraryPage() {
                   aria-label={sourceType === 'openlist' ? '搜索片名或原文件夹名' : '搜索片名'}
                   placeholder={sourceType === 'openlist' ? '搜索片名或原文件夹名…' : '搜索片名…'}
                   autoComplete='off'
-                  className='h-11 min-w-0 flex-1 border-0 bg-transparent text-base text-gray-900 shadow-none placeholder:text-gray-400 focus:outline-none focus:ring-0 focus-visible:shadow-none dark:text-gray-100 sm:text-sm'
                 />
                 {librarySearchInput && (
                   <button

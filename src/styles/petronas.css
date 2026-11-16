@@ -268,10 +268,12 @@ html[data-moontvplus].dark .ptv-auth-panel::before { background: linear-gradient
 .ptv-field-control:focus-within > svg { color: var(--ptv-accent); }
 .ptv-auth-panel .ptv-field-control input { flex: 1; min-width: 0; min-height: 52px; padding: 0 16px 0 46px; border: 0; border-radius: 12px; background: transparent; box-shadow: none; color: var(--ptv-text); font-size: 16px; }
 /* 复合输入框由外层统一绘制焦点，覆盖旧自定义 CSS 的输入框独立光圈。 */
-html[data-moontvplus] .ptv-auth-panel .ptv-field-control > input:is(:focus, :focus-visible) {
+html[data-moontvplus] :is(.ptv-auth-panel, .ptv-library-tools) .ptv-field-control > input:is(:focus, :focus-visible) {
   outline: none !important;
   box-shadow: none !important;
 }
+.ptv-library-tools .ptv-field-control { flex: 1; min-width: 0; }
+.ptv-library-tools .ptv-field-control input { flex: 1; min-width: 0; height: 44px; min-height: 44px; padding: 0 4px 0 42px; border: 0; background: transparent; box-shadow: none; color: var(--ptv-text); font-size: 14px; }
 .ptv-field-control input::placeholder { color: var(--ptv-muted); opacity: .75; }
 .ptv-field-toggle { display: flex; flex-shrink: 0; align-items: center; justify-content: center; width: 44px; height: 44px; margin-right: 4px; border-radius: 10px; color: var(--ptv-muted); transition: color 160ms, background-color 160ms; }
 
