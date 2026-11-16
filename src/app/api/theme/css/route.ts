@@ -1,9 +1,9 @@
-/* eslint-disable @typescript-eslint/no-explicit-any,no-console */
+/* eslint-disable no-console */
 
 import { NextRequest, NextResponse } from 'next/server';
 
 import { getConfig } from '@/lib/config';
-import { getThemeCSS, THEME_STYLESHEET_REVISION } from '@/styles/themes';
+import { isCustomCSSEnabled, THEME_STYLESHEET_REVISION } from '@/styles/themes';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic'; // 禁用缓存
@@ -23,15 +23,8 @@ export async function GET(request: NextRequest) {
       });
     }
 
-    let css = '';
-
-    // 如果启用了内置主题，使用内置主题CSS
-    if (themeConfig.enableBuiltInTheme) {
-      css = getThemeCSS(themeConfig.builtInTheme as any);
-    } else {
-      // 否则使用自定义CSS
-      css = themeConfig.customCSS || '';
-    }
+    // 基础主题来自 petronas.css；旧配色不再输出，仅按独立开关叠加 CSS。
+    const css = isCustomCSSEnabled(themeConfig) ? themeConfig.customCSS || '' : '';
 
     // 设置缓存控制
     const cacheMinutes = themeConfig.cacheMinutes || 1440; // 默认1天（1440分钟）

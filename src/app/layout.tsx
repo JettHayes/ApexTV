@@ -114,6 +114,7 @@ export default async function RootLayout({
   let loginBackgroundImage = '';
   let registerBackgroundImage = '';
   let homeBackgroundImage = '';
+  let themeCacheVersion = 0;
   let progressThumbType = 'default';
   let progressThumbPresetId = '';
   let progressThumbCustomUrl = '';
@@ -204,13 +205,16 @@ export default async function RootLayout({
     loginBackgroundImage = config.ThemeConfig?.loginBackgroundImage || '';
     registerBackgroundImage = config.ThemeConfig?.registerBackgroundImage || '';
     homeBackgroundImage = config.ThemeConfig?.homeBackgroundImage || '';
+    themeCacheVersion = config.ThemeConfig?.cacheVersion || 0;
     progressThumbType = config.ThemeConfig?.progressThumbType || 'default';
     progressThumbPresetId = config.ThemeConfig?.progressThumbPresetId || '';
     progressThumbCustomUrl = config.ThemeConfig?.progressThumbCustomUrl || '';
-    // 白名单兜底：值异常时回落到魔法阵（现行默认），避免三种款式都不显示
+    // 白名单兜底：值异常时回落到魔法阵（现行默认）。
     loadingStyle =
       config.ThemeConfig?.loadingStyle === 'classic' ||
       config.ThemeConfig?.loadingStyle === 'grid' ||
+      config.ThemeConfig?.loadingStyle === 'race-lights' ||
+      config.ThemeConfig?.loadingStyle === 'race-car' ||
       config.ThemeConfig?.loadingStyle === 'talisman'
         ? config.ThemeConfig.loadingStyle
         : 'talisman';
@@ -407,8 +411,8 @@ export default async function RootLayout({
           content='width=device-width, initial-scale=1.0, viewport-fit=cover'
         />
         <link rel='apple-touch-icon' href='/icons/icon-192x192.png' />
-        {/* 主题CSS */}
-        <link rel='stylesheet' href={`/api/theme/css?v=${THEME_STYLESHEET_REVISION}`} />
+        {/* 自定义样式覆盖；配置版本变更时使用新的缓存地址。 */}
+        <link rel='stylesheet' href={`/api/theme/css?v=${THEME_STYLESHEET_REVISION}&c=${themeCacheVersion}`} />
         {/* 将配置序列化后直接写入脚本，浏览器端可通过 window.RUNTIME_CONFIG 获取 */}
         {/* eslint-disable-next-line @next/next/no-sync-scripts */}
         <script

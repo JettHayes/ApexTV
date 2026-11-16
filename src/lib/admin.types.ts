@@ -155,8 +155,9 @@ export interface AdminConfig {
   }[];
   WebLiveEnabled?: boolean; // 网络直播功能总开关
   ThemeConfig?: {
-    enableBuiltInTheme: boolean; // 是否启用内置主题
-    builtInTheme: string; // 内置主题名称
+    enableBuiltInTheme?: boolean; // 旧主题字段，仅用于兼容读取
+    builtInTheme?: string; // 旧配色名称，运行时不再应用
+    enableCustomCSS?: boolean; // 在 Apex TV 主题上启用自定义样式覆盖
     customCSS: string; // 自定义CSS
     enableCache: boolean; // 是否启用浏览器缓存
     cacheMinutes: number; // 缓存时间（分钟）
@@ -169,7 +170,7 @@ export interface AdminConfig {
     progressThumbPresetId?: string; // 预制图标ID
     progressThumbCustomUrl?: string; // 自定义图标URL
     // 初始化加载样式：播放页/直播页首屏加载动画的款式
-    loadingStyle?: 'classic' | 'grid' | 'talisman';
+    loadingStyle?: 'classic' | 'grid' | 'talisman' | 'race-lights' | 'race-car';
     // 评分星标样式：视频卡片右上角评分徽章的款式
     rateBadgeStyle?: 'default' | 'flag' | 'medal';
   };

@@ -3,9 +3,11 @@
 import { AlertCircle, X } from 'lucide-react';
 import { type CSSProperties, type ReactNode } from 'react';
 
-/* 初始化加载动画的三种款式（后台「个性化配置 → 初始化加载样式」可切换）。
+import RacingLoading from './RacingLoading';
+
+/* 初始化加载动画（后台「个性化配置 → 初始化加载样式」可切换）。
  *
- * 三套标记都由这里产出，只是靠 globals.css 里的 html[data-loading-style]
+ * 各套标记都由这里产出，只是靠 globals.css 里的 html[data-loading-style]
  * 决定显示哪一套 —— 首帧就是正确款式，不会「先闪一下旧版再换成二次元」，
  * 也没有 hydration 不匹配。
  *
@@ -41,7 +43,7 @@ interface CommonProps {
   activeStepIdx: number;
   /** 旧版那一套标记，各页自备 */
   legacy: ReactNode;
-  /** 播放器蒙层是深色底：这两款在里面固定走暗色，不跟站点明暗 */
+  /** 播放器蒙层固定走暗色，不跟站点明暗 */
   onDark?: boolean;
 }
 
@@ -108,6 +110,9 @@ export default function LoadingStyle({
   return (
     <>
       <div className='mtv-load mtv-load-classic'>{legacy}</div>
+
+      <RacingLoading variant='lights' steps={steps} activeStepIdx={idx} message={message} onDark={onDark} />
+      <RacingLoading variant='car' steps={steps} activeStepIdx={idx} message={message} onDark={onDark} />
 
       {/* 方格 */}
       <div className={`mtv-load mtv-load-grid${dark}`}>
@@ -192,6 +197,9 @@ export function LoadingErrorStyle({
   return (
     <>
       <div className='mtv-err-legacy'>{legacy}</div>
+
+      <RacingLoading variant='lights' steps={steps} activeStepIdx={idx} message={message} onDark={onDark} failed />
+      <RacingLoading variant='car' steps={steps} activeStepIdx={idx} message={message} onDark={onDark} failed />
 
       {/* 魔法阵：坏死的阵 */}
       <div className={`mtv-load mtv-load-talisman${dark}`}>

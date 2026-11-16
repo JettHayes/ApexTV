@@ -79,12 +79,14 @@ import {
   FEATURE_PERMISSION_OPTIONS,
 } from '@/lib/feature-permissions';
 import { MAIN_SOURCE_NAME } from '@/lib/openlist-sources';
+import { isCustomCSSEnabled } from '@/styles/themes';
 
 import AnimeSubscriptionComponent from '@/components/AnimeSubscriptionComponent';
 import CorrectDialog from '@/components/CorrectDialog';
 import DataMigration from '@/components/DataMigration';
 import OpenListPathInput from '@/components/OpenListPathInput';
 import PageLayout from '@/components/PageLayout';
+import { RacingLoadingGraphic } from '@/components/RacingLoading';
 
 import './admin.css';
 
@@ -10514,15 +10516,14 @@ const ThemeConfigComponent = ({
   const { alertModal, showAlert, hideAlert } = useAlertModal();
   const { isLoading, withLoading } = useLoadingState();
   const [themeSettings, setThemeSettings] = useState({
-    enableBuiltInTheme: false,
-    builtInTheme: 'default',
+    enableCustomCSS: false,
     customCSS: '',
     enableCache: true,
     cacheMinutes: 1440, // 默认1天（1440分钟）
     progressThumbType: 'default' as 'default' | 'preset' | 'custom',
     progressThumbPresetId: '',
     progressThumbCustomUrl: '',
-    loadingStyle: 'talisman' as 'classic' | 'grid' | 'talisman',
+    loadingStyle: 'talisman' as 'classic' | 'grid' | 'talisman' | 'race-lights' | 'race-car',
     rateBadgeStyle: 'flag' as 'default' | 'flag' | 'medal',
   });
   const [loginBackgroundImages, setLoginBackgroundImages] = useState<string[]>([
@@ -10538,8 +10539,7 @@ const ThemeConfigComponent = ({
   useEffect(() => {
     if (config?.ThemeConfig) {
       setThemeSettings({
-        enableBuiltInTheme: config.ThemeConfig.enableBuiltInTheme || false,
-        builtInTheme: config.ThemeConfig.builtInTheme || 'default',
+        enableCustomCSS: isCustomCSSEnabled(config.ThemeConfig),
         customCSS: config.ThemeConfig.customCSS || '',
         enableCache: config.ThemeConfig.enableCache !== false,
         cacheMinutes: config.ThemeConfig.cacheMinutes || 1440,
@@ -10678,222 +10678,117 @@ const ThemeConfigComponent = ({
     });
   };
 
-  const builtInThemes = [
-    {
-      value: 'default',
-      label: '默认主题',
-      color: '#3b82f6',
-    },
-    {
-      value: 'dark_blue',
-      label: '深蓝夜空',
-      color: '#3b82f6',
-    },
-    {
-      value: 'purple_dream',
-      label: '紫色梦境',
-      color: '#a78bfa',
-    },
-    {
-      value: 'green_forest',
-      label: '翠绿森林',
-      color: '#10b981',
-    },
-    {
-      value: 'orange_sunset',
-      label: '橙色日落',
-      color: '#f97316',
-    },
-    {
-      value: 'pink_candy',
-      label: '粉色糖果',
-      color: '#ec4899',
-    },
-    {
-      value: 'cyan_ocean',
-      label: '青色海洋',
-      color: '#06b6d4',
-    },
-  ];
-
   return (
     <div className='apex-admin-fields space-y-6'>
-      {/* 主题类型选择 */}
-      <div className='bg-white dark:bg-gray-800 rounded-lg p-6 border border-gray-200 dark:border-gray-700'>
-        <h3 className='text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4'>
-          主题类型
+      <div className='rounded-lg border border-gray-200 bg-white p-6 dark:border-gray-700 dark:bg-gray-800'>
+        <h3 className='text-lg font-semibold text-gray-900 dark:text-gray-100'>
+          Apex TV 主题
         </h3>
-        <div className='space-y-4'>
-          <label className='flex items-center space-x-3 cursor-pointer'>
-            <input
-              type='radio'
-              checked={!themeSettings.enableBuiltInTheme}
-              onChange={() =>
-                setThemeSettings((prev) => ({
-                  ...prev,
-                  enableBuiltInTheme: false,
-                }))
-              }
-              className='w-4 h-4 text-blue-600'
-            />
-            <span className='text-gray-900 dark:text-gray-100'>
-              自定义CSS（使用下方的CSS编辑器）
-            </span>
-          </label>
-          <label className='flex items-center space-x-3 cursor-pointer'>
-            <input
-              type='radio'
-              checked={themeSettings.enableBuiltInTheme}
-              onChange={() =>
-                setThemeSettings((prev) => ({
-                  ...prev,
-                  enableBuiltInTheme: true,
-                }))
-              }
-              className='w-4 h-4 text-blue-600'
-            />
-            <span className='text-gray-900 dark:text-gray-100'>
-              内置主题（使用预设的主题样式）
-            </span>
-          </label>
-        </div>
+        <p className='mt-2 text-sm text-gray-600 dark:text-gray-400'>
+          使用统一的银灰与青绿配色，深浅模式跟随系统，也可通过页面右上角按钮切换。
+        </p>
       </div>
 
-      {/* 内置主题选择 */}
-      {themeSettings.enableBuiltInTheme && (
-        <div className='bg-white dark:bg-gray-800 rounded-lg p-6 border border-gray-200 dark:border-gray-700'>
-          <h3 className='text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4'>
-            选择内置主题
-          </h3>
-          <div className='flex flex-wrap gap-3'>
-            {builtInThemes.map((theme) => (
-              <div
-                key={theme.value}
-                onClick={() =>
-                  setThemeSettings((prev) => ({
-                    ...prev,
-                    builtInTheme: theme.value,
-                  }))
-                }
-                className={`cursor-pointer rounded-lg border-2 p-3 transition-all hover:shadow-md ${
-                  themeSettings.builtInTheme === theme.value
-                    ? 'border-blue-500 ring-2 ring-blue-200 dark:ring-blue-800 bg-blue-50 dark:bg-blue-900/20'
-                    : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
-                }`}
-              >
-                <div className='flex items-center gap-3'>
-                  {/* 圆形颜色预览 */}
-                  <div
-                    className='w-10 h-10 rounded-full flex-shrink-0 shadow-sm'
-                    style={{ backgroundColor: theme.color }}
-                  />
-                  {/* 主题名称 */}
-                  <div className='flex items-center gap-2'>
-                    <span className='text-sm font-medium text-gray-900 dark:text-gray-100 whitespace-nowrap'>
-                      {theme.label}
-                    </span>
-                    {themeSettings.builtInTheme === theme.value && (
-                      <div className='w-4 h-4 rounded-full bg-blue-500 flex items-center justify-center flex-shrink-0'>
-                        <svg
-                          className='w-2.5 h-2.5 text-white'
-                          fill='none'
-                          stroke='currentColor'
-                          viewBox='0 0 24 24'
-                        >
-                          <path
-                            strokeLinecap='round'
-                            strokeLinejoin='round'
-                            strokeWidth={3}
-                            d='M5 13l4 4L19 7'
-                          />
-                        </svg>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-          <p className='mt-4 text-sm text-gray-600 dark:text-gray-400'>
-            注意：启用内置主题时，自定义CSS将被禁用
-          </p>
-        </div>
-      )}
-
-      {/* 自定义CSS编辑器 */}
-      {!themeSettings.enableBuiltInTheme && (
-        <div className='bg-white dark:bg-gray-800 rounded-lg p-6 border border-gray-200 dark:border-gray-700'>
-          <h3 className='text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4'>
-            自定义CSS
-          </h3>
-          <textarea
-            value={themeSettings.customCSS}
-            onChange={(e) =>
-              setThemeSettings((prev) => ({
-                ...prev,
-                customCSS: e.target.value,
-              }))
-            }
-            placeholder='在此输入自定义CSS代码...'
-            className='w-full h-96 px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 font-mono text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent'
-          />
-          <p className='mt-2 text-sm text-gray-600 dark:text-gray-400'>
-            提示：可以使用CSS变量、媒体查询等高级特性
-          </p>
-        </div>
-      )}
-
-      {/* 缓存设置 */}
-      <div className='bg-white dark:bg-gray-800 rounded-lg p-6 border border-gray-200 dark:border-gray-700'>
-        <h3 className='text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4'>
-          缓存设置
-        </h3>
-        <div className='space-y-4'>
-          <label className='flex items-center space-x-3 cursor-pointer'>
-            <input
-              type='checkbox'
-              checked={themeSettings.enableCache}
-              onChange={(e) =>
-                setThemeSettings((prev) => ({
-                  ...prev,
-                  enableCache: e.target.checked,
-                }))
-              }
-              className='w-4 h-4 text-blue-600 rounded'
-            />
-            <span className='text-gray-900 dark:text-gray-100'>
-              启用浏览器缓存（推荐）
-            </span>
-          </label>
-
-          {themeSettings.enableCache && (
-            <div>
-              <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
-                缓存时间（分钟）
-              </label>
+      <details className='rounded-lg border border-gray-200 bg-white p-6 dark:border-gray-700 dark:bg-gray-800'>
+        <summary className='cursor-pointer text-lg font-semibold text-gray-900 dark:text-gray-100'>
+          高级外观设置
+          <span className='ml-3 text-sm font-normal text-gray-600 dark:text-gray-400'>
+            自定义 CSS {themeSettings.enableCustomCSS ? '已开启' : '未开启'}
+          </span>
+        </summary>
+        <div className='mt-6 space-y-6'>
+          <div>
+            <label className='flex cursor-pointer items-center gap-3 text-sm font-medium text-gray-900 dark:text-gray-100'>
               <input
-                type='number'
-                min='1'
-                max='43200'
-                value={themeSettings.cacheMinutes}
+                type='checkbox'
+                checked={themeSettings.enableCustomCSS}
                 onChange={(e) =>
                   setThemeSettings((prev) => ({
                     ...prev,
-                    cacheMinutes: parseInt(e.target.value) || 1440,
+                    enableCustomCSS: e.target.checked,
                   }))
                 }
-                className='w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent'
+                className='h-4 w-4 rounded text-blue-600'
               />
-              <p className='mt-2 text-sm text-gray-600 dark:text-gray-400'>
-                建议值：60分钟（1小时）、1440分钟（1天）、10080分钟（7天）
-              </p>
+              启用自定义 CSS 覆盖
+            </label>
+            <p className='mt-2 text-sm text-gray-600 dark:text-gray-400'>
+              在 Apex TV 主题基础上叠加样式。关闭后保留代码，但不应用覆盖。
+            </p>
+            <label htmlFor='apex-custom-css' className='mb-2 mt-4 block text-sm font-medium text-gray-900 dark:text-gray-100'>
+              自定义 CSS
+            </label>
+            <textarea
+              id='apex-custom-css'
+              value={themeSettings.customCSS}
+              onChange={(e) =>
+                setThemeSettings((prev) => ({
+                  ...prev,
+                  customCSS: e.target.value,
+                }))
+              }
+              placeholder='在此输入自定义 CSS 代码…'
+              spellCheck={false}
+              className='h-96 w-full rounded-lg border border-gray-300 bg-white px-4 py-3 font-mono text-sm text-gray-900 focus:border-transparent focus:ring-2 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100'
+            />
+            <p className='mt-2 text-sm text-gray-600 dark:text-gray-400'>
+              可使用 CSS 变量、媒体查询等特性；覆盖颜色时请同时考虑深浅模式。
+            </p>
+          </div>
+
+          {/* 缓存设置 */}
+          <div className='border-t border-gray-200 pt-6 dark:border-gray-700'>
+            <h3 className='text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4'>
+              缓存设置
+            </h3>
+            <div className='space-y-4'>
+              <label className='flex items-center space-x-3 cursor-pointer'>
+                <input
+                  type='checkbox'
+                  checked={themeSettings.enableCache}
+                  onChange={(e) =>
+                    setThemeSettings((prev) => ({
+                      ...prev,
+                      enableCache: e.target.checked,
+                    }))
+                  }
+                  className='w-4 h-4 text-blue-600 rounded'
+                />
+                <span className='text-gray-900 dark:text-gray-100'>
+                  启用浏览器缓存（推荐）
+                </span>
+              </label>
+
+              {themeSettings.enableCache && (
+                <div>
+                  <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
+                    缓存时间（分钟）
+                  </label>
+                  <input
+                    type='number'
+                    min='1'
+                    max='43200'
+                    value={themeSettings.cacheMinutes}
+                    onChange={(e) =>
+                      setThemeSettings((prev) => ({
+                        ...prev,
+                        cacheMinutes: parseInt(e.target.value) || 1440,
+                      }))
+                    }
+                    className='w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent'
+                  />
+                  <p className='mt-2 text-sm text-gray-600 dark:text-gray-400'>
+                    建议值：60分钟（1小时）、1440分钟（1天）、10080分钟（7天）
+                  </p>
+                </div>
+              )}
             </div>
-          )}
+            <p className='mt-4 text-sm text-gray-600 dark:text-gray-400'>
+              启用后，浏览器会按指定时间缓存自定义 CSS 文件；保存样式后会更新缓存版本。
+            </p>
+          </div>
         </div>
-        <p className='mt-4 text-sm text-gray-600 dark:text-gray-400'>
-          启用后，用户浏览器会缓存CSS文件指定时间，减少服务器负载。启用该项可能会导致主题更新延迟。
-        </p>
-      </div>
+      </details>
 
       {/* 背景图配置 */}
       <div className='bg-white dark:bg-gray-800 rounded-lg p-6 border border-gray-200 dark:border-gray-700'>
@@ -11305,12 +11200,32 @@ const ThemeConfigComponent = ({
           初始化加载样式
         </h3>
         <p className='text-sm text-gray-600 dark:text-gray-400 mb-4'>
-          播放页、直播页首屏加载动画的款式。颜色跟随站点主题色，保存后刷新页面生效
+          播放页、直播页的加载动画，保存后刷新页面生效。赛车款适配深浅主题，发车灯保留红色信号灯
         </p>
 
-        <div className='grid grid-cols-1 sm:grid-cols-3 gap-3'>
+        <div className='grid grid-cols-1 sm:grid-cols-3 xl:grid-cols-5 gap-3'>
           {(
             [
+              {
+                id: 'race-lights',
+                name: 'F1 发车灯',
+                desc: '',
+                preview: (
+                  <div className='apex-race-preview'>
+                    <RacingLoadingGraphic variant='lights' />
+                  </div>
+                ),
+              },
+              {
+                id: 'race-car',
+                name: '赛车巡航',
+                desc: '',
+                preview: (
+                  <div className='apex-race-preview'>
+                    <RacingLoadingGraphic variant='car' />
+                  </div>
+                ),
+              },
               {
                 id: 'talisman',
                 name: '魔法阵',
@@ -11366,6 +11281,7 @@ const ThemeConfigComponent = ({
             <button
               key={opt.id}
               type='button'
+              aria-pressed={themeSettings.loadingStyle === opt.id}
               onClick={() =>
                 setThemeSettings((prev) => ({ ...prev, loadingStyle: opt.id }))
               }

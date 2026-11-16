@@ -5,6 +5,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getAuthInfoFromCookie } from '@/lib/auth';
 import { getConfig } from '@/lib/config';
 import { db } from '@/lib/db';
+import { isCustomCSSEnabled } from '@/styles/themes';
 
 export const runtime = 'nodejs';
 
@@ -30,7 +31,7 @@ export async function POST(request: NextRequest) {
 
     const {
       enableBuiltInTheme,
-      builtInTheme,
+      enableCustomCSS,
       customCSS,
       enableCache,
       cacheMinutes,
@@ -43,8 +44,8 @@ export async function POST(request: NextRequest) {
       loadingStyle,
       rateBadgeStyle,
     } = body as {
-      enableBuiltInTheme: boolean;
-      builtInTheme: string;
+      enableBuiltInTheme?: boolean;
+      enableCustomCSS?: boolean;
       customCSS: string;
       enableCache: boolean;
       cacheMinutes: number;
@@ -54,14 +55,14 @@ export async function POST(request: NextRequest) {
       progressThumbType?: 'default' | 'preset' | 'custom';
       progressThumbPresetId?: string;
       progressThumbCustomUrl?: string;
-      loadingStyle?: 'classic' | 'grid' | 'talisman';
+      loadingStyle?: 'classic' | 'grid' | 'talisman' | 'race-lights' | 'race-car';
       rateBadgeStyle?: 'default' | 'flag' | 'medal';
     };
 
     // 参数校验
     if (
-      typeof enableBuiltInTheme !== 'boolean' ||
-      typeof builtInTheme !== 'string' ||
+      (enableBuiltInTheme !== undefined && typeof enableBuiltInTheme !== 'boolean') ||
+      (enableCustomCSS !== undefined && typeof enableCustomCSS !== 'boolean') ||
       typeof customCSS !== 'string' ||
       typeof enableCache !== 'boolean' ||
       typeof cacheMinutes !== 'number'
@@ -130,16 +131,23 @@ export async function POST(request: NextRequest) {
 
     // 获取当前版本号，如果CSS有变化则递增
     const currentVersion = adminConfig.ThemeConfig?.cacheVersion || 0;
-    const currentCSS = enableBuiltInTheme
-      ? adminConfig.ThemeConfig?.builtInTheme
-      : adminConfig.ThemeConfig?.customCSS;
-    const newCSS = enableBuiltInTheme ? builtInTheme : customCSS;
-    const cssChanged = currentCSS !== newCSS;
+    const currentEnabled = isCustomCSSEnabled(adminConfig.ThemeConfig);
+    const nextEnabled =
+      typeof enableCustomCSS === 'boolean'
+        ? enableCustomCSS
+        : typeof enableBuiltInTheme === 'boolean'
+          ? isCustomCSSEnabled({ enableBuiltInTheme, customCSS })
+          : currentEnabled;
+    const currentCSS = currentEnabled ? adminConfig.ThemeConfig?.customCSS || '' : '';
+    const newCSS = nextEnabled ? customCSS : '';
+    const cssChanged = currentCSS !== newCSS || currentEnabled !== nextEnabled;
 
     // 更新主题配置
     adminConfig.ThemeConfig = {
-      enableBuiltInTheme,
-      builtInTheme,
+      // 旧配色值统一归为默认；是否叠加 CSS 由新开关独立控制。
+      enableBuiltInTheme: true,
+      builtInTheme: 'default',
+      enableCustomCSS: nextEnabled,
       customCSS,
       enableCache,
       cacheMinutes,
@@ -153,6 +161,8 @@ export async function POST(request: NextRequest) {
       loadingStyle:
         loadingStyle === 'classic' ||
         loadingStyle === 'grid' ||
+        loadingStyle === 'race-lights' ||
+        loadingStyle === 'race-car' ||
         loadingStyle === 'talisman'
           ? loadingStyle
           : 'talisman',
