@@ -97,9 +97,9 @@ export function EmailSettingsPanel({
   statusMessage,
   statusType,
 }: EmailSettingsPanelProps) {
-  if (!isOpen || !mounted) return null;
-
   const [notificationTab, setNotificationTab] = useState<NotificationTab>('email');
+
+  if (!isOpen || !mounted) return null;
 
   const pushDisabled =
     emailSettingsSaving ||
@@ -117,14 +117,14 @@ export function EmailSettingsPanel({
   return createPortal(
     <>
       <div
-        className='fixed inset-0 z-[1000] bg-black/50 backdrop-blur-sm'
+        className='ptv-scrim-in fixed inset-0 z-[1000] bg-black/50 backdrop-blur-sm'
         onClick={onClose}
         onTouchMove={(e) => e.preventDefault()}
         onWheel={(e) => e.preventDefault()}
         style={{ touchAction: 'none' }}
       />
 
-      <div className='fixed left-1/2 top-1/2 z-[1001] w-[calc(100%-2rem)] max-w-lg -translate-x-1/2 -translate-y-1/2 overflow-hidden rounded-2xl bg-white shadow-xl dark:bg-gray-900'>
+      <div className='ptv-modal-in fixed left-1/2 top-1/2 z-[1001] w-[calc(100%-2rem)] max-w-lg -translate-x-1/2 -translate-y-1/2 overflow-hidden rounded-2xl bg-white shadow-xl dark:bg-gray-900'>
         <div
           className='max-h-[85vh] overflow-y-auto p-6'
           data-panel-content
@@ -178,11 +178,11 @@ export function EmailSettingsPanel({
 
           {emailSettingsLoading ? (
             <div className='space-y-4' aria-live='polite'>
-              <div className='animate-pulse rounded-2xl border border-gray-200 bg-gray-50 p-4 dark:border-gray-700 dark:bg-gray-800'>
+              <div className='motion-safe:animate-pulse rounded-2xl border border-gray-200 bg-gray-50 p-4 dark:border-gray-700 dark:bg-gray-800'>
                 <div className='mb-3 h-5 w-28 rounded bg-gray-200 dark:bg-gray-700' />
                 <div className='h-10 rounded bg-gray-200 dark:bg-gray-700' />
               </div>
-              <div className='animate-pulse rounded-2xl border border-gray-200 bg-gray-50 p-4 dark:border-gray-700 dark:bg-gray-800'>
+              <div className='motion-safe:animate-pulse rounded-2xl border border-gray-200 bg-gray-50 p-4 dark:border-gray-700 dark:bg-gray-800'>
                 <div className='mb-3 h-5 w-32 rounded bg-gray-200 dark:bg-gray-700' />
                 <div className='h-16 rounded bg-gray-200 dark:bg-gray-700' />
               </div>

@@ -3,6 +3,8 @@
 import { useRouter } from 'next/navigation';
 import { useEffect, useMemo, useRef, useState } from 'react';
 
+import { smoothScrollBehavior } from '@/lib/motion';
+
 import { useWatchRoomContext } from '@/components/WatchRoomProvider';
 import type { MusicQueueItem, MusicSyncState } from '@/types/watch-room';
 
@@ -290,7 +292,7 @@ export default function WatchRoomMusicPage() {
     if (!container) return;
     const active = container.querySelector<HTMLElement>(`[data-lyric-index="${currentLyricIndex}"]`);
     if (!active) return;
-    active.scrollIntoView({ block: 'center', behavior: 'smooth' });
+    active.scrollIntoView({ block: 'center', behavior: smoothScrollBehavior() });
   }, [currentLyricIndex]);
 
   useEffect(() => {
@@ -516,10 +518,10 @@ export default function WatchRoomMusicPage() {
   const showLyricsPanel = mobilePanel === 'lyrics';
   const isPlaying = Boolean(state?.isPlaying);
   const lyricActiveClass = isDark
-    ? 'scale-105 text-lg font-bold text-emerald-300 md:text-2xl'
-    : 'scale-105 text-lg font-bold text-emerald-600 md:text-2xl';
-  const lyricNearbyClass = isDark ? 'text-base text-zinc-400' : 'text-base text-zinc-500';
-  const lyricIdleClass = isDark ? 'text-sm text-zinc-600' : 'text-sm text-zinc-500';
+    ? 'scale-[1.12] text-emerald-300'
+    : 'scale-[1.12] text-emerald-600';
+  const lyricNearbyClass = isDark ? 'text-zinc-400' : 'text-zinc-500';
+  const lyricIdleClass = isDark ? 'text-zinc-600 opacity-80' : 'text-zinc-500 opacity-80';
 
   return (
     <main className={`relative min-h-screen overflow-hidden transition-colors ${themeRootClass}`}>
@@ -618,14 +620,14 @@ export default function WatchRoomMusicPage() {
                   ref={mobileLyricsContainerRef}
                   className={`rounded-2xl border px-4 py-4 ${isDark ? 'border-white/10 bg-black/20' : 'border-zinc-200 bg-white/80 shadow-sm'}`}
                 >
-                    <div className="max-h-[64vh] overflow-y-auto px-1">
+                    <div className="max-h-[64vh] overflow-y-auto overflow-x-hidden px-1">
                       {lyrics.length > 0 ? (
                         <div className="space-y-3">
                           {lyrics.map((line, index) => (
                             <div
                               key={`${line.time}-${index}`}
                               data-lyric-index={index}
-                              className={`text-center transition-all duration-300 ${
+                              className={`origin-center text-center text-base md:text-lg transition-[transform,color,opacity] duration-300 ${
                                 index === currentLyricIndex
                                   ? lyricActiveClass
                                   : index === currentLyricIndex - 1 || index === currentLyricIndex + 1
@@ -707,7 +709,7 @@ export default function WatchRoomMusicPage() {
 
               <div
                 ref={desktopLyricsContainerRef}
-                className={`${showLyricsPanel ? 'block' : 'hidden'} min-h-0 rounded-lg border p-4 md:block md:h-[70vh] md:overflow-y-auto md:p-6 ${isDark ? 'border-white/10 bg-black/20' : 'border-zinc-200 bg-white/80 shadow-sm'}`}
+                className={`${showLyricsPanel ? 'block' : 'hidden'} min-h-0 rounded-lg border p-4 md:block md:h-[70vh] md:overflow-y-auto md:overflow-x-hidden md:p-6 ${isDark ? 'border-white/10 bg-black/20' : 'border-zinc-200 bg-white/80 shadow-sm'}`}
               >
                 {lyrics.length > 0 ? (
                   <div className="space-y-4">
@@ -715,7 +717,7 @@ export default function WatchRoomMusicPage() {
                       <div
                         key={`${line.time}-${index}`}
                         data-lyric-index={index}
-                        className={`text-center transition-all duration-300 ${
+                        className={`origin-center text-center text-base md:text-lg transition-[transform,color,opacity] duration-300 ${
                           index === currentLyricIndex
                             ? lyricActiveClass
                             : index === currentLyricIndex - 1 || index === currentLyricIndex + 1

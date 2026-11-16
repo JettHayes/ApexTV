@@ -827,8 +827,13 @@ function DoubanPageClient() {
           {isScheduleView ? (
             <BangumiScheduleTimeline weekday={selectedWeekday} />
           ) : (
-            /* 内容网格 */
-            <div className='justify-start grid grid-cols-3 gap-x-2 gap-y-12 px-0 sm:px-2 sm:grid-cols-[repeat(auto-fill,minmax(160px,1fr))] sm:gap-x-8 sm:gap-y-20'>
+            /* 内容网格：筛选条件或骨架/内容阶段变化时重挂载，仅内容阶段淡入（追加分页不触发） */
+            <div
+              key={`douban-grid-${type}-${primarySelection}-${secondarySelection}-${JSON.stringify(multiLevelValues)}-${loading || !selectorsReady ? 'skeleton' : 'data'}`}
+              className={`justify-start grid grid-cols-3 gap-x-2 gap-y-12 px-0 sm:px-2 sm:grid-cols-[repeat(auto-fill,minmax(160px,1fr))] sm:gap-x-8 sm:gap-y-20 ${
+                loading || !selectorsReady ? '' : 'ptv-fade-in'
+              }`}
+            >
               {loading || !selectorsReady
                 ? // 显示骨架屏
                   skeletonData.map((index) => (

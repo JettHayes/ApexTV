@@ -110,7 +110,7 @@ export function ThemeToggle() {
     <button type='button'
       onClick={toggleTheme}
       disabled={!mounted}
-      className='ptv-theme-toggle flex h-11 w-11 items-center justify-center rounded-full p-2 text-gray-600 transition-colors hover:bg-gray-200/50 dark:text-gray-300 dark:hover:bg-gray-700/50'
+      className='ptv-theme-toggle flex h-11 w-11 items-center justify-center rounded-full p-2 text-gray-600 transition-[color,background-color,transform] hover:bg-gray-200/50 active:scale-95 dark:text-gray-300 dark:hover:bg-gray-700/50'
       aria-label={isDark ? '切换为浅色' : '切换为深色'}
       aria-pressed={isDark}
       title={isDark ? '切换为浅色' : '切换为深色'}

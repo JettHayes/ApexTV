@@ -383,7 +383,7 @@ export const VersionPanel: React.FC<VersionPanelProps> = ({
     <>
       {/* 背景遮罩 */}
       <div
-        className='fixed inset-0 bg-black/50 backdrop-blur-sm z-[1000]'
+        className='ptv-scrim-in fixed inset-0 bg-black/50 backdrop-blur-sm z-[1000]'
         onClick={onClose}
         onTouchMove={(e) => {
           // 只阻止滚动，允许其他触摸事件
@@ -400,7 +400,7 @@ export const VersionPanel: React.FC<VersionPanelProps> = ({
 
       {/* 版本面板 */}
       <div
-        className='fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-xl max-h-[90vh] bg-white dark:bg-gray-900 rounded-xl shadow-xl z-[1001] overflow-hidden'
+        className='ptv-modal-in fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-xl max-h-[90vh] bg-white dark:bg-gray-900 rounded-xl shadow-xl z-[1001] overflow-hidden'
         onTouchMove={(e) => {
           // 允许版本面板内部滚动，阻止事件冒泡到外层
           e.stopPropagation();
@@ -527,7 +527,7 @@ export const VersionPanel: React.FC<VersionPanelProps> = ({
                 </div>
 
                 {showRemoteContent && remoteChangelog.length > 0 && (
-                  <div className='space-y-4'>
+                  <div className='ptv-content-in space-y-4'>
                     {remoteChangelog
                       .filter((entry) => {
                         // 找到第一个本地版本，过滤掉本地已有的版本

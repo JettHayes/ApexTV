@@ -134,3 +134,12 @@
     transition-duration: 0.01ms !important;
   }
 }
+
+/* 左侧抽屉入场（全局 ptv-drawer-in 是右侧滑入） */
+@keyframes music-drawer-left {
+  from { translate: -100% 0; }
+}
+.music-drawer-in { animation: music-drawer-left 280ms var(--ptv-ease) backwards; }
+@media (prefers-reduced-motion: reduce) {
+  .music-drawer-in { animation-duration: 0.01ms !important; }
+}

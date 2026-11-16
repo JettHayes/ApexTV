@@ -10,7 +10,6 @@ import {
   GetBangumiScheduleData,
 } from '@/lib/bangumi.client';
 
-import { ImagePlaceholder } from '@/components/ImagePlaceholder';
 import VideoCard from '@/components/VideoCard';
 
 /** 时刻表加载骨架：模拟时间轴结构（时间标签 + 节点 + 横向卡片条） */
@@ -49,7 +48,7 @@ function TimelineSkeleton() {
                 {Array.from({ length: SKELETON_ITEMS[i] }, (_, j) => (
                   <div key={j} className='w-32 sm:w-40 shrink-0'>
                     <div className='relative w-full rounded-lg bg-transparent flex flex-col'>
-                      <ImagePlaceholder aspectRatio='aspect-[2/3]' />
+                      <div className='w-full aspect-[2/3] rounded-lg bg-gray-200 dark:bg-gray-700' />
                       <div className='absolute top-[calc(100%+0.5rem)] left-0 right-0 flex justify-center'>
                         <div className='h-4 w-24 sm:w-32 bg-gray-200 rounded dark:bg-gray-700'></div>
                       </div>
@@ -163,7 +162,7 @@ function BangumiScheduleTimeline({
   const hasAny = day.slots.length > 0 || dayUnknown.length > 0;
 
   return (
-    <div className='space-y-6'>
+    <div key={weekday} className='ptv-content-in space-y-6'>
       {!hasAny ? (
         <div className='text-center text-gray-500 dark:text-gray-400 py-16'>
           {day.cn}暂无放送安排

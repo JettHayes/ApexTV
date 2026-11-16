@@ -198,13 +198,13 @@ export default function TVRemotePanel({
   return createPortal(
     <>
       <div
-        className='fixed inset-0 z-[1000] bg-black/60 backdrop-blur-sm'
+        className='ptv-scrim-in fixed inset-0 z-[1000] bg-black/60 backdrop-blur-sm'
         onClick={onClose}
         onTouchMove={(e) => e.preventDefault()}
         onWheel={(e) => e.preventDefault()}
         style={{ touchAction: 'none' }}
       />
-      <div className='fixed inset-x-3 top-1/2 z-[1001] mx-auto max-h-[94vh] max-w-md -translate-y-1/2 overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-2xl shadow-black/30 dark:border-white/10 dark:bg-slate-950'>
+      <div className='ptv-modal-in fixed inset-x-3 top-1/2 z-[1001] mx-auto max-h-[94vh] max-w-md -translate-y-1/2 overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-2xl shadow-black/30 dark:border-white/10 dark:bg-slate-950'>
         <div
           className='max-h-[94vh] overflow-y-auto p-5'
           data-panel-content

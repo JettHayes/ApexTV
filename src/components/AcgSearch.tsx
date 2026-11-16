@@ -717,8 +717,8 @@ export default function AcgSearch({
 
         {/* 命名弹窗 */}
         {showNameDialog && (
-          <div className='fixed inset-0 z-[1000] flex items-center justify-center bg-black/50'>
-            <div className='bg-white dark:bg-gray-800 rounded-lg p-6 max-w-md w-full mx-4 shadow-xl'>
+          <div className='ptv-scrim-in fixed inset-0 z-[1000] flex items-center justify-center bg-black/50'>
+            <div className='ptv-modal-in bg-white dark:bg-gray-800 rounded-lg p-6 max-w-md w-full mx-4 shadow-xl'>
               <h3 className='text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4'>
                 设置资源名称
               </h3>
@@ -808,7 +808,20 @@ export default function AcgSearch({
     <div className='space-y-6'>
       {/* 搜索源切换 */}
       {showSourceSwitch && sourceSwitch}
-      {renderBody()}
+      <div
+        key={
+          loading && allItems.length === 0
+            ? 'loading'
+            : error
+            ? 'error'
+            : allItems.length === 0
+            ? 'empty'
+            : 'result'
+        }
+        className='ptv-fade-in space-y-6'
+      >
+        {renderBody()}
+      </div>
 
       {/* Toast 提示 */}
       {toast && <Toast {...toast} />}

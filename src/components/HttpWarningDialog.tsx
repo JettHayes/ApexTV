@@ -41,8 +41,10 @@ export default function HttpWarningDialog({ onClose }: HttpWarningDialogProps) {
     setShouldShow(shouldDisplay);
 
     if (shouldDisplay) {
-      // 延迟显示动画
-      setTimeout(() => setIsVisible(true), 100);
+      // 双 rAF 触发入场动画
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => setIsVisible(true));
+      });
     }
   }, []);
 
@@ -55,7 +57,7 @@ export default function HttpWarningDialog({ onClose }: HttpWarningDialogProps) {
     setIsVisible(false);
     setTimeout(() => {
       onClose();
-    }, 300);
+    }, 200);
   };
 
   // 如果不需要显示，直接返回 null
@@ -63,13 +65,13 @@ export default function HttpWarningDialog({ onClose }: HttpWarningDialogProps) {
 
   return createPortal(
     <div
-      className={`fixed inset-0 bg-black bg-opacity-50 z-[9999] flex items-center justify-center p-4 transition-opacity duration-300 ${
+      className={`fixed inset-0 bg-black bg-opacity-50 z-[9999] flex items-center justify-center p-4 transition-opacity duration-200 ease-[cubic-bezier(.16,1,.3,1)] ${
         isVisible ? 'opacity-100' : 'opacity-0'
       }`}
       onClick={handleClose}
     >
       <div
-        className={`bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full border border-yellow-200 dark:border-yellow-800 transition-all duration-300 ${
+        className={`bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full border border-yellow-200 dark:border-yellow-800 transition-transform duration-200 ease-[cubic-bezier(.16,1,.3,1)] ${
           isVisible ? 'scale-100' : 'scale-95'
         }`}
         onClick={(e) => e.stopPropagation()}

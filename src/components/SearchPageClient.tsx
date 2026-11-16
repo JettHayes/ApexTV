@@ -39,6 +39,7 @@ import {
   isSpecialSourceContext,
   SPECIAL_SOURCE_PATH,
 } from '@/lib/special-source.client';
+import { smoothScrollBehavior } from '@/lib/motion';
 import { SearchResult } from '@/lib/types';
 import { processImageUrl } from '@/lib/utils';
 
@@ -1708,7 +1709,7 @@ export function SearchPageClient({ searchBase = '/search' }: { searchBase?: stri
       : '网盘类型';
 
     return (
-      <div className='mx-auto mt-4 flex max-w-2xl justify-end overflow-visible'>
+      <div className='ptv-content-in mx-auto mt-4 flex max-w-2xl justify-end overflow-visible'>
         <button
           ref={pansouCloudFilterButtonRef}
           type='button'
@@ -1782,7 +1783,7 @@ export function SearchPageClient({ searchBase = '/search' }: { searchBase?: stri
       // 根据调试结果，真正的滚动容器是 document.body
       document.body.scrollTo({
         top: 0,
-        behavior: 'smooth',
+        behavior: smoothScrollBehavior(),
       });
     } catch (error) {
       // 如果平滑滚动完全失败，使用立即滚动
@@ -1927,13 +1928,13 @@ export function SearchPageClient({ searchBase = '/search' }: { searchBase?: stri
             renderPansouCloudTypeFilter()}
 
           {activeTab === 'acg' && magnetSearchEnabled && (
-            <div className='mt-4'>
+            <div className='ptv-content-in mt-4'>
               <AcgSearch keyword={searchQuery} controlsOnly />
             </div>
           )}
 
           {activeTab === 'video' && !showResults && (
-            <div className='mx-auto mt-4 flex max-w-2xl justify-end'>
+            <div className='ptv-content-in mx-auto mt-4 flex max-w-2xl justify-end'>
               <div className='relative'>
                 <button
                   ref={(el) => {
@@ -1960,7 +1961,7 @@ export function SearchPageClient({ searchBase = '/search' }: { searchBase?: stri
                     ref={(el) => {
                       if (el) advancedDropdownRefs.current[0] = el;
                     }}
-                    className='absolute right-0 z-[70] mt-2 w-56 rounded-xl border border-gray-200 bg-white p-3 shadow-lg dark:border-gray-700 dark:bg-gray-900'
+                    className='ptv-pop-in origin-top-right absolute right-0 z-[70] mt-2 w-56 rounded-xl border border-gray-200 bg-white p-3 shadow-lg dark:border-gray-700 dark:bg-gray-900'
                   >
                     <label className='flex cursor-pointer select-none items-center justify-between gap-3 rounded-lg px-1 py-2'>
                       <span className='text-sm text-gray-700 dark:text-gray-300'>
@@ -2043,7 +2044,7 @@ export function SearchPageClient({ searchBase = '/search' }: { searchBase?: stri
           createPortal(
             <div
               ref={pansouCloudFilterDropdownRef}
-              className='fixed z-[9999] max-h-[50vh] overflow-y-auto rounded-xl border border-gray-200/50 bg-white/95 p-2 backdrop-blur-sm dark:border-gray-700/50 dark:bg-gray-800/95'
+              className='ptv-pop-in origin-top-left fixed z-[9999] max-h-[50vh] overflow-y-auto rounded-xl border border-gray-200/50 bg-white/95 p-2 backdrop-blur-sm dark:border-gray-700/50 dark:bg-gray-800/95'
               style={{
                 left: `${pansouCloudFilterPosition.x}px`,
                 top: `${pansouCloudFilterPosition.y}px`,
@@ -2097,7 +2098,7 @@ export function SearchPageClient({ searchBase = '/search' }: { searchBase?: stri
           }`}
         >
           {showResults ? (
-            <section className='ptv-search-history mb-12'>
+            <section key={activeTab} className='ptv-search-history ptv-content-in mb-12'>
               {activeTab === 'video' ? (
                 <>
                   {/* 影视搜索结果 */}
@@ -2199,7 +2200,7 @@ export function SearchPageClient({ searchBase = '/search' }: { searchBase?: stri
                           ref={(el) => {
                             if (el) advancedDropdownRefs.current[1] = el;
                           }}
-                          className='absolute right-0 top-full z-[70] mt-2 w-56 rounded-xl border border-gray-200 bg-white p-3 shadow-lg dark:border-gray-700 dark:bg-gray-900'
+                          className='ptv-pop-in origin-top-right absolute right-0 top-full z-[70] mt-2 w-56 rounded-xl border border-gray-200 bg-white p-3 shadow-lg dark:border-gray-700 dark:bg-gray-900'
                         >
                           <label className='flex cursor-pointer select-none items-center justify-between gap-3 rounded-lg px-1 py-2'>
                             <span className='text-sm text-gray-700 dark:text-gray-300'>
@@ -2455,12 +2456,12 @@ export function SearchPageClient({ searchBase = '/search' }: { searchBase?: stri
 
                       return (
                         <div
-                          key={`search-results-${viewMode}-${resultDisplayMode}`}
-                          className={
+                          key={`search-results-${submittedSearchQuery}-${viewMode}-${resultDisplayMode}`}
+                          className={`ptv-content-in ${
                             resultDisplayMode === 'list'
                               ? listClassName
                               : gridClassName
-                          }
+                          }`}
                         >
                           {resultChildren}
                         </div>
@@ -2568,7 +2569,7 @@ export function SearchPageClient({ searchBase = '/search' }: { searchBase?: stri
                         e.preventDefault();
                         deleteSearchHistory(item); // 事件监听会自动更新界面
                       }}
-                      className='ptv-history-delete absolute -top-1 -right-1 h-6 w-6 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 bg-gray-400 hover:bg-red-500 text-white rounded-full flex items-center justify-center text-[10px] transition-colors'
+                      className='ptv-history-delete absolute -top-1 -right-1 h-6 w-6 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 bg-gray-400 hover:bg-red-500 text-white rounded-full flex items-center justify-center text-[10px] transition-[opacity,background-color]'
                     >
                       <X className='w-3 h-3' />
                     </button>

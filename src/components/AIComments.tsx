@@ -185,7 +185,7 @@ export default function AIComments({ movieName, movieInfo }: AICommentsProps) {
           className='text-sm px-3 py-1 bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 rounded-lg hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1'
         >
           <svg
-            className='w-4 h-4'
+            className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`}
             fill='none'
             stroke='currentColor'
             viewBox='0 0 24 24'

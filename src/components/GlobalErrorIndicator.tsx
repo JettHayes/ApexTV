@@ -13,6 +13,7 @@ export function GlobalErrorIndicator() {
   const [isVisible, setIsVisible] = useState(false);
   const [isReplacing, setIsReplacing] = useState(false);
   const [isClosing, setIsClosing] = useState(false);
+  const [isEntered, setIsEntered] = useState(false);
   const currentErrorRef = useRef<ErrorInfo | null>(null);
   const closeTimerRef = useRef<number | null>(null);
   const exitTimerRef = useRef<number | null>(null);
@@ -42,7 +43,7 @@ export function GlobalErrorIndicator() {
       setCurrentError(null);
       setIsClosing(false);
       exitTimerRef.current = null;
-    }, 300);
+    }, 220);
   }, [clearCloseTimer, clearExitTimer]);
 
   useEffect(() => {
@@ -104,6 +105,18 @@ export function GlobalErrorIndicator() {
     };
   }, [currentError, handleClose, isClosing, clearCloseTimer]);
 
+  // 卡片挂载后双 rAF 触发入场动画
+  useEffect(() => {
+    if (!isVisible) {
+      setIsEntered(false);
+      return;
+    }
+    let id = requestAnimationFrame(() => {
+      id = requestAnimationFrame(() => setIsEntered(true));
+    });
+    return () => cancelAnimationFrame(id);
+  }, [isVisible]);
+
   if (!isVisible || !currentError) {
     return null;
   }
@@ -112,13 +125,13 @@ export function GlobalErrorIndicator() {
     <div className='fixed top-4 right-4 z-[2000]'>
       {/* 错误卡片 */}
       <div
-        className={`bg-red-500 text-white px-4 py-3 rounded-lg shadow-lg flex items-center justify-between min-w-[300px] max-w-[400px] transition-all duration-300 ${
-          isClosing
-            ? '-translate-y-4 opacity-0'
+        className={`text-white px-4 py-3 rounded-lg shadow-lg flex items-center justify-between min-w-[300px] max-w-[400px] transition-[opacity,transform,background-color] duration-200 ease-[cubic-bezier(.16,1,.3,1)] ${
+          isClosing || !isEntered
+            ? '-translate-y-2 opacity-0'
             : 'translate-y-0 opacity-100'
         } ${
           isReplacing ? 'scale-105 bg-red-400' : 'scale-100 bg-red-500'
-        } animate-fade-in`}
+        }`}
       >
         <span className='text-sm font-medium flex-1 mr-3'>
           {currentError.message}

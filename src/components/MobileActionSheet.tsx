@@ -94,7 +94,7 @@ const MobileActionSheet: React.FC<MobileActionSheetProps> = ({
       // 等待动画完成后隐藏组件
       timer = setTimeout(() => {
         setIsVisible(false);
-      }, 200);
+      }, 180);
     }
 
     return () => {
@@ -277,7 +277,7 @@ const MobileActionSheet: React.FC<MobileActionSheetProps> = ({
     >
       {/* 背景遮罩 */}
       <div
-        className={`absolute inset-0 bg-black/50 transition-opacity duration-200 ease-out ${isAnimating ? 'opacity-100' : 'opacity-0'
+        className={`absolute inset-0 bg-black/50 transition-opacity ease-[cubic-bezier(.16,1,.3,1)] ${isAnimating ? 'opacity-100 duration-[240ms]' : 'opacity-0 duration-[180ms]'
           }`}
         onPointerDown={armBackdropClose}
         onTouchStart={armBackdropClose}
@@ -316,7 +316,7 @@ const MobileActionSheet: React.FC<MobileActionSheetProps> = ({
             first?.focus();
           }
         }}
-        className="ptv-action-sheet relative w-full max-w-lg mx-4 mb-4 bg-white dark:bg-gray-900 rounded-2xl shadow-2xl transition-all duration-200 ease-out"
+        className={`ptv-action-sheet relative w-full max-w-lg mx-4 mb-4 bg-white dark:bg-gray-900 rounded-2xl shadow-2xl transition-[transform,opacity] ease-[cubic-bezier(.16,1,.3,1)] ${isAnimating ? 'duration-[240ms]' : 'duration-[180ms]'}`}
         onTouchMove={(e) => {
           // 允许操作表单内部滚动，阻止事件冒泡到外层
           e.stopPropagation();
@@ -421,13 +421,12 @@ const MobileActionSheet: React.FC<MobileActionSheetProps> = ({
                   }}
                   disabled={action.disabled}
                   className={`
-                    w-full flex items-center gap-4 py-4 px-2 transition-all duration-150 ease-out
+                    w-full flex items-center gap-4 py-4 px-2 transition-[transform,background-color,color,opacity] duration-150 ease-out
                     ${action.disabled
                       ? 'opacity-50 cursor-not-allowed'
                       : `${getActionHoverColor(action.color)} active:scale-[0.98]`
                     }
                   `}
-                  style={{ willChange: 'transform, background-color' }}
                 >
                   {/* 图标 - 使用线条风格 */}
                   <div className="w-6 h-6 flex items-center justify-center flex-shrink-0">

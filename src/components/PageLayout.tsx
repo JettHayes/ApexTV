@@ -97,7 +97,7 @@ const PageLayout = ({ children, activePath = '/', hideNavigation = false }: Page
           )}
 
           {/* 主内容区域 */}
-          <div className='relative min-w-0 flex-1 transition-all duration-300'>
+          <div className='relative min-w-0 flex-1'>
             {/* 桌面端左上角返回按钮 */}
             {!hideNavigation && showBackButton && (
               <div className='absolute top-3 left-1 z-20 hidden md:flex'>

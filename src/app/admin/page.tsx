@@ -32,7 +32,6 @@ import {
   Check,
   CheckCircle,
   ChevronDown,
-  ChevronUp,
   Cloud,
   Copy,
   Database,
@@ -41,6 +40,7 @@ import {
   FolderOpen,
   Globe,
   Info,
+  Loader2,
   Mail,
   Monitor,
   Palette,
@@ -188,22 +188,36 @@ const AlertModal = ({
   showConfirm = false,
   onConfirm,
 }: AlertModalProps) => {
-  const [isVisible, setIsVisible] = useState(false);
+  // 关闭时延迟卸载，让 -out 动画播完；入场由 CSS 动画负责
+  const [rendered, setRendered] = useState(isOpen);
+  const [closing, setClosing] = useState(false);
+  const onCloseRef = useRef(onClose);
+  onCloseRef.current = onClose;
 
   useEffect(() => {
     if (isOpen) {
-      setIsVisible(true);
-      if (timer) {
-        setTimeout(() => {
-          onClose();
-        }, timer);
-      }
-    } else {
-      setIsVisible(false);
+      setRendered(true);
+      setClosing(false);
+      return;
     }
-  }, [isOpen, timer, onClose]);
+    if (!rendered) return;
+    setClosing(true);
+    const closeTimer = setTimeout(() => {
+      setRendered(false);
+      setClosing(false);
+    }, 160);
+    return () => clearTimeout(closeTimer);
+  }, [isOpen]);
 
-  if (!isOpen) return null;
+  useEffect(() => {
+    if (!isOpen || !timer) return;
+    const hideTimer = setTimeout(() => {
+      onCloseRef.current();
+    }, timer);
+    return () => clearTimeout(hideTimer);
+  }, [isOpen, timer]);
+
+  if (!rendered) return null;
 
   const getIcon = () => {
     switch (type) {
@@ -233,13 +247,13 @@ const AlertModal = ({
 
   return createPortal(
     <div
-      className={`ptv-dialog apex-admin-overlay fixed inset-0 bg-black bg-opacity-50 z-[10050] flex items-center justify-center p-4 transition-opacity duration-200 ${
-        isVisible ? 'opacity-100' : 'opacity-0'
+      className={`ptv-dialog apex-admin-overlay fixed inset-0 bg-black bg-opacity-50 z-[10050] flex items-center justify-center p-4 ${
+        closing ? 'ptv-scrim-out pointer-events-none' : 'ptv-scrim-in'
       }`}
     >
       <div
-        className={`bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-sm w-full border ${getBgColor()} transition-all duration-200 ${
-          isVisible ? 'scale-100' : 'scale-95'
+        className={`bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-sm w-full border ${getBgColor()} ${
+          closing ? 'ptv-modal-out' : 'ptv-modal-in'
         }`}
       >
         <div className='p-6 text-center'>
@@ -315,9 +329,9 @@ const useAlertModal = () => {
     setAlertModal({ ...config, isOpen: true });
   };
 
-  const hideAlert = () => {
+  const hideAlert = useCallback(() => {
     setAlertModal((prev) => ({ ...prev, isOpen: false }));
-  };
+  }, []);
 
   return { alertModal, showAlert, hideAlert };
 };
@@ -2047,7 +2061,7 @@ const UserConfig = ({
         selectedDeviceUsername &&
         createPortal(
           <div
-            className='ptv-dialog apex-admin-overlay fixed inset-0 bg-black bg-opacity-50 z-[10002] flex items-center justify-center p-4'
+            className='ptv-dialog ptv-scrim-in apex-admin-overlay fixed inset-0 bg-black bg-opacity-50 z-[10002] flex items-center justify-center p-4'
             onClick={() => {
               setShowUserDevicesModal(false);
               setSelectedDeviceUsername(null);
@@ -2058,7 +2072,7 @@ const UserConfig = ({
             style={{ touchAction: 'none' }}
           >
             <div
-              className='bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-2xl w-full max-h-[80vh] overflow-hidden flex flex-col'
+              className='ptv-modal-in bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-2xl w-full max-h-[80vh] overflow-hidden flex flex-col'
               onClick={(e) => e.stopPropagation()}
               onTouchMove={(e) => e.stopPropagation()}
               onWheel={(e) => e.stopPropagation()}
@@ -2200,7 +2214,7 @@ const UserConfig = ({
         selectedUser &&
         createPortal(
           <div
-            className='ptv-dialog apex-admin-overlay fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4'
+            className='ptv-dialog ptv-scrim-in apex-admin-overlay fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4'
             onClick={() => {
               setShowConfigureApisModal(false);
               setSelectedUser(null);
@@ -2208,7 +2222,7 @@ const UserConfig = ({
             }}
           >
             <div
-              className='bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-4xl w-full max-h-[80vh] overflow-y-auto'
+              className='ptv-modal-in bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-4xl w-full max-h-[80vh] overflow-y-auto'
               onClick={(e) => e.stopPropagation()}
             >
               <div className='p-6'>
@@ -2376,7 +2390,7 @@ const UserConfig = ({
       {showAddUserGroupForm &&
         createPortal(
           <div
-            className='ptv-dialog apex-admin-overlay fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4'
+            className='ptv-dialog ptv-scrim-in apex-admin-overlay fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4'
             onClick={() => {
               setShowAddUserGroupForm(false);
               setNewUserGroup({
@@ -2387,7 +2401,7 @@ const UserConfig = ({
             }}
           >
             <div
-              className='bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-4xl w-full max-h-[80vh] overflow-y-auto'
+              className='ptv-modal-in bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-4xl w-full max-h-[80vh] overflow-y-auto'
               onClick={(e) => e.stopPropagation()}
             >
               <div className='p-6'>
@@ -2642,14 +2656,14 @@ const UserConfig = ({
         editingUserGroup &&
         createPortal(
           <div
-            className='ptv-dialog apex-admin-overlay fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4'
+            className='ptv-dialog ptv-scrim-in apex-admin-overlay fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4'
             onClick={() => {
               setShowEditUserGroupForm(false);
               setEditingUserGroup(null);
             }}
           >
             <div
-              className='bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-4xl w-full max-h-[80vh] overflow-y-auto'
+              className='ptv-modal-in bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-4xl w-full max-h-[80vh] overflow-y-auto'
               onClick={(e) => e.stopPropagation()}
             >
               <div className='p-6'>
@@ -2876,7 +2890,7 @@ const UserConfig = ({
                       }`}
                     >
                       {isLoading(`userGroup_edit_${editingUserGroup?.name}`)
-                        ? '保存中...'
+                        ? (<><Loader2 className='mr-1.5 inline h-4 w-4 animate-spin align-[-3px]' />保存中...</>)
                         : '保存修改'}
                     </button>
                   </div>
@@ -2892,7 +2906,7 @@ const UserConfig = ({
         selectedUserForGroup &&
         createPortal(
           <div
-            className='ptv-dialog apex-admin-overlay fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4'
+            className='ptv-dialog ptv-scrim-in apex-admin-overlay fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4'
             onClick={() => {
               setShowConfigureUserGroupModal(false);
               setSelectedUserForGroup(null);
@@ -2900,7 +2914,7 @@ const UserConfig = ({
             }}
           >
             <div
-              className='bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-4xl w-full max-h-[80vh] overflow-y-auto'
+              className='ptv-modal-in bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-4xl w-full max-h-[80vh] overflow-y-auto'
               onClick={(e) => e.stopPropagation()}
             >
               <div className='p-6'>
@@ -3031,14 +3045,14 @@ const UserConfig = ({
         deletingUserGroup &&
         createPortal(
           <div
-            className='ptv-dialog apex-admin-overlay fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4'
+            className='ptv-dialog ptv-scrim-in apex-admin-overlay fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4'
             onClick={() => {
               setShowDeleteUserGroupModal(false);
               setDeletingUserGroup(null);
             }}
           >
             <div
-              className='bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-2xl w-full max-h-[calc(100dvh-2rem)] overflow-y-auto'
+              className='ptv-modal-in bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-2xl w-full max-h-[calc(100dvh-2rem)] overflow-y-auto'
               onClick={(e) => e.stopPropagation()}
             >
               <div className='p-6'>
@@ -3192,14 +3206,14 @@ const UserConfig = ({
         deletingUser &&
         createPortal(
           <div
-            className='ptv-dialog apex-admin-overlay fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4'
+            className='ptv-dialog ptv-scrim-in apex-admin-overlay fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4'
             onClick={() => {
               setShowDeleteUserModal(false);
               setDeletingUser(null);
             }}
           >
             <div
-              className='bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-2xl w-full max-h-[calc(100dvh-2rem)] overflow-y-auto'
+              className='ptv-modal-in bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-2xl w-full max-h-[calc(100dvh-2rem)] overflow-y-auto'
               onClick={(e) => e.stopPropagation()}
             >
               <div className='p-6'>
@@ -3285,14 +3299,14 @@ const UserConfig = ({
       {showBatchUserGroupModal &&
         createPortal(
           <div
-            className='ptv-dialog apex-admin-overlay fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4'
+            className='ptv-dialog ptv-scrim-in apex-admin-overlay fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4'
             onClick={() => {
               setShowBatchUserGroupModal(false);
               setSelectedUserGroup('');
             }}
           >
             <div
-              className='bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-2xl w-full max-h-[calc(100dvh-2rem)] overflow-y-auto'
+              className='ptv-modal-in bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-2xl w-full max-h-[calc(100dvh-2rem)] overflow-y-auto'
               onClick={(e) => e.stopPropagation()}
             >
               <div className='p-6'>
@@ -3940,7 +3954,7 @@ const OpenListConfigComponent = ({
             onChange={(e) => setEnabled(e.target.checked)}
             className='sr-only peer'
           />
-          <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
+          <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-transform after:duration-200 after:ease-[cubic-bezier(.16,1,.3,1)] dark:border-gray-600 peer-checked:bg-blue-600"></div>
         </label>
       </div>
 
@@ -4026,14 +4040,14 @@ const OpenListConfigComponent = ({
         {extraSourcesDialogOpen &&
           createPortal(
             <div
-              className='ptv-dialog apex-admin-overlay fixed inset-0 bg-black bg-opacity-50 z-[10002] flex items-center justify-center p-4'
+              className='ptv-dialog ptv-scrim-in apex-admin-overlay fixed inset-0 bg-black bg-opacity-50 z-[10002] flex items-center justify-center p-4'
               onClick={() => setExtraSourcesDialogOpen(false)}
               onTouchMove={(e) => e.preventDefault()}
               onWheel={(e) => e.preventDefault()}
               style={{ touchAction: 'none' }}
             >
               <div
-                className='w-full max-w-2xl max-h-[85vh] flex flex-col rounded-xl bg-white dark:bg-gray-900 shadow-xl border border-gray-200 dark:border-gray-700'
+                className='ptv-modal-in w-full max-w-2xl max-h-[85vh] flex flex-col rounded-xl bg-white dark:bg-gray-900 shadow-xl border border-gray-200 dark:border-gray-700'
                 onClick={(e) => e.stopPropagation()}
                 onTouchMove={(e) => e.stopPropagation()}
                 onWheel={(e) => e.stopPropagation()}
@@ -4152,7 +4166,7 @@ const OpenListConfigComponent = ({
                           className='rounded-xl border border-gray-200 bg-gray-50/60 dark:border-gray-700 dark:bg-gray-800/40'
                         >
                           {expanded ? (
-                            <>
+                            <div className='ptv-content-in'>
                               {/* 编辑态：源名 + 检测 / 完成 / 删除 */}
                               <div className='flex items-center gap-2 border-b border-gray-200 px-3 py-2 dark:border-gray-700'>
                                 <input
@@ -4234,10 +4248,10 @@ const OpenListConfigComponent = ({
                                   </div>
                                 </div>
                               </div>
-                            </>
+                            </div>
                           ) : (
                             /* 展示卡：源名 + 地址 + 账号，右侧检测 / 编辑 / 删除 */
-                            <div className='flex items-start justify-between gap-3 px-4 py-3'>
+                            <div className='ptv-content-in flex items-start justify-between gap-3 px-4 py-3'>
                               <div className='min-w-0 flex-1'>
                                 <p className='truncate text-sm font-semibold text-gray-900 dark:text-gray-100'>
                                   {source.name}
@@ -4468,14 +4482,14 @@ const OpenListConfigComponent = ({
         {pathMetaDialogOpen &&
           createPortal(
             <div
-              className='ptv-dialog apex-admin-overlay fixed inset-0 bg-black bg-opacity-50 z-[10002] flex items-center justify-center p-4'
+              className='ptv-dialog ptv-scrim-in apex-admin-overlay fixed inset-0 bg-black bg-opacity-50 z-[10002] flex items-center justify-center p-4'
               onClick={() => setPathMetaDialogOpen(false)}
               onTouchMove={(e) => e.preventDefault()}
               onWheel={(e) => e.preventDefault()}
               style={{ touchAction: 'none' }}
             >
               <div
-                className='w-full max-w-3xl max-h-[85vh] flex flex-col rounded-xl bg-white dark:bg-gray-900 shadow-xl border border-gray-200 dark:border-gray-700'
+                className='ptv-modal-in w-full max-w-3xl max-h-[85vh] flex flex-col rounded-xl bg-white dark:bg-gray-900 shadow-xl border border-gray-200 dark:border-gray-700'
                 onClick={(e) => e.stopPropagation()}
                 onTouchMove={(e) => e.stopPropagation()}
                 onWheel={(e) => e.stopPropagation()}
@@ -4568,11 +4582,11 @@ const OpenListConfigComponent = ({
                               className='flex-shrink-0 rounded-lg p-1.5 text-gray-500 transition-colors hover:bg-gray-200 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-gray-200'
                               aria-label={expanded ? '收起' : '展开'}
                             >
-                              {expanded ? (
-                                <ChevronUp className='h-4 w-4' />
-                              ) : (
-                                <ChevronDown className='h-4 w-4' />
-                              )}
+                              <ChevronDown
+                                className={`h-4 w-4 transition-transform duration-200 ${
+                                  expanded ? 'rotate-180' : ''
+                                }`}
+                              />
                             </button>
                             <input
                               type='text'
@@ -4605,7 +4619,7 @@ const OpenListConfigComponent = ({
 
                           {/* 展开配置区：分类、自动刷新、代理播放、代理缓存时长 */}
                           {expanded && (
-                            <div className='space-y-3 border-t border-gray-200 px-3 py-3 dark:border-gray-700'>
+                            <div className='ptv-content-in space-y-3 border-t border-gray-200 px-3 py-3 dark:border-gray-700'>
                               <div className='grid grid-cols-1 gap-3 sm:grid-cols-2'>
                                 <div>
                                   <label className='mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400'>
@@ -4784,7 +4798,7 @@ const OpenListConfigComponent = ({
             disabled={isLoading('saveOpenList')}
             className={buttonStyles.success}
           >
-            {isLoading('saveOpenList') ? '保存中...' : '保存配置'}
+            {isLoading('saveOpenList') ? (<><Loader2 className='mr-1.5 inline h-4 w-4 animate-spin align-[-3px]' />保存中...</>) : '保存配置'}
           </button>
         </div>
       </div>
@@ -4846,7 +4860,7 @@ const OpenListConfigComponent = ({
                 </div>
                 <div className='w-full bg-blue-200 dark:bg-blue-800 rounded-full h-2 mb-2'>
                   <div
-                    className='bg-blue-600 dark:bg-blue-500 h-2 rounded-full transition-all duration-300'
+                    className='bg-blue-600 dark:bg-blue-500 h-2 rounded-full transition-[width] duration-300'
                     style={{
                       width: `${
                         scanProgress.total > 0
@@ -5421,7 +5435,7 @@ const NetDiskConfigComponent = ({
                 onChange={(e) => setEnabled(e.target.checked)}
                 className='sr-only peer'
               />
-              <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
+              <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-transform after:duration-200 after:ease-[cubic-bezier(.16,1,.3,1)] dark:border-gray-600 peer-checked:bg-blue-600"></div>
             </label>
           </div>
 
@@ -5494,7 +5508,7 @@ const NetDiskConfigComponent = ({
                 disabled={!enabled}
                 className='sr-only peer'
               />
-              <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-disabled:opacity-50 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
+              <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-disabled:opacity-50 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-transform after:duration-200 after:ease-[cubic-bezier(.16,1,.3,1)] dark:border-gray-600 peer-checked:bg-blue-600"></div>
             </label>
           </div>
 
@@ -5511,7 +5525,7 @@ const NetDiskConfigComponent = ({
               disabled={isLoading('saveNetDisk')}
               className={buttonStyles.success}
             >
-              {isLoading('saveNetDisk') ? '保存中...' : '保存配置'}
+              {isLoading('saveNetDisk') ? (<><Loader2 className='mr-1.5 inline h-4 w-4 animate-spin align-[-3px]' />保存中...</>) : '保存配置'}
             </button>
           </div>
         </div>
@@ -5538,7 +5552,7 @@ const NetDiskConfigComponent = ({
                 onChange={(e) => setMobileEnabled(e.target.checked)}
                 className='sr-only peer'
               />
-              <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-pink-300 dark:peer-focus:ring-pink-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-pink-600"></div>
+              <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-pink-300 dark:peer-focus:ring-pink-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-transform after:duration-200 after:ease-[cubic-bezier(.16,1,.3,1)] dark:border-gray-600 peer-checked:bg-pink-600"></div>
             </label>
           </div>
 
@@ -5575,7 +5589,7 @@ const NetDiskConfigComponent = ({
               disabled={isLoading('saveNetDisk')}
               className={buttonStyles.success}
             >
-              {isLoading('saveNetDisk') ? '保存中...' : '保存配置'}
+              {isLoading('saveNetDisk') ? (<><Loader2 className='mr-1.5 inline h-4 w-4 animate-spin align-[-3px]' />保存中...</>) : '保存配置'}
             </button>
           </div>
         </div>
@@ -5602,7 +5616,7 @@ const NetDiskConfigComponent = ({
                 onChange={(e) => setBaiduEnabled(e.target.checked)}
                 className='sr-only peer'
               />
-              <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-sky-300 dark:peer-focus:ring-sky-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-sky-600"></div>
+              <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-sky-300 dark:peer-focus:ring-sky-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-transform after:duration-200 after:ease-[cubic-bezier(.16,1,.3,1)] dark:border-gray-600 peer-checked:bg-sky-600"></div>
             </label>
           </div>
 
@@ -5639,7 +5653,7 @@ const NetDiskConfigComponent = ({
               disabled={isLoading('saveNetDisk')}
               className={buttonStyles.success}
             >
-              {isLoading('saveNetDisk') ? '保存中...' : '保存配置'}
+              {isLoading('saveNetDisk') ? (<><Loader2 className='mr-1.5 inline h-4 w-4 animate-spin align-[-3px]' />保存中...</>) : '保存配置'}
             </button>
           </div>
         </div>
@@ -5670,7 +5684,7 @@ const NetDiskConfigComponent = ({
                 onChange={(e) => setTianyiEnabled(e.target.checked)}
                 className='sr-only peer'
               />
-              <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-red-300 dark:peer-focus:ring-red-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-red-600"></div>
+              <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-red-300 dark:peer-focus:ring-red-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-transform after:duration-200 after:ease-[cubic-bezier(.16,1,.3,1)] dark:border-gray-600 peer-checked:bg-red-600"></div>
             </label>
           </div>
 
@@ -5722,7 +5736,7 @@ const NetDiskConfigComponent = ({
               disabled={isLoading('saveNetDisk')}
               className={buttonStyles.success}
             >
-              {isLoading('saveNetDisk') ? '保存中...' : '保存配置'}
+              {isLoading('saveNetDisk') ? (<><Loader2 className='mr-1.5 inline h-4 w-4 animate-spin align-[-3px]' />保存中...</>) : '保存配置'}
             </button>
           </div>
         </div>
@@ -5749,7 +5763,7 @@ const NetDiskConfigComponent = ({
                 onChange={(e) => setPan123Enabled(e.target.checked)}
                 className='sr-only peer'
               />
-              <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-teal-300 dark:peer-focus:ring-teal-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-teal-600"></div>
+              <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-teal-300 dark:peer-focus:ring-teal-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-transform after:duration-200 after:ease-[cubic-bezier(.16,1,.3,1)] dark:border-gray-600 peer-checked:bg-teal-600"></div>
             </label>
           </div>
 
@@ -5801,7 +5815,7 @@ const NetDiskConfigComponent = ({
               disabled={isLoading('saveNetDisk')}
               className={buttonStyles.success}
             >
-              {isLoading('saveNetDisk') ? '保存中...' : '保存配置'}
+              {isLoading('saveNetDisk') ? (<><Loader2 className='mr-1.5 inline h-4 w-4 animate-spin align-[-3px]' />保存中...</>) : '保存配置'}
             </button>
           </div>
         </div>
@@ -5828,7 +5842,7 @@ const NetDiskConfigComponent = ({
                 onChange={(e) => setUcEnabled(e.target.checked)}
                 className='sr-only peer'
               />
-              <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-green-300 dark:peer-focus:ring-green-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-green-600"></div>
+              <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-green-300 dark:peer-focus:ring-green-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-transform after:duration-200 after:ease-[cubic-bezier(.16,1,.3,1)] dark:border-gray-600 peer-checked:bg-green-600"></div>
             </label>
           </div>
 
@@ -5889,7 +5903,7 @@ const NetDiskConfigComponent = ({
               disabled={isLoading('saveNetDisk')}
               className={buttonStyles.success}
             >
-              {isLoading('saveNetDisk') ? '保存中...' : '保存配置'}
+              {isLoading('saveNetDisk') ? (<><Loader2 className='mr-1.5 inline h-4 w-4 animate-spin align-[-3px]' />保存中...</>) : '保存配置'}
             </button>
           </div>
         </div>
@@ -5916,7 +5930,7 @@ const NetDiskConfigComponent = ({
                 onChange={(e) => setPan115Enabled(e.target.checked)}
                 className='sr-only peer'
               />
-              <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-amber-300 dark:peer-focus:ring-amber-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-amber-600"></div>
+              <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-amber-300 dark:peer-focus:ring-amber-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-transform after:duration-200 after:ease-[cubic-bezier(.16,1,.3,1)] dark:border-gray-600 peer-checked:bg-amber-600"></div>
             </label>
           </div>
 
@@ -5953,7 +5967,7 @@ const NetDiskConfigComponent = ({
               disabled={isLoading('saveNetDisk')}
               className={buttonStyles.success}
             >
-              {isLoading('saveNetDisk') ? '保存中...' : '保存配置'}
+              {isLoading('saveNetDisk') ? (<><Loader2 className='mr-1.5 inline h-4 w-4 animate-spin align-[-3px]' />保存中...</>) : '保存配置'}
             </button>
           </div>
         </div>
@@ -6994,7 +7008,7 @@ const EmbyConfigComponent = ({
                 disabled={isLoading('saveEmbySource')}
                 className={buttonStyles.success}
               >
-                {isLoading('saveEmbySource') ? '保存中...' : '保存'}
+                {isLoading('saveEmbySource') ? (<><Loader2 className='mr-1.5 inline h-4 w-4 animate-spin align-[-3px]' />保存中...</>) : '保存'}
               </button>
               <button onClick={resetForm} className={buttonStyles.secondary}>
                 取消
@@ -7031,6 +7045,143 @@ const EmbyConfigComponent = ({
     </div>
   );
 };
+
+// 权重弹窗行：必须定义在 VideoSourceConfig 外部，否则每次父组件渲染都会生成新的组件类型，
+// 导致整行重挂载，丢失 dnd-kit 落位动画和输入框焦点
+const WeightModalInput = memo(
+  ({
+    sourceKey,
+    weight,
+    onWeightChange,
+  }: {
+    sourceKey: string;
+    weight: number;
+    onWeightChange: (key: string, weight: number) => void;
+  }) => {
+    const [localWeight, setLocalWeight] = useState(weight);
+
+    useEffect(() => {
+      setLocalWeight(weight);
+    }, [weight]);
+
+    const commitWeight = (value: number) => {
+      const clampedValue = Math.min(100, Math.max(0, value));
+      setLocalWeight(clampedValue);
+      onWeightChange(sourceKey, clampedValue);
+    };
+
+    return (
+      <div
+        className='flex items-center gap-3'
+        onPointerDown={(e) => e.stopPropagation()}
+        onMouseDown={(e) => e.stopPropagation()}
+        onTouchStart={(e) => e.stopPropagation()}
+      >
+        <input
+          type='range'
+          min='0'
+          max='100'
+          value={localWeight}
+          onChange={(e) => commitWeight(parseInt(e.target.value) || 0)}
+          className='w-full accent-blue-600'
+        />
+        <input
+          type='number'
+          inputMode='numeric'
+          min='0'
+          max='100'
+          value={localWeight}
+          onChange={(e) => {
+            const nextValue = parseInt(e.target.value) || 0;
+            const clampedValue = Math.min(100, Math.max(0, nextValue));
+            setLocalWeight(clampedValue);
+          }}
+          onBlur={(e) => commitWeight(parseInt(e.target.value) || 0)}
+          className='w-20 px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent'
+        />
+      </div>
+    );
+  }
+);
+
+const WeightModalRow = memo(
+  ({
+    source,
+    index,
+    recommendedWeight,
+    onWeightChange,
+  }: {
+    source: DataSource;
+    index: number;
+    recommendedWeight: number;
+    onWeightChange: (key: string, weight: number) => void;
+  }) => {
+    const {
+      attributes,
+      listeners,
+      setNodeRef,
+      transform,
+      transition,
+      isDragging,
+    } = useSortable({ id: source.key });
+
+    const style = {
+      transform: CSS.Transform.toString(transform),
+      transition,
+    } as React.CSSProperties;
+
+    return (
+      <div
+        ref={setNodeRef}
+        style={style}
+        className={`grid grid-cols-[88px_minmax(0,1fr)_112px_112px_220px] items-center gap-3 rounded-2xl border border-gray-200 bg-white px-4 py-3 shadow-sm transition-[border-color,box-shadow] hover:border-blue-200 hover:shadow dark:border-gray-700 dark:bg-gray-800/90 dark:hover:border-blue-800 ${
+          isDragging ? 'relative z-10 shadow-lg opacity-90' : ''
+        }`}
+      >
+        <div
+          className='flex items-center gap-3 text-sm text-gray-500 dark:text-gray-400 cursor-grab'
+          style={{ touchAction: 'none' }}
+          {...attributes}
+          {...listeners}
+        >
+          <GripVertical size={16} />
+          <span className='font-medium text-gray-700 dark:text-gray-200'>
+            #{index + 1}
+          </span>
+        </div>
+        <div className='min-w-0'>
+          <div className='truncate text-sm font-medium text-gray-900 dark:text-gray-100'>
+            {source.name}
+          </div>
+          <div className='truncate text-xs text-gray-500 dark:text-gray-400'>
+            {source.key}
+          </div>
+        </div>
+        <div>
+          <span
+            className={`inline-flex rounded-full px-2.5 py-1 text-xs font-medium ${
+              source.disabled
+                ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300'
+                : 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300'
+            }`}
+          >
+            {source.disabled ? '已禁用' : '启用中'}
+          </span>
+        </div>
+        <div>
+          <span className='inline-flex rounded-full bg-blue-100 px-2.5 py-1 text-xs font-medium text-blue-700 dark:bg-blue-900/30 dark:text-blue-300'>
+            {recommendedWeight}
+          </span>
+        </div>
+        <WeightModalInput
+          sourceKey={source.key}
+          weight={source.weight ?? 0}
+          onWeightChange={onWeightChange}
+        />
+      </div>
+    );
+  }
+);
 
 // 视频源配置组件
 const VideoSourceConfig = ({
@@ -7724,122 +7875,6 @@ const VideoSourceConfig = ({
         return null;
     }
   };
-
-  const WeightModalInput = memo(
-    ({ sourceKey, weight }: { sourceKey: string; weight: number }) => {
-      const [localWeight, setLocalWeight] = useState(weight);
-
-      useEffect(() => {
-        setLocalWeight(weight);
-      }, [weight]);
-
-      const commitWeight = (value: number) => {
-        const clampedValue = Math.min(100, Math.max(0, value));
-        setLocalWeight(clampedValue);
-        handleWeightDraftChange(sourceKey, clampedValue);
-      };
-
-      return (
-        <div
-          className='flex items-center gap-3'
-          onPointerDown={(e) => e.stopPropagation()}
-          onMouseDown={(e) => e.stopPropagation()}
-          onTouchStart={(e) => e.stopPropagation()}
-        >
-          <input
-            type='range'
-            min='0'
-            max='100'
-            value={localWeight}
-            onChange={(e) => commitWeight(parseInt(e.target.value) || 0)}
-            className='w-full accent-blue-600'
-          />
-          <input
-            type='number'
-            inputMode='numeric'
-            min='0'
-            max='100'
-            value={localWeight}
-            onChange={(e) => {
-              const nextValue = parseInt(e.target.value) || 0;
-              const clampedValue = Math.min(100, Math.max(0, nextValue));
-              setLocalWeight(clampedValue);
-            }}
-            onBlur={(e) => commitWeight(parseInt(e.target.value) || 0)}
-            className='w-20 px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent'
-          />
-        </div>
-      );
-    }
-  );
-
-  const WeightModalRow = memo(
-    ({
-      source,
-      index,
-      recommendedWeight,
-    }: {
-      source: DataSource;
-      index: number;
-      recommendedWeight: number;
-    }) => {
-      const { attributes, listeners, setNodeRef, transform, transition } =
-        useSortable({ id: source.key });
-
-      const style = {
-        transform: CSS.Transform.toString(transform),
-        transition,
-      } as React.CSSProperties;
-
-      return (
-        <div
-          ref={setNodeRef}
-          style={style}
-          className='grid grid-cols-[88px_minmax(0,1fr)_112px_112px_220px] items-center gap-3 rounded-2xl border border-gray-200 bg-white px-4 py-3 shadow-sm transition hover:border-blue-200 hover:shadow dark:border-gray-700 dark:bg-gray-800/90 dark:hover:border-blue-800'
-        >
-          <div
-            className='flex items-center gap-3 text-sm text-gray-500 dark:text-gray-400 cursor-grab'
-            style={{ touchAction: 'none' }}
-            {...attributes}
-            {...listeners}
-          >
-            <GripVertical size={16} />
-            <span className='font-medium text-gray-700 dark:text-gray-200'>
-              #{index + 1}
-            </span>
-          </div>
-          <div className='min-w-0'>
-            <div className='truncate text-sm font-medium text-gray-900 dark:text-gray-100'>
-              {source.name}
-            </div>
-            <div className='truncate text-xs text-gray-500 dark:text-gray-400'>
-              {source.key}
-            </div>
-          </div>
-          <div>
-            <span
-              className={`inline-flex rounded-full px-2.5 py-1 text-xs font-medium ${
-                source.disabled
-                  ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300'
-                  : 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300'
-              }`}
-            >
-              {source.disabled ? '已禁用' : '启用中'}
-            </span>
-          </div>
-          <div>
-            <span className='inline-flex rounded-full bg-blue-100 px-2.5 py-1 text-xs font-medium text-blue-700 dark:bg-blue-900/30 dark:text-blue-300'>
-              {recommendedWeight}
-            </span>
-          </div>
-          <WeightModalInput
-            sourceKey={source.key}
-            weight={source.weight ?? 0}
-          />
-        </div>
-      );
-    }
-  );
 
   const SourceRow = memo(({ source }: { source: DataSource }) => {
     return (
@@ -8539,7 +8574,7 @@ const VideoSourceConfig = ({
                   : buttonStyles.success
               }`}
             >
-              {isLoading('updateSource') ? '保存中...' : '保存'}
+              {isLoading('updateSource') ? (<><Loader2 className='mr-1.5 inline h-4 w-4 animate-spin align-[-3px]' />保存中...</>) : '保存'}
             </button>
           </div>
         </div>
@@ -8599,11 +8634,11 @@ const VideoSourceConfig = ({
       {showSpecialSourcesModal &&
         createPortal(
           <div
-            className='ptv-dialog apex-admin-overlay fixed inset-0 z-[10000] flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm'
+            className='ptv-dialog ptv-scrim-in apex-admin-overlay fixed inset-0 z-[10000] flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm'
             onClick={closeSpecialSourcesModal}
           >
             <div
-              className='flex max-h-[84vh] w-full max-w-4xl flex-col overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-2xl dark:border-gray-700 dark:bg-gray-800'
+              className='ptv-modal-in flex max-h-[84vh] w-full max-w-4xl flex-col overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-2xl dark:border-gray-700 dark:bg-gray-800'
               onClick={(e) => e.stopPropagation()}
             >
               <div className='flex items-start justify-between gap-4 border-b border-gray-200 px-6 py-5 dark:border-gray-700'>
@@ -8709,7 +8744,7 @@ const VideoSourceConfig = ({
                         : buttonStyles.success
                     }`}
                   >
-                    {isLoading('saveSpecialSources') ? '保存中...' : '保存'}
+                    {isLoading('saveSpecialSources') ? (<><Loader2 className='mr-1.5 inline h-4 w-4 animate-spin align-[-3px]' />保存中...</>) : '保存'}
                   </button>
                 </div>
               </div>
@@ -8721,11 +8756,11 @@ const VideoSourceConfig = ({
       {showClientAdSourcesModal &&
         createPortal(
           <div
-            className='ptv-dialog apex-admin-overlay fixed inset-0 z-[10000] flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm'
+            className='ptv-dialog ptv-scrim-in apex-admin-overlay fixed inset-0 z-[10000] flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm'
             onClick={closeClientAdSourcesModal}
           >
             <div
-              className='flex max-h-[84vh] w-full max-w-4xl flex-col overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-2xl dark:border-gray-700 dark:bg-gray-800'
+              className='ptv-modal-in flex max-h-[84vh] w-full max-w-4xl flex-col overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-2xl dark:border-gray-700 dark:bg-gray-800'
               onClick={(e) => e.stopPropagation()}
             >
               <div className='flex items-start justify-between gap-4 border-b border-gray-200 px-6 py-5 dark:border-gray-700'>
@@ -8822,7 +8857,7 @@ const VideoSourceConfig = ({
                         : buttonStyles.success
                     }`}
                   >
-                    {isLoading('saveClientAdSources') ? '保存中...' : '保存'}
+                    {isLoading('saveClientAdSources') ? (<><Loader2 className='mr-1.5 inline h-4 w-4 animate-spin align-[-3px]' />保存中...</>) : '保存'}
                   </button>
                 </div>
               </div>
@@ -8835,7 +8870,7 @@ const VideoSourceConfig = ({
         createPortal(
           <>
             <div
-              className='ptv-dialog apex-admin-overlay fixed inset-0 bg-black/60 backdrop-blur-sm z-[10000]'
+              className='ptv-dialog ptv-scrim-in apex-admin-overlay fixed inset-0 bg-black/60 backdrop-blur-sm z-[10000]'
               onClick={handleCloseWeightModal}
               onTouchMove={(e) => {
                 e.preventDefault();
@@ -8848,7 +8883,7 @@ const VideoSourceConfig = ({
               }}
             />
             <div
-              className='ptv-dialog fixed left-1/2 top-1/2 z-[10001] flex w-[calc(100%-1rem)] max-w-6xl max-h-[90dvh] -translate-x-1/2 -translate-y-1/2 flex-col overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-2xl dark:border-gray-700 dark:bg-gray-800'
+              className='ptv-modal-in ptv-dialog fixed left-1/2 top-1/2 z-[10001] flex w-[calc(100%-1rem)] max-w-6xl max-h-[90dvh] -translate-x-1/2 -translate-y-1/2 flex-col overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-2xl dark:border-gray-700 dark:bg-gray-800'
               onClick={(e) => e.stopPropagation()}
             >
               <div className='flex items-start justify-between gap-4 border-b border-gray-200 dark:border-gray-700 px-6 py-5'>
@@ -8936,6 +8971,7 @@ const VideoSourceConfig = ({
                                   source={source}
                                   index={index}
                                   recommendedWeight={recommendedWeight}
+                                  onWeightChange={handleWeightDraftChange}
                                 />
                               );
                             })}
@@ -8966,7 +9002,7 @@ const VideoSourceConfig = ({
                         : buttonStyles.success
                     }`}
                   >
-                    {isLoading('saveWeightConfig') ? '保存中...' : '保存'}
+                    {isLoading('saveWeightConfig') ? (<><Loader2 className='mr-1.5 inline h-4 w-4 animate-spin align-[-3px]' />保存中...</>) : '保存'}
                   </button>
                 </div>
               </div>
@@ -8979,11 +9015,11 @@ const VideoSourceConfig = ({
       {showValidationModal &&
         createPortal(
           <div
-            className='ptv-dialog apex-admin-overlay fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50'
+            className='ptv-dialog ptv-scrim-in apex-admin-overlay fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50'
             onClick={() => setShowValidationModal(false)}
           >
             <div
-              className='bg-white dark:bg-gray-800 rounded-lg p-6 w-full max-w-md mx-4'
+              className='ptv-modal-in bg-white dark:bg-gray-800 rounded-lg p-6 w-full max-w-md mx-4'
               onClick={(e) => e.stopPropagation()}
             >
               <h3 className='text-lg font-medium text-gray-900 dark:text-gray-100 mb-4'>
@@ -9044,11 +9080,11 @@ const VideoSourceConfig = ({
       {confirmModal.isOpen &&
         createPortal(
           <div
-            className='ptv-dialog apex-admin-overlay fixed inset-0 bg-black bg-opacity-50 z-[10020] flex items-center justify-center p-4'
+            className='ptv-dialog ptv-scrim-in apex-admin-overlay fixed inset-0 bg-black bg-opacity-50 z-[10020] flex items-center justify-center p-4'
             onClick={confirmModal.onCancel}
           >
             <div
-              className='bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full'
+              className='ptv-modal-in bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full'
               onClick={(e) => e.stopPropagation()}
             >
               <div className='p-6'>
@@ -9118,6 +9154,117 @@ const VideoSourceConfig = ({
           document.body
         )}
     </div>
+  );
+};
+
+// 可拖拽行封装 (dnd-kit)：必须定义在 CategoryConfig 外部，否则每次父组件渲染都会重挂载整行，
+// 丢失 dnd-kit 落位动画和焦点
+const CategoryDraggableRow = ({
+  category,
+  isLoading,
+  onToggleEnable,
+  onDelete,
+}: {
+  category: CustomCategory;
+  isLoading: (key: string) => boolean;
+  onToggleEnable: (query: string, type: 'movie' | 'tv') => void;
+  onDelete: (query: string, type: 'movie' | 'tv') => void;
+}) => {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: `${category.query}:${category.type}` });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+  } as React.CSSProperties;
+
+  return (
+    <tr
+      ref={setNodeRef}
+      style={style}
+      className={`hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors select-none ${
+        isDragging ? 'relative z-10 shadow-lg opacity-90' : ''
+      }`}
+    >
+      <td
+        className='px-2 py-4 cursor-grab text-gray-400'
+        style={{ touchAction: 'none' }}
+        {...{ ...attributes, ...listeners }}
+      >
+        <GripVertical size={16} />
+      </td>
+      <td className='px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100'>
+        {category.name || '-'}
+      </td>
+      <td className='px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100'>
+        <span
+          className={`px-2 py-1 text-xs rounded-full ${
+            category.type === 'movie'
+              ? 'bg-blue-100 dark:bg-blue-900/20 text-blue-800 dark:text-blue-300'
+              : 'bg-purple-100 dark:bg-purple-900/20 text-purple-800 dark:text-purple-300'
+          }`}
+        >
+          {category.type === 'movie' ? '电影' : '电视剧'}
+        </span>
+      </td>
+      <td
+        className='px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100 max-w-[12rem] truncate'
+        title={category.query}
+      >
+        {category.query}
+      </td>
+      <td className='px-6 py-4 whitespace-nowrap max-w-[1rem]'>
+        <span
+          className={`px-2 py-1 text-xs rounded-full ${
+            !category.disabled
+              ? 'bg-green-100 dark:bg-green-900/20 text-green-800 dark:text-green-300'
+              : 'bg-red-100 dark:bg-red-900/20 text-red-800 dark:text-red-300'
+          }`}
+        >
+          {!category.disabled ? '启用中' : '已禁用'}
+        </span>
+      </td>
+      <td className='px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-2'>
+        <button
+          onClick={() => onToggleEnable(category.query, category.type)}
+          disabled={isLoading(
+            `toggleCategory_${category.query}_${category.type}`
+          )}
+          className={`inline-flex items-center px-3 py-1.5 rounded-full text-xs font-medium ${
+            !category.disabled
+              ? buttonStyles.roundedDanger
+              : buttonStyles.roundedSuccess
+          } transition-colors ${
+            isLoading(`toggleCategory_${category.query}_${category.type}`)
+              ? 'opacity-50 cursor-not-allowed'
+              : ''
+          }`}
+        >
+          {!category.disabled ? '禁用' : '启用'}
+        </button>
+        {category.from !== 'config' && (
+          <button
+            onClick={() => onDelete(category.query, category.type)}
+            disabled={isLoading(
+              `deleteCategory_${category.query}_${category.type}`
+            )}
+            className={`${buttonStyles.roundedSecondary} ${
+              isLoading(`deleteCategory_${category.query}_${category.type}`)
+                ? 'opacity-50 cursor-not-allowed'
+                : ''
+            }`}
+          >
+            删除
+          </button>
+        )}
+      </td>
+    </tr>
   );
 };
 
@@ -9255,98 +9402,6 @@ const CategoryConfig = ({
       });
   };
 
-  // 可拖拽行封装 (dnd-kit)
-  const DraggableRow = ({ category }: { category: CustomCategory }) => {
-    const { attributes, listeners, setNodeRef, transform, transition } =
-      useSortable({ id: `${category.query}:${category.type}` });
-
-    const style = {
-      transform: CSS.Transform.toString(transform),
-      transition,
-    } as React.CSSProperties;
-
-    return (
-      <tr
-        ref={setNodeRef}
-        style={style}
-        className='hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors select-none'
-      >
-        <td
-          className='px-2 py-4 cursor-grab text-gray-400'
-          style={{ touchAction: 'none' }}
-          {...{ ...attributes, ...listeners }}
-        >
-          <GripVertical size={16} />
-        </td>
-        <td className='px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100'>
-          {category.name || '-'}
-        </td>
-        <td className='px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100'>
-          <span
-            className={`px-2 py-1 text-xs rounded-full ${
-              category.type === 'movie'
-                ? 'bg-blue-100 dark:bg-blue-900/20 text-blue-800 dark:text-blue-300'
-                : 'bg-purple-100 dark:bg-purple-900/20 text-purple-800 dark:text-purple-300'
-            }`}
-          >
-            {category.type === 'movie' ? '电影' : '电视剧'}
-          </span>
-        </td>
-        <td
-          className='px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100 max-w-[12rem] truncate'
-          title={category.query}
-        >
-          {category.query}
-        </td>
-        <td className='px-6 py-4 whitespace-nowrap max-w-[1rem]'>
-          <span
-            className={`px-2 py-1 text-xs rounded-full ${
-              !category.disabled
-                ? 'bg-green-100 dark:bg-green-900/20 text-green-800 dark:text-green-300'
-                : 'bg-red-100 dark:bg-red-900/20 text-red-800 dark:text-red-300'
-            }`}
-          >
-            {!category.disabled ? '启用中' : '已禁用'}
-          </span>
-        </td>
-        <td className='px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-2'>
-          <button
-            onClick={() => handleToggleEnable(category.query, category.type)}
-            disabled={isLoading(
-              `toggleCategory_${category.query}_${category.type}`
-            )}
-            className={`inline-flex items-center px-3 py-1.5 rounded-full text-xs font-medium ${
-              !category.disabled
-                ? buttonStyles.roundedDanger
-                : buttonStyles.roundedSuccess
-            } transition-colors ${
-              isLoading(`toggleCategory_${category.query}_${category.type}`)
-                ? 'opacity-50 cursor-not-allowed'
-                : ''
-            }`}
-          >
-            {!category.disabled ? '禁用' : '启用'}
-          </button>
-          {category.from !== 'config' && (
-            <button
-              onClick={() => handleDelete(category.query, category.type)}
-              disabled={isLoading(
-                `deleteCategory_${category.query}_${category.type}`
-              )}
-              className={`${buttonStyles.roundedSecondary} ${
-                isLoading(`deleteCategory_${category.query}_${category.type}`)
-                  ? 'opacity-50 cursor-not-allowed'
-                  : ''
-              }`}
-            >
-              删除
-            </button>
-          )}
-        </td>
-      </tr>
-    );
-  };
-
   if (!config) {
     return (
       <div className='text-center text-gray-500 dark:text-gray-400'>
@@ -9464,9 +9519,12 @@ const CategoryConfig = ({
             >
               <tbody className='divide-y divide-gray-200 dark:divide-gray-700'>
                 {categories.map((category) => (
-                  <DraggableRow
+                  <CategoryDraggableRow
                     key={`${category.query}:${category.type}`}
                     category={category}
+                    isLoading={isLoading}
+                    onToggleEnable={handleToggleEnable}
+                    onDelete={handleDelete}
                   />
                 ))}
               </tbody>
@@ -9487,7 +9545,7 @@ const CategoryConfig = ({
                 : buttonStyles.primary
             }`}
           >
-            {isLoading('saveCategoryOrder') ? '保存中...' : '保存排序'}
+            {isLoading('saveCategoryOrder') ? (<><Loader2 className='mr-1.5 inline h-4 w-4 animate-spin align-[-3px]' />保存中...</>) : '保存排序'}
           </button>
         </div>
       )}
@@ -10008,7 +10066,7 @@ const VideoSourceScriptLab = () => {
                   : buttonStyles.success
               }
             >
-              {isLoading('saveSourceScript') ? '保存中...' : '保存脚本'}
+              {isLoading('saveSourceScript') ? (<><Loader2 className='mr-1.5 inline h-4 w-4 animate-spin align-[-3px]' />保存中...</>) : '保存脚本'}
             </button>
             <button
               onClick={handleTest}
@@ -10487,7 +10545,7 @@ const ConfigFileComponent = ({
                 : buttonStyles.success
             }`}
           >
-            {isLoading('saveConfig') ? '保存中…' : '保存'}
+            {isLoading('saveConfig') ? (<><Loader2 className='mr-1.5 inline h-4 w-4 animate-spin align-[-3px]' />保存中…</>) : '保存'}
           </button>
         </div>
       </div>
@@ -11456,7 +11514,7 @@ const ThemeConfigComponent = ({
               : buttonStyles.success
           }
         >
-          {isLoading('saveThemeConfig') ? '保存中...' : '保存个性化配置'}
+          {isLoading('saveThemeConfig') ? (<><Loader2 className='mr-1.5 inline h-4 w-4 animate-spin align-[-3px]' />保存中...</>) : '保存个性化配置'}
         </button>
       </div>
 
@@ -11879,7 +11937,7 @@ const SiteConfigComponent = ({
 
             {/* 下拉选项列表 */}
             {isDoubanDropdownOpen && (
-              <div className='absolute z-50 w-full mt-1 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg shadow-lg max-h-60 overflow-auto'>
+              <div className='ptv-pop-in origin-top absolute z-50 w-full mt-1 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg shadow-lg max-h-60 overflow-auto'>
                 {doubanDataSourceOptions.map((option) => (
                   <button
                     key={option.value}
@@ -11969,7 +12027,7 @@ const SiteConfigComponent = ({
 
             {/* 下拉选项列表 */}
             {isDoubanImageProxyDropdownOpen && (
-              <div className='absolute z-50 w-full mt-1 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg shadow-lg max-h-60 overflow-auto'>
+              <div className='ptv-pop-in origin-top absolute z-50 w-full mt-1 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg shadow-lg max-h-60 overflow-auto'>
                 {doubanImageProxyTypeOptions.map((option) => (
                   <button
                     key={option.value}
@@ -13098,7 +13156,7 @@ const SiteConfigComponent = ({
               : buttonStyles.success
           } rounded-lg transition-colors`}
         >
-          {isLoading('saveSiteConfig') ? '保存中…' : '保存'}
+          {isLoading('saveSiteConfig') ? (<><Loader2 className='mr-1.5 inline h-4 w-4 animate-spin align-[-3px]' />保存中…</>) : '保存'}
         </button>
       </div>
 
@@ -13117,11 +13175,11 @@ const SiteConfigComponent = ({
       {showEnableCommentsModal &&
         createPortal(
           <div
-            className='ptv-dialog apex-admin-overlay fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4'
+            className='ptv-dialog ptv-scrim-in apex-admin-overlay fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4'
             onClick={() => setShowEnableCommentsModal(false)}
           >
             <div
-              className='bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full'
+              className='ptv-modal-in bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full'
               onClick={(e) => e.stopPropagation()}
             >
               <div className='p-6'>
@@ -14000,7 +14058,7 @@ const RegistrationConfigComponent = ({
               : buttonStyles.success
           } rounded-lg transition-colors`}
         >
-          {isLoading('saveRegistrationConfig') ? '保存中…' : '保存'}
+          {isLoading('saveRegistrationConfig') ? (<><Loader2 className='mr-1.5 inline h-4 w-4 animate-spin align-[-3px]' />保存中…</>) : '保存'}
         </button>
       </div>
 
@@ -14019,11 +14077,11 @@ const RegistrationConfigComponent = ({
       {showEnableRegistrationModal &&
         createPortal(
           <div
-            className='ptv-dialog apex-admin-overlay fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4'
+            className='ptv-dialog ptv-scrim-in apex-admin-overlay fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4'
             onClick={() => setShowEnableRegistrationModal(false)}
           >
             <div
-              className='bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full'
+              className='ptv-modal-in bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full'
               onClick={(e) => e.stopPropagation()}
             >
               <div className='p-6'>
@@ -14345,7 +14403,7 @@ const CustomAdFilterConfig = ({
                 : buttonStyles.success
             }`}
           >
-            {isLoading('saveAdFilterCode') ? '保存中…' : '保存'}
+            {isLoading('saveAdFilterCode') ? (<><Loader2 className='mr-1.5 inline h-4 w-4 animate-spin align-[-3px]' />保存中…</>) : '保存'}
           </button>
         </div>
       </div>
@@ -14539,8 +14597,8 @@ const SuwayomiConfigComponent = ({
         {/* 漫画展馆免责声明弹窗 */}
         {showMangaDisclaimer &&
           createPortal(
-            <div className='ptv-dialog apex-admin-overlay fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4'>
-              <div className='bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full border border-red-200 dark:border-red-800'>
+            <div className='ptv-dialog ptv-scrim-in apex-admin-overlay fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4'>
+              <div className='ptv-modal-in bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full border border-red-200 dark:border-red-800'>
                 <div className='p-6'>
                   <div className='flex justify-center mb-4'>
                     <AlertTriangle className='w-12 h-12 text-red-500' />
@@ -14724,7 +14782,7 @@ const SuwayomiConfigComponent = ({
             disabled={isLoading('saveSuwayomi')}
             className={buttonStyles.success}
           >
-            {isLoading('saveSuwayomi') ? '保存中...' : '保存配置'}
+            {isLoading('saveSuwayomi') ? (<><Loader2 className='mr-1.5 inline h-4 w-4 animate-spin align-[-3px]' />保存中...</>) : '保存配置'}
           </button>
         </div>
       </div>
@@ -15042,8 +15100,8 @@ const OPDSConfigComponent = ({
       {/* 电子书馆免责声明弹窗 */}
       {showBooksDisclaimer &&
         createPortal(
-          <div className='ptv-dialog apex-admin-overlay fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4'>
-            <div className='bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full border border-red-200 dark:border-red-800'>
+          <div className='ptv-dialog ptv-scrim-in apex-admin-overlay fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4'>
+            <div className='ptv-modal-in bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full border border-red-200 dark:border-red-800'>
               <div className='p-6'>
                 <div className='flex justify-center mb-4'>
                   <AlertTriangle className='w-12 h-12 text-red-500' />
@@ -15435,7 +15493,7 @@ const OPDSConfigComponent = ({
           disabled={isLoading('saveOPDSConfig')}
           className={buttonStyles.success}
         >
-          {isLoading('saveOPDSConfig') ? '保存中...' : '保存电子书源配置'}
+          {isLoading('saveOPDSConfig') ? (<><Loader2 className='mr-1.5 inline h-4 w-4 animate-spin align-[-3px]' />保存中...</>) : '保存电子书源配置'}
         </button>
       </div>
 
@@ -15678,7 +15736,7 @@ const XiaoyaConfigComponent = ({
             disabled={isLoading('saveXiaoya')}
             className={buttonStyles.success}
           >
-            {isLoading('saveXiaoya') ? '保存中...' : '保存配置'}
+            {isLoading('saveXiaoya') ? (<><Loader2 className='mr-1.5 inline h-4 w-4 animate-spin align-[-3px]' />保存中...</>) : '保存配置'}
           </button>
         </div>
       </div>
@@ -15921,7 +15979,7 @@ const TelegramConfigComponent = ({
 
         <div className='flex justify-end'>
           <button onClick={handleSave} disabled={isLoading('saveTelegram')} className={buttonStyles.success}>
-            {isLoading('saveTelegram') ? '保存中...' : '保存配置'}
+            {isLoading('saveTelegram') ? (<><Loader2 className='mr-1.5 inline h-4 w-4 animate-spin align-[-3px]' />保存中...</>) : '保存配置'}
           </button>
         </div>
       </div>
@@ -16336,7 +16394,7 @@ const EmailConfigComponent = ({
             disabled={isLoading('saveEmail')}
             className={buttonStyles.success}
           >
-            {isLoading('saveEmail') ? '保存中...' : '保存配置'}
+            {isLoading('saveEmail') ? (<><Loader2 className='mr-1.5 inline h-4 w-4 animate-spin align-[-3px]' />保存中...</>) : '保存配置'}
           </button>
         </div>
       </div>
@@ -16502,7 +16560,7 @@ const MovieRequestsComponent = ({
                 onChange={(e) => setEnableMovieRequest(e.target.checked)}
                 className='sr-only peer'
               />
-              <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
+              <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-transform after:duration-200 after:ease-[cubic-bezier(.16,1,.3,1)] dark:border-gray-600 peer-checked:bg-blue-600"></div>
             </label>
           </div>
 
@@ -16540,7 +16598,7 @@ const MovieRequestsComponent = ({
             disabled={savingSettings}
             className={buttonStyles.primary}
           >
-            {savingSettings ? '保存中...' : '保存设置'}
+            {savingSettings ? (<><Loader2 className='mr-1.5 inline h-4 w-4 animate-spin align-[-3px]' />保存中...</>) : '保存设置'}
           </button>
         </div>
       </div>
@@ -16865,7 +16923,7 @@ const AIConfigComponent = ({
             onChange={(e) => setEnabled(e.target.checked)}
             className='sr-only peer'
           />
-          <div className="w-14 h-7 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-green-300 dark:peer-focus:ring-green-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:start-[4px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-6 after:w-6 after:transition-all dark:border-gray-600 peer-checked:bg-green-600"></div>
+          <div className="w-14 h-7 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-green-300 dark:peer-focus:ring-green-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:start-[4px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-6 after:w-6 after:transition-transform after:duration-200 after:ease-[cubic-bezier(.16,1,.3,1)] dark:border-gray-600 peer-checked:bg-green-600"></div>
         </label>
       </div>
 
@@ -17184,7 +17242,7 @@ const AIConfigComponent = ({
               onChange={(e) => setEnableWebSearch(e.target.checked)}
               className='sr-only peer'
             />
-            <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
+            <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-transform after:duration-200 after:ease-[cubic-bezier(.16,1,.3,1)] dark:border-gray-600 peer-checked:bg-blue-600"></div>
           </label>
         </div>
 
@@ -17349,7 +17407,7 @@ const AIConfigComponent = ({
                 onChange={(e) => item.setState(e.target.checked)}
                 className='sr-only peer'
               />
-              <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-green-300 dark:peer-focus:ring-green-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-green-600"></div>
+              <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-green-300 dark:peer-focus:ring-green-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-transform after:duration-200 after:ease-[cubic-bezier(.16,1,.3,1)] dark:border-gray-600 peer-checked:bg-green-600"></div>
             </label>
           </div>
         ))}
@@ -17498,7 +17556,7 @@ const AIConfigComponent = ({
               : buttonStyles.success
           }
         >
-          {isLoading('saveAIConfig') ? '保存中...' : '保存配置'}
+          {isLoading('saveAIConfig') ? (<><Loader2 className='mr-1.5 inline h-4 w-4 animate-spin align-[-3px]' />保存中...</>) : '保存配置'}
         </button>
       </div>
 
@@ -17653,15 +17711,15 @@ const MusicConfigComponent = ({
             }}
             className='sr-only peer'
           />
-          <div className="w-14 h-7 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-green-300 dark:peer-focus:ring-green-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:start-[4px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-6 after:w-6 after:transition-all dark:border-gray-600 peer-checked:bg-green-600"></div>
+          <div className="w-14 h-7 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-green-300 dark:peer-focus:ring-green-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:start-[4px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-6 after:w-6 after:transition-transform after:duration-200 after:ease-[cubic-bezier(.16,1,.3,1)] dark:border-gray-600 peer-checked:bg-green-600"></div>
         </label>
       </div>
 
       {/* 音乐免责声明弹窗 */}
       {showMusicDisclaimer &&
         createPortal(
-          <div className='ptv-dialog apex-admin-overlay fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4'>
-            <div className='bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full border border-red-200 dark:border-red-800'>
+          <div className='ptv-dialog ptv-scrim-in apex-admin-overlay fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4'>
+            <div className='ptv-modal-in bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full border border-red-200 dark:border-red-800'>
               <div className='p-6'>
                 <div className='flex justify-center mb-4'>
                   <AlertTriangle className='w-12 h-12 text-red-500' />
@@ -17730,7 +17788,7 @@ const MusicConfigComponent = ({
               onChange={(e) => setProxyEnabled(e.target.checked)}
               className='sr-only peer'
             />
-            <div className="w-14 h-7 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-green-300 dark:peer-focus:ring-green-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:start-[4px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-6 after:w-6 after:transition-all dark:border-gray-600 peer-checked:bg-green-600"></div>
+            <div className="w-14 h-7 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-green-300 dark:peer-focus:ring-green-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:start-[4px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-6 after:w-6 after:transition-transform after:duration-200 after:ease-[cubic-bezier(.16,1,.3,1)] dark:border-gray-600 peer-checked:bg-green-600"></div>
           </label>
         </div>
 
@@ -17777,7 +17835,7 @@ const MusicConfigComponent = ({
               : buttonStyles.success
           }
         >
-          {isLoading('saveMusicConfig') ? '保存中...' : '保存音乐配置'}
+          {isLoading('saveMusicConfig') ? (<><Loader2 className='mr-1.5 inline h-4 w-4 animate-spin align-[-3px]' />保存中...</>) : '保存音乐配置'}
         </button>
       </div>
 
@@ -17791,6 +17849,164 @@ const MusicConfigComponent = ({
         showConfirm={alertModal.showConfirm}
       />
     </div>
+  );
+};
+
+// 可拖拽行封装 (dnd-kit)：必须定义在 LiveSourceConfig 外部，否则每次父组件渲染都会重挂载整行，
+// 丢失 dnd-kit 落位动画和焦点
+const LiveSourceDraggableRow = ({
+  liveSource,
+  isLoading,
+  onSetProxyMode,
+  onToggleEnable,
+  onEdit,
+  onDelete,
+}: {
+  liveSource: LiveDataSource;
+  isLoading: (key: string) => boolean;
+  onSetProxyMode: (
+    key: string,
+    mode: 'full' | 'm3u8-only' | 'direct'
+  ) => void;
+  onToggleEnable: (key: string) => void;
+  onEdit: (liveSource: LiveDataSource) => void;
+  onDelete: (key: string) => void;
+}) => {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: liveSource.key });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+  } as React.CSSProperties;
+
+  return (
+    <tr
+      ref={setNodeRef}
+      style={style}
+      className={`hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors select-none ${
+        isDragging ? 'relative z-10 shadow-lg opacity-90' : ''
+      }`}
+    >
+      <td
+        className='px-2 py-4 cursor-grab text-gray-400'
+        style={{ touchAction: 'none' }}
+        {...attributes}
+        {...listeners}
+      >
+        <GripVertical size={16} />
+      </td>
+      <td className='px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100'>
+        {liveSource.name}
+      </td>
+      <td className='px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100'>
+        {liveSource.key}
+      </td>
+      <td
+        className='px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100 max-w-[12rem] truncate'
+        title={liveSource.url}
+      >
+        {liveSource.url}
+      </td>
+      <td
+        className='px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100 max-w-[8rem] truncate'
+        title={liveSource.epg || '-'}
+      >
+        {liveSource.epg || '-'}
+      </td>
+      <td
+        className='px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100 max-w-[8rem] truncate'
+        title={liveSource.ua || '-'}
+      >
+        {liveSource.ua || '-'}
+      </td>
+      <td className='px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100 text-center'>
+        {liveSource.channelNumber && liveSource.channelNumber > 0
+          ? liveSource.channelNumber
+          : '-'}
+      </td>
+      <td className='px-6 py-4 whitespace-nowrap max-w-[1rem]'>
+        <span
+          className={`px-2 py-1 text-xs rounded-full ${
+            !liveSource.disabled
+              ? 'bg-green-100 dark:bg-green-900/20 text-green-800 dark:text-green-300'
+              : 'bg-red-100 dark:bg-red-900/20 text-red-800 dark:text-red-300'
+          }`}
+        >
+          {!liveSource.disabled ? '启用中' : '已禁用'}
+        </span>
+      </td>
+      <td className='px-6 py-4 whitespace-nowrap'>
+        <select
+          value={liveSource.proxyMode || 'full'}
+          onChange={(e) => {
+            onSetProxyMode(
+              liveSource.key,
+              e.target.value as 'full' | 'm3u8-only' | 'direct'
+            );
+          }}
+          disabled={isLoading(`setLiveProxyMode_${liveSource.key}`)}
+          className={`px-2 py-1 text-xs rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 ${
+            isLoading(`setLiveProxyMode_${liveSource.key}`)
+              ? 'opacity-50 cursor-not-allowed'
+              : 'cursor-pointer'
+          }`}
+        >
+          <option value='full'>全量代理</option>
+          <option value='m3u8-only'>仅代理m3u8</option>
+          <option value='direct'>直连</option>
+        </select>
+      </td>
+      <td className='px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-2'>
+        <button
+          onClick={() => onToggleEnable(liveSource.key)}
+          disabled={isLoading(`toggleLiveSource_${liveSource.key}`)}
+          className={`inline-flex items-center px-3 py-1.5 rounded-full text-xs font-medium ${
+            !liveSource.disabled
+              ? buttonStyles.roundedDanger
+              : buttonStyles.roundedSuccess
+          } transition-colors ${
+            isLoading(`toggleLiveSource_${liveSource.key}`)
+              ? 'opacity-50 cursor-not-allowed'
+              : ''
+          }`}
+        >
+          {!liveSource.disabled ? '禁用' : '启用'}
+        </button>
+        {liveSource.from !== 'config' && (
+          <>
+            <button
+              onClick={() => onEdit(liveSource)}
+              disabled={isLoading(`editLiveSource_${liveSource.key}`)}
+              className={`${buttonStyles.roundedPrimary} ${
+                isLoading(`editLiveSource_${liveSource.key}`)
+                  ? 'opacity-50 cursor-not-allowed'
+                  : ''
+              }`}
+            >
+              编辑
+            </button>
+            <button
+              onClick={() => onDelete(liveSource.key)}
+              disabled={isLoading(`deleteLiveSource_${liveSource.key}`)}
+              className={`${buttonStyles.roundedSecondary} ${
+                isLoading(`deleteLiveSource_${liveSource.key}`)
+                  ? 'opacity-50 cursor-not-allowed'
+                  : ''
+              }`}
+            >
+              删除
+            </button>
+          </>
+        )}
+      </td>
+    </tr>
   );
 };
 
@@ -17980,7 +18196,6 @@ const LiveSourceConfig = ({
           throw new Error(data.error || `刷新失败: ${response.status}`);
         }
 
-        // 刷新成功后重新获取配置
         await refreshConfig();
         showAlert({
           type: 'success',
@@ -18067,138 +18282,6 @@ const LiveSourceConfig = ({
       });
   };
 
-  // 可拖拽行封装 (dnd-kit)
-  const DraggableRow = ({ liveSource }: { liveSource: LiveDataSource }) => {
-    const { attributes, listeners, setNodeRef, transform, transition } =
-      useSortable({ id: liveSource.key });
-
-    const style = {
-      transform: CSS.Transform.toString(transform),
-      transition,
-    } as React.CSSProperties;
-
-    return (
-      <tr
-        ref={setNodeRef}
-        style={style}
-        className='hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors select-none'
-      >
-        <td
-          className='px-2 py-4 cursor-grab text-gray-400'
-          style={{ touchAction: 'none' }}
-          {...attributes}
-          {...listeners}
-        >
-          <GripVertical size={16} />
-        </td>
-        <td className='px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100'>
-          {liveSource.name}
-        </td>
-        <td className='px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100'>
-          {liveSource.key}
-        </td>
-        <td
-          className='px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100 max-w-[12rem] truncate'
-          title={liveSource.url}
-        >
-          {liveSource.url}
-        </td>
-        <td
-          className='px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100 max-w-[8rem] truncate'
-          title={liveSource.epg || '-'}
-        >
-          {liveSource.epg || '-'}
-        </td>
-        <td
-          className='px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100 max-w-[8rem] truncate'
-          title={liveSource.ua || '-'}
-        >
-          {liveSource.ua || '-'}
-        </td>
-        <td className='px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100 text-center'>
-          {liveSource.channelNumber && liveSource.channelNumber > 0
-            ? liveSource.channelNumber
-            : '-'}
-        </td>
-        <td className='px-6 py-4 whitespace-nowrap max-w-[1rem]'>
-          <span
-            className={`px-2 py-1 text-xs rounded-full ${
-              !liveSource.disabled
-                ? 'bg-green-100 dark:bg-green-900/20 text-green-800 dark:text-green-300'
-                : 'bg-red-100 dark:bg-red-900/20 text-red-800 dark:text-red-300'
-            }`}
-          >
-            {!liveSource.disabled ? '启用中' : '已禁用'}
-          </span>
-        </td>
-        <td className='px-6 py-4 whitespace-nowrap'>
-          <select
-            value={liveSource.proxyMode || 'full'}
-            onChange={(e) => {
-              handleSetProxyMode(
-                liveSource.key,
-                e.target.value as 'full' | 'm3u8-only' | 'direct'
-              );
-            }}
-            disabled={isLoading(`setLiveProxyMode_${liveSource.key}`)}
-            className={`px-2 py-1 text-xs rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 ${
-              isLoading(`setLiveProxyMode_${liveSource.key}`)
-                ? 'opacity-50 cursor-not-allowed'
-                : 'cursor-pointer'
-            }`}
-          >
-            <option value='full'>全量代理</option>
-            <option value='m3u8-only'>仅代理m3u8</option>
-            <option value='direct'>直连</option>
-          </select>
-        </td>
-        <td className='px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-2'>
-          <button
-            onClick={() => handleToggleEnable(liveSource.key)}
-            disabled={isLoading(`toggleLiveSource_${liveSource.key}`)}
-            className={`inline-flex items-center px-3 py-1.5 rounded-full text-xs font-medium ${
-              !liveSource.disabled
-                ? buttonStyles.roundedDanger
-                : buttonStyles.roundedSuccess
-            } transition-colors ${
-              isLoading(`toggleLiveSource_${liveSource.key}`)
-                ? 'opacity-50 cursor-not-allowed'
-                : ''
-            }`}
-          >
-            {!liveSource.disabled ? '禁用' : '启用'}
-          </button>
-          {liveSource.from !== 'config' && (
-            <>
-              <button
-                onClick={() => setEditingLiveSource(liveSource)}
-                disabled={isLoading(`editLiveSource_${liveSource.key}`)}
-                className={`${buttonStyles.roundedPrimary} ${
-                  isLoading(`editLiveSource_${liveSource.key}`)
-                    ? 'opacity-50 cursor-not-allowed'
-                    : ''
-                }`}
-              >
-                编辑
-              </button>
-              <button
-                onClick={() => handleDelete(liveSource.key)}
-                disabled={isLoading(`deleteLiveSource_${liveSource.key}`)}
-                className={`${buttonStyles.roundedSecondary} ${
-                  isLoading(`deleteLiveSource_${liveSource.key}`)
-                    ? 'opacity-50 cursor-not-allowed'
-                    : ''
-                }`}
-              >
-                删除
-              </button>
-            </>
-          )}
-        </td>
-      </tr>
-    );
-  };
-
   if (!config) {
     return (
       <div className='text-center text-gray-500 dark:text-gray-400'>
@@ -18238,7 +18321,7 @@ const LiveSourceConfig = ({
                   : buttonStyles.success
               }`}
             >
-              {isLoading('saveLiveRefreshInterval') ? '保存中...' : '保存间隔'}
+              {isLoading('saveLiveRefreshInterval') ? (<><Loader2 className='mr-1.5 inline h-4 w-4 animate-spin align-[-3px]' />保存中...</>) : '保存间隔'}
             </button>
           </div>
         </div>
@@ -18456,7 +18539,7 @@ const LiveSourceConfig = ({
                   : buttonStyles.success
               }`}
             >
-              {isLoading('editLiveSource') ? '保存中...' : '保存'}
+              {isLoading('editLiveSource') ? (<><Loader2 className='mr-1.5 inline h-4 w-4 animate-spin align-[-3px]' />保存中...</>) : '保存'}
             </button>
           </div>
         </div>
@@ -18516,7 +18599,15 @@ const LiveSourceConfig = ({
             >
               <tbody className='divide-y divide-gray-200 dark:divide-gray-700'>
                 {liveSources.map((liveSource) => (
-                  <DraggableRow key={liveSource.key} liveSource={liveSource} />
+                  <LiveSourceDraggableRow
+                    key={liveSource.key}
+                    liveSource={liveSource}
+                    isLoading={isLoading}
+                    onSetProxyMode={handleSetProxyMode}
+                    onToggleEnable={handleToggleEnable}
+                    onEdit={setEditingLiveSource}
+                    onDelete={handleDelete}
+                  />
                 ))}
               </tbody>
             </SortableContext>
@@ -18536,7 +18627,7 @@ const LiveSourceConfig = ({
                 : buttonStyles.primary
             }`}
           >
-            {isLoading('saveLiveSourceOrder') ? '保存中...' : '保存排序'}
+            {isLoading('saveLiveSourceOrder') ? (<><Loader2 className='mr-1.5 inline h-4 w-4 animate-spin align-[-3px]' />保存中...</>) : '保存排序'}
           </button>
         </div>
       )}
@@ -18728,8 +18819,8 @@ const WebLiveConfig = ({
       {/* 免责声明弹窗 */}
       {showDisclaimerModal &&
         createPortal(
-          <div className='ptv-dialog apex-admin-overlay fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4'>
-            <div className='bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full border border-red-200 dark:border-red-800'>
+          <div className='ptv-dialog ptv-scrim-in apex-admin-overlay fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4'>
+            <div className='ptv-modal-in bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full border border-red-200 dark:border-red-800'>
               <div className='p-6'>
                 <div className='flex justify-center mb-4'>
                   <AlertTriangle className='w-12 h-12 text-red-500' />
@@ -18936,7 +19027,7 @@ const WebLiveConfig = ({
                   : buttonStyles.success
               }`}
             >
-              {isLoading('editWebLive') ? '保存中...' : '保存'}
+              {isLoading('editWebLive') ? (<><Loader2 className='mr-1.5 inline h-4 w-4 animate-spin align-[-3px]' />保存中...</>) : '保存'}
             </button>
           </div>
         </div>
@@ -19724,7 +19815,7 @@ function AdminPageClient() {
                 <span className='apex-admin-section-category'>{activeGroup?.title}</span>
                 <h2 id='admin-section-title'>{activeItem.title}</h2>
               </header>
-              <div className='apex-admin-content'>
+              <div key={activeItem.key} className='apex-admin-content ptv-content-in'>
                 {activeItem.render?.()}
               </div>
             </section>
@@ -19747,11 +19838,11 @@ function AdminPageClient() {
       {showResetConfigModal &&
         createPortal(
           <div
-            className='ptv-dialog apex-admin-overlay fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4'
+            className='ptv-dialog ptv-scrim-in apex-admin-overlay fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4'
             onClick={() => setShowResetConfigModal(false)}
           >
             <div
-              className='bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-2xl w-full'
+              className='ptv-modal-in bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-2xl w-full'
               onClick={(e) => e.stopPropagation()}
             >
               <div className='p-6'>

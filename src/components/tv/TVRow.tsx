@@ -20,7 +20,7 @@ export default function TVRow({ section }: { section: TVSection }) {
           </Link>
         )}
       </div>
-      <div data-tv-focus-row='horizontal' className='flex gap-5 overflow-x-auto px-5 py-6 [scrollbar-width:none]'>
+      <div data-tv-focus-row='horizontal' className='-my-4 flex gap-5 overflow-x-auto px-5 py-10 [scrollbar-width:none]'>
         {section.items.map((item) => <TVCard key={`${section.title}-${item.id}`} item={item} />)}
       </div>
     </section>

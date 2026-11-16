@@ -471,9 +471,7 @@ function WatchRoomPageContent() {
               >
                 <Icon className="w-4 h-4" />
                 {tab.label}
-                {activeTab === tab.id && (
-                  <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-600 dark:bg-blue-400" />
-                )}
+                <div className={`absolute bottom-0 left-0 right-0 h-0.5 bg-blue-600 dark:bg-blue-400 origin-center transition-transform duration-200 ${activeTab === tab.id ? 'scale-x-100' : 'scale-x-0'}`} />
               </button>
             );
           })}
@@ -483,7 +481,7 @@ function WatchRoomPageContent() {
         <div className="flex-1">
           {/* 创建房间 */}
           {activeTab === 'create' && (
-            <div className="max-w-2xl mx-auto py-8">
+            <div className="ptv-content-in max-w-2xl mx-auto py-8">
               <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-lg border border-gray-200 dark:border-gray-700">
                 <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-6">
                   创建新房间
@@ -704,7 +702,7 @@ function WatchRoomPageContent() {
 
           {/* 加入房间 */}
           {activeTab === 'join' && (
-            <div className="max-w-2xl mx-auto py-8">
+            <div className="ptv-content-in max-w-2xl mx-auto py-8">
               <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-lg border border-gray-200 dark:border-gray-700">
                 <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-6">
                   加入房间
@@ -841,7 +839,7 @@ function WatchRoomPageContent() {
 
           {/* 房间列表 */}
           {activeTab === 'list' && (
-            <div className="py-4">
+            <div className="ptv-content-in py-4">
               {/* 顶部操作栏 */}
               <div className="flex items-center justify-between mb-6">
                 <p className="text-sm text-gray-600 dark:text-gray-400">

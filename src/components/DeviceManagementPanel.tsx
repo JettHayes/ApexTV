@@ -39,14 +39,14 @@ export function DeviceManagementPanel({
   return createPortal(
     <>
       <div
-        className='fixed inset-0 bg-black/50 backdrop-blur-sm z-[1000]'
+        className='ptv-scrim-in fixed inset-0 bg-black/50 backdrop-blur-sm z-[1000]'
         onClick={onClose}
         onTouchMove={(e) => e.preventDefault()}
         onWheel={(e) => e.preventDefault()}
         style={{ touchAction: 'none' }}
       />
 
-      <div className='ptv-dialog fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[calc(100%-2rem)] max-w-lg bg-white dark:bg-gray-900 rounded-xl shadow-xl z-[1001] overflow-hidden'>
+      <div className='ptv-dialog ptv-modal-in fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[calc(100%-2rem)] max-w-lg bg-white dark:bg-gray-900 rounded-xl shadow-xl z-[1001] overflow-hidden'>
         <div
           className='max-h-[calc(100dvh-2rem)] flex flex-col'
           data-panel-content
@@ -70,7 +70,7 @@ export function DeviceManagementPanel({
             {devicesLoading ? (
               <div className='space-y-3'>
                 {[1, 2, 3].map((i) => (
-                  <div key={i} className='animate-pulse'>
+                  <div key={i} className='motion-safe:animate-pulse'>
                     <div className='h-20 bg-gray-200 dark:bg-gray-700 rounded-lg'></div>
                   </div>
                 ))}

@@ -11,14 +11,22 @@ export interface ToastProps {
 }
 
 export default function Toast({ message, type = 'info', duration = 3000, onClose }: ToastProps) {
-  const [isVisible, setIsVisible] = useState(true);
+  const [isVisible, setIsVisible] = useState(false);
+
+  // 挂载后双 rAF 触发入场动画
+  useEffect(() => {
+    let id = requestAnimationFrame(() => {
+      id = requestAnimationFrame(() => setIsVisible(true));
+    });
+    return () => cancelAnimationFrame(id);
+  }, []);
 
   useEffect(() => {
     const timer = setTimeout(() => {
       setIsVisible(false);
       setTimeout(() => {
         onClose?.();
-      }, 300); // 等待动画完成
+      }, 200); // 等待动画完成
     }, duration);
 
     return () => clearTimeout(timer);
@@ -28,7 +36,7 @@ export default function Toast({ message, type = 'info', duration = 3000, onClose
     setIsVisible(false);
     setTimeout(() => {
       onClose?.();
-    }, 300);
+    }, 200);
   };
 
   const icons = {
@@ -45,7 +53,7 @@ export default function Toast({ message, type = 'info', duration = 3000, onClose
 
   return (
     <div
-      className={`fixed top-20 left-1/2 -translate-x-1/2 z-[9999] transition-all duration-300 ${
+      className={`fixed top-20 left-1/2 -translate-x-1/2 z-[9999] transition-[opacity,transform] duration-200 ease-[cubic-bezier(.16,1,.3,1)] ${
         isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-4'
       }`}
     >

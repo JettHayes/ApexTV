@@ -290,7 +290,7 @@ export default function PlayRecordsPanel({
                           event.stopPropagation();
                           toggleSelected(record.key);
                         }}
-                        className={`absolute inset-0 z-20 rounded-lg transition-colors ${
+                        className={`ptv-fade-in absolute inset-0 z-20 rounded-lg transition-colors ${
                           checked
                             ? 'bg-sky-500/15 ring-2 ring-sky-500'
                             : 'bg-black/5 hover:bg-sky-500/10 dark:bg-black/20'
@@ -318,11 +318,11 @@ export default function PlayRecordsPanel({
       {showConfirmDialog &&
         createPortal(
           <div
-            className='fixed inset-0 bg-black bg-opacity-50 z-[9999] flex items-center justify-center p-4 transition-opacity duration-300'
+            className='fixed inset-0 bg-black bg-opacity-50 z-[9999] flex items-center justify-center p-4 ptv-scrim-in'
             onClick={() => setShowConfirmDialog(false)}
           >
             <div
-              className='bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full border border-red-200 dark:border-red-800 transition-all duration-300'
+              className='bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full border border-red-200 dark:border-red-800 ptv-modal-in'
               onClick={(e) => e.stopPropagation()}
             >
               <div className='p-6'>
@@ -363,13 +363,13 @@ export default function PlayRecordsPanel({
       {showDeleteSelectedDialog &&
         createPortal(
           <div
-            className='fixed inset-0 bg-black bg-opacity-50 z-[9999] flex items-center justify-center p-4 transition-opacity duration-300'
+            className='fixed inset-0 bg-black bg-opacity-50 z-[9999] flex items-center justify-center p-4 ptv-scrim-in'
             onClick={() =>
               !deletingSelected && setShowDeleteSelectedDialog(false)
             }
           >
             <div
-              className='bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full border border-red-200 dark:border-red-800 transition-all duration-300'
+              className='bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full border border-red-200 dark:border-red-800 ptv-modal-in'
               onClick={(e) => e.stopPropagation()}
             >
               <div className='p-6'>

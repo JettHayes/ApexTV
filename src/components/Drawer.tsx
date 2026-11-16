@@ -44,7 +44,7 @@ export default function Drawer({
       setIsAnimating(false);
       timer = setTimeout(() => {
         setIsVisible(false);
-      }, 300);
+      }, 200);
     }
 
     return () => {
@@ -75,7 +75,9 @@ export default function Drawer({
   const content = (
     <div className='fixed inset-0 z-[10000] flex items-center justify-end pointer-events-none'>
       <div
-        className={`ptv-dialog relative ${width} h-full bg-white dark:bg-gray-900 shadow-2xl flex flex-col transition-transform duration-300 ease-out pointer-events-auto ${
+        className={`ptv-dialog relative ${width} h-full bg-white dark:bg-gray-900 shadow-2xl flex flex-col transition-transform ease-[cubic-bezier(.16,1,.3,1)] pointer-events-auto ${
+          isAnimating ? 'duration-[280ms]' : 'duration-200'
+        } ${
           position === 'right'
             ? isAnimating
               ? 'translate-x-0'

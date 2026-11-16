@@ -124,8 +124,8 @@ const DownloadEpisodeSelector: React.FC<DownloadEpisodeSelectorProps> = ({
   if (!isOpen) return null;
 
   return (
-    <div className='fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 backdrop-blur-sm'>
-      <div className='bg-white dark:bg-gray-800 rounded-xl shadow-2xl w-[90vw] max-w-4xl max-h-[80vh] flex flex-col overflow-hidden border border-gray-200 dark:border-gray-700'>
+    <div className='ptv-scrim-in fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 backdrop-blur-sm'>
+      <div className='ptv-modal-in bg-white dark:bg-gray-800 rounded-xl shadow-2xl w-[90vw] max-w-4xl max-h-[80vh] flex flex-col overflow-hidden border border-gray-200 dark:border-gray-700'>
         {/* 标题栏 */}
         <div className='flex items-center justify-between px-6 py-4 border-b border-gray-200 dark:border-gray-700'>
           <div className='flex-1'>

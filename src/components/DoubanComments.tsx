@@ -194,7 +194,7 @@ export default function DoubanComments({ doubanId }: DoubanCommentsProps) {
         {comments.map((comment) => (
           <div
             key={comment.id}
-            className='bg-gray-50 dark:bg-gray-800/50 rounded-lg p-4 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors'
+            className='ptv-fade-in bg-gray-50 dark:bg-gray-800/50 rounded-lg p-4 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors'
           >
             {/* 用户信息 */}
             <div className='flex items-start gap-3 mb-3'>

@@ -268,11 +268,25 @@ div[data-media-provider] video {
   transform-origin: center;
   scale: 1;
   transition:
-    scale 180ms ease,
+    scale 180ms var(--ptv-ease),
     background-color 180ms ease,
     color 180ms ease,
-    box-shadow 180ms ease,
     opacity 180ms ease;
+}
+
+/* 焦点光晕放在常驻 ::after 上，只切换 opacity，避免对大半径 box-shadow 做过渡 */
+.tv-focusable::after {
+  content: '';
+  position: absolute;
+  inset: -3px;
+  border-radius: inherit;
+  background: linear-gradient(135deg, rgba(255,255,255,0.1), rgba(225,29,72,0.13));
+  box-shadow:
+    0 18px 44px rgba(0, 0, 0, 0.68),
+    0 0 26px rgba(225, 29, 72, 0.38);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 180ms var(--ptv-ease);
 }
 
 .tv-focusable:focus,
@@ -282,10 +296,23 @@ div[data-media-provider] video {
   scale: 1.055;
   background-color: rgba(15, 23, 42, 0.96) !important;
   color: #ffffff !important;
-  box-shadow:
-    0 18px 44px rgba(0, 0, 0, 0.68),
-    0 0 26px rgba(225, 29, 72, 0.38) !important;
   z-index: 30;
+}
+
+.tv-focusable:focus::after,
+.tv-focusable:focus-visible::after,
+.tv-focused::after {
+  opacity: 1;
+}
+
+/* 选中项（data-selected / aria-pressed）聚焦时保持玫红底，避免与未选中项的聚焦态无法区分 */
+.tv-focusable[data-selected='true']:focus,
+.tv-focusable[data-selected='true']:focus-visible,
+.tv-focusable[data-selected='true'].tv-focused,
+.tv-focusable[aria-pressed='true']:focus,
+.tv-focusable[aria-pressed='true']:focus-visible,
+.tv-focusable[aria-pressed='true'].tv-focused {
+  background-color: #e11d48 !important;
 }
 
 /* 白底卡片（如二维码）聚焦时保持浅色，避免扫码区域被深色焦点样式盖住 */
@@ -296,16 +323,15 @@ div[data-media-provider] video {
   color: #0f172a !important;
 }
 
-.tv-focusable:focus::after,
-.tv-focusable:focus-visible::after,
-.tv-focused::after {
-  content: '';
-  position: absolute;
-  inset: -3px;
-  border-radius: inherit;
-  background: linear-gradient(135deg, rgba(255,255,255,0.22), rgba(225,29,72,0.28));
-  opacity: 0.45;
-  pointer-events: none;
+/* input 不支持 ::after、overflow-hidden 会裁掉 ::after 光晕：回退为元素自身的静态阴影（不过渡） */
+input.tv-focusable:focus,
+input.tv-focusable:focus-visible,
+.tv-focusable.overflow-hidden:focus,
+.tv-focusable.overflow-hidden:focus-visible,
+.tv-focusable.overflow-hidden.tv-focused {
+  box-shadow:
+    0 18px 44px rgba(0, 0, 0, 0.68),
+    0 0 26px rgba(225, 29, 72, 0.38) !important;
 }
 
 .tv-focusable:active {
@@ -316,7 +342,8 @@ div[data-media-provider] video {
   .tv-focusable,
   .tv-focusable:focus,
   .tv-focusable:focus-visible,
-  .tv-focused {
+  .tv-focused,
+  .tv-focusable::after {
     transition: none;
   }
 }
@@ -402,7 +429,7 @@ html:not([data-loading-style]) .mtv-load-race-lights {
   /* 不能裁切：进行中的光环/光点要能扩到格子外面 */
   transition:
     background 0.45s ease,
-    transform 0.34s cubic-bezier(0.34, 1.56, 0.64, 1);
+    transform 0.34s var(--ptv-ease);
 }
 .mtv-panel svg {
   width: 22px;
@@ -504,19 +531,19 @@ html:not([data-loading-style]) .mtv-load-race-lights {
   }
 }
 .mtv-panel.cur svg {
-  animation: mtv-icon-pop 0.55s cubic-bezier(0.34, 1.56, 0.64, 1);
+  animation: mtv-icon-pop 0.32s var(--ptv-ease);
 }
 @keyframes mtv-icon-pop {
   0% {
-    transform: scale(0.5) rotate(-16deg);
+    transform: scale(0.6);
     opacity: 0;
   }
-  60% {
-    transform: scale(1.22) rotate(6deg);
+  70% {
+    transform: scale(1.06);
     opacity: 1;
   }
   100% {
-    transform: scale(1) rotate(0);
+    transform: scale(1);
   }
 }
 
@@ -747,19 +774,19 @@ html:not([data-loading-style]) .mtv-load-race-lights {
   height: 100%;
 }
 .mtv-tal-icon.pop {
-  animation: mtv-icon-pop2 0.55s cubic-bezier(0.34, 1.56, 0.64, 1);
+  animation: mtv-icon-pop2 0.32s var(--ptv-ease);
 }
 @keyframes mtv-icon-pop2 {
   0% {
-    transform: scale(0.3) rotate(-25deg);
+    transform: scale(0.6);
     opacity: 0;
   }
-  60% {
-    transform: scale(1.25) rotate(8deg);
+  70% {
+    transform: scale(1.06);
     opacity: 1;
   }
   100% {
-    transform: scale(1) rotate(0);
+    transform: scale(1);
   }
 }
 /* 文案 + 底部细进度条 */
@@ -798,7 +825,17 @@ html:not([data-loading-style]) .mtv-load-race-lights {
   /* 下游光段就靠这层裁切，才会「从左边冒出来、到头部消失」而不越界 */
   overflow: hidden;
   background: linear-gradient(90deg, var(--mtv-acc-hover), var(--mtv-acc));
-  transition: width 0.9s cubic-bezier(0.22, 0.61, 0.36, 1);
+  transition: width 300ms var(--ptv-ease);
+}
+/* 攒力高亮：用白色叠层的 opacity 代替对填充整体做 filter: brightness */
+.mtv-tal-bar i::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: #fff;
+  opacity: 0;
+  pointer-events: none;
   animation: mtv-tal-charge 1.2s ease-in-out infinite;
 }
 /* 线内流光：头尾透明的渐变，亮端在前，看着是一段游走的光而不是挪动的色块。
@@ -822,13 +859,13 @@ html:not([data-loading-style]) .mtv-load-race-lights {
 @keyframes mtv-tal-charge {
   0%,
   100% {
-    filter: brightness(1);
+    opacity: 0;
   }
   55% {
-    filter: brightness(1.4);
+    opacity: 0.28;
   }
   80% {
-    filter: brightness(1.06);
+    opacity: 0.05;
   }
 }
 @keyframes mtv-tal-flow {
@@ -1132,7 +1169,7 @@ html[data-loading-style='grid'] .mtv-err-box {
 .apex-race-steps .is-done > span { background: var(--race-accent); }
 .apex-race-loading.is-error { --race-accent: var(--ptv-danger, #b94343); }
 .apex-race-loading.is-error *,
-.apex-race-loading.is-error *::after { animation: none; }
+.apex-race-loading.is-error *::after { animation: none !important; }
 .apex-race-loading.is-error .apex-light-column i::after { opacity: 1; }
 .apex-race-preview { width: 88px; flex-shrink: 0; }
 .apex-race-preview .apex-start-lights { width: 88px; gap: 3px; padding: 5px; border-radius: 6px; }
@@ -1141,7 +1178,7 @@ html[data-loading-style='grid'] .mtv-err-box {
 .apex-race-preview .apex-race-road { height: 7px; }
 .apex-race-preview .apex-race-road span { margin-top: 3px; }
 .apex-race-preview *,
-.apex-race-preview *::after { animation: none; }
+.apex-race-preview *::after { animation: none !important; }
 .apex-race-preview .apex-light-column i::after { opacity: 1; }
 .dark .apex-progress-thumb-icon[data-monochrome='true'] { filter: brightness(0) invert(1); }
 @media (max-width: 640px), (max-height: 500px) {
@@ -1150,8 +1187,13 @@ html[data-loading-style='grid'] .mtv-err-box {
   .mtv-on-dark .apex-race-scene { width: 170px; }
 }
 @media (prefers-reduced-motion: reduce) {
+  .mtv-mote,
+  .mtv-panel.cur::before,
+  .mtv-panel.cur::after { display: none; }
+}
+@media (prefers-reduced-motion: reduce) {
   .apex-race-loading *, .apex-race-loading *::after,
-  .apex-race-preview *, .apex-race-preview *::after { animation: none; }
+  .apex-race-preview *, .apex-race-preview *::after { animation: none !important; }
   .apex-light-column i::after { opacity: 1; }
 }
 

@@ -26,7 +26,7 @@ const MobileBottomNav = ({ activePath }: { activePath?: string }) => {
         {items.map(({ icon: Icon, label, href, active }) => (
           <li key={href} className='min-w-0 flex-1'>
             <Link href={href} prefetch={false} aria-current={active ? 'page' : undefined} data-active={active}
-              className='ptv-nav-link flex h-14 flex-col items-center justify-center gap-1 text-xs'>
+              className='ptv-nav-link flex h-14 flex-col items-center justify-center gap-1 text-xs [&_svg]:transition-transform [&_svg]:duration-150 active:[&_svg]:scale-90'>
               <Icon className='h-5 w-5' aria-hidden='true' /><span>{label}</span>
             </Link>
           </li>

@@ -4,6 +4,8 @@
 import { useEffect, useRef } from 'react';
 import ReactDOM from 'react-dom/client';
 
+import { smoothScrollBehavior } from '@/lib/motion';
+
 interface Song {
   id: string;
   name: string;
@@ -69,7 +71,7 @@ const PiPLyricsContent = ({
         const lineTop = currentLine.offsetTop;
         const lineHeight = currentLine.clientHeight;
         const scrollTop = lineTop - containerHeight / 2 + lineHeight / 2;
-        container.scrollTo({ top: scrollTop, behavior: 'smooth' });
+        container.scrollTo({ top: scrollTop, behavior: smoothScrollBehavior() });
       }
     }
   }, [currentLyricIndex, minimized]);
@@ -225,11 +227,14 @@ const PiPLyricsContent = ({
                   width: '100%',
                   padding: '8px 0',
                   textAlign: 'center',
-                  fontSize: index === currentLyricIndex ? '16px' : '14px',
+                  fontSize: '14px',
                   opacity: index === currentLyricIndex ? 1 : 0.5,
                   color: index === currentLyricIndex ? '#22c55e' : 'white',
-                  transition: 'all 0.3s ease',
-                  fontWeight: index === currentLyricIndex ? 'bold' : 'normal',
+                  // 字号固定，高亮用 scale 避免触发布局重排
+                  transform: index === currentLyricIndex ? 'scale(1.12)' : 'scale(1)',
+                  transformOrigin: 'center',
+                  transition: 'transform 0.3s ease, opacity 0.3s ease, color 0.3s ease',
+                  fontWeight: 'normal',
                   background: 'transparent',
                   border: 'none',
                   outline: 'none',
@@ -242,7 +247,7 @@ const PiPLyricsContent = ({
                   <div
                     style={{
                       marginTop: '4px',
-                      fontSize: index === currentLyricIndex ? '13px' : '12px',
+                      fontSize: '12px',
                       opacity: index === currentLyricIndex ? 0.85 : 0.55,
                       fontWeight: 'normal',
                     }}

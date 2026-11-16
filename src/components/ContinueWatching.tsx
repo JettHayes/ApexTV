@@ -146,7 +146,7 @@ export default function ContinueWatching({ className }: ContinueWatchingProps) {
             ))}
           </div>
         ) : (
-          <div>
+          <div className='ptv-fade-in' style={{ animationFillMode: 'backwards' }}>
             <VirtualScrollableRow>
               {playRecords.map((record) => {
                 const { source, id } = parseKey(record.key);
@@ -194,23 +194,12 @@ export default function ContinueWatching({ className }: ContinueWatchingProps) {
                         }}
                       >
                         <div
+                          className='motion-safe:animate-[ping-scale_1.5s_cubic-bezier(0,0,0.2,1)_3]'
                           style={{
                             position: 'absolute',
                             inset: '0',
                             borderRadius: '9999px',
                             backgroundColor: 'rgb(14 165 233)',
-                            animation:
-                              'ping-scale 1.5s cubic-bezier(0, 0, 0.2, 1) infinite',
-                          }}
-                        />
-                        <div
-                          style={{
-                            position: 'absolute',
-                            inset: '0',
-                            borderRadius: '9999px',
-                            backgroundColor: 'rgb(14 165 233)',
-                            animation:
-                              'pulse-scale 2.5s cubic-bezier(0.4, 0, 0.6, 1) infinite',
                           }}
                         />
                         <div
@@ -228,7 +217,6 @@ export default function ContinueWatching({ className }: ContinueWatchingProps) {
                             justifyContent: 'center',
                             boxShadow:
                               '0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1)',
-                            animation: 'badge-scale 2s ease-in-out infinite',
                           }}
                         >
                           +{record.new_episodes}
@@ -246,11 +234,11 @@ export default function ContinueWatching({ className }: ContinueWatchingProps) {
       {showConfirmDialog &&
         createPortal(
           <div
-            className='fixed inset-0 z-[9999] flex items-center justify-center bg-black bg-opacity-50 p-4 transition-opacity duration-300'
+            className='ptv-scrim-in fixed inset-0 z-[9999] flex items-center justify-center bg-black bg-opacity-50 p-4'
             onClick={() => setShowConfirmDialog(false)}
           >
             <div
-              className='max-w-md w-full rounded-lg border border-red-200 bg-white shadow-xl transition-all duration-300 dark:border-red-800 dark:bg-gray-800'
+              className='ptv-modal-in max-w-md w-full rounded-lg border border-red-200 bg-white shadow-xl dark:border-red-800 dark:bg-gray-800'
               onClick={(event) => event.stopPropagation()}
             >
               <div className='p-6'>

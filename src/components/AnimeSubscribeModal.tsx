@@ -47,7 +47,6 @@ export default function AnimeSubscribeModal({
   initialLastEpisode = 0,
   onSuccess,
 }: AnimeSubscribeModalProps) {
-  const [visible, setVisible] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [recognizing, setRecognizing] = useState(false);
@@ -95,7 +94,6 @@ export default function AnimeSubscribeModal({
 
   useEffect(() => {
     if (isOpen) {
-      setVisible(true);
       setError('');
       setRecognizeError('');
       setRecognition(null);
@@ -116,8 +114,6 @@ export default function AnimeSubscribeModal({
         episodeRegex: '',
         downloadPath: '',
       });
-    } else {
-      setVisible(false);
     }
   }, [isOpen, initialTitle, initialLastEpisode]);
 
@@ -292,16 +288,10 @@ export default function AnimeSubscribeModal({
   return createPortal(
     <div className='fixed inset-0 z-[10000] flex items-center justify-center p-4'>
       <div
-        className={`absolute inset-0 bg-black transition-opacity duration-200 ${
-          visible ? 'opacity-50' : 'opacity-0'
-        }`}
+        className='absolute inset-0 bg-black/50 ptv-scrim-in'
         onClick={onClose}
       />
-      <div
-        className={`relative w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-xl bg-white dark:bg-gray-800 shadow-xl transition-all duration-200 ${
-          visible ? 'opacity-100 scale-100' : 'opacity-0 scale-95'
-        }`}
-      >
+      <div className='relative w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-xl bg-white dark:bg-gray-800 shadow-xl ptv-modal-in'>
         <div className='sticky top-0 z-10 flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800'>
           <h3 className='text-base font-semibold text-gray-900 dark:text-white'>
             添加追番订阅

@@ -998,7 +998,7 @@ const VideoCard = forwardRef<VideoCardHandle, VideoCardProps>(
         <div
           className={`ptv-video-card group relative w-full rounded-lg bg-transparent ${
             isUpcoming ? 'cursor-default' : 'cursor-pointer'
-          } ${showUpcomingInfo ? 'scale-[1.05] z-[500]' : ''}`}
+          } ${showUpcomingInfo ? 'z-[500]' : ''}`}
           onClick={handleClick}
           {...longPressProps}
           role='group'
@@ -1096,13 +1096,15 @@ const VideoCard = forwardRef<VideoCardHandle, VideoCardProps>(
                   src={displayPoster}
                   alt={actualTitle}
                   fill
-                  className={
+                  className={`transition-opacity duration-300 ease-[cubic-bezier(.16,1,.3,1)] ${
+                    isLoading ? 'opacity-100' : 'opacity-0'
+                  } ${
                     origin === 'live'
                       ? 'object-contain'
                       : orientation === 'horizontal'
                       ? 'object-cover object-center'
                       : 'object-cover'
-                  }
+                  }`}
                   referrerPolicy='no-referrer'
                   loading='lazy'
                   onLoadingComplete={() => {
@@ -1168,7 +1170,7 @@ const VideoCard = forwardRef<VideoCardHandle, VideoCardProps>(
 
               {/* 悬浮遮罩 */}
               <div
-                className='absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent transition-opacity duration-300 ease-in-out opacity-0 group-hover:opacity-100'
+                className='absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent transition-opacity duration-200 ease-[cubic-bezier(.16,1,.3,1)] opacity-0 group-hover:opacity-100'
                 style={
                   {
                     WebkitUserSelect: 'none',
@@ -1219,7 +1221,7 @@ const VideoCard = forwardRef<VideoCardHandle, VideoCardProps>(
             ) : (
               config.showPlayButton && (
                 <div
-                  className='pointer-events-none absolute inset-0 flex items-center justify-center opacity-0 transition-all duration-300 ease-in-out delay-75 group-hover:opacity-100 group-hover:scale-100'
+                  className='pointer-events-none absolute inset-0 flex items-center justify-center opacity-0 scale-90 transition-[opacity,transform] duration-200 ease-[cubic-bezier(.16,1,.3,1)] group-hover:opacity-100 group-hover:scale-100'
                   style={
                     {
                       WebkitUserSelect: 'none',
@@ -1257,7 +1259,7 @@ const VideoCard = forwardRef<VideoCardHandle, VideoCardProps>(
               from !== 'playrecord' && (
                 <div
                   data-button='true'
-                  className='absolute bottom-3 right-3 flex gap-3 opacity-0 translate-y-2 transition-all duration-300 ease-in-out sm:group-hover:opacity-100 sm:group-hover:translate-y-0'
+                  className='absolute bottom-3 right-3 flex gap-3 opacity-0 translate-y-2 transition-[opacity,transform] duration-200 ease-[cubic-bezier(.16,1,.3,1)] sm:group-hover:opacity-100 sm:group-hover:translate-y-0'
                   style={
                     {
                       WebkitUserSelect: 'none',
@@ -1316,7 +1318,7 @@ const VideoCard = forwardRef<VideoCardHandle, VideoCardProps>(
             {/* 季度徽章 */}
             {seasonNumber && (
               <div
-                className='absolute top-2 left-2 bg-blue-500/80 text-white text-xs font-medium px-2 py-1 rounded backdrop-blur-sm shadow-sm transition-all duration-300 ease-out group-hover:opacity-90'
+                className='absolute top-2 left-2 bg-blue-500/80 text-white text-xs font-medium px-2 py-1 rounded backdrop-blur-sm shadow-sm transition-[opacity,transform] duration-200 ease-[cubic-bezier(.16,1,.3,1)] group-hover:opacity-90'
                 style={
                   {
                     WebkitUserSelect: 'none',
@@ -1470,7 +1472,7 @@ const VideoCard = forwardRef<VideoCardHandle, VideoCardProps>(
                 >
                   {/* 集数显示 */}
                   <div
-                    className='bg-black/60 text-white text-[9px] sm:text-xs font-medium px-2 sm:px-3 py-0.5 sm:py-1 rounded-full shadow-md transition-all duration-300 ease-out group-hover:scale-110 backdrop-blur-sm flex items-center justify-center'
+                    className='bg-black/60 text-white text-[9px] sm:text-xs font-medium px-2 sm:px-3 py-0.5 sm:py-1 rounded-full shadow-md transition-[opacity,transform] duration-200 ease-[cubic-bezier(.16,1,.3,1)] backdrop-blur-sm flex items-center justify-center'
                     style={
                       {
                         WebkitUserSelect: 'none',
@@ -1491,7 +1493,7 @@ const VideoCard = forwardRef<VideoCardHandle, VideoCardProps>(
                   {/* 年份显示 */}
                   {displayYear && (
                     <div
-                      className='bg-black/60 text-white text-[9px] sm:text-xs font-medium px-2 sm:px-3 py-0.5 sm:py-1 rounded-full shadow-md transition-all duration-300 ease-out group-hover:scale-110 backdrop-blur-sm flex items-center justify-center'
+                      className='bg-black/60 text-white text-[9px] sm:text-xs font-medium px-2 sm:px-3 py-0.5 sm:py-1 rounded-full shadow-md transition-[opacity,transform] duration-200 ease-[cubic-bezier(.16,1,.3,1)] backdrop-blur-sm flex items-center justify-center'
                       style={
                         {
                           WebkitUserSelect: 'none',
@@ -1579,7 +1581,7 @@ const VideoCard = forwardRef<VideoCardHandle, VideoCardProps>(
                   target='_blank'
                   rel='noopener noreferrer'
                   onClick={(e) => e.stopPropagation()}
-                  className='absolute top-2 left-2 opacity-0 -translate-x-2 transition-all duration-300 ease-in-out delay-100 sm:group-hover:opacity-100 sm:group-hover:translate-x-0'
+                  className='absolute top-2 left-2 opacity-0 -translate-x-2 transition-[opacity,transform] duration-200 ease-[cubic-bezier(.16,1,.3,1)] sm:group-hover:opacity-100 sm:group-hover:translate-x-0'
                   style={
                     {
                       WebkitUserSelect: 'none',
@@ -1632,7 +1634,7 @@ const VideoCard = forwardRef<VideoCardHandle, VideoCardProps>(
                 return (
                   <div
                     data-button='true'
-                    className={`absolute bottom-1 right-1 z-[55] sm:bottom-2 sm:right-2 transition-all duration-300 ease-in-out delay-75 ${
+                    className={`absolute bottom-1 right-1 z-[55] sm:bottom-2 sm:right-2 transition-[opacity,transform] duration-200 ease-[cubic-bezier(.16,1,.3,1)] ${
                       from === 'search'
                         ? 'opacity-100'
                         : 'opacity-0 sm:group-hover:opacity-100'
@@ -1683,7 +1685,7 @@ const VideoCard = forwardRef<VideoCardHandle, VideoCardProps>(
                       }
                     >
                       <div
-                        className='bg-gray-700 text-white text-xs font-bold w-6 h-6 sm:w-7 sm:h-7 rounded-full flex items-center justify-center shadow-md hover:bg-gray-600 hover:scale-[1.1] transition-all duration-300 ease-out cursor-pointer'
+                        className='bg-gray-700 text-white text-xs font-bold w-6 h-6 sm:w-7 sm:h-7 rounded-full flex items-center justify-center shadow-md hover:bg-gray-600 hover:scale-[1.1] transition-[opacity,transform,background-color] duration-200 ease-[cubic-bezier(.16,1,.3,1)] cursor-pointer'
                         style={
                           {
                             WebkitUserSelect: 'none',
@@ -1995,7 +1997,7 @@ const VideoCard = forwardRef<VideoCardHandle, VideoCardProps>(
                           }}
                         >
                           <div
-                            className='h-full bg-white transition-all duration-500 ease-out'
+                            className='h-full bg-white transition-[width] duration-300 ease-[cubic-bezier(.16,1,.3,1)]'
                             style={
                               {
                                 width: `${progress}%`,
@@ -2074,7 +2076,7 @@ const VideoCard = forwardRef<VideoCardHandle, VideoCardProps>(
                   }}
                 >
                   <div
-                    className='h-full bg-green-500 transition-all duration-500 ease-out'
+                    className='h-full bg-green-500 transition-[width] duration-300 ease-[cubic-bezier(.16,1,.3,1)]'
                     style={
                       {
                         width: `${progress}%`,
@@ -2288,7 +2290,7 @@ const VideoCard = forwardRef<VideoCardHandle, VideoCardProps>(
           }}
         />
         {animeSubscribeToast ? (
-          <div className='fixed bottom-24 left-1/2 z-[10001] -translate-x-1/2 rounded-full bg-green-600 px-4 py-2 text-sm text-white shadow-lg'>
+          <div className='ptv-fade-in fixed bottom-24 left-1/2 z-[10001] -translate-x-1/2 rounded-full bg-green-600 px-4 py-2 text-sm text-white shadow-lg'>
             {animeSubscribeToast}
           </div>
         ) : null}

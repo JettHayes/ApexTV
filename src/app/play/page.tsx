@@ -8355,6 +8355,7 @@ function PlayPageClient() {
                   z-index: 9999;
                   min-width: 300px;
                   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+                  animation: ptv-pop 220ms cubic-bezier(.16,1,.3,1) both;
                 `;
 
                   container.innerHTML = `
@@ -8559,6 +8560,7 @@ function PlayPageClient() {
                   align-items: center;
                   justify-content: center;
                   padding: 16px;
+                  animation: ptv-fade 180ms cubic-bezier(.16,1,.3,1) both;
                 }
                 .ios-fullscreen-dialog-content {
                   background: white;
@@ -8566,6 +8568,7 @@ function PlayPageClient() {
                   max-width: 480px;
                   width: 100%;
                   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+                  animation: ptv-pop 220ms cubic-bezier(.16,1,.3,1) both;
                   overflow: hidden;
                 }
                 .dark .ios-fullscreen-dialog-content {
@@ -9690,7 +9693,7 @@ function PlayPageClient() {
         artPlayerRef.current.layers.add({
           name: 'seek-buttons',
           html: `
-          <div class="seek-buttons-container" style="display: none;">
+          <div class="seek-buttons-container" style="opacity: 0; pointer-events: none; transition: opacity 0.2s;">
             <button class="seek-button seek-backward" style="position: fixed; left: 20px; top: 40%; transform: translateY(-50%); width: 48px; height: 48px; background: rgba(0,0,0,0.7); border: none; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 9999; transition: opacity 0.2s;">
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <path d="M11 18V6l-8.5 6 8.5 6zm.5-6l8.5 6V6l-8.5 6z" fill="white"/>
@@ -9746,7 +9749,8 @@ function PlayPageClient() {
 
               if (container) {
                 const shouldShow = isFullscreen && isMobile && controlsVisible;
-                container.style.display = shouldShow ? 'block' : 'none';
+                container.style.opacity = shouldShow ? '1' : '0';
+                container.style.pointerEvents = shouldShow ? 'auto' : 'none';
               }
             };
 
@@ -9940,11 +9944,27 @@ function PlayPageClient() {
                     return `${m}:${s.toString().padStart(2, '0')}`;
                   };
 
+                  // 先淡出再移除跳转提示层
+                  const fadeOutAndRemoveJumpLayer = () => {
+                    const jumpContainer = document.getElementById('play-record-jump-container');
+                    if (jumpContainer) jumpContainer.style.opacity = '0';
+                    playRecordJumpLayerRef.current = null;
+                    setTimeout(() => {
+                      try {
+                        artPlayerRef.current?.layers.remove('play-record-jump');
+                      } catch (err) {
+                        console.warn('[PlayRecordJump] 移除跳转按钮失败:', err);
+                      }
+                    }, 160);
+                  };
+
                   // 添加到播放器 layers
                   playRecordJumpLayerRef.current = artPlayerRef.current.layers.add({
                     name: 'play-record-jump',
                     html: `
                       <div id="play-record-jump-container" style="
+                        animation: ptv-fade 220ms cubic-bezier(.16,1,.3,1);
+                        transition: opacity 160ms ease;
                         position: absolute;
                         left: 16px;
                         bottom: 60px;
@@ -10020,8 +10040,7 @@ function PlayPageClient() {
                       }
                       playRecordJumpDismissedRef.current = true;
                       if (playRecordJumpLayerRef.current) {
-                        artPlayerRef.current.layers.remove('play-record-jump');
-                        playRecordJumpLayerRef.current = null;
+                        fadeOutAndRemoveJumpLayer();
                       }
                     });
                   }
@@ -10036,8 +10055,7 @@ function PlayPageClient() {
                     dismissBtn.addEventListener('click', () => {
                       playRecordJumpDismissedRef.current = true;
                       if (playRecordJumpLayerRef.current) {
-                        artPlayerRef.current.layers.remove('play-record-jump');
-                        playRecordJumpLayerRef.current = null;
+                        fadeOutAndRemoveJumpLayer();
                       }
                     });
                   }
@@ -10669,8 +10687,8 @@ function PlayPageClient() {
       )}
       {/* 弹幕源选择对话框 */}
       {showDanmakuSourceSelector && danmakuMatches.length > 0 && (
-        <div className='fixed inset-0 z-[1000] flex items-center justify-center bg-black/60 backdrop-blur-sm'>
-          <div className='relative w-full max-w-2xl max-h-[80vh] mx-4 bg-white dark:bg-gray-800 rounded-2xl shadow-2xl overflow-hidden'>
+        <div className='ptv-scrim-in fixed inset-0 z-[1000] flex items-center justify-center bg-black/60 backdrop-blur-sm'>
+          <div className='ptv-modal-in relative w-full max-w-2xl max-h-[80vh] mx-4 bg-white dark:bg-gray-800 rounded-2xl shadow-2xl overflow-hidden'>
             {/* 标题栏 */}
             <div className='sticky top-0 z-10 bg-gradient-to-r from-green-500 to-emerald-600 px-6 py-4'>
               <h3 className='text-xl font-bold text-white flex items-center gap-2'>
@@ -10892,9 +10910,9 @@ function PlayPageClient() {
                   className='bg-black w-full h-full rounded-xl overflow-hidden shadow-lg'
                 ></div>
 
-                {/* 换源加载蒙层 */}
-                {(isVideoLoading || videoError) && (
-                  <div className='absolute inset-0 bg-black/85 backdrop-blur-sm rounded-xl flex items-center justify-center z-[500] transition-all duration-300'>
+                {/* 换源加载蒙层：常驻挂载，靠透明度淡入淡出；隐藏时不拦截播放器点击 */}
+                <div className={`absolute inset-0 bg-black/85 backdrop-blur-sm rounded-xl flex items-center justify-center z-[500] transition-opacity duration-200 ease-[cubic-bezier(.16,1,.3,1)] ${(isVideoLoading || videoError) ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
+                  {(isVideoLoading || videoError) && (
                     <div className='text-center max-w-md mx-auto px-6'>
                       {videoError ? (
                         // 错误显示
@@ -11006,12 +11024,12 @@ function PlayPageClient() {
                         />
                       )}
                     </div>
-                  </div>
-                )}
+                  )}
+                </div>
 
                 {/* 链接刷新提示（右上角，无遮罩） */}
                 {isRefreshingUrl && (
-                  <div className='absolute top-3 right-3 z-50 pointer-events-none'>
+                  <div className='ptv-fade-in absolute top-3 right-3 z-50 pointer-events-none'>
                     <div className='bg-black/70 text-white px-3 py-1.5 rounded-md flex items-center gap-2 text-sm border border-green-500/30 shadow-lg'>
                       <svg className='animate-spin h-4 w-4' viewBox='0 0 24 24'>
                         <circle className='opacity-25' cx='12' cy='12' r='10' stroke='currentColor' strokeWidth='4' fill='none' />
@@ -11024,7 +11042,7 @@ function PlayPageClient() {
 
                 {/* 弹幕加载蒙层 */}
                 {danmakuLoading && (
-                  <div className='absolute top-0 right-0 m-4 bg-black/80 backdrop-blur-sm rounded-lg px-4 py-2 z-[600] flex items-center gap-2 border border-green-500/30'>
+                  <div className='ptv-fade-in absolute top-0 right-0 m-4 bg-black/80 backdrop-blur-sm rounded-lg px-4 py-2 z-[600] flex items-center gap-2 border border-green-500/30'>
                     {danmakuCount > 0 ? (
                       <>
                         <svg
@@ -11653,7 +11671,7 @@ function PlayPageClient() {
                         e.stopPropagation();
                         handleToggleFavorite();
                       }}
-                      className='flex-shrink-0 hover:opacity-80 transition-opacity'
+                      className='flex-shrink-0 hover:opacity-80 active:scale-90 transition-[transform,opacity] duration-150'
                     >
                       <FavoriteIcon filled={favorited} />
                     </button>
@@ -11988,11 +12006,11 @@ function PlayPageClient() {
       {/* 快捷键说明弹窗 */}
       {showShortcutDialog && (
         <div
-          className='fixed inset-0 z-[10000] flex items-center justify-center bg-black/50 px-4 py-6 backdrop-blur-sm'
+          className='ptv-scrim-in fixed inset-0 z-[10000] flex items-center justify-center bg-black/50 px-4 py-6 backdrop-blur-sm'
           onClick={() => setShowShortcutDialog(false)}
         >
           <div
-            className='relative w-full max-w-lg overflow-hidden rounded-2xl border border-gray-200 bg-white text-gray-900 shadow-2xl shadow-black/20 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 dark:shadow-black/40'
+            className='ptv-modal-in relative w-full max-w-lg overflow-hidden rounded-2xl border border-gray-200 bg-white text-gray-900 shadow-2xl shadow-black/20 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 dark:shadow-black/40'
             onClick={(e) => e.stopPropagation()}
             onKeyDown={(e) => e.stopPropagation()}
             role='dialog'
@@ -12063,28 +12081,29 @@ function PlayPageClient() {
       )}
 
       {/* 网盘搜索弹窗 */}
-      {showPansouDialog && (
-        isLargeScreen ? (
-          <Drawer
-            isOpen={showPansouDialog}
-            onClose={() => setShowPansouDialog(false)}
-            title={`搜索网盘资源: ${detail?.title || ''}`}
-            width='w-[400px]'
-          >
-            <div className='p-4'>
-              <PansouSearch
-                keyword={detail?.title || ''}
-                triggerSearch={showPansouDialog}
-              />
-            </div>
-          </Drawer>
-        ) : (
+      {/* 桌面端 Drawer 常驻挂载，由 isOpen 驱动，才能播放退出动画；Drawer 内容仅在可见时挂载，triggerSearch 恒为 true 与原先一致 */}
+      {isLargeScreen && (
+        <Drawer
+          isOpen={showPansouDialog}
+          onClose={() => setShowPansouDialog(false)}
+          title={`搜索网盘资源: ${detail?.title || ''}`}
+          width='w-[400px]'
+        >
+          <div className='p-4'>
+            <PansouSearch
+              keyword={detail?.title || ''}
+              triggerSearch
+            />
+          </div>
+        </Drawer>
+      )}
+      {!isLargeScreen && showPansouDialog && (
           <div
-            className='fixed inset-0 z-[10000] flex items-center justify-center bg-black/50'
+            className='ptv-scrim-in fixed inset-0 z-[10000] flex items-center justify-center bg-black/50'
             onClick={() => setShowPansouDialog(false)}
           >
             <div
-              className='relative w-full max-w-4xl max-h-[80vh] overflow-y-auto bg-white dark:bg-gray-900 rounded-lg shadow-xl m-4'
+              className='ptv-modal-in relative w-full max-w-4xl max-h-[80vh] overflow-y-auto bg-white dark:bg-gray-900 rounded-lg shadow-xl m-4'
               onClick={(e) => e.stopPropagation()}
             >
               {/* 弹窗头部 */}
@@ -12109,7 +12128,6 @@ function PlayPageClient() {
               </div>
             </div>
           </div>
-        )
       )}
 
       {/* AI问片面板 */}
@@ -12259,7 +12277,7 @@ const FavoriteIcon = ({ filled }: { filled: boolean }) => {
   if (filled) {
     return (
       <svg
-        className='h-7 w-7'
+        className='ptv-modal-in h-7 w-7'
         viewBox='0 0 24 24'
         xmlns='http://www.w3.org/2000/svg'
       >

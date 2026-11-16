@@ -176,7 +176,7 @@ function RegisterPageClient() {
       <div className='absolute top-4 right-4 z-20'>
         <ThemeToggle />
       </div>
-      <div className='ptv-auth-panel relative z-10 w-full max-w-md rounded-3xl p-10'>
+      <div className='ptv-auth-panel ptv-login-panel relative z-10 w-full max-w-md rounded-3xl p-10'>
         <h1 className='text-green-600 tracking-tight text-center text-3xl font-extrabold mb-2 bg-clip-text drop-shadow-sm'>
           {siteName}
         </h1>
@@ -339,7 +339,7 @@ function RegisterPageClient() {
           )}
 
           {error && (
-            <p className='text-sm text-red-600 dark:text-red-400'>{error}</p>
+            <p className='ptv-content-in text-sm text-red-600 dark:text-red-400'>{error}</p>
           )}
 
           {/* 注册按钮 */}
@@ -350,7 +350,7 @@ function RegisterPageClient() {
               (siteConfig?.RequireRegistrationInviteCode && !inviteCode.trim()) ||
               (siteConfig?.RegistrationRequireTurnstile && !turnstileToken)
             }
-            className='inline-flex w-full justify-center rounded-lg bg-green-600 py-3 text-base font-semibold text-white shadow-lg transition-all duration-200 hover:from-green-600 hover:to-blue-600 disabled:cursor-not-allowed disabled:opacity-50'
+            className='ptv-login-submit'
           >
             {loading ? '注册中...' : '注册'}
           </button>

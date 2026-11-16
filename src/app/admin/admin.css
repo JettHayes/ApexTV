@@ -62,6 +62,7 @@
   text-align: left;
   font-size: 14px;
   line-height: 1.4;
+  transition: background-color 160ms var(--ptv-ease), color 160ms var(--ptv-ease);
 }
 .apex-admin-nav-item > svg { flex-shrink: 0; width: 18px; height: 18px; color: inherit; }
 .apex-admin-nav-item[aria-current='page'] { background: var(--ptv-selected); color: var(--ptv-accent); font-weight: 600; }
@@ -104,6 +105,12 @@
   line-height: 1.6;
 }
 .apex-admin-content details[open] > summary { color: var(--ptv-accent); }
+/* 渐进增强：支持 ::details-content 的浏览器里，原生 details 展开/收起带淡入淡出；不支持则整条规则被忽略，保持瞬时 */
+.apex-admin-content details::details-content {
+  opacity: 0;
+  transition: content-visibility 240ms allow-discrete, opacity 200ms var(--ptv-ease);
+}
+.apex-admin-content details[open]::details-content { opacity: 1; }
 .apex-admin-content details > summary::marker { color: var(--ptv-muted); }
 .apex-admin-section[data-section='netDiskConfig'] .apex-admin-fields > details {
   padding: 12px 18px;
@@ -192,4 +199,5 @@ html[data-moontvplus] .ptv-dialog.apex-admin-overlay { background-color: rgb(7 1
 
 @media (prefers-reduced-motion: reduce) {
   .apex-admin-page *, .apex-admin-overlay * { scroll-behavior: auto; }
+  .apex-admin-content details::details-content { transition: none; }
 }

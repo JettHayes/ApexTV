@@ -19,6 +19,7 @@ import {
   isHierarchicalCategories,
   pickDefaultSelection,
 } from '@/lib/category-tree';
+import { smoothScrollBehavior } from '@/lib/motion';
 import { SearchResult } from '@/lib/types';
 
 import CapsuleSwitch from '@/components/CapsuleSwitch';
@@ -413,8 +414,8 @@ function DuanjuPageClient() {
   // 返回顶部
   const scrollToTop = () => {
     try {
-      document.body.scrollTo({ top: 0, behavior: 'smooth' });
-      document.documentElement.scrollTo({ top: 0, behavior: 'smooth' });
+      document.body.scrollTo({ top: 0, behavior: smoothScrollBehavior() });
+      document.documentElement.scrollTo({ top: 0, behavior: smoothScrollBehavior() });
     } catch {
       scrollPageTo(0);
     }
@@ -593,7 +594,7 @@ function DuanjuPageClient() {
               </div>
             ) : (
               <>
-                <div className='grid grid-cols-3 gap-x-2 gap-y-14 sm:gap-y-20 px-0 sm:px-2 sm:grid-cols-[repeat(auto-fill,_minmax(11rem,_1fr))] sm:gap-x-8'>
+                <div className='ptv-fade-in grid grid-cols-3 gap-x-2 gap-y-14 sm:gap-y-20 px-0 sm:px-2 sm:grid-cols-[repeat(auto-fill,_minmax(11rem,_1fr))] sm:gap-x-8'>
                   {videos.map((item) => (
                     <div key={`${item.source}-${item.id}`} className='w-full'>
                       <VideoCard

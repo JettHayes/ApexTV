@@ -134,7 +134,9 @@ const ImageViewer: React.FC<ImageViewerProps> = ({
       {/* 关闭按钮 */}
       <button
         onClick={onClose}
-        className="absolute top-4 right-4 z-10 p-2 rounded-full bg-black/50 hover:bg-black/70 transition-colors duration-150"
+        className={`absolute top-4 right-4 z-10 p-2 rounded-full bg-black/50 hover:bg-black/70 transition-[background-color,opacity] duration-200 ease-out ${
+          isAnimating ? 'opacity-100' : 'opacity-0'
+        }`}
         aria-label="关闭"
       >
         <X size={24} className="text-white" />
@@ -142,7 +144,7 @@ const ImageViewer: React.FC<ImageViewerProps> = ({
 
       {/* 图片容器 */}
       <div
-        className="relative max-w-[100vw] max-h-[100vh] sm:max-w-[90vw] sm:max-h-[90vh] transition-all duration-200 ease-out"
+        className="relative max-w-[100vw] max-h-[100vh] sm:max-w-[90vw] sm:max-h-[90vh] transition-[transform,opacity] duration-200 ease-out"
         style={{
           willChange: 'transform, opacity',
           backfaceVisibility: 'hidden',

@@ -110,6 +110,7 @@ export default function TVAnimePage() {
               key={day.weekday.en}
               type='button'
               onClick={() => setActiveDay(day.weekday.en)}
+              data-selected={activeDay === day.weekday.en}
               className={`tv-focusable cursor-pointer rounded-2xl px-7 py-4 text-2xl font-black outline-none transition ${
                 activeDay === day.weekday.en
                   ? 'bg-rose-600 text-white'

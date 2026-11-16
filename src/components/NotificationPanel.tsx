@@ -161,12 +161,12 @@ export const NotificationPanel: React.FC<NotificationPanelProps> = ({
     <>
       {/* 背景遮罩 */}
       <div
-        className='fixed inset-0 bg-black/50 backdrop-blur-sm z-[1000]'
+        className='ptv-scrim-in fixed inset-0 bg-black/50 backdrop-blur-sm z-[1000]'
         onClick={onClose}
       />
 
       {/* 通知面板 */}
-      <div className='ptv-dialog fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[calc(100%-2rem)] max-w-lg h-[min(520px,calc(100dvh-2rem))] bg-white dark:bg-gray-900 rounded-xl shadow-xl z-[1001] flex flex-col overflow-hidden'>
+      <div className='ptv-dialog ptv-modal-in fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[calc(100%-2rem)] max-w-lg h-[min(520px,calc(100dvh-2rem))] bg-white dark:bg-gray-900 rounded-xl shadow-xl z-[1001] flex flex-col overflow-hidden'>
         {/* 标题栏 */}
         <div className='flex shrink-0 flex-wrap items-center justify-between gap-2 px-4 py-3 sm:px-6 border-b border-gray-200 dark:border-gray-700'>
           <div className='flex min-w-0 flex-wrap items-center gap-2'>

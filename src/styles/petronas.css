@@ -120,13 +120,26 @@ html[data-moontvplus] :is(.ptv-dialog, .ptv-popover, .ptv-menu) { background-col
 .ptv-brand img { flex-shrink: 0; object-fit: contain; }
 .ptv-brand span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .ptv-brand-name { font-size: 20px; font-weight: 650; line-height: 1.2; letter-spacing: -.025em; }
-.ptv-sidebar-brand { display: flex; align-items: center; gap: 8px; min-height: 72px; padding: 12px 12px 12px 16px; margin-bottom: 6px; border-bottom: 1px solid var(--ptv-line); }
+.ptv-sidebar-brand { display: flex; align-items: center; justify-content: flex-end; gap: 8px; min-height: 72px; padding: 12px 12px 12px 16px; margin-bottom: 6px; border-bottom: 1px solid var(--ptv-line); }
 .ptv-sidebar-brand .ptv-brand { gap: 8px; }
 .ptv-sidebar-brand .ptv-brand img { width: 32px; height: 32px; }
 .ptv-sidebar-brand .ptv-brand-name { font-size: 22px; color: var(--ptv-text); }
-.ptv-sidebar-toggle { width: 44px; height: 44px; color: var(--ptv-muted); transition: color 160ms, background-color 160ms; }
+.ptv-sidebar-toggle { width: 44px; height: 44px; color: var(--ptv-muted); transition: color 160ms, background-color 160ms, transform 120ms var(--ptv-ease); }
 .ptv-sidebar-toggle:hover { background: var(--ptv-selected); color: var(--ptv-accent); }
-.ptv-sidebar[data-collapsed='true'] .ptv-sidebar-brand { justify-content: center; padding-inline: 10px; }
+.ptv-sidebar-toggle:active { transform: scale(.94); }
+.ptv-sidebar[data-collapsed='true'] .ptv-sidebar-brand { padding-inline: 10px; }
+/* 收展动效只在用户点击后启用，首屏按本地记录纠正宽度时不播放 */
+.ptv-sidebar { overflow: hidden; }
+.ptv-sidebar[data-animate='true'], .ptv-sidebar[data-animate='true'] + .sidebar-offset { transition: width 300ms var(--ptv-ease); }
+.ptv-sidebar[data-animate='true'][data-collapsed='true'], .ptv-sidebar[data-animate='true'][data-collapsed='true'] + .sidebar-offset { transition-duration: 230ms; }
+.ptv-sidebar[data-animate='true'] .ptv-sidebar-brand { transition: padding 300ms var(--ptv-ease); }
+.ptv-sidebar[data-animate='true'] :is(.ptv-brand, .ptv-nav-label) { animation: ptv-nav-label-in 220ms 60ms var(--ptv-ease) backwards; }
+@keyframes ptv-nav-label-in { from { opacity: 0; transform: translateX(-6px); } }
+.ptv-nav-group-title { display: grid; grid-template-rows: 1fr; }
+.ptv-nav-group-title > div { min-height: 0; overflow: hidden; }
+.ptv-nav-group-title p { white-space: nowrap; }
+.ptv-sidebar[data-collapsed='true'] .ptv-nav-group-title { grid-template-rows: 0fr; opacity: 0; }
+.ptv-sidebar[data-animate='true'] .ptv-nav-group-title { transition: grid-template-rows 300ms var(--ptv-ease), opacity 200ms; }
 .ptv-nav-link { min-height: 46px; border-radius: 10px; color: var(--ptv-muted); transition: background-color 160ms, color 160ms; }
 .ptv-nav-link:is([data-active='true'], [aria-current='page']) { color: var(--ptv-accent); background: var(--ptv-selected); }
 .ptv-mobile-header, .ptv-mobile-nav { background: var(--ptv-surface) !important; border-color: var(--ptv-line) !important; box-shadow: none !important; }
@@ -165,7 +178,8 @@ html[data-theme-switching]::view-transition-old(ptv-theme-player) { display: non
 html[data-theme-switching]::view-transition-new(ptv-theme-player) { animation: none; mix-blend-mode: normal; }
 .ptv-more, .ptv-more-page, .ptv-search-page, .ptv-library-page { width: 100%; max-width: var(--ptv-max); margin-inline: auto; padding: 24px var(--ptv-gutter) 40px; }
 .ptv-more-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; }
-.ptv-more-link, .ptv-more-card { display: flex; align-items: center; gap: 12px; min-height: 64px; padding: 16px; border: 1px solid var(--ptv-line); border-radius: 12px; background: var(--ptv-surface); }
+.ptv-more-link, .ptv-more-card { display: flex; align-items: center; gap: 12px; min-height: 64px; padding: 16px; border: 1px solid var(--ptv-line); border-radius: 12px; background: var(--ptv-surface); transition: background-color 160ms, color 160ms, transform 120ms var(--ptv-ease); }
+.ptv-more-link:active, .ptv-more-card:active { transform: scale(.985); }
 
 .ptv-home-content { max-width: var(--ptv-max); margin-inline: auto; padding-inline: var(--ptv-gutter); }
 .ptv-home-hero-wrap { max-width: var(--ptv-max); margin: 0 auto 24px; padding-inline: var(--ptv-gutter); }
@@ -305,7 +319,7 @@ html[data-moontvplus].dark .ptv-login-error { color: #fda29b; background: rgba(2
 .ptv-player-tools { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; padding-block: 12px; }
 .ptv-player-tools > :is(button, a), .ptv-player-tools summary { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-width: 44px; min-height: 44px; padding: 8px 12px; border: 1px solid var(--ptv-line); border-radius: 9px; background: transparent; color: var(--ptv-text); }
 .ptv-live-tabs { display: inline-flex; flex-wrap: wrap; gap: 4px; padding: 4px; border: 1px solid var(--ptv-line); border-radius: 12px; background: var(--ptv-panel); }
-.ptv-live-tabs a { display: inline-flex; align-items: center; justify-content: center; min-height: 44px; padding: 8px 18px; border-radius: 8px; color: var(--ptv-muted); }
+.ptv-live-tabs a { display: inline-flex; align-items: center; justify-content: center; min-height: 44px; padding: 8px 18px; border-radius: 8px; color: var(--ptv-muted); transition: background-color 160ms, color 160ms; }
 .ptv-live-tabs a[aria-current='page'] { background: var(--ptv-action); color: var(--ptv-action-ink); }
 @media (min-width: 768px) { .ptv-live-tabs { display: none; } }
 .ptv-live-page .ptv-player-grid {
@@ -439,6 +453,26 @@ html[data-moontvplus].dark .ptv-login-error { color: #fda29b; background: rgba(2
 @keyframes ptv-reveal { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
 .ptv-hero-content { animation: ptv-reveal 460ms var(--ptv-ease) both; }
 
+/* 公共进出场：用独立的 scale/translate 属性，不覆盖 Tailwind 的 -translate-x-1/2 居中。
+   *-out 为对应入场的反向播放，需配合延迟卸载使用。 */
+@keyframes ptv-fade { from { opacity: 0; } }
+@keyframes ptv-rise { from { opacity: 0; translate: 0 6px; } }
+@keyframes ptv-pop { from { opacity: 0; scale: .96; } }
+@keyframes ptv-drop { from { opacity: 0; translate: 0 -4px; scale: .98; } }
+@keyframes ptv-sheet { from { translate: 0 100%; } }
+@keyframes ptv-drawer { from { translate: 100% 0; } }
+.ptv-fade-in { animation: ptv-fade 220ms var(--ptv-ease) backwards; }
+.ptv-content-in { animation: ptv-rise 200ms var(--ptv-ease) backwards; }
+.ptv-scrim-in { animation: ptv-fade 180ms var(--ptv-ease) backwards; }
+.ptv-scrim-out { animation: ptv-fade 140ms var(--ptv-ease) reverse both; }
+.ptv-modal-in { animation: ptv-pop 220ms var(--ptv-ease) backwards; }
+.ptv-modal-out { animation: ptv-pop 160ms var(--ptv-ease) reverse both; }
+.ptv-pop-in { animation: ptv-drop 160ms var(--ptv-ease) backwards; }
+.ptv-drawer-in { animation: ptv-drawer 280ms var(--ptv-ease) backwards; }
+.ptv-drawer-out { animation: ptv-drawer 200ms var(--ptv-ease) reverse both; }
+.ptv-sheet-in { animation: ptv-pop 220ms var(--ptv-ease) backwards; }
+@media (max-width: 639px) { .ptv-sheet-in { animation: ptv-sheet 260ms var(--ptv-ease) backwards; } }
+
 @media (hover: hover) and (pointer: fine) {
   .ptv-nav-link:hover, .ptv-more-link:hover, .ptv-more-card:hover { background: var(--ptv-selected); color: var(--ptv-accent); }
   .ptv-video-card:hover { transform: translateY(-3px) scale(1.02); }
@@ -469,7 +503,10 @@ html[data-moontvplus].dark .ptv-login-error { color: #fda29b; background: rgba(2
   .ptv-search-page { padding-top: 72px; }
 }
 @media (min-width: 768px) and (max-width: 1199px) { .ptv-page .mtv-load-overlay { left: 16rem; } html[data-sidebar-collapsed] .ptv-page .mtv-load-overlay { left: 4rem; } }
-@media (min-width: 1024px) { .ptv-player-grid-collapsed > .ptv-player-panel { display: none; } }
+@media (min-width: 1024px) {
+  .ptv-player-grid-collapsed > .ptv-player-panel { display: none; }
+  .ptv-player-grid:not(.ptv-player-grid-collapsed) > .ptv-player-panel { animation: ptv-fade 200ms var(--ptv-ease) backwards; }
+}
 @media (min-width: 1200px) {
   .ptv-media-grid { grid-template-columns: repeat(auto-fill, minmax(156px, 1fr)); }
   .ptv-player-grid { grid-template-columns: minmax(0, 1fr) 300px; }
@@ -503,4 +540,8 @@ html[data-moontvplus].dark .ptv-login-error { color: #fda29b; background: rgba(2
   .ptv-page *, .ptv-page *::before, .ptv-page *::after, .ptv-action-sheet, .ptv-auth *, .ptv-auth *::before, .ptv-auth *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
   .ptv-video-card:hover, .ptv-video-card:active { transform: none !important; }
   html[data-theme-switching]::view-transition-new(root) { animation: none; }
+  .ptv-sidebar, .ptv-sidebar *, .sidebar-offset { transition-duration: .01ms !important; animation: none !important; }
+  /* portal 到 body 的弹层、书库/漫画外壳、TV 端都不在 .ptv-page 内 */
+  :is(.ptv-dialog, .ptv-popover, .ptv-menu, .ptv-library, .ptv-tv), :is(.ptv-dialog, .ptv-popover, .ptv-menu, .ptv-library, .ptv-tv) *, :is(.ptv-dialog, .ptv-popover, .ptv-menu, .ptv-library, .ptv-tv) *::before, :is(.ptv-dialog, .ptv-popover, .ptv-menu, .ptv-library, .ptv-tv) *::after,
+  :is(.ptv-fade-in, .ptv-content-in, .ptv-scrim-in, .ptv-scrim-out, .ptv-modal-in, .ptv-modal-out, .ptv-pop-in, .ptv-drawer-in, .ptv-drawer-out, .ptv-sheet-in) { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
 }

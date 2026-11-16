@@ -43,7 +43,7 @@ export function BackButton() {
     else router.push('/');
   };
   return (
-    <button type='button' onClick={goBack} className='flex h-10 w-10 shrink-0 items-center justify-center rounded-full transition-colors' aria-label='返回'>
+    <button type='button' onClick={goBack} className='flex h-10 w-10 shrink-0 items-center justify-center rounded-full hover:bg-gray-200/50 dark:hover:bg-gray-700/50 active:scale-95 transition-[background-color,transform] duration-150' aria-label='返回'>
       <ArrowLeft className='h-5 w-5' />
     </button>
   );

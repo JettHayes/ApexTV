@@ -123,8 +123,8 @@ export function DownloadPanel() {
   } : null;
 
   return (
-    <div className='fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 p-3 backdrop-blur-sm sm:p-6'>
-      <div className='ptv-dialog flex max-h-[calc(100dvh-2rem)] w-full max-w-6xl flex-col overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-2xl dark:border-slate-700/80 dark:bg-slate-950'>
+    <div className='ptv-scrim-in fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 p-3 backdrop-blur-sm sm:p-6'>
+      <div className='ptv-dialog ptv-modal-in flex max-h-[calc(100dvh-2rem)] w-full max-w-6xl flex-col overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-2xl dark:border-slate-700/80 dark:bg-slate-950'>
         {/* 标题栏 */}
         <div className='flex items-center justify-between border-b border-gray-200 bg-white/90 p-4 dark:border-slate-800 dark:bg-slate-950/90'>
           <div>
@@ -195,7 +195,7 @@ export function DownloadPanel() {
                     </div>
                     <div className='h-2 w-full overflow-hidden rounded-full bg-gray-200 dark:bg-slate-800'>
                       <div
-                        className={`h-full rounded-full transition-all duration-300 ${
+                        className={`h-full rounded-full transition-[width] duration-300 ${
                           task.status === 'downloading'
                             ? 'bg-gradient-to-r from-sky-500 to-emerald-500 motion-safe:animate-pulse'
                             : task.status === 'done'
@@ -299,8 +299,8 @@ export function DownloadPanel() {
       </div>
 
       {logTask && (
-        <div className='fixed inset-0 z-[10000] flex items-center justify-center bg-black/50 p-3 backdrop-blur-sm sm:p-6'>
-          <div className='ptv-dialog flex max-h-[calc(100dvh-2rem)] w-full max-w-5xl flex-col overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-2xl dark:border-slate-700 dark:bg-slate-950'>
+        <div className='ptv-scrim-in fixed inset-0 z-[10000] flex items-center justify-center bg-black/50 p-3 backdrop-blur-sm sm:p-6'>
+          <div className='ptv-dialog ptv-modal-in flex max-h-[calc(100dvh-2rem)] w-full max-w-5xl flex-col overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-2xl dark:border-slate-700 dark:bg-slate-950'>
             <div className='border-b border-gray-200 bg-white/95 p-4 dark:border-slate-800 dark:bg-slate-950/95'>
               <div className='flex items-start justify-between gap-4'>
                 <div className='min-w-0'>

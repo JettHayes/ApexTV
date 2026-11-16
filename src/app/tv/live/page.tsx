@@ -171,7 +171,7 @@ export default function TVLivePage() {
         </div>
         <div className='mt-8 flex gap-4 overflow-x-auto px-4 py-4 [scrollbar-width:none]'>
           {sources.map((item) => (
-            <button key={item.key} onClick={() => setSource(item.key)} className={`cursor-pointer rounded-2xl px-6 py-4 text-2xl font-bold outline-none transition tv-focusable ${source === item.key ? 'bg-rose-600 text-white' : 'bg-white/8 text-slate-200 hover:bg-white/12'}`}>{item.name}</button>
+            <button key={item.key} onClick={() => setSource(item.key)} data-selected={source === item.key} className={`cursor-pointer rounded-2xl px-6 py-4 text-2xl font-bold outline-none transition tv-focusable ${source === item.key ? 'bg-rose-600 text-white' : 'bg-white/8 text-slate-200 hover:bg-white/12'}`}>{item.name}</button>
           ))}
         </div>
         <label className='mt-5 flex h-20 items-center gap-4 rounded-3xl border border-white/10 bg-white/10 px-6 focus-within:border-rose-500'>
@@ -208,7 +208,7 @@ export default function TVLivePage() {
         <div className='mt-10 grid grid-cols-[280px_1fr] gap-6'>
           <aside className='rounded-[32px] border border-white/10 bg-white/[0.04] p-4'>
             <div className='max-h-[70vh] space-y-2 overflow-y-auto pr-2'>
-              {groups.map((group) => <button key={group} onClick={() => { setSelectedGroup(group); setVisibleCount(120); }} className={`tv-focusable w-full cursor-pointer rounded-2xl px-5 py-4 text-left text-2xl font-bold outline-none focus:ring-4 focus:ring-rose-300 ${selectedGroup === group ? 'bg-rose-600 text-white' : 'text-slate-200 hover:bg-white/10'}`}>{group}</button>)}
+              {groups.map((group) => <button key={group} onClick={() => { setSelectedGroup(group); setVisibleCount(120); }} data-selected={selectedGroup === group} className={`tv-focusable w-full cursor-pointer rounded-2xl px-5 py-4 text-left text-2xl font-bold outline-none focus:ring-4 focus:ring-rose-300 ${selectedGroup === group ? 'bg-rose-600 text-white' : 'text-slate-200 hover:bg-white/10'}`}>{group}</button>)}
             </div>
           </aside>
           <section>

@@ -59,7 +59,7 @@ export default function MediaShell({
   const isActive = (href: string) => pathname === href;
 
   return (
-    <div className={cn('min-h-screen', LIBRARY_PAGE, LIBRARY_TEXT)}>
+    <div className={cn('ptv-library min-h-screen', LIBRARY_PAGE, LIBRARY_TEXT)}>
       <header
         className='fixed inset-x-0 top-0 z-40 border-b border-library-edge bg-library-paper/95 backdrop-blur-none dark:border-library-night-edge dark:bg-library-night/95'
         style={{ paddingTop: 'var(--safe-top)' }}

@@ -946,7 +946,7 @@ export default function PrivateLibraryPage() {
         {mounted && showSortDropdown && createPortal(
           <div
             ref={sortDropdownRef}
-            className='fixed z-[9999] bg-white/95 dark:bg-gray-800/95 rounded-xl border border-gray-200/50 dark:border-gray-700/50 backdrop-blur-sm max-h-[50vh] flex flex-col'
+            className='ptv-pop-in origin-top-left fixed z-[9999] bg-white/95 dark:bg-gray-800/95 rounded-xl border border-gray-200/50 dark:border-gray-700/50 backdrop-blur-sm max-h-[50vh] flex flex-col'
             style={{
               left: `${sortDropdownPosition.x}px`,
               top: `${sortDropdownPosition.y}px`,
@@ -1103,7 +1103,7 @@ export default function PrivateLibraryPage() {
                             setXiaoyaSearchResults([]);
                           }
                         }}
-                        className='flex items-center gap-2 p-3 bg-gray-100 dark:bg-gray-800 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors text-left'
+                        className='flex items-center gap-2 p-3 bg-gray-100 dark:bg-gray-800 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition-[background-color,transform] active:scale-[.985] text-left'
                       >
                         {isVideoFile ? (
                           <svg className='w-5 h-5 text-green-600 flex-shrink-0' fill='currentColor' viewBox='0 0 20 20'>
@@ -1158,14 +1158,14 @@ export default function PrivateLibraryPage() {
 
             {/* 文件夹列表 */}
             {xiaoyaFolders.length > 0 && (
-              <div className='space-y-2'>
+              <div key={xiaoyaPath} className='ptv-content-in space-y-2'>
                 <h3 className='text-sm font-medium text-gray-700 dark:text-gray-300'>文件夹</h3>
                 <div className='grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2'>
                   {xiaoyaFolders.map((folder) => (
                     <button
                       key={folder.path}
                       onClick={() => setXiaoyaPath(folder.path)}
-                      className='flex items-center gap-2 p-3 bg-gray-100 dark:bg-gray-800 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors text-left'
+                      className='flex items-center gap-2 p-3 bg-gray-100 dark:bg-gray-800 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition-[background-color,transform] active:scale-[.985] text-left'
                     >
                       <svg className='w-5 h-5 text-blue-600' fill='currentColor' viewBox='0 0 20 20'>
                         <path d='M2 6a2 2 0 012-2h5l2 2h5a2 2 0 012 2v6a2 2 0 01-2 2H4a2 2 0 01-2-2V6z' />
@@ -1179,7 +1179,7 @@ export default function PrivateLibraryPage() {
 
             {/* 视频文件列表 */}
             {xiaoyaFiles.length > 0 && (
-              <div className='space-y-2'>
+              <div key={xiaoyaPath} className='ptv-content-in space-y-2'>
                 <h3 className='text-sm font-medium text-gray-700 dark:text-gray-300'>视频文件</h3>
                 <div className='grid grid-cols-1 gap-2'>
                   {xiaoyaFiles.map((file) => {
@@ -1199,7 +1199,7 @@ export default function PrivateLibraryPage() {
                           const encodedDirPath = base58Encode(xiaoyaPath);
                           router.push(`/play?source=xiaoya&id=${encodeURIComponent(encodedDirPath)}&fileName=${encodeURIComponent(file.name)}&title=${encodeURIComponent(title)}`);
                         }}
-                        className='flex items-center gap-2 p-3 bg-gray-100 dark:bg-gray-800 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors text-left'
+                        className='flex items-center gap-2 p-3 bg-gray-100 dark:bg-gray-800 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition-[background-color,transform] active:scale-[.985] text-left'
                       >
                         <svg className='w-5 h-5 text-green-600' fill='currentColor' viewBox='0 0 20 20'>
                           <path d='M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z' />
@@ -1232,7 +1232,7 @@ export default function PrivateLibraryPage() {
           </div>
         ) : (
           <>
-            <div className='ptv-media-grid'>
+            <div className='ptv-media-grid ptv-fade-in'>
               {videos.map((video) => {
                 // 构建source参数用于VideoCard
                 // 如果是emby源且有embyKey，使用下划线格式

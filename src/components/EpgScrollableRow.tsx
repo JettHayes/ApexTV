@@ -3,6 +3,7 @@
 import { BarChart3,Clock, List, Target, Tv } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 
+import { smoothScrollBehavior } from '@/lib/motion';
 import { formatTimeToHHMM, parseCustomTimeFormat } from '@/lib/time';
 
 interface EpgProgram {
@@ -42,7 +43,7 @@ export default function EpgScrollableRow({
       // 根据滚轮方向进行横向滚动
       container.scrollBy({
         left: scrollAmount,
-        behavior: 'smooth'
+        behavior: smoothScrollBehavior()
       });
     }
   };
@@ -71,7 +72,7 @@ export default function EpgScrollableRow({
 
           container.scrollTo({
             left: Math.max(0, scrollLeft),
-            behavior: 'smooth'
+            behavior: smoothScrollBehavior()
           });
         }
       }
@@ -96,7 +97,7 @@ export default function EpgScrollableRow({
 
         container.scrollTo({
           left: Math.max(0, scrollLeft),
-          behavior: 'smooth'
+          behavior: smoothScrollBehavior()
         });
       }
     }
@@ -115,7 +116,7 @@ export default function EpgScrollableRow({
 
           scrollContainer.scrollTo({
             top: Math.max(0, scrollTop),
-            behavior: 'smooth'
+            behavior: smoothScrollBehavior()
           });
         }
       }
@@ -334,7 +335,7 @@ export default function EpgScrollableRow({
       {/* 列表视图 */}
       {viewMode === 'list' && (
         <div
-          className='relative'
+          className='ptv-content-in relative'
           onMouseEnter={() => setIsHovered(true)}
           onMouseLeave={() => setIsHovered(false)}
         >
@@ -419,7 +420,7 @@ export default function EpgScrollableRow({
 
       {/* 时间线视图 */}
       {viewMode === 'timeline' && (
-        <div className='relative'>
+        <div className='ptv-content-in relative'>
           {/* 电脑端：横向时间线 */}
           <div className='hidden md:block'>
             <div className='bg-gray-100 dark:bg-gray-800 rounded-lg p-4'>

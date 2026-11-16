@@ -542,7 +542,7 @@ export default function BannerCarousel({
     <section
       ref={heroRef}
       style={{ '--ptv-hero-scale': Number(bannerHeightScale) } as React.CSSProperties}
-      className={`ptv-hero relative w-full ${bannerHeightClassMap[bannerHeightScale]} overflow-hidden group`}
+      className={`ptv-hero ptv-fade-in relative w-full ${bannerHeightClassMap[bannerHeightScale]} overflow-hidden group`}
       onMouseEnter={() => setIsPaused(true)}
       onMouseLeave={() => setIsPaused(false)}
       onFocus={() => setIsFocused(true)}
@@ -564,7 +564,7 @@ export default function BannerCarousel({
         {items.map((item, index) => (
           <div
             key={item.id}
-            className={`absolute inset-0 transition-opacity duration-1000 ${
+            className={`absolute inset-0 transition-opacity duration-700 ease-[cubic-bezier(.16,1,.3,1)] ${
               index === currentIndex ? 'opacity-100' : 'opacity-0'
             }`}
           >
@@ -624,7 +624,7 @@ export default function BannerCarousel({
 
       {/* 内容信息 */}
       <div className='absolute inset-0 flex items-end p-8 md:p-12 pointer-events-none'>
-        <div className='ptv-hero-content max-w-2xl space-y-4'>
+        <div key={currentItem.id} className='ptv-hero-content max-w-2xl space-y-4'>
           <h2
             ref={titleRef}
             className='text-3xl md:text-5xl font-bold text-white drop-shadow-lg'
@@ -685,7 +685,7 @@ export default function BannerCarousel({
               e.stopPropagation();
               handlePlay(currentItem.title);
             }}
-            className='ptv-hero-play flex items-center gap-2 px-6 py-3 bg-gray-500/30 hover:bg-gray-500/50 text-white font-semibold rounded-lg transition-all pointer-events-auto'
+            className='ptv-hero-play flex items-center gap-2 px-6 py-3 bg-gray-500/30 hover:bg-gray-500/50 text-white font-semibold rounded-lg transition-all active:scale-95 pointer-events-auto'
           >
             <Play className='w-5 h-5 fill-white' />
             立即播放
@@ -730,7 +730,7 @@ export default function BannerCarousel({
         </button>
       )}
 
-      <button type='button' className='ptv-hero-pause absolute bottom-3 right-4 z-10 flex h-11 w-11 items-center justify-center rounded-full bg-black/40 text-white' aria-label={isAutoPlayPaused ? '继续自动轮播' : '暂停自动轮播'} aria-pressed={isAutoPlayPaused} onClick={(event) => { event.stopPropagation(); setIsAutoPlayPaused((value) => !value); }}>
+      <button type='button' className='ptv-hero-pause absolute bottom-3 right-4 z-10 flex h-11 w-11 items-center justify-center rounded-full bg-black/40 text-white transition-transform active:scale-95' aria-label={isAutoPlayPaused ? '继续自动轮播' : '暂停自动轮播'} aria-pressed={isAutoPlayPaused} onClick={(event) => { event.stopPropagation(); setIsAutoPlayPaused((value) => !value); }}>
         {isAutoPlayPaused ? <Play className='h-4 w-4' /> : <Pause className='h-4 w-4' />}
       </button>
       {/* 指示器 */}
@@ -746,7 +746,7 @@ export default function BannerCarousel({
             aria-current={index === currentIndex ? 'true' : undefined}
             aria-label={`跳转到第 ${index + 1} 张`}
           >
-            <span className={`h-1 rounded-full transition-colors ${index === currentIndex ? 'w-7 bg-white' : 'w-3 bg-white/50'}`} />
+            <span className={`h-1 rounded-full transition-[width,background-color] duration-200 ease-[cubic-bezier(.16,1,.3,1)] ${index === currentIndex ? 'w-7 bg-white' : 'w-3 bg-white/50'}`} />
           </button>
         ))}
       </div>

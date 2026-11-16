@@ -187,7 +187,7 @@ export default function AdvancedRecommendationPage() {
           {!isLoadingSources && sources.length > 0 && (
             <>
               {videos.length > 0 ? (
-                <div className='grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-3 sm:gap-4'>
+                <div className='ptv-fade-in grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-3 sm:gap-4'>
                   {videos.map((video, index) => (
                     <VideoCard
                       key={`${video.source}-${video.id}-${index}`}

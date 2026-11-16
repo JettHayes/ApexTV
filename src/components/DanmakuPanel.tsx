@@ -11,6 +11,7 @@ import type {
   DanmakuEpisode,
   DanmakuSelection,
 } from '@/lib/danmaku/types';
+import { smoothScrollBehavior } from '@/lib/motion';
 
 interface DanmakuPanelProps {
   videoTitle: string;
@@ -260,7 +261,7 @@ export default function DanmakuPanel({
     e.preventDefault();
     container.scrollBy({
       left: e.deltaY * 2,
-      behavior: 'smooth',
+      behavior: smoothScrollBehavior(),
     });
   }, [isEpisodeGroupHovered]);
 
@@ -293,7 +294,7 @@ export default function DanmakuPanel({
 
     container.scrollTo({
       left: targetScrollLeft,
-      behavior: 'smooth',
+      behavior: smoothScrollBehavior(),
     });
   }, [displayEpisodeGroupIndex]);
 
@@ -386,7 +387,7 @@ export default function DanmakuPanel({
         <div>
         {/* 显示剧集列表 */}
         {selectedAnime && (
-          <div className='space-y-2'>
+          <div key={selectedAnime.animeId} className='ptv-content-in space-y-2'>
             {/* 返回按钮 */}
             <button
               onClick={handleBackToResults}
@@ -441,9 +442,7 @@ export default function DanmakuPanel({
                           }`}
                         >
                           {label}
-                          {isActive && (
-                            <div className='absolute bottom-0 left-0 right-0 h-0.5 bg-green-500 dark:bg-green-400' />
-                          )}
+                          <div className={`absolute bottom-0 left-0 right-0 h-0.5 bg-green-500 dark:bg-green-400 origin-center transition-transform duration-200 ${isActive ? 'scale-x-100' : 'scale-x-0'}`} />
                         </button>
                       );
                     })}
@@ -495,7 +494,7 @@ export default function DanmakuPanel({
                         <button
                           key={episode.episodeId}
                           onClick={() => handleEpisodeSelect(episode)}
-                          className={`rounded-lg px-3 py-2 text-sm font-medium transition-all ${
+                          className={`rounded-lg px-3 py-2 text-sm font-medium active:scale-[0.97] transition-[transform,background-color,color,border-color] duration-150 ${
                             isSelected
                               ? 'bg-green-500 text-white shadow-md'
                               : 'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700'
@@ -517,7 +516,7 @@ export default function DanmakuPanel({
                         <button
                           key={episode.episodeId}
                           onClick={() => handleEpisodeSelect(episode)}
-                          className={`w-full flex items-center gap-3 p-3 rounded-lg text-left transition-all duration-200 group border ${
+                          className={`w-full flex items-center gap-3 p-3 rounded-lg text-left active:scale-[0.97] transition-[transform,background-color,color,border-color] duration-150 group border ${
                             isSelected
                               ? 'bg-green-500 text-white border-green-600 shadow-md'
                               : 'bg-gray-100 hover:bg-gray-200 border-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 dark:border-gray-700 hover:border-green-500/50 hover:shadow-sm'
@@ -579,7 +578,7 @@ export default function DanmakuPanel({
 
         {/* 显示搜索结果 */}
         {!selectedAnime && searchResults.length > 0 && (
-          <div className='space-y-2 pb-4'>
+          <div className='ptv-content-in space-y-2 pb-4'>
             {searchResults.map((anime) => (
               <div
                 key={anime.animeId}

@@ -22,6 +22,7 @@ import type { DanmakuComment,DanmakuEpisode,DanmakuSelection } from '@/lib/danma
 import { generateStorageKey, getCachedPlayRecordsSnapshot } from '@/lib/db.client';
 import { isEpisodeHiddenByFilter } from '@/lib/episode-filter';
 import { loadAllLocalEpisodeProgressRecords } from '@/lib/episode-progress';
+import { smoothScrollBehavior } from '@/lib/motion';
 import { isNetdiskSource } from '@/lib/netdisk/source';
 import { EpisodeFilterConfig,SearchResult } from '@/lib/types';
 import { getVideoResolutionFromM3u8, SpeedTestError } from '@/lib/utils';
@@ -158,7 +159,7 @@ const EpisodeButton: React.FC<EpisodeButtonProps> = ({
           : undefined
       }
       {...(canShowOriginalName ? longPressProps : {})}
-      className={`relative h-10 min-w-10 px-3 py-2 flex items-center justify-center text-sm font-medium rounded-md transition-all duration-200 whitespace-nowrap font-mono border ${
+      className={`relative h-10 min-w-10 px-3 py-2 flex items-center justify-center text-sm font-medium rounded-md active:scale-[0.97] transition-[transform,background-color,color,border-color] duration-150 whitespace-nowrap font-mono border ${
         canShowOriginalName ? 'select-none' : ''
       }
         ${isActive
@@ -216,7 +217,7 @@ const EpisodeListItem: React.FC<EpisodeListItemProps> = ({
         }
       }}
       title={name}
-      className={`flex items-center gap-3 w-full px-3 py-2.5 rounded-lg border text-left transition-all duration-200 ${
+      className={`flex items-center gap-3 w-full px-3 py-2.5 rounded-lg border text-left active:scale-[0.97] transition-[transform,background-color,color,border-color] duration-150 ${
         isActive
           ? 'bg-[var(--ptv-action)] text-[color:var(--ptv-action-ink)] border-transparent cursor-default'
           : isWatched
@@ -848,7 +849,7 @@ const EpisodeSelector: React.FC<EpisodeSelectorProps> = ({
       // 根据滚轮方向进行横向滚动
       container.scrollBy({
         left: scrollAmount,
-        behavior: 'smooth'
+        behavior: smoothScrollBehavior()
       });
     }
   }, [isCategoryHovered]);
@@ -892,7 +893,7 @@ const EpisodeSelector: React.FC<EpisodeSelectorProps> = ({
       // 平滑滚动到目标位置
       container.scrollTo({
         left: targetScrollLeft,
-        behavior: 'smooth',
+        behavior: smoothScrollBehavior(),
       });
     }
   }, [displayPage, pageCount]);
@@ -1084,7 +1085,7 @@ const EpisodeSelector: React.FC<EpisodeSelectorProps> = ({
 
       {/* 弹幕 Tab 内容 */}
       {activeTab === 'danmaku' && onDanmakuSelect && (
-        <div className='flex-1 min-h-0 overflow-hidden'>
+        <div className='ptv-content-in flex-1 min-h-0 overflow-hidden'>
           <DanmakuPanel
             videoTitle={videoTitle || ''}
             currentEpisodeIndex={value - 1}
@@ -1098,7 +1099,7 @@ const EpisodeSelector: React.FC<EpisodeSelectorProps> = ({
 
       {/* 选集 Tab 内容 */}
       {activeTab === 'episodes' && (
-        <>
+        <div className='ptv-content-in flex flex-col flex-1 min-h-0'>
           {/* 分类标签 */}
           <div className='relative z-30 flex items-center gap-4 mb-4 border-b border-gray-300 dark:border-gray-700 -mx-4 px-4 flex-shrink-0'>
             <div
@@ -1125,9 +1126,7 @@ const EpisodeSelector: React.FC<EpisodeSelectorProps> = ({
                       `.trim()}
                     >
                       {label}
-                      {isActive && (
-                        <div className='absolute bottom-0 left-0 right-0 h-0.5 bg-green-500 dark:bg-green-400' />
-                      )}
+                      <div className={`absolute bottom-0 left-0 right-0 h-0.5 bg-green-500 dark:bg-green-400 origin-center transition-transform duration-200 ${isActive ? 'scale-x-100' : 'scale-x-0'}`} />
                     </button>
                   );
                 })}
@@ -1171,7 +1170,7 @@ const EpisodeSelector: React.FC<EpisodeSelectorProps> = ({
               </button>
               {showEpisodeMenu && (
                 <div
-                  className='absolute right-0 top-9 z-50 min-w-[9rem] rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-lg py-1'
+                  className='ptv-pop-in origin-top-right absolute right-0 top-9 z-50 min-w-[9rem] rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-lg py-1'
                   role='menu'
                 >
                   <button
@@ -1276,12 +1275,12 @@ const EpisodeSelector: React.FC<EpisodeSelectorProps> = ({
               })()}
             </div>
           )}
-        </>
+        </div>
       )}
 
       {/* 换源 Tab 内容 */}
       {activeTab === 'sources' && (
-        <div className='flex flex-col h-full mt-2'>
+        <div className='ptv-content-in flex flex-col h-full mt-2'>
           {/* 全部重测按钮 - 右上角 */}
           {!sourceSearchLoading && !sourceSearchError && availableSources.length > 0 && (
             <div className='flex justify-end mb-2 px-2 pb-2 border-b border-gray-300 dark:border-gray-700'>
@@ -1378,7 +1377,7 @@ const EpisodeSelector: React.FC<EpisodeSelectorProps> = ({
                         className={`flex items-start gap-3 px-2 py-3 rounded-lg transition-all select-none duration-200 relative
                       ${isCurrentSource
                          ? 'bg-green-500/10 dark:bg-green-500/20 border-green-500/30 border'
-                          : 'hover:bg-gray-200/50 dark:hover:bg-white/10 hover:scale-[1.02] cursor-pointer'
+                          : 'hover:bg-gray-200/50 dark:hover:bg-white/10 cursor-pointer'
                           }`.trim()}
                       >
                         {/* 封面 */}

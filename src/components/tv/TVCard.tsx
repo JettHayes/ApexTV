@@ -20,7 +20,7 @@ export default function TVCard({ item }: { item: TVItem }) {
       onClick={() => router.push(playUrl)}
       className='group w-[210px] shrink-0 cursor-pointer rounded-[28px] bg-white/[0.04] p-3 text-left outline-none transition duration-200 hover:bg-white/10 focus-visible:bg-white/10 tv-focusable'
     >
-      <div className='relative aspect-[2/3] overflow-hidden rounded-[22px] bg-slate-900 shadow-xl shadow-black/50 transition duration-200 group-hover:scale-[1.03] group-focus-visible:scale-[1.03]'>
+      <div className='relative aspect-[2/3] overflow-hidden rounded-[22px] bg-slate-900 shadow-xl shadow-black/50 transition duration-200 group-hover:scale-[1.03]'>
         {poster ? (
           <img src={poster} alt={item.title} className='h-full w-full object-cover' />
         ) : (

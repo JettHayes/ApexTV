@@ -551,8 +551,8 @@ export function DownloadManagementPanel({
     <>
       {createPortal(
         <div className='fixed inset-0 z-[9999] flex items-end justify-center p-0 sm:items-center sm:p-4'>
-          <div className='absolute inset-0 bg-black/50' onClick={onClose} />
-          <div className='relative flex h-[92dvh] max-h-[92dvh] w-full max-w-4xl flex-col rounded-t-2xl bg-white shadow-xl dark:bg-gray-900 sm:h-auto sm:max-h-[90vh] sm:rounded-lg'>
+          <div className='ptv-scrim-in absolute inset-0 bg-black/50' onClick={onClose} />
+          <div className='ptv-sheet-in relative flex h-[92dvh] max-h-[92dvh] w-full max-w-4xl flex-col rounded-t-2xl bg-white shadow-xl dark:bg-gray-900 sm:h-auto sm:max-h-[90vh] sm:rounded-lg'>
             {/* Header */}
             <div className='flex items-center justify-between border-b border-gray-200 p-3 dark:border-gray-700 sm:p-4'>
               <h2 className='text-lg font-semibold text-gray-800 dark:text-gray-200 sm:text-xl'>
@@ -713,7 +713,7 @@ export function DownloadManagementPanel({
                         </div>
 
                         {isExpanded && (
-                          <div className='border-t border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-900'>
+                          <div className='ptv-content-in border-t border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-900'>
                             {group.tasks.map((task) => (
                               <div
                                 key={task.id}

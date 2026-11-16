@@ -53,6 +53,7 @@ import {
   saveFavorite,
   savePlayRecord,
 } from '@/lib/db.client';
+import { smoothScrollBehavior } from '@/lib/motion';
 import { loadTVPlayerUpDownAction } from '@/lib/tv-preferences';
 import { SearchResult } from '@/lib/types';
 
@@ -152,7 +153,7 @@ function scrollFocusedControlIntoView(event: FocusEvent<HTMLElement>) {
     target.scrollIntoView({
       block: 'nearest',
       inline: 'center',
-      behavior: 'smooth',
+      behavior: smoothScrollBehavior(),
     });
   }
 }
@@ -246,7 +247,7 @@ function focusEpisodePanelElement(element: HTMLElement | null | undefined) {
   element.scrollIntoView({
     block: 'nearest',
     inline: 'nearest',
-    behavior: 'smooth',
+    behavior: smoothScrollBehavior(),
   });
   return true;
 }
@@ -1373,7 +1374,7 @@ function TVPlayClient() {
               {item.text}
             </div>
           ))}
-          <style jsx>{`
+          <style jsx global>{`
             @keyframes tv-danmaku {
               from {
                 transform: translateX(100vw);
@@ -1435,7 +1436,7 @@ function TVPlayClient() {
 
       <div
         className={`absolute left-8 right-8 top-8 flex items-center justify-between transition-opacity duration-300 ${
-          showPanel ? 'opacity-100' : 'opacity-0'
+          showPanel ? 'opacity-100' : 'pointer-events-none opacity-0'
         }`}
       >
         <button
@@ -1506,6 +1507,7 @@ function TVPlayClient() {
             <button
               onClick={toggleFavorite}
               data-tv-player-control
+              data-selected={favorited}
               className={`tv-focusable flex cursor-pointer items-center gap-2 rounded-2xl px-5 py-4 text-xl font-bold outline-none ${
                 favorited ? 'bg-rose-600' : 'bg-white/10'
               }`}
@@ -1527,6 +1529,7 @@ function TVPlayClient() {
             <button
               onClick={() => setDanmakuEnabled((v) => !v)}
               data-tv-player-control
+              data-selected={danmakuEnabled}
               className={`tv-focusable flex cursor-pointer items-center gap-2 rounded-2xl px-5 py-4 text-xl font-bold outline-none ${
                 danmakuEnabled ? 'bg-rose-600' : 'bg-white/10'
               }`}
@@ -1549,6 +1552,7 @@ function TVPlayClient() {
             <button
               onClick={() => setAdFilterEnabled((v) => !v)}
               data-tv-player-control
+              data-selected={adFilterEnabled}
               className={`tv-focusable flex cursor-pointer items-center gap-2 rounded-2xl px-5 py-4 text-xl font-bold outline-none ${
                 adFilterEnabled ? 'bg-rose-600' : 'bg-white/10'
               }`}
@@ -1619,7 +1623,7 @@ function TVPlayClient() {
         <aside
           ref={episodesPanelRef}
           data-tv-episode-panel
-          className='absolute bottom-40 right-8 max-h-[55vh] w-[560px] overflow-y-auto rounded-[34px] border border-white/10 bg-slate-950/92 p-6 shadow-2xl shadow-black/70 backdrop-blur-2xl'
+          className='ptv-content-in absolute bottom-40 right-8 max-h-[55vh] w-[560px] overflow-y-auto rounded-[34px] border border-white/10 bg-slate-950/92 p-6 shadow-2xl shadow-black/70 backdrop-blur-2xl'
         >
           <h2 className='mb-5 flex items-center gap-3 text-3xl font-black'>
             <Layers className='h-8 w-8 text-rose-500' />
@@ -1627,7 +1631,7 @@ function TVPlayClient() {
           </h2>
           <div className='mb-6'>
             <div className='mb-2 text-xl font-black text-slate-300'>播放源</div>
-            <div className='flex gap-3 overflow-x-auto px-2 py-3 [scrollbar-width:none]'>
+            <div className='-my-5 flex gap-3 overflow-x-auto px-2 py-8 [scrollbar-width:none]'>
               {sources.length > 0 ? (
                 sources.map((item) => (
                   <button
@@ -1635,6 +1639,7 @@ function TVPlayClient() {
                     onClick={() => switchSource(item)}
                     data-tv-player-control
                     data-tv-episode-focus-group='sources'
+                    data-selected={detail.source === item.source && detail.id === item.id}
                     className={`tv-focusable shrink-0 cursor-pointer rounded-2xl px-5 py-3 text-xl font-bold outline-none focus:ring-4 focus:ring-rose-300 ${
                       detail.source === item.source && detail.id === item.id
                         ? 'bg-rose-600'
@@ -1657,6 +1662,7 @@ function TVPlayClient() {
                   onClick={() => setEpisodePage(page)}
                   data-tv-player-control
                   data-tv-episode-focus-group='pages'
+                  data-selected={page === episodePage}
                   className={`tv-focusable shrink-0 cursor-pointer rounded-2xl px-5 py-3 text-xl font-black outline-none focus:ring-4 focus:ring-rose-300 ${
                     page === episodePage ? 'bg-rose-600' : 'bg-white/10'
                   }`}
@@ -1678,6 +1684,7 @@ function TVPlayClient() {
                 data-tv-player-control
                 data-tv-episode-focus-group='episodes'
                 data-tv-episode-index={index}
+                data-selected={index === episodeIndex}
                 className={`tv-focusable min-h-16 cursor-pointer rounded-2xl px-3 py-3 text-lg font-black outline-none focus:ring-4 focus:ring-rose-300 ${
                   index === episodeIndex ? 'bg-rose-600' : 'bg-white/10'
                 }`}
@@ -1689,12 +1696,12 @@ function TVPlayClient() {
         </aside>
       )}
       {showDanmakuSettings && (
-        <div className='absolute inset-0 z-40 flex items-center justify-center bg-black/60 p-10 backdrop-blur-sm'>
+        <div className='ptv-fade-in absolute inset-0 z-40 flex items-center justify-center bg-black/60 p-10 backdrop-blur-sm'>
           <section
             data-tv-player-control
             data-tv-focus-scope='active'
             data-tv-danmaku-settings
-            className='w-[720px] max-w-[92vw] rounded-[34px] border border-white/10 bg-slate-950/95 p-7 text-white shadow-2xl shadow-black/80'
+            className='ptv-modal-in w-[720px] max-w-[92vw] rounded-[34px] border border-white/10 bg-slate-950/95 p-7 text-white shadow-2xl shadow-black/80'
             onKeyDownCapture={(event) => {
               const target = event.target;
               if (
@@ -1835,10 +1842,10 @@ function TVPlayClient() {
         </div>
       )}
       {showDetail && (
-        <div className='absolute inset-0 z-40 flex items-center justify-center bg-black/72 p-10 backdrop-blur-sm'>
+        <div className='ptv-fade-in absolute inset-0 z-40 flex items-center justify-center bg-black/72 p-10 backdrop-blur-sm'>
           <section
             data-tv-player-control
-            className='max-h-[82vh] w-[980px] max-w-[92vw] overflow-y-auto rounded-[42px] border border-white/10 bg-slate-950/95 p-8 text-white shadow-2xl shadow-black/80'
+            className='ptv-modal-in max-h-[82vh] w-[980px] max-w-[92vw] overflow-y-auto rounded-[42px] border border-white/10 bg-slate-950/95 p-8 text-white shadow-2xl shadow-black/80'
           >
             <div className='mb-6 flex items-start justify-between gap-6'>
               <div>

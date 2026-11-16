@@ -3,6 +3,8 @@
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 
+import { smoothScrollBehavior } from '@/lib/motion';
+
 interface VirtualScrollableRowProps {
   children: React.ReactNode[];
   maxVisible?: number; // 最大可见数量
@@ -63,7 +65,7 @@ export default function VirtualScrollableRow({
     if (containerRef.current) {
       containerRef.current.scrollBy({
         left: -400,
-        behavior: 'smooth',
+        behavior: smoothScrollBehavior(),
       });
     }
   };
@@ -72,7 +74,7 @@ export default function VirtualScrollableRow({
     if (containerRef.current) {
       containerRef.current.scrollBy({
         left: 400,
-        behavior: 'smooth',
+        behavior: smoothScrollBehavior(),
       });
     }
   };
@@ -81,23 +83,25 @@ export default function VirtualScrollableRow({
   const visibleChildren = children.slice(visibleRange.start, visibleRange.end);
 
   return (
-    <div className="relative group">
-      {/* 左侧滚动按钮 */}
-      {showLeftScroll && (
-        <button
-          onClick={scrollLeft}
-          className="absolute left-0 top-1/2 -translate-y-1/2 z-[600] bg-white/90 dark:bg-gray-800/90 p-2 rounded-full shadow-lg opacity-0 group-hover:opacity-100 transition-opacity hover:bg-white dark:hover:bg-gray-700"
-          aria-label="向左滚动"
-        >
-          <ChevronLeft className="w-6 h-6 text-gray-700 dark:text-gray-200" />
-        </button>
-      )}
+    <div className="relative group/row">
+      {/* 左侧滚动按钮（常驻挂载，不可滚动时隐藏） */}
+      <button
+        onClick={scrollLeft}
+        className={`absolute left-0 top-1/2 -translate-y-1/2 z-[600] bg-white/90 dark:bg-gray-800/90 p-2 rounded-full shadow-lg opacity-0 transition-opacity hover:bg-white dark:hover:bg-gray-700 ${
+          showLeftScroll ? 'group-hover/row:opacity-100' : 'pointer-events-none'
+        }`}
+        aria-label="向左滚动"
+        aria-hidden={!showLeftScroll}
+        tabIndex={showLeftScroll ? undefined : -1}
+      >
+        <ChevronLeft className="w-6 h-6 text-gray-700 dark:text-gray-200" />
+      </button>
 
       {/* 滚动容器 */}
       <div
         ref={containerRef}
-        className={`flex gap-2 overflow-x-auto scrollbar-hide scroll-smooth ${className}`}
-        style={{ scrollBehavior: 'smooth', paddingTop: '20px', paddingBottom: '20px', marginTop: '-20px', marginBottom: '-20px' }}
+        className={`flex gap-2 overflow-x-auto scrollbar-hide ${className}`}
+        style={{ paddingTop: '20px', paddingBottom: '20px', marginTop: '-20px', marginBottom: '-20px' }}
       >
         {/* 左侧占位符（用于保持滚动位置） */}
         {visibleRange.start > 0 && (
@@ -113,16 +117,18 @@ export default function VirtualScrollableRow({
         )}
       </div>
 
-      {/* 右侧滚动按钮 */}
-      {showRightScroll && (
-        <button
-          onClick={scrollRight}
-          className="absolute right-0 top-1/2 -translate-y-1/2 z-[600] bg-white/90 dark:bg-gray-800/90 p-2 rounded-full shadow-lg opacity-0 group-hover:opacity-100 transition-opacity hover:bg-white dark:hover:bg-gray-700"
-          aria-label="向右滚动"
-        >
-          <ChevronRight className="w-6 h-6 text-gray-700 dark:text-gray-200" />
-        </button>
-      )}
+      {/* 右侧滚动按钮（常驻挂载，不可滚动时隐藏） */}
+      <button
+        onClick={scrollRight}
+        className={`absolute right-0 top-1/2 -translate-y-1/2 z-[600] bg-white/90 dark:bg-gray-800/90 p-2 rounded-full shadow-lg opacity-0 transition-opacity hover:bg-white dark:hover:bg-gray-700 ${
+          showRightScroll ? 'group-hover/row:opacity-100' : 'pointer-events-none'
+        }`}
+        aria-label="向右滚动"
+        aria-hidden={!showRightScroll}
+        tabIndex={showRightScroll ? undefined : -1}
+      >
+        <ChevronRight className="w-6 h-6 text-gray-700 dark:text-gray-200" />
+      </button>
     </div>
   );
 }

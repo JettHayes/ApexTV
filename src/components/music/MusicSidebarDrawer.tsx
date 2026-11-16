@@ -52,8 +52,8 @@ export default function MusicSidebarDrawer({
 
   return (
     <div className='fixed inset-0 z-[10000]'>
-      <button className={MUSIC_DRAWER_SCRIM} onClick={onClose} aria-label='关闭菜单' />
-      <aside className={MUSIC_DRAWER}>
+      <button className={cn('ptv-scrim-in', MUSIC_DRAWER_SCRIM)} onClick={onClose} aria-label='关闭菜单' />
+      <aside className={cn('music-drawer-in', MUSIC_DRAWER)}>
         <div className='mb-8 flex items-center justify-between gap-3'>
           <div className='flex min-w-0 items-center gap-3'>
             <div className={MUSIC_DRAWER_BRAND}>

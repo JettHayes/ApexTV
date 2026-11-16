@@ -1,6 +1,8 @@
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 
+import { smoothScrollBehavior } from '@/lib/motion';
+
 interface ScrollableRowProps {
   children: React.ReactNode;
   scrollDistance?: number;
@@ -78,7 +80,7 @@ export default function ScrollableRow({
     if (containerRef.current) {
       containerRef.current.scrollBy({
         left: scrollDistance,
-        behavior: 'smooth',
+        behavior: smoothScrollBehavior(),
       });
     }
   };
@@ -87,7 +89,7 @@ export default function ScrollableRow({
     if (containerRef.current) {
       containerRef.current.scrollBy({
         left: -scrollDistance,
-        behavior: 'smooth',
+        behavior: smoothScrollBehavior(),
       });
     }
   };
@@ -109,63 +111,62 @@ export default function ScrollableRow({
       >
         {children}
       </div>
-      {showLeftScroll && (
+      <div
+        aria-hidden={!showLeftScroll}
+        className={`hidden sm:flex absolute left-0 top-0 bottom-0 w-16 items-center justify-center z-[600] transition-opacity duration-200 ${
+          isHovered && showLeftScroll ? 'opacity-100' : 'opacity-0'
+        }`}
+        style={{
+          background: 'transparent',
+          pointerEvents: 'none', // 允许点击穿透
+        }}
+      >
         <div
-          className={`hidden sm:flex absolute left-0 top-0 bottom-0 w-16 items-center justify-center z-[600] transition-opacity duration-200 ${
-            isHovered ? 'opacity-100' : 'opacity-0'
-          }`}
+          className='absolute inset-0 flex items-center justify-center'
           style={{
-            background: 'transparent',
-            pointerEvents: 'none', // 允许点击穿透
+            top: '40%',
+            bottom: '60%',
+            left: '-4.5rem',
+            pointerEvents: showLeftScroll ? 'auto' : 'none',
           }}
         >
-          <div
-            className='absolute inset-0 flex items-center justify-center'
-            style={{
-              top: '40%',
-              bottom: '60%',
-              left: '-4.5rem',
-              pointerEvents: 'auto',
-            }}
+          <button
+            onClick={handleScrollLeftClick}
+            tabIndex={showLeftScroll ? undefined : -1}
+            className='w-12 h-12 bg-white/95 rounded-full shadow-lg flex items-center justify-center hover:bg-white border border-gray-200 transition-transform hover:scale-105 dark:bg-gray-800/90 dark:hover:bg-gray-700 dark:border-gray-600'
           >
-            <button
-              onClick={handleScrollLeftClick}
-              className='w-12 h-12 bg-white/95 rounded-full shadow-lg flex items-center justify-center hover:bg-white border border-gray-200 transition-transform hover:scale-105 dark:bg-gray-800/90 dark:hover:bg-gray-700 dark:border-gray-600'
-            >
-              <ChevronLeft className='w-6 h-6 text-gray-600 dark:text-gray-300' />
-            </button>
-          </div>
+            <ChevronLeft className='w-6 h-6 text-gray-600 dark:text-gray-300' />
+          </button>
         </div>
-      )}
-
-      {showRightScroll && (
+      </div>
+      <div
+        aria-hidden={!showRightScroll}
+        className={`hidden sm:flex absolute right-0 top-0 bottom-0 w-16 items-center justify-center z-[600] transition-opacity duration-200 ${
+          isHovered && showRightScroll ? 'opacity-100' : 'opacity-0'
+        }`}
+        style={{
+          background: 'transparent',
+          pointerEvents: 'none', // 允许点击穿透
+        }}
+      >
         <div
-          className={`hidden sm:flex absolute right-0 top-0 bottom-0 w-16 items-center justify-center z-[600] transition-opacity duration-200 ${
-            isHovered ? 'opacity-100' : 'opacity-0'
-          }`}
+          className='absolute inset-0 flex items-center justify-center'
           style={{
-            background: 'transparent',
-            pointerEvents: 'none', // 允许点击穿透
+            top: '40%',
+            bottom: '60%',
+            right: '-4.5rem',
+            pointerEvents: showRightScroll ? 'auto' : 'none',
           }}
         >
-          <div
-            className='absolute inset-0 flex items-center justify-center'
-            style={{
-              top: '40%',
-              bottom: '60%',
-              right: '-4.5rem',
-              pointerEvents: 'auto',
-            }}
+          <button
+            onClick={handleScrollRightClick}
+            tabIndex={showRightScroll ? undefined : -1}
+            className='w-12 h-12 bg-white/95 rounded-full shadow-lg flex items-center justify-center hover:bg-white border border-gray-200 transition-transform hover:scale-105 dark:bg-gray-800/90 dark:hover:bg-gray-700 dark:border-gray-600'
           >
-            <button
-              onClick={handleScrollRightClick}
-              className='w-12 h-12 bg-white/95 rounded-full shadow-lg flex items-center justify-center hover:bg-white border border-gray-200 transition-transform hover:scale-105 dark:bg-gray-800/90 dark:hover:bg-gray-700 dark:border-gray-600'
-            >
-              <ChevronRight className='w-6 h-6 text-gray-600 dark:text-gray-300' />
-            </button>
-          </div>
+            <ChevronRight className='w-6 h-6 text-gray-600 dark:text-gray-300' />
+          </button>
         </div>
-      )}
+      </div>
     </div>
   );
 }

@@ -819,13 +819,13 @@ export default function CorrectDialog({
   return createPortal(
     useDrawer ? (
       <div className='fixed inset-0 z-[9999] flex items-center justify-end pointer-events-none'>
-        <div className={`relative ${drawerWidth} h-full bg-white dark:bg-gray-800 shadow-2xl flex flex-col pointer-events-auto`}>
+        <div className={`ptv-drawer-in relative ${drawerWidth} h-full bg-white dark:bg-gray-800 shadow-2xl flex flex-col pointer-events-auto`}>
           {dialogContent}
         </div>
       </div>
     ) : (
-      <div className='fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 backdrop-blur-sm'>
-        <div className='bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-2xl max-h-[80vh] overflow-hidden flex flex-col m-4'>
+      <div className='ptv-scrim-in fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 backdrop-blur-sm'>
+        <div className='ptv-modal-in bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-2xl max-h-[80vh] overflow-hidden flex flex-col m-4'>
           {dialogContent}
         </div>
       </div>

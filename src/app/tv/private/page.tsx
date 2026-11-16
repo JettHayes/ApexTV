@@ -115,7 +115,7 @@ export default function TVPrivatePage() {
         <div className='flex items-center justify-between gap-6'>
           <div className='flex items-center gap-4'><HardDrive className='h-14 w-14 text-rose-500' /><div><h1 className='text-6xl font-black'>私人影库</h1><p className='mt-2 text-2xl text-slate-300'>已接入真实 OpenList / Emby / 小雅数据。</p></div></div>
           <div className='flex gap-3'>
-            {enabledSources.map((item) => <button key={item} onClick={() => setSource(item)} className={`cursor-pointer rounded-2xl px-6 py-4 text-2xl font-bold outline-none transition tv-focusable ${source === item ? 'bg-rose-600 text-white' : 'bg-white/8 text-slate-200 hover:bg-white/12'}`}>{sourceLabel[item]}</button>)}
+            {enabledSources.map((item) => <button key={item} onClick={() => setSource(item)} data-selected={source === item} className={`cursor-pointer rounded-2xl px-6 py-4 text-2xl font-bold outline-none transition tv-focusable ${source === item ? 'bg-rose-600 text-white' : 'bg-white/8 text-slate-200 hover:bg-white/12'}`}>{sourceLabel[item]}</button>)}
           </div>
         </div>
         {source === 'emby' && embySources.length > 1 && <div className='mt-6 flex gap-3 overflow-x-auto px-3 py-3 [scrollbar-width:none]'>{embySources.map((item) => <button key={item.key} onClick={() => setEmbyKey(item.key)} className={`tv-focusable cursor-pointer rounded-2xl px-5 py-3 text-xl font-bold ${embyKey === item.key ? 'tv-focusable-light bg-white text-black' : 'bg-white/10 text-white'}`}><Server className='mr-2 inline h-5 w-5' />{item.name}</button>)}</div>}

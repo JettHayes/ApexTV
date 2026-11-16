@@ -60,8 +60,8 @@ export default function TrailerPickerDialog({
 
   return createPortal(
     <div className='fixed inset-0 z-[10000] flex items-end sm:items-center justify-center'>
-      <div className='absolute inset-0 bg-black/60 backdrop-blur-sm' onClick={onClose} />
-      <div className='relative w-full sm:max-w-2xl max-h-[85vh] overflow-hidden rounded-t-2xl sm:rounded-2xl bg-white dark:bg-gray-900 shadow-2xl border border-gray-200 dark:border-gray-700'>
+      <div className='ptv-scrim-in absolute inset-0 bg-black/60 backdrop-blur-sm' onClick={onClose} />
+      <div className='ptv-sheet-in relative w-full sm:max-w-2xl max-h-[85vh] overflow-hidden rounded-t-2xl sm:rounded-2xl bg-white dark:bg-gray-900 shadow-2xl border border-gray-200 dark:border-gray-700'>
         <div className='flex items-start justify-between gap-4 border-b border-gray-200 dark:border-gray-800 px-4 sm:px-6 py-4'>
           <div className='min-w-0'>
             <div className='flex items-center gap-2 text-gray-500 dark:text-gray-400 text-sm mb-1'>
@@ -87,7 +87,7 @@ export default function TrailerPickerDialog({
               {[0, 1, 2].map((i) => (
                 <div
                   key={i}
-                  className='flex items-center gap-4 rounded-xl border border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/40 px-4 py-4 animate-pulse'
+                  className='flex items-center gap-4 rounded-xl border border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/40 px-4 py-4 motion-safe:animate-pulse'
                 >
                   <div className='h-11 w-11 rounded-full bg-gray-200 dark:bg-gray-700' />
                   <div className='flex-1 space-y-2'>

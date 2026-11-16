@@ -35,7 +35,7 @@ export function PersonalCenterPanel({
   return createPortal(
     <>
       <div
-        className='fixed inset-0 bg-black/50 backdrop-blur-sm z-[1000]'
+        className='ptv-scrim-in fixed inset-0 bg-black/50 backdrop-blur-sm z-[1000]'
         onClick={onClose}
         onTouchMove={(e) => {
           e.preventDefault();
@@ -46,7 +46,7 @@ export function PersonalCenterPanel({
         style={{ touchAction: 'none' }}
       />
 
-      <div className='ptv-dialog ptv-personal-center fixed top-1/2 left-1/2 z-[1001] max-h-[calc(100dvh-2rem-env(safe-area-inset-top)-env(safe-area-inset-bottom))] w-[calc(100%-2rem)] max-w-md -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-2xl bg-white shadow-xl dark:bg-gray-900'>
+      <div className='ptv-dialog ptv-modal-in ptv-personal-center fixed top-1/2 left-1/2 z-[1001] max-h-[calc(100dvh-2rem-env(safe-area-inset-top)-env(safe-area-inset-bottom))] w-[calc(100%-2rem)] max-w-md -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-2xl bg-white shadow-xl dark:bg-gray-900'>
         <div
           className='p-6'
           data-panel-content

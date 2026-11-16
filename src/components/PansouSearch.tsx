@@ -1049,7 +1049,7 @@ export default function PansouSearch({
                               link.url
                             )
                           }
-                          className='p-2 rounded-md hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors'
+                          className='flex min-w-[3.5rem] items-center justify-center p-2 rounded-md hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors'
                           title='复制链接'
                         >
                           {copiedUrl === link.url ? (
@@ -1144,10 +1144,15 @@ export default function PansouSearch({
 
   return (
     <>
-      <div className='space-y-6'>{renderBody()}</div>
+      <div
+        key={loading ? 'loading' : error ? 'error' : 'result'}
+        className='ptv-fade-in space-y-6'
+      >
+        {renderBody()}
+      </div>
       {showNameDialog && (
-        <div className='fixed inset-0 z-[1000] flex items-center justify-center bg-black/50'>
-          <div className='bg-white dark:bg-gray-800 rounded-lg p-6 max-w-md w-full mx-4 shadow-xl'>
+        <div className='ptv-scrim-in fixed inset-0 z-[1000] flex items-center justify-center bg-black/50'>
+          <div className='ptv-modal-in bg-white dark:bg-gray-800 rounded-lg p-6 max-w-md w-full mx-4 shadow-xl'>
             <h3 className='text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4'>
               设置资源名称
             </h3>

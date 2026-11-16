@@ -101,21 +101,23 @@ export default function DoubanRecommendations({ doubanId }: DoubanRecommendation
   }
 
   return (
-    <ScrollableRow scrollDistance={600} bottomPadding='pb-2'>
-      {recommendations.map((rec) => (
-        <div
-          key={rec.doubanId}
-          className='min-w-[96px] w-24 sm:min-w-[140px] sm:w-[140px]'
-        >
-          <VideoCard
-            title={rec.title}
-            poster={rec.poster}
-            rate={rec.rating}
-            douban_id={parseInt(rec.doubanId)}
-            from='douban'
-          />
-        </div>
-      ))}
-    </ScrollableRow>
+    <div className='ptv-fade-in'>
+      <ScrollableRow scrollDistance={600} bottomPadding='pb-2'>
+        {recommendations.map((rec) => (
+          <div
+            key={rec.doubanId}
+            className='min-w-[96px] w-24 sm:min-w-[140px] sm:w-[140px]'
+          >
+            <VideoCard
+              title={rec.title}
+              poster={rec.poster}
+              rate={rec.rating}
+              douban_id={parseInt(rec.doubanId)}
+              from='douban'
+            />
+          </div>
+        ))}
+      </ScrollableRow>
+    </div>
   );
 }

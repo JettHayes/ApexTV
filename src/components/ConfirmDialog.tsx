@@ -1,6 +1,7 @@
 'use client';
 
 import { AlertTriangle, X } from 'lucide-react';
+import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 
 interface ConfirmDialogProps {
@@ -24,7 +25,19 @@ export function ConfirmDialog({
   onCancel,
   variant = 'warning',
 }: ConfirmDialogProps) {
-  if (!isOpen) return null;
+  const [rendered, setRendered] = useState(isOpen);
+
+  // 延迟卸载，等待退出动画完成
+  useEffect(() => {
+    if (isOpen) {
+      setRendered(true);
+      return;
+    }
+    const timer = setTimeout(() => setRendered(false), 160);
+    return () => clearTimeout(timer);
+  }, [isOpen]);
+
+  if (!isOpen && !rendered) return null;
 
   const variantStyles = {
     danger: {
@@ -44,12 +57,22 @@ export function ConfirmDialog({
   const styles = variantStyles[variant];
 
   return createPortal(
-    <div className='fixed inset-0 z-[10000] flex items-center justify-center p-4'>
+    <div
+      className={`fixed inset-0 z-[10000] flex items-center justify-center p-4 ${
+        isOpen ? '' : 'pointer-events-none'
+      }`}
+    >
       <div
-        className='absolute inset-0 bg-black/50'
+        className={`absolute inset-0 bg-black/50 ${
+          isOpen ? 'ptv-scrim-in' : 'ptv-scrim-out'
+        }`}
         onClick={onCancel}
       />
-      <div className='ptv-dialog relative flex max-h-[calc(100dvh-2rem)] w-full max-w-md flex-col overflow-hidden bg-white dark:bg-gray-900 rounded-lg shadow-xl'>
+      <div
+        className={`ptv-dialog ${
+          isOpen ? 'ptv-modal-in' : 'ptv-modal-out'
+        } relative flex max-h-[calc(100dvh-2rem)] w-full max-w-md flex-col overflow-hidden bg-white dark:bg-gray-900 rounded-lg shadow-xl`}
+      >
         {/* Header */}
         <div className='flex shrink-0 items-center justify-between gap-3 p-4 border-b border-gray-200 dark:border-gray-700'>
           <div className='flex items-center gap-3'>

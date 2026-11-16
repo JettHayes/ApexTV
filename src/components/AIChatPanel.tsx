@@ -10,6 +10,7 @@ import ReactMarkdown from 'react-markdown';
 
 import { VideoContext } from '@/lib/ai-orchestrator';
 import { getAuthInfoFromBrowserCookie } from '@/lib/auth';
+import { smoothScrollBehavior } from '@/lib/motion';
 
 interface ChatMessage {
   role: 'user' | 'assistant';
@@ -474,7 +475,7 @@ export default function AIChatPanel({
 
   // 自动滚动到底部
   const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    messagesEndRef.current?.scrollIntoView({ behavior: smoothScrollBehavior() });
   };
 
   useEffect(() => {
@@ -1089,8 +1090,8 @@ export default function AIChatPanel({
   ) : (
     // 原有的居中弹窗模式
     <div
-      className={`fixed inset-0 z-[1002] flex items-center justify-center bg-black/50 backdrop-blur-sm overflow-hidden transition-opacity duration-200 ${
-        isOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'
+      className={`fixed inset-0 z-[1002] flex items-center justify-center bg-black/50 backdrop-blur-sm overflow-hidden transition-[opacity,visibility] duration-200 ${
+        isOpen ? 'opacity-100' : 'invisible opacity-0 pointer-events-none'
       }`}
       onClick={(e) => {
         // 点击遮罩层关闭弹窗

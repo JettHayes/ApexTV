@@ -198,11 +198,11 @@ export default function AddToPlaylistModal({
 
   return (
     <div
-      className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[110] flex items-center justify-center p-4"
+      className="ptv-scrim-in fixed inset-0 bg-black/50 backdrop-blur-sm z-[110] flex items-center justify-center p-4"
       onClick={onClose}
     >
       <div
-        className="bg-zinc-900 rounded-xl max-w-md w-full max-h-[80vh] overflow-hidden border border-white/10"
+        className="ptv-modal-in bg-zinc-900 rounded-xl max-w-md w-full max-h-[80vh] overflow-hidden border border-white/10"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
@@ -242,7 +242,7 @@ export default function AddToPlaylistModal({
 
           {/* Create Form */}
           {showCreateForm && (
-            <div className="mb-4 p-4 bg-white/5 rounded-lg border border-white/10">
+            <div className="ptv-content-in mb-4 p-4 bg-white/5 rounded-lg border border-white/10">
               <input
                 type="text"
                 placeholder="歌单名称"

@@ -34,7 +34,7 @@ export default function MediaCard({
   className,
 }: MediaCardProps) {
   const shellClass = cn(
-    'group block overflow-hidden rounded-md border border-library-edge bg-library-card transition-colors duration-200',
+    'group block overflow-hidden rounded-md border border-library-edge bg-library-card transition-[color,background-color,border-color,transform] duration-200 active:scale-[.985]',
     'hover:border-library-ochre/45 dark:border-library-night-edge dark:bg-library-night-card dark:hover:border-library-night-ochre/45',
     LIBRARY_FOCUS,
     'focus-visible:ring-inset',

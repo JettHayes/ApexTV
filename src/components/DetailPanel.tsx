@@ -1385,7 +1385,7 @@ const DetailPanel: React.FC<DetailPanelProps> = ({
     useDrawer ? (
       <div className='fixed inset-0 z-[10000] flex items-center justify-end pointer-events-none'>
         <div
-          className={`relative ${drawerWidth} h-full bg-white dark:bg-gray-900 shadow-2xl overflow-hidden flex flex-col pointer-events-auto`}
+          className={`ptv-drawer-in relative ${drawerWidth} h-full bg-white dark:bg-gray-900 shadow-2xl overflow-hidden flex flex-col pointer-events-auto`}
         >
           {galleryHeader}
           {galleryBody}
@@ -1394,10 +1394,10 @@ const DetailPanel: React.FC<DetailPanelProps> = ({
     ) : (
       <div className='fixed inset-0 z-[10000] flex items-center justify-center p-4'>
         <div
-          className='absolute inset-0 bg-black/60'
+          className='ptv-scrim-in absolute inset-0 bg-black/60'
           onClick={() => setShowGallery(false)}
         />
-        <div className='relative w-full max-w-6xl max-h-[90vh] bg-white dark:bg-gray-900 rounded-2xl shadow-2xl overflow-hidden flex flex-col'>
+        <div className='ptv-modal-in relative w-full max-w-6xl max-h-[90vh] bg-white dark:bg-gray-900 rounded-2xl shadow-2xl overflow-hidden flex flex-col'>
           {galleryHeader}
           {galleryBody}
         </div>
@@ -1476,7 +1476,7 @@ const DetailPanel: React.FC<DetailPanelProps> = ({
     useDrawer ? (
       <div className='fixed inset-0 z-[10000] flex items-center justify-end pointer-events-none'>
         <div
-          className={`relative ${drawerWidth} h-full bg-white dark:bg-gray-900 shadow-2xl overflow-hidden flex flex-col pointer-events-auto`}
+          className={`ptv-drawer-in relative ${drawerWidth} h-full bg-white dark:bg-gray-900 shadow-2xl overflow-hidden flex flex-col pointer-events-auto`}
         >
           {episodeStillsHeader}
           {episodeStillsBody}
@@ -1485,10 +1485,10 @@ const DetailPanel: React.FC<DetailPanelProps> = ({
     ) : (
       <div className='fixed inset-0 z-[10000] flex items-center justify-center p-4'>
         <div
-          className='absolute inset-0 bg-black/60'
+          className='ptv-scrim-in absolute inset-0 bg-black/60'
           onClick={() => setShowEpisodeStills(false)}
         />
-        <div className='relative w-full max-w-4xl max-h-[90vh] bg-white dark:bg-gray-900 rounded-2xl shadow-2xl overflow-hidden flex flex-col'>
+        <div className='ptv-modal-in relative w-full max-w-4xl max-h-[90vh] bg-white dark:bg-gray-900 rounded-2xl shadow-2xl overflow-hidden flex flex-col'>
           {episodeStillsHeader}
           {episodeStillsBody}
         </div>
@@ -1582,7 +1582,7 @@ const DetailPanel: React.FC<DetailPanelProps> = ({
     useDrawer ? (
       <div className='fixed inset-0 z-[10000] flex items-center justify-end pointer-events-none'>
         <div
-          className={`relative ${drawerWidth} h-full bg-white dark:bg-gray-900 shadow-2xl overflow-hidden flex flex-col pointer-events-auto`}
+          className={`ptv-drawer-in relative ${drawerWidth} h-full bg-white dark:bg-gray-900 shadow-2xl overflow-hidden flex flex-col pointer-events-auto`}
         >
           {tmdbCorrectionHeader}
           {tmdbCorrectionBody}
@@ -1591,10 +1591,10 @@ const DetailPanel: React.FC<DetailPanelProps> = ({
     ) : (
       <div className='fixed inset-0 z-[10000] flex items-center justify-center p-4'>
         <div
-          className='absolute inset-0 bg-black/60'
+          className='ptv-scrim-in absolute inset-0 bg-black/60'
           onClick={() => setShowTmdbCorrection(false)}
         />
-        <div className='relative w-full max-w-lg max-h-[90vh] bg-white dark:bg-gray-900 rounded-2xl shadow-2xl overflow-hidden flex flex-col'>
+        <div className='ptv-modal-in relative w-full max-w-lg max-h-[90vh] bg-white dark:bg-gray-900 rounded-2xl shadow-2xl overflow-hidden flex flex-col'>
           {tmdbCorrectionHeader}
           {tmdbCorrectionBody}
         </div>
@@ -1608,8 +1608,8 @@ const DetailPanel: React.FC<DetailPanelProps> = ({
     <div className='fixed inset-0 z-[9999] flex items-center justify-end pointer-events-none'>
       {/* 详情面板 - 抽屉模式 */}
       <div
-        className={`relative ${drawerWidth} h-full bg-white dark:bg-gray-900 shadow-2xl overflow-hidden flex flex-col transition-transform duration-300 ease-out pointer-events-auto ${
-          isAnimating ? 'translate-x-0' : 'translate-x-full'
+        className={`relative ${drawerWidth} h-full bg-white dark:bg-gray-900 shadow-2xl overflow-hidden flex flex-col transition-transform ease-[cubic-bezier(.16,1,.3,1)] pointer-events-auto ${
+          isAnimating ? 'translate-x-0 duration-[280ms]' : 'translate-x-full duration-200'
         }`}
       >
         {/* 头部 */}

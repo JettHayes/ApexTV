@@ -165,11 +165,11 @@ export default function EpisodeTitleCorrectDialog({
 
   return createPortal(
     <div
-      className='fixed inset-0 z-[1000] flex items-center justify-center bg-black/50 p-4'
+      className='ptv-scrim-in fixed inset-0 z-[1000] flex items-center justify-center bg-black/50 p-4'
       onClick={onClose}
     >
       <div
-        className='w-full max-w-md max-h-[85vh] overflow-hidden flex flex-col rounded-2xl bg-white dark:bg-gray-800 shadow-xl'
+        className='ptv-modal-in w-full max-w-md max-h-[85vh] overflow-hidden flex flex-col rounded-2xl bg-white dark:bg-gray-800 shadow-xl'
         onClick={(e) => e.stopPropagation()}
         role='dialog'
         aria-modal='true'

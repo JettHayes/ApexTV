@@ -566,8 +566,9 @@ export default function WebLivePage() {
                   </div>
                 )}
 
-                {isVideoLoading && (
-                  <div className='absolute inset-0 bg-black/85 backdrop-blur-sm rounded-xl overflow-hidden shadow-lg border border-white/0 dark:border-white/30 flex items-center justify-center z-[500] transition-all duration-300'>
+                {/* 加载蒙层：常驻挂载，靠透明度淡入淡出；隐藏时不拦截播放器点击 */}
+                <div className={`absolute inset-0 bg-black/85 backdrop-blur-sm rounded-xl overflow-hidden shadow-lg border border-white/0 dark:border-white/30 flex items-center justify-center z-[500] transition-opacity duration-200 ease-[cubic-bezier(.16,1,.3,1)] ${isVideoLoading ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
+                  {isVideoLoading && (
                     <div className='text-center max-w-md mx-auto px-6'>
                       {/* 三种加载款式（旧版那一套各页自备） */}
                       <LoadingStyle
@@ -590,8 +591,8 @@ export default function WebLivePage() {
                         }
                       />
                     </div>
-                  </div>
-                )}
+                  )}
+                </div>
               </div>
 
               {currentSource && (
@@ -793,7 +794,7 @@ export default function WebLivePage() {
                 </div>
 
                 {activeTab === 'rooms' && (
-                  <div className='flex-1 overflow-y-auto space-y-2 pb-4 mt-4'>
+                  <div className='ptv-content-in flex-1 overflow-y-auto space-y-2 pb-4 mt-4'>
                     {selectedPlatform && (
                       <div className='mb-3 flex items-center justify-between px-2 py-2 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-800'>
                         <div className='flex items-center gap-2'>
@@ -818,7 +819,7 @@ export default function WebLivePage() {
                             key={source.key}
                             onClick={() => handleSourceClick(source)}
                             disabled={webLiveSync.shouldDisableControls}
-                            className={`w-full p-3 rounded-lg text-left transition-all duration-200 ${isActive ? 'bg-green-100 dark:bg-green-900/30 border border-green-300 dark:border-green-700' : 'hover:bg-gray-100 dark:hover:bg-gray-700'} ${webLiveSync.shouldDisableControls ? 'opacity-50 cursor-not-allowed' : ''}`}
+                            className={`w-full p-3 rounded-lg text-left active:scale-[0.97] transition-[transform,background-color,color,border-color] duration-150 ${isActive ? 'bg-green-100 dark:bg-green-900/30 border border-green-300 dark:border-green-700' : 'hover:bg-gray-100 dark:hover:bg-gray-700'} ${webLiveSync.shouldDisableControls ? 'opacity-50 cursor-not-allowed' : ''}`}
                           >
                             <div className='flex items-center gap-3'>
                               <WebLiveAvatar avatar={isActive ? streamInfo?.avatar : undefined} cover={isActive ? streamInfo?.cover : undefined} />
@@ -844,7 +845,7 @@ export default function WebLivePage() {
                 )}
 
                 {activeTab === 'platforms' && (
-                  <div className='flex flex-col h-full mt-4'>
+                  <div className='ptv-content-in flex flex-col h-full mt-4'>
                     <div className='flex-1 overflow-y-auto space-y-2 pb-20'>
                       {platforms.length > 0 ? (
                         platforms.map((platform) => (
@@ -852,7 +853,7 @@ export default function WebLivePage() {
                             key={platform}
                             onClick={() => handlePlatformClick(platform)}
                             disabled={webLiveSync.shouldDisableControls}
-                            className={`w-full flex items-start gap-3 px-2 py-3 rounded-lg bg-gray-200/50 dark:bg-white/10 hover:bg-gray-300/50 dark:hover:bg-white/20 transition-all duration-200 cursor-pointer ${webLiveSync.shouldDisableControls ? 'opacity-50 cursor-not-allowed' : ''}`}
+                            className={`w-full flex items-start gap-3 px-2 py-3 rounded-lg bg-gray-200/50 dark:bg-white/10 hover:bg-gray-300/50 dark:hover:bg-white/20 active:scale-[0.97] transition-[transform,background-color,color,border-color] duration-150 cursor-pointer ${webLiveSync.shouldDisableControls ? 'opacity-50 cursor-not-allowed' : ''}`}
                           >
                             <div className='w-12 h-12 bg-gray-200 dark:bg-gray-600 rounded-lg flex items-center justify-center flex-shrink-0 overflow-hidden'>
                               {platform === 'huya' ? (

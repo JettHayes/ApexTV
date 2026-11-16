@@ -194,11 +194,11 @@ export const FavoritesPanel: React.FC<FavoritesPanelProps> = ({
       {/* 确认对话框 */}
       {showConfirmDialog && createPortal(
         <div
-          className='fixed inset-0 bg-black bg-opacity-50 z-[9999] flex items-center justify-center p-4 transition-opacity duration-300'
+          className='fixed inset-0 bg-black bg-opacity-50 z-[9999] flex items-center justify-center p-4 ptv-scrim-in'
           onClick={() => setShowConfirmDialog(false)}
         >
           <div
-            className='bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full border border-red-200 dark:border-red-800 transition-all duration-300'
+            className='bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full border border-red-200 dark:border-red-800 ptv-modal-in'
             onClick={(e) => e.stopPropagation()}
           >
             <div className="p-6">

@@ -367,6 +367,7 @@ export default function TVMePage() {
                     ref={wakeMenuButtonRef}
                     type='button'
                     onClick={() => handleUpDownActionChange('wake-menu')}
+                    data-selected={upDownAction === 'wake-menu'}
                     className={`tv-focusable flex cursor-pointer items-center justify-center gap-3 rounded-2xl px-5 py-4 text-xl font-black outline-none transition focus:ring-4 focus:ring-rose-300 ${
                       upDownAction === 'wake-menu'
                         ? 'bg-rose-600 text-white shadow-lg shadow-rose-950/40'
@@ -380,6 +381,7 @@ export default function TVMePage() {
                     ref={volumeButtonRef}
                     type='button'
                     onClick={() => handleUpDownActionChange('volume')}
+                    data-selected={upDownAction === 'volume'}
                     className={`tv-focusable flex cursor-pointer items-center justify-center gap-3 rounded-2xl px-5 py-4 text-xl font-black outline-none transition focus:ring-4 focus:ring-rose-300 ${
                       upDownAction === 'volume'
                         ? 'bg-rose-600 text-white shadow-lg shadow-rose-950/40'

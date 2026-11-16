@@ -34,19 +34,12 @@ const AlertModal = ({
   showConfirm = false,
   timer
 }: AlertModalProps) => {
-  const [isVisible, setIsVisible] = useState(false);
-
-  // 控制动画状态
+  // 自动关闭定时器
   useEffect(() => {
-    if (isOpen) {
-      setIsVisible(true);
-      if (timer) {
-        setTimeout(() => {
-          onClose();
-        }, timer);
-      }
-    } else {
-      setIsVisible(false);
+    if (isOpen && timer) {
+      setTimeout(() => {
+        onClose();
+      }, timer);
     }
   }, [isOpen, timer, onClose]);
 
@@ -79,8 +72,8 @@ const AlertModal = ({
   };
 
   return createPortal(
-    <div className={`fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4 transition-opacity duration-200 ${isVisible ? 'opacity-100' : 'opacity-0'}`} onClick={onClose}>
-      <div className={`bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full border ${getBgColor()} transition-all duration-200 ${isVisible ? 'scale-100' : 'scale-95'}`} onClick={(e) => e.stopPropagation()}>
+    <div className={`fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4 ptv-scrim-in`} onClick={onClose}>
+      <div className={`bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full border ${getBgColor()} ptv-modal-in`} onClick={(e) => e.stopPropagation()}>
         <div className="p-6 text-center">
           <div className="flex justify-center mb-4">
             {getIcon()}
@@ -484,7 +477,7 @@ const DataMigration = ({ onRefreshConfig }: DataMigrationProps) => {
                         {exportProgress.total > 0 && (
                           <div className="w-full bg-gray-300 dark:bg-gray-600 rounded-full h-3">
                             <div
-                              className="bg-yellow-500 h-3 rounded-full transition-all duration-300"
+                              className="bg-yellow-500 h-3 rounded-full transition-[width] duration-300"
                               style={{ width: `${(exportProgress.current / exportProgress.total) * 100}%` }}
                             ></div>
                           </div>
@@ -576,7 +569,7 @@ const DataMigration = ({ onRefreshConfig }: DataMigrationProps) => {
                         {importProgress.total > 0 && (
                           <div className="w-full bg-gray-300 dark:bg-gray-600 rounded-full h-3">
                             <div
-                              className="bg-yellow-500 h-3 rounded-full transition-all duration-300"
+                              className="bg-yellow-500 h-3 rounded-full transition-[width] duration-300"
                               style={{ width: `${(importProgress.current / importProgress.total) * 100}%` }}
                             ></div>
                           </div>

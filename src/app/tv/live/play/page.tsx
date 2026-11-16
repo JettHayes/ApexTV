@@ -544,24 +544,24 @@ function TVLivePlayClient() {
           <button onClick={toggleMute} data-tv-live-control className='tv-focusable rounded-2xl bg-black/70 p-4 outline-none backdrop-blur focus:ring-4 focus:ring-rose-300'>{muted ? <VolumeX className='h-7 w-7' /> : <Volume2 className='h-7 w-7' />}</button>
           <input aria-label='直播音量' data-tv-live-control type='range' min='0' max='1' step='0.05' value={muted ? 0 : volume} onChange={(e) => setVideoVolume(Number(e.target.value))} className='tv-focusable w-28 accent-rose-600' />
           <button onClick={toggleFullscreen} data-tv-live-control className='tv-focusable rounded-2xl bg-black/70 p-4 outline-none backdrop-blur focus:ring-4 focus:ring-rose-300'><Maximize className='h-7 w-7' /></button>
-          <button onClick={toggleFavorite} data-tv-live-control className={`tv-focusable flex cursor-pointer items-center gap-3 rounded-2xl px-5 py-4 text-2xl font-black outline-none backdrop-blur focus:ring-4 focus:ring-rose-300 ${favorited ? 'bg-rose-600' : 'bg-black/70'}`}><Heart className={`h-7 w-7 ${favorited ? 'fill-current' : ''}`} />收藏</button>
+          <button onClick={toggleFavorite} data-tv-live-control data-selected={favorited} className={`tv-focusable flex cursor-pointer items-center gap-3 rounded-2xl px-5 py-4 text-2xl font-black outline-none backdrop-blur focus:ring-4 focus:ring-rose-300 ${favorited ? 'bg-rose-600' : 'bg-black/70'}`}><Heart className={`h-7 w-7 ${favorited ? 'fill-current' : ''}`} />收藏</button>
         </div>
       </div>
 
       {showPanel && (
-        <aside data-tv-live-control className='absolute bottom-8 left-8 top-28 grid w-[720px] grid-cols-[220px_1fr] gap-4 rounded-[34px] border border-white/10 bg-slate-950/88 p-5 shadow-2xl shadow-black/70 backdrop-blur-2xl'>
+        <aside data-tv-live-control className='ptv-content-in absolute bottom-8 left-8 top-28 grid w-[720px] grid-cols-[220px_1fr] gap-4 rounded-[34px] border border-white/10 bg-slate-950/88 p-5 shadow-2xl shadow-black/70 backdrop-blur-2xl'>
           <div className='overflow-y-auto px-2 py-2'>
             {sources.length > 1 && (
               <>
                 <h2 className='mb-3 text-2xl font-black'>直播源</h2>
                 <div className='mb-5 space-y-3'>
-                  {sources.map((item) => <button key={item.key} onClick={() => switchSource(item)} className={`tv-focusable w-full cursor-pointer rounded-2xl px-4 py-4 text-left text-xl font-black outline-none focus:ring-4 focus:ring-inset focus:ring-rose-300 ${source?.key === item.key ? 'bg-rose-600' : 'bg-white/10'}`}>{item.name}</button>)}
+                  {sources.map((item) => <button key={item.key} onClick={() => switchSource(item)} data-selected={source?.key === item.key} className={`tv-focusable w-full cursor-pointer rounded-2xl px-4 py-4 text-left text-xl font-black outline-none focus:ring-4 focus:ring-inset focus:ring-rose-300 ${source?.key === item.key ? 'bg-rose-600' : 'bg-white/10'}`}>{item.name}</button>)}
                 </div>
               </>
             )}
             <h2 className='mb-4 text-2xl font-black'>分类</h2>
             <div className='space-y-3'>
-              {groups.map((group) => <button key={group} onClick={() => setSelectedGroup(group)} className={`tv-focusable w-full cursor-pointer rounded-2xl px-4 py-4 text-left text-xl font-black outline-none focus:ring-4 focus:ring-inset focus:ring-rose-300 ${selectedGroup === group ? 'bg-rose-600' : 'bg-white/10'}`}>{group}</button>)}
+              {groups.map((group) => <button key={group} onClick={() => setSelectedGroup(group)} data-selected={selectedGroup === group} className={`tv-focusable w-full cursor-pointer rounded-2xl px-4 py-4 text-left text-xl font-black outline-none focus:ring-4 focus:ring-inset focus:ring-rose-300 ${selectedGroup === group ? 'bg-rose-600' : 'bg-white/10'}`}>{group}</button>)}
             </div>
           </div>
           <div className='overflow-y-auto px-2 py-2'>
@@ -581,7 +581,7 @@ function TVLivePlayClient() {
             <div className='grid grid-cols-1 gap-3'>
               {filteredChannels.map((item) => {
                 const absoluteIndex = channels.findIndex((c) => c.id === item.id) + 1;
-                return <button key={item.id} ref={(el) => { channelButtonRefs.current[item.id] = el; }} onClick={() => switchChannel(item)} className={`tv-focusable flex min-h-16 cursor-pointer items-center gap-3 rounded-2xl px-4 py-3 text-left text-xl font-black outline-none focus:ring-4 focus:ring-inset focus:ring-rose-300 ${item.id === channel.id ? 'bg-rose-600' : 'bg-white/10'}`}>{item.logo ? <img src={getLogoUrl(item.logo, source?.key)} alt='' className='h-9 w-9 rounded-lg object-contain' /> : <Radio className='h-8 w-8 text-rose-400' />}<span className='min-w-12 text-slate-300'>#{absoluteIndex}</span><span className='line-clamp-1'>{item.name}</span></button>;
+                return <button key={item.id} ref={(el) => { channelButtonRefs.current[item.id] = el; }} onClick={() => switchChannel(item)} data-selected={item.id === channel.id} className={`tv-focusable flex min-h-16 cursor-pointer items-center gap-3 rounded-2xl px-4 py-3 text-left text-xl font-black outline-none focus:ring-4 focus:ring-inset focus:ring-rose-300 ${item.id === channel.id ? 'bg-rose-600' : 'bg-white/10'}`}>{item.logo ? <img src={getLogoUrl(item.logo, source?.key)} alt='' className='h-9 w-9 rounded-lg object-contain' /> : <Radio className='h-8 w-8 text-rose-400' />}<span className='min-w-12 text-slate-300'>#{absoluteIndex}</span><span className='line-clamp-1'>{item.name}</span></button>;
               })}
             </div>
           </div>

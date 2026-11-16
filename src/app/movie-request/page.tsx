@@ -349,8 +349,8 @@ export default function MovieRequestPage() {
 
       {/* 提示弹窗 */}
       {alertModal.isOpen && typeof window !== 'undefined' && createPortal(
-        <div className='fixed inset-0 bg-black/50 z-[1002] flex items-center justify-center p-4'>
-          <div className='bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-sm w-full p-6'>
+        <div className='ptv-scrim-in fixed inset-0 bg-black/50 z-[1002] flex items-center justify-center p-4'>
+          <div className='ptv-modal-in bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-sm w-full p-6'>
             <div className='flex justify-center mb-4'>
               {alertModal.type === 'success' ? (
                 <CheckCircle className='w-12 h-12 text-green-500' />
@@ -379,10 +379,10 @@ export default function MovieRequestPage() {
       {showSeasonDialog && typeof window !== 'undefined' && createPortal(
         <>
           <div
-            className='fixed inset-0 bg-black/50 backdrop-blur-sm z-[1000]'
+            className='ptv-scrim-in fixed inset-0 bg-black/50 backdrop-blur-sm z-[1000]'
             onClick={() => setShowSeasonDialog(false)}
           />
-          <div className='fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-md bg-white dark:bg-gray-900 rounded-xl shadow-xl z-[1001] p-6'>
+          <div className='ptv-modal-in fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-md bg-white dark:bg-gray-900 rounded-xl shadow-xl z-[1001] p-6'>
             <h3 className='text-lg font-bold text-gray-800 dark:text-gray-200 mb-4'>
               选择季度
             </h3>

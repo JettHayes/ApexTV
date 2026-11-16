@@ -20,6 +20,7 @@ import {
   cacheBookListItem,
 } from '@/lib/book-route-cache.client';
 import { cn } from '@/lib/cn';
+import { smoothScrollBehavior } from '@/lib/motion';
 
 import { bookCardItem } from '@/components/media/adapters';
 import EmptyState from '@/components/media/EmptyState';
@@ -482,7 +483,7 @@ export default function BooksCatalogPage() {
         activeRect.left -
         containerRect.left -
         (container.clientWidth - activeItem.clientWidth) / 2;
-      container.scrollTo({ left: Math.max(0, targetLeft), behavior: 'smooth' });
+      container.scrollTo({ left: Math.max(0, targetLeft), behavior: smoothScrollBehavior() });
     });
 
     return () => window.cancelAnimationFrame(frameId);
@@ -503,7 +504,7 @@ export default function BooksCatalogPage() {
         activeRect.left -
         containerRect.left -
         (container.clientWidth - activeItem.clientWidth) / 2;
-      container.scrollTo({ left: Math.max(0, targetLeft), behavior: 'smooth' });
+      container.scrollTo({ left: Math.max(0, targetLeft), behavior: smoothScrollBehavior() });
     });
 
     return () => window.cancelAnimationFrame(frameId);

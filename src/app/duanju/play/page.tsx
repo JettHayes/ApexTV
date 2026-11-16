@@ -100,6 +100,7 @@ html:has(#djplayer), body:has(#djplayer) { height:100%; overflow:hidden; overscr
   display:inline-grid; place-items:center; width:34px; height:34px; flex:none;
   border-radius:50%; border:none; cursor:pointer; color:#fff;
   background: rgba(255,255,255,0.14); backdrop-filter: blur(6px);
+  transition: transform .12s cubic-bezier(.16,1,.3,1);
 }
 #djplayer .iconbtn:active { transform: scale(0.94); }
 #djplayer .top .name {
@@ -120,11 +121,12 @@ html:has(#djplayer), body:has(#djplayer) { height:100%; overflow:hidden; overscr
   display:grid; place-items:center; width:46px; height:46px; border-radius:50%;
   background: rgba(255,255,255,0.16); backdrop-filter: blur(8px);
   border:1px solid rgba(255,255,255,0.12);
+  transition: transform .12s cubic-bezier(.16,1,.3,1);
 }
 #djplayer .railbtn:active .bubble { transform: scale(0.93); }
 #djplayer .railbtn.on .bubble { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
 #djplayer .railbtn.on .lab { color: var(--accent-2); font-weight:700; }
-@keyframes dj-pop { 0% { transform: scale(1); } 40% { transform: scale(1.24); } 100% { transform: scale(1); } }
+@keyframes dj-pop { 0% { transform: scale(1); } 40% { transform: scale(1.12); } 100% { transform: scale(1); } }
 #djplayer .railbtn.pop .bubble { animation: dj-pop .34s ease; }
 #djplayer .railbtn .lab { font-size:11px; text-shadow:0 1px 4px rgba(0,0,0,0.7); }
 #djplayer .railbtn .badge {
@@ -167,6 +169,7 @@ html:has(#djplayer), body:has(#djplayer) { height:100%; overflow:hidden; overscr
   flex:none; display:inline-grid; place-items:center; width:34px; height:34px;
   border-radius:50%; border:none; cursor:pointer; color:#fff;
   background: rgba(255,255,255,0.16); backdrop-filter: blur(6px);
+  transition: transform .12s cubic-bezier(.16,1,.3,1);
 }
 #djplayer .clearbtn:hover, #djplayer .fsbtn:hover { background: rgba(255,255,255,0.26); }
 #djplayer .clearbtn:active, #djplayer .fsbtn:active { transform: scale(0.93); }
@@ -219,9 +222,15 @@ html:has(#djplayer), body:has(#djplayer) { height:100%; overflow:hidden; overscr
   position:absolute; top: calc(52px + env(safe-area-inset-top, 0px)); right:12px; z-index:7; width:194px;
   background: rgba(18,20,26,0.96); backdrop-filter: blur(10px);
   border:1px solid rgba(255,255,255,0.12); border-radius:14px; padding:6px;
-  display:none; box-shadow:0 16px 40px -18px rgba(0,0,0,0.85);
+  box-shadow:0 16px 40px -18px rgba(0,0,0,0.85);
+  opacity:0; transform: translateY(-4px) scale(.98); transform-origin: top right;
+  pointer-events:none; visibility:hidden;
+  transition: opacity .16s cubic-bezier(.16,1,.3,1), transform .16s cubic-bezier(.16,1,.3,1), visibility 0s linear .16s;
 }
-#djplayer .menu.on { display:block; }
+#djplayer .menu.on {
+  opacity:1; transform:none; pointer-events:auto; visibility:visible;
+  transition-delay: 0s;
+}
 #djplayer .mrow {
   display:flex; align-items:center; justify-content:space-between; gap:10px;
   width:100%; background:none; border:none; color:#fff; font-family:inherit;
@@ -231,7 +240,8 @@ html:has(#djplayer), body:has(#djplayer) { height:100%; overflow:hidden; overscr
 #djplayer .mrow .val { color: var(--accent-2); font-weight:700; font-variant-numeric: tabular-nums; }
 #djplayer .mdiv { height:1px; background: rgba(255,255,255,0.1); margin:5px 8px; }
 #djplayer .speeds { display:none; flex-wrap:wrap; gap:6px; padding:2px 8px 10px; }
-#djplayer .speeds.on { display:flex; }
+#djplayer .speeds.on { display:flex; animation: dj-fade-in .18s cubic-bezier(.16,1,.3,1) both; }
+@keyframes dj-fade-in { from { opacity:0; transform: translateY(-4px); } to { opacity:1; transform:none; } }
 #djplayer .speeds button {
   flex:1; min-width:46px; padding:7px 0; border-radius:8px; cursor:pointer;
   border:1px solid rgba(255,255,255,0.14); background: rgba(255,255,255,0.06);
@@ -296,6 +306,7 @@ html:has(#djplayer), body:has(#djplayer) { height:100%; overflow:hidden; overscr
   aspect-ratio:1; border-radius:10px; border:1px solid var(--line); background: var(--surface-2);
   color: var(--fg); font-family:inherit; font-size:13px; font-weight:700;
   font-variant-numeric: tabular-nums; cursor:pointer; display:grid; place-items:center;
+  transition: background-color .15s, border-color .15s, color .15s;
 }
 #djplayer .epcell:hover { border-color: var(--accent); }
 #djplayer .epcell.cur { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
@@ -306,6 +317,7 @@ html:has(#djplayer), body:has(#djplayer) { height:100%; overflow:hidden; overscr
   display:flex; align-items:center; gap:12px; width:100%; text-align:left;
   padding:12px; border:1px solid var(--line); background: var(--surface-2);
   border-radius:12px; cursor:pointer; font-family:inherit; color: var(--fg); margin-bottom:8px;
+  transition: background-color .15s, border-color .15s, color .15s;
 }
 #djplayer .srcrow:hover { border-color: var(--accent); }
 #djplayer .srcrow.cur { border-color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent); }
@@ -349,6 +361,7 @@ html:has(#djplayer), body:has(#djplayer) { height:100%; overflow:hidden; overscr
   flex:none; font-family:inherit; font-size:12px; font-weight:700; cursor:pointer;
   padding:5px 11px; border-radius:7px; border:1px solid var(--line);
   background: var(--surface-2); color: var(--fg); font-variant-numeric: tabular-nums;
+  transition: background-color .15s, border-color .15s, color .15s;
 }
 #djplayer .ranges button.cur { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
 #djplayer .flip {
@@ -388,7 +401,9 @@ html:has(#djplayer), body:has(#djplayer) { height:100%; overflow:hidden; overscr
 #djplayer .rec:hover .recpic { box-shadow: 0 0 0 2px var(--accent); }
 
 @media (prefers-reduced-motion: reduce) {
-  #djplayer .railbtn.pop .bubble { animation:none; }
+  #djplayer .railbtn.pop .bubble, #djplayer .speeds.on { animation:none; }
+  #djplayer .menu, #djplayer .iconbtn, #djplayer .bubble, #djplayer .clearbtn, #djplayer .fsbtn,
+  #djplayer .epcell, #djplayer .srcrow, #djplayer .ranges button { transition:none; }
   #djplayer .drawer, #djplayer .scrim, #djplayer .bigplay, #djplayer .rail,
   #djplayer .info, #djplayer .vt, #djplayer .desc, #djplayer .seektime,
   #djplayer .thumb, #djplayer .sw, #djplayer .sw::after, #djplayer .toast { transition:none; }

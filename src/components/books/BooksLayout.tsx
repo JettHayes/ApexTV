@@ -154,7 +154,7 @@ export default function BooksLayout({
           <div
             className={cn(
               LIBRARY_PANEL,
-              'absolute right-0 top-12 z-50 min-w-[9rem] overflow-hidden py-1 shadow-lg'
+              'ptv-pop-in origin-top-right absolute right-0 top-12 z-50 min-w-[9rem] overflow-hidden py-1 shadow-lg'
             )}
           >
             <button

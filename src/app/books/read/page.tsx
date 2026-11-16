@@ -54,6 +54,7 @@ import {
   saveBookTtsProgress,
 } from '@/lib/book-tts-progress.client';
 import { cn } from '@/lib/cn';
+import { smoothScrollBehavior } from '@/lib/motion';
 
 import {
   LIBRARY_BUTTON,
@@ -1323,11 +1324,11 @@ function ChapterReader({ manifest }: { manifest: BookReadManifest }) {
       {tocOpen && typeof document !== 'undefined'
         ? createPortal(
             <div
-              className='fixed inset-0 z-40 bg-black/30'
+              className='ptv-scrim-in fixed inset-0 z-40 bg-black/30'
               onClick={() => setTocOpen(false)}
             >
               <div
-                className='absolute right-0 top-0 h-screen supports-[height:100dvh]:h-[100dvh] w-[22rem] pb-[env(safe-area-inset-bottom)] max-w-[88vw] overflow-y-auto border-l border-library-edge bg-library-card shadow-xl dark:border-library-night-edge dark:bg-library-night-card'
+                className='ptv-drawer-in absolute right-0 top-0 h-screen supports-[height:100dvh]:h-[100dvh] w-[22rem] pb-[env(safe-area-inset-bottom)] max-w-[88vw] overflow-y-auto border-l border-library-edge bg-library-card shadow-xl dark:border-library-night-edge dark:bg-library-night-card'
                 onClick={(event) => event.stopPropagation()}
               >
                 <div className='space-y-2 p-4'>
@@ -1362,11 +1363,11 @@ function ChapterReader({ manifest }: { manifest: BookReadManifest }) {
       {settingsOpen && typeof document !== 'undefined'
         ? createPortal(
             <div
-              className='fixed inset-0 z-40 flex items-center justify-center bg-black/40 px-4'
+              className='ptv-scrim-in fixed inset-0 z-40 flex items-center justify-center bg-black/40 px-4'
               onClick={() => setSettingsOpen(false)}
             >
               <div
-                className={cn(READER_SHEET, 'w-full max-w-sm p-5')}
+                className={cn(READER_SHEET, 'ptv-modal-in w-full max-w-sm p-5')}
                 onClick={(event) => event.stopPropagation()}
               >
                 <div className='mb-4'>
@@ -1658,7 +1659,7 @@ function ChapterReader({ manifest }: { manifest: BookReadManifest }) {
             </div>
           </div>
           {ttsPanelOpen ? (
-            <div className='absolute inset-x-0 bottom-[calc(5rem+env(safe-area-inset-bottom))] z-30 mx-auto w-[min(94vw,34rem)]'>
+            <div className='ptv-content-in absolute inset-x-0 bottom-[calc(5rem+env(safe-area-inset-bottom))] z-30 mx-auto w-[min(94vw,34rem)]'>
               <div className={cn(READER_SHEET, 'p-4 shadow-2xl')}>
                 <div className='mb-3 flex items-center justify-between'>
                   <div className='flex items-center gap-2 text-sm font-medium text-library-ink dark:text-library-night-ink'>
@@ -3191,7 +3192,7 @@ export default function BookReadPage() {
     if (!tocOpen || !activeTocHref) return;
     const activeNode = tocItemRefs.current[activeTocHref];
     if (!activeNode) return;
-    activeNode.scrollIntoView({ block: 'center', behavior: 'smooth' });
+    activeNode.scrollIntoView({ block: 'center', behavior: smoothScrollBehavior() });
   }, [tocOpen, activeTocHref]);
   const nextChapterHref = useMemo(() => {
     const index = flatToc.findIndex((item) =>
@@ -3444,7 +3445,7 @@ export default function BookReadPage() {
               </div>
             </button>
             {expandable && expanded ? (
-              <div className='ml-2 space-y-2 border-l border-library-edge pl-2 dark:border-library-night-edge'>
+              <div className='ptv-content-in ml-2 space-y-2 border-l border-library-edge pl-2 dark:border-library-night-edge'>
                 {renderTocItems(children, depth + 1)}
               </div>
             ) : null}
@@ -3591,11 +3592,11 @@ export default function BookReadPage() {
       {tocOpen && typeof document !== 'undefined'
         ? createPortal(
             <div
-              className='fixed inset-0 z-40 bg-black/30'
+              className='ptv-scrim-in fixed inset-0 z-40 bg-black/30'
               onClick={() => setTocOpen(false)}
             >
               <div
-                className='absolute right-0 top-0 h-screen supports-[height:100dvh]:h-[100dvh] w-[22rem] pb-[env(safe-area-inset-bottom)] max-w-[88vw] overflow-y-auto border-l border-library-edge bg-library-card shadow-xl dark:border-library-night-edge dark:bg-library-night-card'
+                className='ptv-drawer-in absolute right-0 top-0 h-screen supports-[height:100dvh]:h-[100dvh] w-[22rem] pb-[env(safe-area-inset-bottom)] max-w-[88vw] overflow-y-auto border-l border-library-edge bg-library-card shadow-xl dark:border-library-night-edge dark:bg-library-night-card'
                 onClick={(event) => event.stopPropagation()}
               >
                 <div className='p-4'>
@@ -3618,11 +3619,11 @@ export default function BookReadPage() {
       {settingsOpen && typeof document !== 'undefined'
         ? createPortal(
             <div
-              className='fixed inset-0 z-40 flex items-center justify-center bg-black/40 px-4'
+              className='ptv-scrim-in fixed inset-0 z-40 flex items-center justify-center bg-black/40 px-4'
               onClick={() => setSettingsOpen(false)}
             >
               <div
-                className={cn(READER_SHEET, 'w-full max-w-sm p-5')}
+                className={cn(READER_SHEET, 'ptv-modal-in w-full max-w-sm p-5')}
                 onClick={(event) => event.stopPropagation()}
               >
                 <div className='mb-4'>
@@ -3883,7 +3884,7 @@ export default function BookReadPage() {
           </div>
 
           {ttsPanelOpen ? (
-            <div className='absolute inset-x-0 bottom-[calc(5rem+env(safe-area-inset-bottom))] z-30 mx-auto w-[min(94vw,34rem)]'>
+            <div className='ptv-content-in absolute inset-x-0 bottom-[calc(5rem+env(safe-area-inset-bottom))] z-30 mx-auto w-[min(94vw,34rem)]'>
               <div className={cn(READER_SHEET, 'p-4 shadow-2xl')}>
                 <div className='mb-3 flex items-center justify-between'>
                   <div className='flex items-center gap-2 text-sm font-medium text-library-ink dark:text-library-night-ink'>

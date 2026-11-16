@@ -1,11 +1,9 @@
-import { ImagePlaceholder } from '@/components/ImagePlaceholder';
-
 const DoubanCardSkeleton = () => {
   return (
     <div className='w-full'>
       <div className='group relative w-full rounded-lg bg-transparent shadow-none flex flex-col'>
-        {/* 图片占位符 - 骨架屏效果 */}
-        <ImagePlaceholder aspectRatio='aspect-[2/3]' />
+        {/* 图片占位符 - 骨架屏效果（统一使用 pulse，不再叠加 shine） */}
+        <div className='w-full aspect-[2/3] rounded-lg bg-gray-200 dark:bg-gray-700 animate-pulse' />
 
         {/* 信息层骨架 */}
         <div className='absolute top-[calc(100%+0.5rem)] left-0 right-0'>

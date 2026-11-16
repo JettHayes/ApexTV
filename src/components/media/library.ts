@@ -71,7 +71,7 @@ export const LIBRARY_SKELETON =
 export const LIBRARY_PROGRESS_TRACK =
   'overflow-hidden rounded-full bg-library-edge dark:bg-library-night-edge';
 export const LIBRARY_PROGRESS_BAR =
-  'h-full rounded-full bg-library-ochre transition-all duration-300 dark:bg-library-night-ochre';
+  'h-full rounded-full bg-library-ochre transition-[width] duration-300 dark:bg-library-night-ochre';
 
 /**
  * 小节标题下的说明行（"共 N 条"这类）。图标单独上色，用 LIBRARY_ACCENT_ICON。

@@ -197,8 +197,11 @@ const CustomHeatmap: React.FC<CustomHeatmapProps> = ({
           style={{
             position: 'absolute',
             bottom: '100%',
-            left: `${(hoverTime / duration) * 100}%`,
-            transform: 'translateX(-50%)',
+            left: 0,
+            // 用 transform 跟随鼠标，避免每次 mousemove 触发布局
+            transform: `translateX(${
+              ((containerRef.current?.clientWidth ?? 0) * hoverTime) / duration
+            }px) translateX(-50%)`,
             marginBottom: '8px',
             padding: '4px 8px',
             backgroundColor: 'rgba(0, 0, 0, 0.8)',

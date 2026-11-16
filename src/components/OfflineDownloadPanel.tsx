@@ -183,8 +183,8 @@ export function OfflineDownloadPanel({ isOpen, onClose }: OfflineDownloadPanelPr
   const libraryVideos = getLibraryVideos();
 
   const panelContent = (
-    <div className='fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4'>
-      <div className='bg-white dark:bg-gray-800 rounded-lg shadow-2xl w-full max-w-4xl max-h-[80vh] flex flex-col'>
+    <div className='ptv-scrim-in fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4'>
+      <div className='ptv-modal-in bg-white dark:bg-gray-800 rounded-lg shadow-2xl w-full max-w-4xl max-h-[80vh] flex flex-col'>
         {/* 标题栏 */}
         <div className='flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700'>
           <h2 className='text-xl font-bold text-gray-900 dark:text-white'>
@@ -392,9 +392,9 @@ export function OfflineDownloadPanel({ isOpen, onClose }: OfflineDownloadPanelPr
                     </div>
                     <div className='w-full bg-gray-200 dark:bg-gray-600 rounded-full h-2 overflow-hidden'>
                       <div
-                        className={`h-full rounded-full transition-all duration-300 ${
+                        className={`h-full rounded-full transition-[width] duration-300 ${
                           task.status === 'downloading'
-                            ? 'bg-gradient-to-r from-blue-500 to-purple-600 animate-pulse'
+                            ? 'bg-gradient-to-r from-blue-500 to-purple-600'
                             : task.status === 'completed'
                             ? 'bg-green-500'
                             : task.status === 'error'

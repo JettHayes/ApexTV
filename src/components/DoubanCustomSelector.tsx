@@ -239,9 +239,9 @@ const DoubanCustomSelector: React.FC<DoubanCustomSelectorProps> = ({
         {/* 滑动的白色背景指示器 */}
         {indicatorStyle.width > 0 && (
           <div
-            className='absolute top-0.5 bottom-0.5 sm:top-1 sm:bottom-1 bg-white dark:bg-gray-500 rounded-full shadow-sm transition-all duration-300 ease-out'
+            className='absolute left-0 top-0.5 bottom-0.5 sm:top-1 sm:bottom-1 bg-white dark:bg-gray-500 rounded-full shadow-sm transition-[transform,width] duration-[260ms] ease-[cubic-bezier(.16,1,.3,1)]'
             style={{
-              left: `${indicatorStyle.left}px`,
+              transform: `translateX(${indicatorStyle.left}px)`,
               width: `${indicatorStyle.width}px`,
             }}
           />

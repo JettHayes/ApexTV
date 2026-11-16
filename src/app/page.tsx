@@ -34,6 +34,12 @@ import { useSite } from '@/components/SiteProvider';
 import Toast, { ToastProps } from '@/components/Toast';
 import VideoCard from '@/components/VideoCard';
 
+// 首页行内容淡入的错峰延迟（仅用于首次挂载；backwards 填充避免动画结束后残留层叠上下文）
+const staggerIn = (index: number): React.CSSProperties => ({
+  animationDelay: `${Math.min(index, 8) * 30}ms`,
+  animationFillMode: 'backwards',
+});
+
 // 首页模块配置接口
 interface HomeModule {
   id: string;
@@ -576,7 +582,7 @@ function HomeClient() {
               </h2>
               <Link
                 href='/douban?type=movie'
-                className='flex items-center text-sm text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'
+                className='flex items-center text-sm text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 transition-colors'
               >
                 查看更多
                 <ChevronRight className='w-4 h-4 ml-1' />
@@ -593,10 +599,11 @@ function HomeClient() {
                       <div className='h-4 bg-gray-200 dark:bg-gray-700 rounded animate-pulse w-3/4' />
                     </div>
                   ))
-                : hotMovies.map((movie) => (
+                : hotMovies.map((movie, index) => (
                     <div
                       key={movie.id}
-                      className='min-w-[96px] w-24 sm:min-w-[180px] sm:w-44'
+                      className='ptv-fade-in min-w-[96px] w-24 sm:min-w-[180px] sm:w-44'
+                      style={staggerIn(index)}
                     >
                       <VideoCard
                         id={movie.id}
@@ -624,7 +631,7 @@ function HomeClient() {
               </h2>
               <Link
                 href='/duanju'
-                className='flex items-center text-sm text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'
+                className='flex items-center text-sm text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 transition-colors'
               >
                 查看更多
                 <ChevronRight className='w-4 h-4 ml-1' />
@@ -641,10 +648,11 @@ function HomeClient() {
                       <div className='h-4 bg-gray-200 dark:bg-gray-700 rounded animate-pulse w-3/4' />
                     </div>
                   ))
-                : hotDuanju.map((duanju) => (
+                : hotDuanju.map((duanju, index) => (
                     <div
                       key={duanju.id + duanju.source}
-                      className='min-w-[96px] w-24 sm:min-w-[180px] sm:w-44'
+                      className='ptv-fade-in min-w-[96px] w-24 sm:min-w-[180px] sm:w-44'
+                      style={staggerIn(index)}
                     >
                       <VideoCard
                         id={duanju.id}
@@ -679,7 +687,7 @@ function HomeClient() {
               </h2>
               <Link
                 href='/douban?type=anime'
-                className='flex items-center text-sm text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'
+                className='flex items-center text-sm text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 transition-colors'
               >
                 查看更多
                 <ChevronRight className='w-4 h-4 ml-1' />
@@ -718,7 +726,8 @@ function HomeClient() {
                     return todayAnimes.map((anime, index) => (
                       <div
                         key={`${anime.id}-${index}`}
-                        className='min-w-[96px] w-24 sm:min-w-[180px] sm:w-44'
+                        className='ptv-fade-in min-w-[96px] w-24 sm:min-w-[180px] sm:w-44'
+                        style={staggerIn(index)}
                       >
                         <VideoCard
                           from='douban'
@@ -752,7 +761,7 @@ function HomeClient() {
               </h2>
               <Link
                 href='/douban?type=tv'
-                className='flex items-center text-sm text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'
+                className='flex items-center text-sm text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 transition-colors'
               >
                 查看更多
                 <ChevronRight className='w-4 h-4 ml-1' />
@@ -769,10 +778,11 @@ function HomeClient() {
                       <div className='h-4 bg-gray-200 dark:bg-gray-700 rounded animate-pulse w-3/4' />
                     </div>
                   ))
-                : hotTvShows.map((tvShow) => (
+                : hotTvShows.map((tvShow, index) => (
                     <div
                       key={tvShow.id}
-                      className='min-w-[96px] w-24 sm:min-w-[180px] sm:w-44'
+                      className='ptv-fade-in min-w-[96px] w-24 sm:min-w-[180px] sm:w-44'
+                      style={staggerIn(index)}
                     >
                       <VideoCard
                         id={tvShow.id}
@@ -799,7 +809,7 @@ function HomeClient() {
               </h2>
               <Link
                 href='/douban?type=show'
-                className='flex items-center text-sm text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'
+                className='flex items-center text-sm text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 transition-colors'
               >
                 查看更多
                 <ChevronRight className='w-4 h-4 ml-1' />
@@ -816,10 +826,11 @@ function HomeClient() {
                       <div className='h-4 bg-gray-200 dark:bg-gray-700 rounded animate-pulse w-3/4' />
                     </div>
                   ))
-                : hotVarietyShows.map((varietyShow) => (
+                : hotVarietyShows.map((varietyShow, index) => (
                     <div
                       key={varietyShow.id}
-                      className='min-w-[96px] w-24 sm:min-w-[180px] sm:w-44'
+                      className='ptv-fade-in min-w-[96px] w-24 sm:min-w-[180px] sm:w-44'
+                      style={staggerIn(index)}
                     >
                       <VideoCard
                         id={varietyShow.id}
@@ -995,8 +1006,8 @@ function HomeClient() {
 
       {/* 公告弹窗 */}
       {showAnnouncement && (
-        <div className='fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4'>
-          <div className='bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full p-6'>
+        <div className='ptv-scrim-in fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4'>
+          <div className='ptv-modal-in bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full p-6'>
             <h3 className='text-lg font-semibold text-gray-900 dark:text-gray-100 mb-3'>
               公告
             </h3>
@@ -1015,11 +1026,11 @@ function HomeClient() {
 
       {showDirectPlayDialog && (
         <div
-          className='fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4'
+          className='ptv-scrim-in fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4'
           onClick={() => setShowDirectPlayDialog(false)}
         >
           <div
-            className='bg-white dark:bg-gray-900 rounded-lg shadow-xl w-full max-w-lg'
+            className='ptv-modal-in bg-white dark:bg-gray-900 rounded-lg shadow-xl w-full max-w-lg'
             onClick={(event) => event.stopPropagation()}
           >
             <div className='flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700'>

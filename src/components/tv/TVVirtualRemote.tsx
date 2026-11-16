@@ -14,6 +14,7 @@ import {
 import { useRouter } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 
+import { smoothScrollBehavior } from '@/lib/motion';
 import { fireTVRemoteKey } from '@/lib/tv-remote-core';
 
 const focusableSelector = [
@@ -80,6 +81,13 @@ function getScrollableParent(element: HTMLElement) {
   return null;
 }
 
+// 方向键长按（key repeat）时为 true：连续触发的平滑滚动会互相打断，改用瞬时滚动
+let isKeyRepeat = false;
+
+function getFocusScrollBehavior(): ScrollBehavior {
+  return isKeyRepeat ? 'auto' : smoothScrollBehavior();
+}
+
 function scrollIntoScrollableParent(element: HTMLElement) {
   const parent = getScrollableParent(element);
   if (!parent) return false;
@@ -87,32 +95,76 @@ function scrollIntoScrollableParent(element: HTMLElement) {
   const elementRect = element.getBoundingClientRect();
   const parentRect = parent.getBoundingClientRect();
   const padding = 16;
+  const behavior = getFocusScrollBehavior();
 
   if (elementRect.top < parentRect.top + padding) {
     parent.scrollBy({
       top: elementRect.top - parentRect.top - padding,
-      behavior: 'smooth',
+      behavior,
     });
   } else if (elementRect.bottom > parentRect.bottom - padding) {
     parent.scrollBy({
       top: elementRect.bottom - parentRect.bottom + padding,
-      behavior: 'smooth',
+      behavior,
     });
   }
 
   if (elementRect.left < parentRect.left + padding) {
     parent.scrollBy({
       left: elementRect.left - parentRect.left - padding,
-      behavior: 'smooth',
+      behavior,
     });
   } else if (elementRect.right > parentRect.right - padding) {
     parent.scrollBy({
       left: elementRect.right - parentRect.right + padding,
-      behavior: 'smooth',
+      behavior,
     });
   }
 
   return true;
+}
+
+// 一次性算出最终滚动位置：先滚内层容器（并累计它们造成的位移），再对 window 只调用一次 scrollTo，
+// 避免 scrollIntoView 平滑滚动进行中再按中途位置二次 scrollBy 造成抖动。
+function scrollElementIntoViewOnce(element: HTMLElement) {
+  const behavior = getFocusScrollBehavior();
+  const rect = element.getBoundingClientRect();
+  let top = rect.top;
+  let bottom = rect.bottom;
+  let left = rect.left;
+  let right = rect.right;
+
+  let parent = getScrollableParent(element);
+  while (parent) {
+    const parentRect = parent.getBoundingClientRect();
+    let dx = 0;
+    let dy = 0;
+
+    if (top < parentRect.top) dy = top - parentRect.top;
+    else if (bottom > parentRect.bottom) dy = bottom - parentRect.bottom;
+
+    if (left < parentRect.left) dx = left - parentRect.left;
+    else if (right > parentRect.right) dx = right - parentRect.right;
+
+    if (dx !== 0 || dy !== 0) {
+      parent.scrollBy({ left: dx, top: dy, behavior });
+      top -= dy;
+      bottom -= dy;
+      left -= dx;
+      right -= dx;
+    }
+    parent = getScrollableParent(parent);
+  }
+
+  const safeTop = 150;
+  const safeBottom = window.innerHeight - 96;
+  let delta = 0;
+  if (top < safeTop) delta = top - safeTop;
+  else if (bottom > safeBottom) delta = bottom - safeBottom;
+
+  if (delta !== 0) {
+    window.scrollTo({ top: window.scrollY + delta, behavior });
+  }
 }
 
 function isTopNavigationElement(element: HTMLElement) {
@@ -233,22 +285,7 @@ function focusElement(element: HTMLElement) {
 
   // 播放页浮层是 fixed/absolute，不能 scrollIntoView，否则会把全屏播放器滚出视口。
   if (!isInFixedChrome) {
-    element.scrollIntoView({
-      block: 'nearest',
-      inline: 'nearest',
-      behavior: 'smooth',
-    });
-    window.requestAnimationFrame(() => {
-      const rect = element.getBoundingClientRect();
-      const safeTop = 150;
-      const safeBottom = window.innerHeight - 96;
-
-      if (rect.top < safeTop) {
-        window.scrollBy({ top: rect.top - safeTop, behavior: 'smooth' });
-      } else if (rect.bottom > safeBottom) {
-        window.scrollBy({ top: rect.bottom - safeBottom, behavior: 'smooth' });
-      }
-    });
+    scrollElementIntoViewOnce(element);
   } else {
     scrollIntoScrollableParent(element);
   }
@@ -500,6 +537,7 @@ export default function TVVirtualRemote() {
           | 'down'
           | 'left'
           | 'right';
+        isKeyRepeat = event.repeat;
         moveSpatialFocus(direction, lastFocusedRef.current);
         return;
       }
@@ -554,7 +592,7 @@ export default function TVVirtualRemote() {
   return (
     <aside
       data-tv-remote
-      className='fixed bottom-6 right-6 z-[80] w-[280px] rounded-[34px] border border-white/10 bg-slate-950/88 p-5 text-white shadow-2xl shadow-black/70 backdrop-blur-2xl'
+      className='ptv-content-in fixed bottom-6 right-6 z-[80] w-[280px] rounded-[34px] border border-white/10 bg-slate-950/88 p-5 text-white shadow-2xl shadow-black/70 backdrop-blur-2xl'
     >
       <div className='mb-4 flex items-center justify-between'>
         <div>

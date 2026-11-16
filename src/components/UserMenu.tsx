@@ -69,6 +69,7 @@ export const UserMenu: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [isProfileCenterOpen, setIsProfileCenterOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [isSettingsRendered, setIsSettingsRendered] = useState(false);
   const [isChangePasswordOpen, setIsChangePasswordOpen] = useState(false);
   const [isSubscribeOpen, setIsSubscribeOpen] = useState(false);
   const [isOfflineDownloadPanelOpen, setIsOfflineDownloadPanelOpen] =
@@ -2881,6 +2882,16 @@ export const UserMenu: React.FC = () => {
     prevSettingsOpenRef.current = isSettingsOpen;
   }, [isSettingsOpen, syncAvailable, syncMode]);
 
+  // 设置面板延迟卸载，等待退出动画完成
+  useEffect(() => {
+    if (isSettingsOpen) {
+      setIsSettingsRendered(true);
+      return;
+    }
+    const timer = setTimeout(() => setIsSettingsRendered(false), 160);
+    return () => clearTimeout(timer);
+  }, [isSettingsOpen]);
+
 
   // 清除弹幕缓存
   const handleClearDanmakuCache = async () => {
@@ -2959,7 +2970,7 @@ export const UserMenu: React.FC = () => {
       />
 
       {/* 菜单面板 */}
-      <div className='ptv-menu ptv-account-menu fixed top-[calc(3.5rem+var(--safe-top))] right-[max(1rem,env(safe-area-inset-right))] max-h-[calc(100dvh-4.5rem-var(--safe-top)-env(safe-area-inset-bottom))] bg-white dark:bg-gray-900 rounded-lg shadow-xl z-[1001] border border-gray-200/50 dark:border-gray-700/50 overflow-y-auto'>
+      <div className='ptv-menu ptv-account-menu ptv-pop-in origin-top-right fixed top-[calc(3.5rem+var(--safe-top))] right-[max(1rem,env(safe-area-inset-right))] max-h-[calc(100dvh-4.5rem-var(--safe-top)-env(safe-area-inset-bottom))] bg-white dark:bg-gray-900 rounded-lg shadow-xl z-[1001] border border-gray-200/50 dark:border-gray-700/50 overflow-y-auto'>
         {/* 用户信息区域 */}
         <div className='ptv-account-header'>
             <button
@@ -3085,7 +3096,7 @@ export const UserMenu: React.FC = () => {
     <>
       {/* 背景遮罩 */}
       <div
-        className='fixed inset-0 bg-black/50 backdrop-blur-sm z-[1000]'
+        className={`${isSettingsOpen ? 'ptv-scrim-in' : 'ptv-scrim-out pointer-events-none'} fixed inset-0 bg-black/50 backdrop-blur-sm z-[1000]`}
         onClick={handleCloseSettings}
         onTouchMove={(e) => {
           // 只阻止滚动，允许其他触摸事件
@@ -3101,7 +3112,7 @@ export const UserMenu: React.FC = () => {
       />
 
       {/* 设置面板 */}
-      <div className='ptv-dialog fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[calc(100%-2rem)] max-w-xl max-h-[calc(100dvh-2rem)] bg-white dark:bg-gray-900 rounded-xl shadow-xl z-[1001] flex flex-col'>
+      <div className={`ptv-dialog ${isSettingsOpen ? 'ptv-modal-in' : 'ptv-modal-out pointer-events-none'} fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[calc(100%-2rem)] max-w-xl max-h-[calc(100dvh-2rem)] bg-white dark:bg-gray-900 rounded-xl shadow-xl z-[1001] flex flex-col`}>
         {/* 内容容器 - 独立的滚动区域 */}
         <div
           className='min-h-0 flex-1 px-4 py-6 md:p-6 overflow-y-auto'
@@ -3143,7 +3154,7 @@ export const UserMenu: React.FC = () => {
                     )}
                   </button>
                   {isCloudBackupDropdownOpen && (
-                    <div className='absolute z-50 right-0 top-full mt-1 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg shadow-lg overflow-hidden min-w-[150px]'>
+                    <div className='ptv-pop-in origin-top-right absolute z-50 right-0 top-full mt-1 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg shadow-lg overflow-hidden min-w-[150px]'>
                       <button
                         onClick={() => {
                           setIsCloudBackupDropdownOpen(false);
@@ -3237,7 +3248,7 @@ export const UserMenu: React.FC = () => {
 
                       {/* 下拉选项列表 */}
                       {isDoubanDropdownOpen && (
-                        <div className='absolute z-50 w-full mt-1 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg shadow-lg max-h-60 overflow-auto'>
+                        <div className='ptv-pop-in origin-top absolute z-50 w-full mt-1 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg shadow-lg max-h-60 overflow-auto'>
                           {doubanDataSourceOptions.map((option) => (
                             <button
                               key={option.value}
@@ -3328,7 +3339,7 @@ export const UserMenu: React.FC = () => {
                         />
                       </div>
                       {isDoubanBackupDropdownOpen && (
-                        <div className='absolute z-50 w-full mt-1 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg shadow-lg max-h-60 overflow-auto'>
+                        <div className='ptv-pop-in origin-top absolute z-50 w-full mt-1 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg shadow-lg max-h-60 overflow-auto'>
                           {doubanDataSourceOptions.map((option) => (
                             <button
                               key={option.value}
@@ -3431,7 +3442,7 @@ export const UserMenu: React.FC = () => {
 
                       {/* 下拉选项列表 */}
                       {isDoubanImageProxyDropdownOpen && (
-                        <div className='absolute z-50 w-full mt-1 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg shadow-lg max-h-60 overflow-auto'>
+                        <div className='ptv-pop-in origin-top absolute z-50 w-full mt-1 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg shadow-lg max-h-60 overflow-auto'>
                           {doubanImageProxyTypeOptions.map((option) => (
                             <button
                               key={option.value}
@@ -3525,7 +3536,7 @@ export const UserMenu: React.FC = () => {
                         />
                       </div>
                       {isDoubanImageProxyBackupDropdownOpen && (
-                        <div className='absolute z-50 w-full mt-1 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg shadow-lg max-h-60 overflow-auto'>
+                        <div className='ptv-pop-in origin-top absolute z-50 w-full mt-1 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg shadow-lg max-h-60 overflow-auto'>
                           {doubanImageProxyTypeOptions.map((option) => (
                             <button
                               key={option.value}
@@ -3649,7 +3660,7 @@ export const UserMenu: React.FC = () => {
                             />
                           </div>
                           {isAnimeDropdownOpen && (
-                            <div className='absolute z-50 w-full mt-1 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg shadow-lg max-h-60 overflow-auto'>
+                            <div className='ptv-pop-in origin-top absolute z-50 w-full mt-1 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg shadow-lg max-h-60 overflow-auto'>
                               {animeDataSourceOptions.map((option) => (
                                 <button
                                   key={option.value}
@@ -3709,7 +3720,7 @@ export const UserMenu: React.FC = () => {
                             />
                           </div>
                           {isAnimeBackupDropdownOpen && (
-                            <div className='absolute z-50 w-full mt-1 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg shadow-lg max-h-60 overflow-auto'>
+                            <div className='ptv-pop-in origin-top absolute z-50 w-full mt-1 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg shadow-lg max-h-60 overflow-auto'>
                               {animeDataSourceOptions.map((option) => (
                                 <button
                                   key={option.value}
@@ -3905,7 +3916,7 @@ export const UserMenu: React.FC = () => {
                               aria-label='优选策略说明'
                             >
                               <CircleHelp className='h-3.5 w-3.5' />
-                              <span className='pointer-events-none absolute left-1/2 top-full z-50 mt-2 hidden w-56 -translate-x-1/2 rounded-lg bg-gray-900 px-3 py-2 text-left text-xs leading-relaxed text-white shadow-lg group-hover:block group-focus:block dark:bg-gray-700'>
+                              <span className='pointer-events-none absolute left-1/2 top-full z-50 mt-2 invisible w-56 -translate-x-1/2 rounded-lg bg-gray-900 px-3 py-2 text-left text-xs leading-relaxed text-white opacity-0 shadow-lg transition-opacity duration-150 group-hover:visible group-hover:opacity-100 group-focus:visible group-focus:opacity-100 dark:bg-gray-700'>
                                 快速策略：快速优选高权重播放源
                                 <br />
                                 全量策略：全量优选全部源
@@ -3949,7 +3960,7 @@ export const UserMenu: React.FC = () => {
                               aria-label='优选偏好说明'
                             >
                               <CircleHelp className='h-3.5 w-3.5' />
-                              <span className='pointer-events-none absolute left-1/2 top-full z-50 mt-2 hidden w-56 -translate-x-1/2 rounded-lg bg-gray-900 px-3 py-2 text-left text-xs leading-relaxed text-white shadow-lg group-hover:block group-focus:block dark:bg-gray-700'>
+                              <span className='pointer-events-none absolute left-1/2 top-full z-50 mt-2 invisible w-56 -translate-x-1/2 rounded-lg bg-gray-900 px-3 py-2 text-left text-xs leading-relaxed text-white opacity-0 shadow-lg transition-opacity duration-150 group-hover:visible group-hover:opacity-100 group-focus:visible group-focus:opacity-100 dark:bg-gray-700'>
                                 综合判定：分辨率与网速均衡评分
                                 <br />
                                 分辨率优先：优选时给分辨率加权重
@@ -5333,7 +5344,7 @@ export const UserMenu: React.FC = () => {
     <>
       {/* 背景遮罩 */}
       <div
-        className='fixed inset-0 bg-black/60 backdrop-blur-sm z-[1000]'
+        className='ptv-scrim-in fixed inset-0 bg-black/60 backdrop-blur-sm z-[1000]'
         onClick={handleCloseSubscribe}
         onTouchMove={(e) => {
           e.preventDefault();
@@ -5347,7 +5358,7 @@ export const UserMenu: React.FC = () => {
       />
 
       {/* 电视访问面板 */}
-      <div className='ptv-dialog ptv-tv-access fixed top-1/2 left-1/2 z-[1001] max-h-[92vh] w-full max-w-3xl -translate-x-1/2 -translate-y-1/2 overflow-hidden rounded-3xl border border-slate-200/70 bg-white shadow-2xl shadow-black/30 dark:border-white/10 dark:bg-slate-950'>
+      <div className='ptv-dialog ptv-modal-in ptv-tv-access fixed top-1/2 left-1/2 z-[1001] max-h-[92vh] w-full max-w-3xl -translate-x-1/2 -translate-y-1/2 overflow-hidden rounded-3xl border border-slate-200/70 bg-white shadow-2xl shadow-black/30 dark:border-white/10 dark:bg-slate-950'>
         <div
           className='max-h-[92vh] overflow-y-auto p-6 sm:p-7'
           data-panel-content
@@ -5485,9 +5496,9 @@ export const UserMenu: React.FC = () => {
                 </div>
               ) : isLoadingSubscribeUrl ? (
                 <div className='mt-5 space-y-3'>
-                  <div className='h-14 animate-pulse rounded-xl bg-slate-200 dark:bg-white/10' />
-                  <div className='h-14 animate-pulse rounded-xl bg-slate-200 dark:bg-white/10' />
-                  <div className='h-10 animate-pulse rounded-xl bg-slate-200 dark:bg-white/10' />
+                  <div className='h-14 motion-safe:animate-pulse rounded-xl bg-slate-200 dark:bg-white/10' />
+                  <div className='h-14 motion-safe:animate-pulse rounded-xl bg-slate-200 dark:bg-white/10' />
+                  <div className='h-10 motion-safe:animate-pulse rounded-xl bg-slate-200 dark:bg-white/10' />
                 </div>
               ) : (
                 <div className='mt-5 space-y-4'>
@@ -5699,7 +5710,7 @@ export const UserMenu: React.FC = () => {
     <>
       {/* 背景遮罩 */}
       <div
-        className='fixed inset-0 bg-black/50 backdrop-blur-sm z-[1000]'
+        className='ptv-scrim-in fixed inset-0 bg-black/50 backdrop-blur-sm z-[1000]'
         onClick={handleCloseChangePassword}
         onTouchMove={(e) => {
           // 只阻止滚动，允许其他触摸事件
@@ -5715,7 +5726,7 @@ export const UserMenu: React.FC = () => {
       />
 
       {/* 修改密码面板 */}
-      <div className='fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-md bg-white dark:bg-gray-900 rounded-xl shadow-xl z-[1001] overflow-hidden'>
+      <div className='ptv-modal-in fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-md bg-white dark:bg-gray-900 rounded-xl shadow-xl z-[1001] overflow-hidden'>
         {/* 内容容器 - 独立的滚动区域 */}
         <div
           className='h-full p-6'
@@ -5816,7 +5827,7 @@ export const UserMenu: React.FC = () => {
     <>
       {/* 背景遮罩 */}
       <div
-        className='fixed inset-0 bg-black/50 backdrop-blur-sm z-[1000]'
+        className='ptv-scrim-in fixed inset-0 bg-black/50 backdrop-blur-sm z-[1000]'
         onClick={() => setIsEcoAppsOpen(false)}
         onTouchMove={(e) => {
           e.preventDefault();
@@ -5830,7 +5841,7 @@ export const UserMenu: React.FC = () => {
       />
 
       {/* 生态应用面板 */}
-      <div className='ptv-dialog ptv-client-tools fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-2xl bg-white dark:bg-gray-900 rounded-xl shadow-xl z-[1001] overflow-hidden'>
+      <div className='ptv-dialog ptv-modal-in ptv-client-tools fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-2xl bg-white dark:bg-gray-900 rounded-xl shadow-xl z-[1001] overflow-hidden'>
         <div
           className='h-full max-h-[85vh] flex flex-col'
           data-panel-content
@@ -6047,7 +6058,7 @@ export const UserMenu: React.FC = () => {
       <div className='relative'>
         <button
           onClick={handleMenuClick}
-          className='w-10 h-10 p-2 rounded-full flex items-center justify-center text-gray-600 hover:bg-gray-200/50 dark:text-gray-300 dark:hover:bg-gray-700/50 transition-colors'
+          className='w-10 h-10 p-2 rounded-full flex items-center justify-center text-gray-600 hover:bg-gray-200/50 dark:text-gray-300 dark:hover:bg-gray-700/50 active:scale-95 transition-[background-color,color,transform] duration-150'
           aria-label='账户菜单'
           aria-expanded={isOpen}
         >
@@ -6055,7 +6066,7 @@ export const UserMenu: React.FC = () => {
         </button>
         {/* 未读通知红点 */}
         {unreadCount > 0 && (
-          <div className='absolute top-[2px] right-[2px] w-2 h-2 bg-red-500 rounded-full'></div>
+          <div className='ptv-fade-in absolute top-[2px] right-[2px] w-2 h-2 bg-red-500 rounded-full'></div>
         )}
       </div>
 
@@ -6088,7 +6099,9 @@ export const UserMenu: React.FC = () => {
       />
 
       {/* 使用 Portal 将设置面板渲染到 document.body */}
-      {isSettingsOpen && mounted && createPortal(settingsPanel, document.body)}
+      {(isSettingsOpen || isSettingsRendered) &&
+        mounted &&
+        createPortal(settingsPanel, document.body)}
 
       {/* 云备份操作结果 Toast */}
       {syncToast && mounted && createPortal(<Toast {...syncToast} />, document.body)}
@@ -6202,8 +6215,8 @@ export const UserMenu: React.FC = () => {
       {confirmDialog.isOpen &&
         mounted &&
         createPortal(
-          <div className='fixed inset-0 z-[10000] flex items-center justify-center bg-black/50 backdrop-blur-sm'>
-            <div className='bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-md m-4'>
+          <div className='ptv-scrim-in fixed inset-0 z-[10000] flex items-center justify-center bg-black/50 backdrop-blur-sm'>
+            <div className='ptv-modal-in bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-md m-4'>
               {/* 标题 */}
               <div className='p-6 border-b border-gray-200 dark:border-gray-700'>
                 <h3 className='text-lg font-semibold text-gray-900 dark:text-gray-100'>

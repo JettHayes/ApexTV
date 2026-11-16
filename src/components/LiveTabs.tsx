@@ -13,7 +13,7 @@ export default function LiveTabs({ active }: { active: 'live' | 'web-live' }) {
 
   if (!enabled.live && !enabled.webLive) return null;
   return (
-    <nav className='ptv-live-tabs' aria-label='直播类型'>
+    <nav className='ptv-live-tabs ptv-fade-in' aria-label='直播类型'>
       {enabled.live && <Link href='/live' aria-current={active === 'live' ? 'page' : undefined}>电视直播</Link>}
       {enabled.webLive && <Link href='/web-live' aria-current={active === 'web-live' ? 'page' : undefined}>网络直播</Link>}
     </nav>

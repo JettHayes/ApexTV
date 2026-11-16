@@ -30,6 +30,7 @@ const Sidebar = ({ onToggle }: { onToggle?: (collapsed: boolean) => void; active
   const { primary, categories, other } = useNavigationItems(isUnderPath ? SPECIAL_SOURCE_PATH : '/search');
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [hasSavedChoice, setHasSavedChoice] = useState(false);
+  const [animate, setAnimate] = useState(false);
 
   useLayoutEffect(() => {
     const media = window.matchMedia('(min-width: 768px) and (max-width: 1199px)');
@@ -53,6 +54,7 @@ const Sidebar = ({ onToggle }: { onToggle?: (collapsed: boolean) => void; active
 
   const handleToggle = useCallback(() => {
     const next = !isCollapsed;
+    setAnimate(true);
     setIsCollapsed(next);
     localStorage.setItem('sidebarCollapsed', JSON.stringify(next));
     setHasSavedChoice(true);
@@ -64,6 +66,7 @@ const Sidebar = ({ onToggle }: { onToggle?: (collapsed: boolean) => void; active
     localStorage.removeItem('sidebarCollapsed');
     const next = window.matchMedia('(min-width: 768px) and (max-width: 1199px)').matches;
     setHasSavedChoice(false);
+    setAnimate(true);
     setIsCollapsed(next);
     window.__sidebarCollapsed = next;
     onToggle?.(next);
@@ -78,7 +81,7 @@ const Sidebar = ({ onToggle }: { onToggle?: (collapsed: boolean) => void; active
         aria-label={label} aria-current={active ? 'page' : undefined} data-active={active}
         className='ptv-nav-link flex min-h-11 items-center gap-3 rounded-lg px-4 text-sm font-medium transition-colors'>
         <Icon className='h-5 w-5 shrink-0' aria-hidden='true' />
-        {!isCollapsed && <span className='truncate'>{label}</span>}
+        {!isCollapsed && <span className='ptv-nav-label truncate'>{label}</span>}
       </Link>
     );
   });
@@ -86,7 +89,7 @@ const Sidebar = ({ onToggle }: { onToggle?: (collapsed: boolean) => void; active
   return (
     <SidebarContext.Provider value={{ isCollapsed }}>
       <div className='hidden md:flex'>
-        <aside data-sidebar data-collapsed={isCollapsed} className={`ptv-sidebar fixed left-0 top-0 z-40 h-dvh border-r ${isCollapsed ? 'w-16' : 'w-64'}`}>
+        <aside data-sidebar data-collapsed={isCollapsed} data-animate={animate} className={`ptv-sidebar fixed left-0 top-0 z-40 h-dvh border-r ${isCollapsed ? 'w-16' : 'w-64'}`}>
           <div className='flex h-full flex-col'>
             <div className='ptv-sidebar-brand'>
               {!isCollapsed && <BrandLogo />}
@@ -98,7 +101,9 @@ const Sidebar = ({ onToggle }: { onToggle?: (collapsed: boolean) => void; active
             <nav aria-label='主导航' className='flex-1 overflow-y-auto px-2 pb-4'>
               <div className='space-y-1'>{renderItems(primary)}</div>
               <div className='ptv-nav-group'>
-                {!isCollapsed && <p className='px-4 pb-2 text-xs font-medium opacity-60'>影视分类</p>}
+                <div className='ptv-nav-group-title' aria-hidden={isCollapsed}>
+                  <div><p className='px-4 pb-2 text-xs font-medium opacity-60'>影视分类</p></div>
+                </div>
                 <div className='space-y-1'>{renderItems(categories)}</div>
               </div>
               {other.length > 0 && <div className='ptv-nav-group space-y-1'>{renderItems(other)}</div>}

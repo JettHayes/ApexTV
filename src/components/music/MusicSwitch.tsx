@@ -73,7 +73,14 @@ export default function MusicSwitch<T extends string>({
             <span className={MUSIC_MONOGRAM}>{current.monogram}</span>
           ) : null}
           {current?.label}
-          <ChevronDown className={MUSIC_SWITCH_CARET} strokeWidth={2.5} />
+          <ChevronDown
+            className={cn(
+              MUSIC_SWITCH_CARET,
+              'transition-transform duration-200',
+              open && 'rotate-180'
+            )}
+            strokeWidth={2.5}
+          />
         </span>
       </button>
 
@@ -87,7 +94,7 @@ export default function MusicSwitch<T extends string>({
             className='fixed inset-0 z-[55] cursor-default'
             onClick={() => setOpen(false)}
           />
-          <div className={MUSIC_MENU} role='listbox'>
+          <div className={cn('ptv-pop-in origin-top-right', MUSIC_MENU)} role='listbox'>
             {options.map((option) => {
               const active = option.key === value;
               return (

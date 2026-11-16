@@ -8,6 +8,7 @@ import { type MouseEvent, useEffect, useMemo, useRef, useState } from 'react';
 import { cn } from '@/lib/cn';
 import { getAllMangaReadRecords, getAllMangaShelf, saveMangaReadRecord, saveMangaShelf } from '@/lib/db.client';
 import type { MangaChapter, MangaDetail, MangaReadRecord, MangaShelfItem } from '@/lib/manga.types';
+import { smoothScrollBehavior } from '@/lib/motion';
 import { processImageUrl } from '@/lib/utils';
 
 import {
@@ -741,7 +742,7 @@ export default function MangaReadPage() {
   const goPrev = () => {
     if (!pages.length) return;
     if (readMode === 'vertical') {
-      getVerticalScroller().scrollBy({ top: -window.innerHeight * 0.85, behavior: 'smooth' });
+      getVerticalScroller().scrollBy({ top: -window.innerHeight * 0.85, behavior: smoothScrollBehavior() });
       hideTransientUi();
       return;
     }
@@ -760,7 +761,7 @@ export default function MangaReadPage() {
     if (!pages.length) return;
     if (readMode === 'vertical') {
       if (openChapterComplete()) return;
-      getVerticalScroller().scrollBy({ top: window.innerHeight * 0.85, behavior: 'smooth' });
+      getVerticalScroller().scrollBy({ top: window.innerHeight * 0.85, behavior: smoothScrollBehavior() });
       hideTransientUi();
       return;
     }
@@ -883,11 +884,11 @@ export default function MangaReadPage() {
     <div className='mx-auto max-w-6xl'>
       {settingsOpen && (
         <div
-          className='fixed inset-0 z-40 flex items-center justify-center bg-black/40 px-4'
+          className='ptv-scrim-in fixed inset-0 z-40 flex items-center justify-center bg-black/40 px-4'
           onClick={() => setSettingsOpen(false)}
         >
           <div
-            className={cn(READER_SHEET, 'w-full max-w-sm p-5')}
+            className={cn(READER_SHEET, 'ptv-modal-in w-full max-w-sm p-5')}
             onClick={(e) => e.stopPropagation()}
           >
             <div className='mb-4'>
@@ -990,9 +991,9 @@ export default function MangaReadPage() {
       )}
 
       {chapterListOpen && (
-        <div className='fixed inset-0 z-40 bg-black/30' onClick={() => setChapterListOpen(false)}>
+        <div className='ptv-scrim-in fixed inset-0 z-40 bg-black/30' onClick={() => setChapterListOpen(false)}>
           <div
-            className='absolute right-0 top-14 h-[calc(100vh-3.5rem)] supports-[height:100dvh]:h-[calc(100dvh-3.5rem)] w-full max-w-sm overflow-y-auto pb-[env(safe-area-inset-bottom)] border-l border-library-edge bg-library-card shadow-xl dark:border-library-night-edge dark:bg-library-night-card sm:top-16 sm:h-[calc(100vh-4rem)] sm:supports-[height:100dvh]:h-[calc(100dvh-4rem)]'
+            className='ptv-drawer-in absolute right-0 top-14 h-[calc(100vh-3.5rem)] supports-[height:100dvh]:h-[calc(100dvh-3.5rem)] w-full max-w-sm overflow-y-auto pb-[env(safe-area-inset-bottom)] border-l border-library-edge bg-library-card shadow-xl dark:border-library-night-edge dark:bg-library-night-card sm:top-16 sm:h-[calc(100vh-4rem)] sm:supports-[height:100dvh]:h-[calc(100dvh-4rem)]'
             onClick={(event) => event.stopPropagation()}
           >
             <div className='p-4'>
@@ -1049,9 +1050,9 @@ export default function MangaReadPage() {
         onClick={handleReaderClick}
       >
         {showChapterComplete && (
-          <div className='fixed inset-0 z-30 flex items-center justify-center bg-black/60 px-4' onClick={() => setShowChapterComplete(false)}>
+          <div className='ptv-scrim-in fixed inset-0 z-30 flex items-center justify-center bg-black/60 px-4' onClick={() => setShowChapterComplete(false)}>
             <div
-              className={cn(READER_SHEET, 'w-full max-w-sm p-6 text-center')}
+              className={cn(READER_SHEET, 'ptv-modal-in w-full max-w-sm p-6 text-center')}
               onClick={(event) => event.stopPropagation()}
             >
               <div
@@ -1089,14 +1090,14 @@ export default function MangaReadPage() {
 
         {jumpDialogOpen && (
           <div
-            className='fixed inset-0 z-30 flex items-center justify-center bg-black/60 px-4'
+            className='ptv-scrim-in fixed inset-0 z-30 flex items-center justify-center bg-black/60 px-4'
             onClick={(event) => {
               event.stopPropagation();
               setJumpDialogOpen(false);
             }}
           >
             <form
-              className={cn(READER_SHEET, 'w-full max-w-xs p-6')}
+              className={cn(READER_SHEET, 'ptv-modal-in w-full max-w-xs p-6')}
               onClick={(event) => event.stopPropagation()}
               onSubmit={(event) => {
                 event.preventDefault();
@@ -1136,13 +1137,13 @@ export default function MangaReadPage() {
         )}
 
         <div
-          className={`fixed right-3 top-1/2 z-20 h-40 w-1 -translate-y-1/2 overflow-hidden rounded-full bg-library-edge/80 transition-all duration-200 dark:bg-library-night-edge/80 ${
+          className={`fixed right-3 top-1/2 z-20 h-40 w-1 -translate-y-1/2 overflow-hidden rounded-full bg-library-edge/80 transition-opacity duration-200 dark:bg-library-night-edge/80 ${
             controlsVisible ? 'opacity-100' : 'pointer-events-none opacity-0'
           }`}
         >
           <div
-            className='absolute bottom-0 left-0 w-full rounded-full bg-library-ochre transition-all dark:bg-library-night-ochre'
-            style={{ height: `${progress}%` }}
+            className='absolute bottom-0 left-0 h-full w-full origin-bottom rounded-full bg-library-ochre dark:bg-library-night-ochre'
+            style={{ transform: `scaleY(${Math.min(Math.max(progress, 0), 100) / 100})` }}
           />
         </div>
 

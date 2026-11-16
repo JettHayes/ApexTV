@@ -27,6 +27,7 @@ import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 
 import { cn } from '@/lib/cn';
+import { smoothScrollBehavior } from '@/lib/motion';
 import { getSourceDisplayLabel, normalizeSource, SourcePill } from '@/lib/music/shared';
 import type { MusicQuality, MusicSource, Song } from '@/lib/music/types';
 
@@ -1837,7 +1838,7 @@ export default function MusicClient({ children: _children }: { children?: React.
       const activeLine = container.querySelector(`[data-index="${currentLyricIndex}"]`);
       if (activeLine) {
         activeLine.scrollIntoView({
-          behavior: 'smooth',
+          behavior: smoothScrollBehavior(),
           block: 'center',
         });
       }
@@ -2559,8 +2560,8 @@ export default function MusicClient({ children: _children }: { children?: React.
             {/* Progress Bar */}
             <div className="absolute left-0 right-0 top-0 h-1 bg-white/10 rounded-t-xl">
               <div
-                className="relative z-10 h-full bg-[#00d2be] transition-all pointer-events-none"
-                style={{ width: `${progress}%` }}
+                className="relative z-10 h-full w-full origin-left bg-[#00d2be] pointer-events-none"
+                style={{ transform: `scaleX(${progress / 100})` }}
               />
               {showStreamBuffering && (
                 <div className="music-buffer-track-global absolute inset-0 z-0" />
@@ -2713,7 +2714,7 @@ export default function MusicClient({ children: _children }: { children?: React.
       {/* Lyrics Modal */}
       {showLyrics && currentSong && (
         <div
-          className="fixed inset-0 bg-black/90 backdrop-blur-sm z-[100] flex items-center justify-center p-4"
+          className="ptv-fade-in fixed inset-0 bg-black/90 backdrop-blur-sm z-[100] flex items-center justify-center p-4"
           onClick={(e) => {
             // 点击背景关闭音量条
             if (e.target === e.currentTarget) {
@@ -2806,21 +2807,21 @@ export default function MusicClient({ children: _children }: { children?: React.
                         type="button"
                         data-index={index}
                         onClick={() => seekToLyric(line, index)}
-                        className={`block min-h-11 w-full appearance-none border-0 bg-transparent p-0 text-center transition-[color,transform] duration-300 focus-visible:outline focus-visible:outline-2 focus-visible:outline-music-theme ${
+                        className={`block min-h-11 w-full appearance-none border-0 bg-transparent p-0 text-center text-base md:text-lg transition-[color,transform] duration-300 focus-visible:outline focus-visible:outline-2 focus-visible:outline-music-theme ${
                           index === currentLyricIndex
-                            ? 'text-white text-lg md:text-xl lg:text-2xl font-bold scale-110'
+                            ? 'text-white font-bold scale-[1.15]'
                             : index === currentLyricIndex - 1 || index === currentLyricIndex + 1
-                            ? 'text-zinc-400 text-base md:text-lg'
-                            : 'text-zinc-600 text-sm md:text-base'
+                            ? 'text-zinc-400'
+                            : 'text-zinc-600'
                         }`}
                       >
                         <div>{line.text}</div>
                         {line.translation && (
                           <div
-                            className={`mt-1 ${
+                            className={`mt-1 text-xs md:text-sm lg:text-base font-normal transition-colors duration-300 ${
                               index === currentLyricIndex
-                                ? 'text-zinc-300 text-sm md:text-base lg:text-lg font-normal'
-                                : 'text-zinc-500 text-xs md:text-sm lg:text-base font-normal'
+                                ? 'text-zinc-300'
+                                : 'text-zinc-500'
                             }`}
                           >
                             {line.translation}
@@ -3051,8 +3052,8 @@ export default function MusicClient({ children: _children }: { children?: React.
                   <span>{formatTime(currentTime)}</span>
                   <div className="flex-1 h-1 bg-white/10 rounded-full relative">
                     <div
-                      className="relative z-10 h-full bg-music-theme dark:bg-music-night-theme transition-all pointer-events-none"
-                      style={{ width: `${progress}%` }}
+                      className="relative z-10 h-full w-full origin-left bg-music-theme dark:bg-music-night-theme pointer-events-none"
+                      style={{ transform: `scaleX(${progress / 100})` }}
                     />
                     {showStreamBuffering && (
                       <div className="music-buffer-track-global absolute inset-0 z-0" />
@@ -3076,8 +3077,8 @@ export default function MusicClient({ children: _children }: { children?: React.
 
       {/* Playlist Modal */}
       {showPlaylist && (
-        <div className="fixed inset-0 bg-black/90 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
-          <div className={MUSIC_QUEUE_SHELL}>
+        <div className="ptv-scrim-in fixed inset-0 bg-black/90 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
+          <div className={cn('ptv-sheet-in', MUSIC_QUEUE_SHELL)}>
             <div className={MUSIC_QUEUE_HEAD}>
               <div className="flex items-center gap-2.5">
                 <h2 className={MUSIC_QUEUE_TITLE}>播放列表</h2>
@@ -3154,11 +3155,11 @@ export default function MusicClient({ children: _children }: { children?: React.
       {/* Sleep Timer Menu */}
       {showSleepTimerMenu && (
         <div
-          className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[110] flex items-end justify-center"
+          className="ptv-scrim-in fixed inset-0 bg-black/50 backdrop-blur-sm z-[110] flex items-end justify-center"
           onClick={() => setShowSleepTimerMenu(false)}
         >
           <div
-            className="w-full max-w-md bg-zinc-900 rounded-t-2xl border-t border-white/10 shadow-2xl animate-slide-up"
+            className="ptv-sheet-in w-full max-w-md bg-zinc-900 rounded-t-2xl border-t border-white/10 shadow-2xl"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="relative p-4 border-b border-white/10">
@@ -3235,7 +3236,7 @@ export default function MusicClient({ children: _children }: { children?: React.
                                   if (sleepHoursPickerRef.current) {
                                     sleepHoursPickerRef.current.scrollTo({
                                       top: item * sleepPickerItemHeight,
-                                      behavior: 'smooth',
+                                      behavior: smoothScrollBehavior(),
                                     });
                                   }
                                 } else {
@@ -3243,7 +3244,7 @@ export default function MusicClient({ children: _children }: { children?: React.
                                   if (sleepMinutesPickerRef.current) {
                                     sleepMinutesPickerRef.current.scrollTo({
                                       top: item * sleepPickerItemHeight,
-                                      behavior: 'smooth',
+                                      behavior: smoothScrollBehavior(),
                                     });
                                   }
                                 }
@@ -3298,8 +3299,8 @@ export default function MusicClient({ children: _children }: { children?: React.
       )}
 
       {showAudioEffectsMenu && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4" onClick={() => setShowAudioEffectsMenu(false)}>
-          <div className="relative w-full max-w-5xl max-h-[90vh] supports-[height:100dvh]:max-h-[90dvh] bg-zinc-900 rounded-2xl border border-white/10 shadow-2xl overflow-hidden" onClick={(e) => e.stopPropagation()}>
+        <div className="ptv-scrim-in fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4" onClick={() => setShowAudioEffectsMenu(false)}>
+          <div className="ptv-sheet-in relative w-full max-w-5xl max-h-[90vh] supports-[height:100dvh]:max-h-[90dvh] bg-zinc-900 rounded-2xl border border-white/10 shadow-2xl overflow-hidden" onClick={(e) => e.stopPropagation()}>
             <div className="p-5 border-b border-white/10 flex items-center justify-between"><div><h3 className="text-lg font-bold text-white">均衡器与音效调节</h3></div><button onClick={() => setShowAudioEffectsMenu(false)} className="w-8 h-8 rounded-lg text-music-muted dark:text-music-night-muted hover:text-music-ink dark:hover:text-music-night-ink hover:bg-music-card-2 dark:hover:bg-music-night-card-2">✕</button></div>
             <div className="p-5 overflow-y-auto max-h-[calc(90vh-80px)] supports-[height:100dvh]:max-h-[calc(90dvh-80px)]"><div className="grid grid-cols-1 lg:grid-cols-[1fr_280px] gap-8">
               <section><div className="flex items-center justify-between mb-4"><div><h4 className="text-sm font-bold text-white">10 段均衡器</h4></div><label className="flex items-center gap-2 text-xs text-zinc-300"><input type="checkbox" checked={equalizerEnabled} onChange={(e) => setEqualizerEnabled(e.target.checked)} className="h-4 w-4 accent-music-theme dark:accent-music-night-theme" />启用 EQ</label></div>
@@ -3319,11 +3320,11 @@ export default function MusicClient({ children: _children }: { children?: React.
       {/* Quality Selection Menu */}
       {showQualityMenu && (
         <div
-          className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[100] flex items-end justify-center"
+          className="ptv-scrim-in fixed inset-0 bg-black/50 backdrop-blur-sm z-[100] flex items-end justify-center"
           onClick={() => setShowQualityMenu(false)}
         >
           <div
-            className="w-full max-w-md bg-zinc-900 rounded-t-2xl border-t border-white/10 shadow-2xl animate-slide-up"
+            className="ptv-sheet-in w-full max-w-md bg-zinc-900 rounded-t-2xl border-t border-white/10 shadow-2xl"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header */}
@@ -3483,12 +3484,12 @@ export default function MusicClient({ children: _children }: { children?: React.
       {confirmModal.isOpen &&
         createPortal(
           <div
-            className="music-theme-portal fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4"
+            className="ptv-scrim-in music-theme-portal fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4"
             style={{ zIndex: 99999 }}
             onClick={confirmModal.onCancel}
           >
             <div
-              className="bg-zinc-900 rounded-xl max-w-md w-full border border-white/10"
+              className="ptv-modal-in bg-zinc-900 rounded-xl max-w-md w-full border border-white/10"
               onClick={(e) => e.stopPropagation()}
             >
               <div className="p-6">

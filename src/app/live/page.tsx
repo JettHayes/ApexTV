@@ -4,7 +4,6 @@
 
 import {
   ChevronDown,
-  ChevronUp,
   Download,
   Gauge,
   GitBranch,
@@ -29,6 +28,7 @@ import {
   savePlayRecord,
   subscribeToDataUpdates,
 } from '@/lib/db.client';
+import { smoothScrollBehavior } from '@/lib/motion';
 import { parseCustomTimeFormat } from '@/lib/time';
 import { useLiveSync } from '@/hooks/useLiveSync';
 
@@ -768,7 +768,7 @@ function LivePageClient() {
       // 平滑滚动到目标位置
       container.scrollTo({
         top: Math.max(0, scrollTop),
-        behavior: 'smooth'
+        behavior: smoothScrollBehavior()
       });
     }
   };
@@ -1783,7 +1783,7 @@ function LivePageClient() {
       if (channelListRef.current) {
         channelListRef.current.scrollTo({
           top: 0,
-          behavior: 'smooth'
+          behavior: smoothScrollBehavior()
         });
       }
     }
@@ -1814,7 +1814,7 @@ function LivePageClient() {
           if (channelListRef.current) {
             channelListRef.current.scrollTo({
               top: 0,
-              behavior: 'smooth'
+              behavior: smoothScrollBehavior()
             });
           }
 
@@ -1959,7 +1959,7 @@ function LivePageClient() {
       // 平滑滚动到目标位置
       container.scrollTo({
         left: targetScrollLeft,
-        behavior: 'smooth',
+        behavior: smoothScrollBehavior(),
       });
     }
   }, [selectedGroup, groupedChannels]);
@@ -2690,9 +2690,9 @@ function LivePageClient() {
                   </div>
                 )}
 
-                {/* 视频加载蒙层 */}
-                {isVideoLoading && (
-                  <div className='absolute inset-0 bg-black/85 backdrop-blur-sm rounded-xl overflow-hidden shadow-lg border border-white/0 dark:border-white/30 flex items-center justify-center z-[500] transition-all duration-300'>
+                {/* 视频加载蒙层：常驻挂载，靠透明度淡入淡出；隐藏时不拦截播放器点击 */}
+                <div className={`absolute inset-0 bg-black/85 backdrop-blur-sm rounded-xl overflow-hidden shadow-lg border border-white/0 dark:border-white/30 flex items-center justify-center z-[500] transition-opacity duration-200 ease-[cubic-bezier(.16,1,.3,1)] ${isVideoLoading ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
+                  {isVideoLoading && (
                     <div className='text-center max-w-md mx-auto px-6'>
                       {/* 三种加载款式（旧版那一套各页自备） */}
                       <LoadingStyle
@@ -2717,8 +2717,8 @@ function LivePageClient() {
                         }
                       />
                     </div>
-                  </div>
-                )}
+                  )}
+                </div>
               </div>
 
               {/* 外部播放器按钮 - 观影室同步状态下隐藏 */}
@@ -2925,7 +2925,7 @@ function LivePageClient() {
 
                 {/* 频道 Tab 内容 */}
                 {activeTab === 'channels' && (
-                  <>
+                  <div className='ptv-content-in flex flex-col flex-1 min-h-0'>
                     {/* 搜索框 */}
                     <div className='mb-3 -mx-4 px-4 flex-shrink-0'>
                       <div className='relative'>
@@ -3034,9 +3034,7 @@ function LivePageClient() {
                               <div className='px-1 overflow-hidden whitespace-nowrap' title={group}>
                                 {group}
                               </div>
-                              {selectedGroup === group && !isSwitchingSource && (
-                                <div className='absolute bottom-0 left-0 right-0 h-0.5 bg-green-500 dark:bg-green-400' />
-                              )}
+                              <div className={`absolute bottom-0 left-0 right-0 h-0.5 bg-green-500 dark:bg-green-400 origin-center transition-transform duration-200 ${selectedGroup === group && !isSwitchingSource ? 'scale-x-100' : 'scale-x-0'}`} />
                             </button>
                           ))}
                         </div>
@@ -3059,7 +3057,7 @@ function LivePageClient() {
                                 data-channel-id={channel.id}
                                 onClick={() => handlePlayLines(getItemChannels(item))}
                                 disabled={isSwitchingSource}
-                                className={`w-full p-3 rounded-lg text-left transition-all duration-200 ${isSwitchingSource
+                                className={`w-full p-3 rounded-lg text-left active:scale-[0.97] transition-[transform,background-color,color,border-color] duration-150 ${isSwitchingSource
                                   ? 'opacity-50 cursor-not-allowed'
                                   : isActive
                                     ? 'bg-green-100 dark:bg-green-900/30 border border-green-300 dark:border-green-700'
@@ -3141,7 +3139,7 @@ function LivePageClient() {
                                   handlePlayLines(getItemChannels(item));
                                 }}
                                 disabled={isSwitchingSource}
-                                className={`w-full p-3 rounded-lg text-left transition-all duration-200 ${isSwitchingSource
+                                className={`w-full p-3 rounded-lg text-left active:scale-[0.97] transition-[transform,background-color,color,border-color] duration-150 ${isSwitchingSource
                                   ? 'opacity-50 cursor-not-allowed'
                                   : hasActiveChild
                                     ? 'bg-green-100 dark:bg-green-900/30 border border-green-300 dark:border-green-700'
@@ -3217,14 +3215,14 @@ function LivePageClient() {
                                       }}
                                       className={iconButtonClassName(false, isExpanded)}
                                     >
-                                      {isExpanded ? <ChevronUp className='w-4 h-4' /> : <ChevronDown className='w-4 h-4' />}
+                                      <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''}`} />
                                     </span>
                                   </div>
                                 </div>
                               </button>
 
                               {isExpanded && (
-                                <div className='pl-4 space-y-2'>
+                                <div className='ptv-content-in pl-4 space-y-2'>
                                   {item.channels.map((channel, index) => {
                                     const isActive = channel.id === currentChannel?.id;
                                     const testLabel = getLineTestLabel(channel);
@@ -3237,7 +3235,7 @@ function LivePageClient() {
                                         data-channel-id={channel.id}
                                         onClick={() => handleChannelChange(channel)}
                                         disabled={isSwitchingSource}
-                                        className={`w-full p-3 rounded-lg text-left text-sm transition-all duration-200 ${
+                                        className={`w-full p-3 rounded-lg text-left text-sm active:scale-[0.97] transition-[transform,background-color,color,border-color] duration-150 ${
                                           isSwitchingSource
                                             ? 'opacity-50 cursor-not-allowed'
                                             : isActive
@@ -3315,12 +3313,12 @@ function LivePageClient() {
                         </div>
                       )}
                     </div>
-                  </>
+                  </div>
                 )}
 
                 {/* 直播源 Tab 内容 */}
                 {activeTab === 'sources' && (
-                  <div className='flex flex-col h-full mt-4'>
+                  <div className='ptv-content-in flex flex-col h-full mt-4'>
                     <div className='flex-1 overflow-y-auto space-y-2 pb-20'>
                       {liveSources?.length > 0 ? (
                         liveSources.map((source) => {

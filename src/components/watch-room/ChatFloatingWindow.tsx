@@ -4,6 +4,7 @@
 import { AlertCircle,Check, Copy,Info, Link, LogOut, Maximize2, MessageCircle, Mic, MicOff, Minimize2, Send, Smile, Users, Volume2, VolumeX, X, XCircle } from 'lucide-react';
 import { useEffect, useRef,useState } from 'react';
 
+import { smoothScrollBehavior } from '@/lib/motion';
 import { useVoiceChat } from '@/hooks/useVoiceChat';
 
 import { useWatchRoomContextSafe } from '@/components/WatchRoomProvider';
@@ -60,7 +61,7 @@ export default function ChatFloatingWindow() {
   // 自动滚动到底部
   useEffect(() => {
     if (messagesEndRef.current && watchRoom?.currentRoom) {
-      messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
+      messagesEndRef.current.scrollIntoView({ behavior: smoothScrollBehavior() });
     }
   }, [watchRoom?.chatMessages, watchRoom?.currentRoom]);
 
@@ -122,7 +123,7 @@ export default function ChatFloatingWindow() {
           <button
             onClick={handleReconnect}
             disabled={isReconnecting}
-            className="group relative flex h-14 w-14 items-center justify-center rounded-full bg-red-500 text-white shadow-2xl transition-all hover:scale-110 hover:bg-red-600 disabled:opacity-50 disabled:cursor-not-allowed animate-pulse"
+            className="group relative flex h-14 w-14 items-center justify-center rounded-full bg-red-500 text-white shadow-2xl transition-all hover:scale-110 active:scale-95 hover:bg-red-600 disabled:opacity-50 disabled:cursor-not-allowed motion-safe:animate-pulse"
             aria-label="连接失败，点击重连"
             title="连接失败，点击重连"
           >
@@ -190,7 +191,7 @@ export default function ChatFloatingWindow() {
           <button
             onClick={handleReconnect}
             disabled={isReconnecting}
-            className="group relative flex h-14 w-14 items-center justify-center rounded-full bg-red-500 text-white shadow-2xl transition-all hover:scale-110 hover:bg-red-600 disabled:opacity-50 disabled:cursor-not-allowed animate-pulse"
+            className="group relative flex h-14 w-14 items-center justify-center rounded-full bg-red-500 text-white shadow-2xl transition-all hover:scale-110 active:scale-95 hover:bg-red-600 disabled:opacity-50 disabled:cursor-not-allowed motion-safe:animate-pulse"
             aria-label="连接失败，点击重连"
             title="连接失败，点击重连"
           >
@@ -206,7 +207,7 @@ export default function ChatFloatingWindow() {
         {/* 房间信息按钮 */}
         <button
           onClick={() => setShowRoomInfo(true)}
-          className="flex h-14 w-14 items-center justify-center rounded-full bg-blue-500 text-white shadow-2xl transition-all hover:scale-110 hover:bg-blue-600"
+          className="flex h-14 w-14 items-center justify-center rounded-full bg-blue-500 text-white shadow-2xl transition-all hover:scale-110 active:scale-95 hover:bg-blue-600"
           aria-label="房间信息"
         >
           <Info className="h-6 w-6" />
@@ -215,7 +216,7 @@ export default function ChatFloatingWindow() {
         {/* 聊天按钮 */}
         <button
           onClick={() => setIsOpen(true)}
-          className="relative flex h-14 w-14 items-center justify-center rounded-full bg-green-500 text-white shadow-2xl transition-all hover:scale-110 hover:bg-green-600"
+          className="relative flex h-14 w-14 items-center justify-center rounded-full bg-green-500 text-white shadow-2xl transition-all hover:scale-110 active:scale-95 hover:bg-green-600"
           aria-label="打开聊天"
         >
           <MessageCircle className="h-6 w-6" />
@@ -235,7 +236,7 @@ export default function ChatFloatingWindow() {
       <>
         {/* 背景遮罩 */}
         <div
-          className='fixed inset-0 bg-black/50 backdrop-blur-sm z-[1000]'
+          className='ptv-scrim-in fixed inset-0 bg-black/50 backdrop-blur-sm z-[1000]'
           onClick={() => setShowRoomInfo(false)}
           onTouchMove={(e) => {
             e.preventDefault();
@@ -249,7 +250,7 @@ export default function ChatFloatingWindow() {
         />
 
         {/* 房间信息面板 */}
-        <div className='fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-md bg-white dark:bg-gray-900 rounded-xl shadow-xl z-[1001] overflow-hidden'>
+        <div className='ptv-modal-in fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-md bg-white dark:bg-gray-900 rounded-xl shadow-xl z-[1001] overflow-hidden'>
           <div
             className='h-full p-6'
             data-panel-content
@@ -411,7 +412,7 @@ export default function ChatFloatingWindow() {
           <button
             onClick={handleReconnect}
             disabled={isReconnecting}
-            className="fixed bottom-[13.5rem] right-4 z-[700] group relative flex h-12 w-12 items-center justify-center rounded-full bg-red-500 text-white shadow-2xl transition-all hover:scale-110 hover:bg-red-600 disabled:opacity-50 disabled:cursor-not-allowed animate-pulse md:bottom-[11rem]"
+            className="fixed bottom-[13.5rem] right-4 z-[700] group relative flex h-12 w-12 items-center justify-center rounded-full bg-red-500 text-white shadow-2xl transition-all hover:scale-110 active:scale-95 hover:bg-red-600 disabled:opacity-50 disabled:cursor-not-allowed motion-safe:animate-pulse md:bottom-[11rem]"
             aria-label="连接失败，点击重连"
             title="连接失败，点击重连"
           >
@@ -427,7 +428,7 @@ export default function ChatFloatingWindow() {
         {/* 房间信息按钮 */}
         <button
           onClick={() => setShowRoomInfo(true)}
-          className="fixed bottom-36 right-4 z-[700] flex h-12 w-12 items-center justify-center rounded-full bg-blue-500 text-white shadow-2xl transition-all hover:scale-110 hover:bg-blue-600 md:bottom-20"
+          className="fixed bottom-36 right-4 z-[700] flex h-12 w-12 items-center justify-center rounded-full bg-blue-500 text-white shadow-2xl transition-all hover:scale-110 active:scale-95 hover:bg-blue-600 md:bottom-20"
           aria-label="房间信息"
         >
           <Info className="h-5 w-5" />
@@ -464,7 +465,7 @@ export default function ChatFloatingWindow() {
         <button
           onClick={handleReconnect}
           disabled={isReconnecting}
-          className="fixed bottom-[32.5rem] right-4 z-[700] group relative flex h-12 w-12 items-center justify-center rounded-full bg-red-500 text-white shadow-2xl transition-all hover:scale-110 hover:bg-red-600 disabled:opacity-50 disabled:cursor-not-allowed animate-pulse md:bottom-[30rem]"
+          className="fixed bottom-[32.5rem] right-4 z-[700] group relative flex h-12 w-12 items-center justify-center rounded-full bg-red-500 text-white shadow-2xl transition-all hover:scale-110 active:scale-95 hover:bg-red-600 disabled:opacity-50 disabled:cursor-not-allowed motion-safe:animate-pulse md:bottom-[30rem]"
           aria-label="连接失败，点击重连"
           title="连接失败，点击重连"
         >
@@ -480,14 +481,14 @@ export default function ChatFloatingWindow() {
       {/* 房间信息按钮 */}
       <button
         onClick={() => setShowRoomInfo(true)}
-        className="fixed bottom-[30rem] right-4 z-[700] flex h-12 w-12 items-center justify-center rounded-full bg-blue-500 text-white shadow-2xl transition-all hover:scale-110 hover:bg-blue-600 md:bottom-[28rem]"
+        className="fixed bottom-[30rem] right-4 z-[700] flex h-12 w-12 items-center justify-center rounded-full bg-blue-500 text-white shadow-2xl transition-all hover:scale-110 active:scale-95 hover:bg-blue-600 md:bottom-[28rem]"
         aria-label="房间信息"
       >
         <Info className="h-5 w-5" />
       </button>
 
       {/* 聊天窗口 */}
-      <div className="fixed bottom-20 right-4 z-[700] flex w-80 flex-col rounded-2xl bg-gray-800 shadow-2xl md:bottom-4 md:w-96">
+      <div className="ptv-modal-in origin-bottom-right fixed bottom-20 right-4 z-[700] flex w-80 flex-col rounded-2xl bg-gray-800 shadow-2xl md:bottom-4 md:w-96">
       {/* 头部 */}
       <div className="rounded-t-2xl bg-green-500">
         {/* 第一行: 标题和窗口控制 */}
@@ -586,7 +587,7 @@ export default function ChatFloatingWindow() {
         ) : (
           <>
             {chatMessages.map((msg) => (
-              <div key={msg.id} className="flex flex-col gap-1">
+              <div key={msg.id} className="ptv-fade-in flex flex-col gap-1">
                 <div className="flex items-baseline gap-2">
                   <span className="text-xs font-medium text-green-400">{msg.userName}</span>
                   <span className="text-xs text-gray-500">{formatTime(msg.timestamp)}</span>
@@ -611,7 +612,7 @@ export default function ChatFloatingWindow() {
       <div className="border-t border-gray-700 p-3">
         {/* 表情选择器 */}
         {showEmojiPicker && (
-          <div className="mb-2 grid grid-cols-6 gap-2 rounded-lg bg-gray-700 p-2">
+          <div className="ptv-pop-in origin-bottom mb-2 grid grid-cols-6 gap-2 rounded-lg bg-gray-700 p-2">
             {EMOJI_LIST.map((emoji) => (
               <button
                 key={emoji}

@@ -2,6 +2,8 @@
 
 import React, { useEffect, useRef, useState } from 'react';
 
+import { smoothScrollBehavior } from '@/lib/motion';
+
 interface CapsuleSwitchProps {
   options: { label: string; value: string; icon?: React.ReactNode }[];
   active: string;
@@ -48,10 +50,12 @@ const CapsuleSwitch: React.FC<CapsuleSwitchProps> = ({
         const buttonOffsetLeft = button.offsetLeft;
         const buttonWidth = button.offsetWidth;
 
-        setIndicatorStyle({
-          left: buttonOffsetLeft,
-          width: buttonWidth,
-        });
+        // 位置未变化时复用旧对象，避免滚动事件触发无效重渲染
+        setIndicatorStyle((prev) =>
+          prev.left === buttonOffsetLeft && prev.width === buttonWidth
+            ? prev
+            : { left: buttonOffsetLeft, width: buttonWidth }
+        );
 
         // 只在需要自动滚动时才执行
         if (autoScroll && !isScrollingRef.current) {
@@ -69,7 +73,7 @@ const CapsuleSwitch: React.FC<CapsuleSwitchProps> = ({
               buttonWidth / 2;
             scrollContainer.scrollTo({
               left: scrollToPosition,
-              behavior: 'smooth',
+              behavior: smoothScrollBehavior(),
             });
           }
         }
@@ -196,9 +200,9 @@ const CapsuleSwitch: React.FC<CapsuleSwitchProps> = ({
         {/* 滑动的白色背景指示器 */}
         {indicatorStyle.width > 0 && (
           <div
-            className='absolute top-0 bottom-0 bg-white dark:bg-gray-500 rounded-full shadow-sm transition-all duration-300 ease-out pointer-events-none'
+            className='absolute left-0 top-0 bottom-0 bg-white dark:bg-gray-500 rounded-full shadow-sm transition-[transform,width] duration-[260ms] ease-[cubic-bezier(.16,1,.3,1)] pointer-events-none'
             style={{
-              left: `${indicatorStyle.left}px`,
+              transform: `translateX(${indicatorStyle.left}px)`,
               width: `${indicatorStyle.width}px`,
             }}
           />

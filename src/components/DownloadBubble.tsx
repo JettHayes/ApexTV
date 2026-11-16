@@ -126,7 +126,7 @@ export function DownloadBubble() {
           cursor: isDragging ? 'grabbing' : 'grab',
           touchAction: 'none',
         }}
-        className='relative group bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white rounded-full p-4 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-110'
+        className='relative group bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white rounded-full p-4 shadow-lg hover:shadow-xl transition-transform duration-200 hover:scale-105 active:scale-95'
       >
         {/* 下载图标 */}
         <svg
@@ -145,13 +145,13 @@ export function DownloadBubble() {
 
         {/* 下载中数量徽章 */}
         {downloadingCount > 0 && (
-          <div className='absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full w-6 h-6 flex items-center justify-center animate-pulse'>
+          <div className='absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full w-6 h-6 flex items-center justify-center motion-safe:animate-pulse'>
             {downloadingCount}
           </div>
         )}
 
         {/* 悬停提示 */}
-        <div className='absolute bottom-full right-0 mb-2 hidden group-hover:block'>
+        <div className='absolute bottom-full right-0 mb-2 invisible opacity-0 transition-opacity duration-150 group-hover:visible group-hover:opacity-100'>
           <div className='bg-gray-900 text-white text-sm rounded-lg py-2 px-3 whitespace-nowrap'>
             {downloadingCount > 0 ? `${downloadingCount} 个任务下载中` : '查看下载任务'}
             <div className='absolute top-full right-4 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-900'></div>

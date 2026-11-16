@@ -86,17 +86,20 @@ const AlertModal = ({
   onConfirm,
   showConfirm = false,
 }: AlertModalProps) => {
-  const [isVisible, setIsVisible] = useState(false);
+  // 关闭时延迟 160ms 卸载，让退出动画（ptv-modal-out / ptv-scrim-out）播完
+  const [mounted, setMounted] = useState(isOpen);
 
   useEffect(() => {
     if (isOpen) {
-      setIsVisible(true);
-    } else {
-      setIsVisible(false);
+      setMounted(true);
+      return undefined;
     }
+    const timer = window.setTimeout(() => setMounted(false), 160);
+    return () => window.clearTimeout(timer);
   }, [isOpen]);
 
-  if (!isOpen) return null;
+  if (!mounted) return null;
+  const closing = !isOpen;
 
   const icons = {
     success: <AlertCircle className="w-12 h-12 text-green-500" />,
@@ -106,16 +109,20 @@ const AlertModal = ({
   };
 
   return createPortal(
-    <div className="fixed inset-0 z-[9999] flex items-center justify-center">
+    <div
+      className={`fixed inset-0 z-[9999] flex items-center justify-center ${
+        closing ? 'pointer-events-none' : ''
+      }`}
+    >
       <div
-        className={`absolute inset-0 bg-black transition-opacity duration-300 ${
-          isVisible ? 'opacity-50' : 'opacity-0'
+        className={`absolute inset-0 bg-black opacity-50 ${
+          closing ? 'ptv-scrim-out' : 'ptv-scrim-in'
         }`}
         onClick={onClose}
       />
       <div
-        className={`relative bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full mx-4 p-6 transition-all duration-300 ${
-          isVisible ? 'opacity-100 scale-100' : 'opacity-0 scale-95'
+        className={`relative bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full mx-4 p-6 ${
+          closing ? 'ptv-modal-out' : 'ptv-modal-in'
         }`}
       >
         <div className="flex flex-col items-center text-center">
