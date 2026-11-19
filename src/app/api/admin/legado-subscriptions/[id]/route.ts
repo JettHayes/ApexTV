@@ -25,8 +25,8 @@ export async function DELETE(request: NextRequest, context: { params: Promise<{ 
     const config = await getConfig();
     const opds = config.OPDSConfig || { Enabled: false, Sources: [], LegadoSubscriptions: [], CacheTTL: 10 * 60 * 1000 };
     const nextConfig = { ...config, OPDSConfig: { ...opds, LegadoSubscriptions: (opds.LegadoSubscriptions || []).filter((item) => item.id !== id) } };
+    await db.saveAdminConfig(nextConfig, config);
     await legadoSubscriptionStore.delete(id);
-    await db.saveAdminConfig(nextConfig);
     await setCachedConfig(nextConfig);
     return NextResponse.json({ success: true });
   } catch (error) {

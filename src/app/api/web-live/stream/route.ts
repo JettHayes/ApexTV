@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 
 import { getConfig } from '@/lib/config';
 import { requireFeaturePermission } from '@/lib/permissions';
-import { normalizeWebLiveRoomId, type WebLivePlayback, type WebLiveSource, webLiveImageUrl } from '@/lib/web-live';
+import { isWebLivePlatformEnabled, normalizeWebLiveRoomId, type WebLivePlayback, type WebLiveSource, webLiveImageUrl } from '@/lib/web-live';
 import { resolveWebLiveEmbed } from '@/lib/web-live-embeds';
 import { resolveWebLivePlatform } from '@/lib/web-live-resolvers';
 import { fetchPublicMedia, validatePublicMediaUrl, webLiveProxyUrl } from '@/lib/web-live-server';
@@ -43,6 +43,7 @@ export async function GET(request: NextRequest) {
   try {
     const params = request.nextUrl.searchParams;
     const platform = params.get('platform')?.trim() || '';
+    if (!isWebLivePlatformEnabled(platform)) return NextResponse.json({ error: '不支持此直播平台' }, { status: 400 });
     let roomId: string;
     try { roomId = normalizeWebLiveRoomId(platform, params.get('roomId') || ''); }
     catch (error) { return NextResponse.json({ error: error instanceof Error ? error.message : '房间参数无效' }, { status: 400 }); }
@@ -75,7 +76,7 @@ export async function GET(request: NextRequest) {
   } catch (error) {
     if (request.signal.aborted) return new NextResponse(null, { status: 499 });
     const message = error instanceof Error ? error.message : '';
-    const safeMessage = /[\u4e00-\u9fff]/.test(message) && !/https?:\/\//i.test(message) ? message : '获取直播信息失败，请稍后重试或前往官方直播间';
+    const safeMessage = /[\u4e00-\u9fff]/.test(message) && !/https?:\/\//i.test(message) ? message : '获取直播信息失败，请稍后重试';
     return NextResponse.json({ error: safeMessage }, { status: 502, headers: { 'Cache-Control': 'no-store' } });
   } finally {
     clearTimeout(timer);

@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 
 import { getConfig } from '@/lib/config';
 import { requireFeaturePermission } from '@/lib/permissions';
-import { normalizeWebLiveRoomId } from '@/lib/web-live';
+import { isWebLivePlatformEnabled, normalizeWebLiveRoomId } from '@/lib/web-live';
 
 export const dynamic = 'force-dynamic'; // 禁用缓存
 
@@ -15,7 +15,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json([]);
     }
 
-    const sources = config.WebLiveConfig.filter(s => !s.disabled).map((source) => {
+    const sources = config.WebLiveConfig.filter(s => !s.disabled && isWebLivePlatformEnabled(s.platform)).map((source) => {
       try { return { ...source, name: source.name.trim(), roomId: normalizeWebLiveRoomId(source.platform, source.roomId) }; }
       catch { return { ...source, roomId: source.roomId.trim() }; }
     });

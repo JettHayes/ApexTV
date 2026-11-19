@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, no-console, @typescript-eslint/no-non-null-assertion */
 
 import { db } from '@/lib/db';
+import { removeUnsupportedLiveSources, trackAdminConfig } from '@/lib/admin-config-snapshot';
 import { DEFAULT_SITE_NAME, resolveSiteName } from '@/lib/site-brand';
 import { normalizeApiBaseUrl } from '@/lib/url';
 
@@ -445,14 +446,15 @@ async function getInitConfig(
 }
 
 export async function getConfig(): Promise<AdminConfig> {
-  // 直接使用内存缓存
-  if (cachedConfig) {
-    return cachedConfig;
+  // 数据库存储不能复用实例内永久快照：Vercel 各实例的快照互不失效。
+  if (cachedConfig && (process.env.NEXT_PUBLIC_STORAGE_TYPE || 'localstorage') === 'localstorage') {
+    return trackAdminConfig(structuredClone(cachedConfig), cachedConfig);
   }
 
   // 如果正在初始化，等待初始化完成
   if (configInitPromise) {
-    return configInitPromise;
+    const config = await configInitPromise;
+    return trackAdminConfig(structuredClone(config), config);
   }
 
   // 创建初始化 Promise
@@ -481,15 +483,18 @@ export async function getConfig(): Promise<AdminConfig> {
     // db 中无配置，执行一次初始化
     if (!adminConfig) {
       if (dbReadFailed) {
-        // 数据库读取失败，使用默认配置但不保存，避免覆盖数据库
-        console.warn('数据库读取失败，使用临时默认配置（不会保存到数据库）');
-        adminConfig = await getInitConfig('');
+        // 读取失败不能伪装成空配置，否则后续编辑可能覆盖真实数据。
+        throw new Error('管理员配置读取失败，请稍后重试');
       } else {
         // 数据库中确实没有配置，首次初始化并保存
         console.log('首次初始化配置');
         adminConfig = await getInitConfig('');
         await db.saveAdminConfig(adminConfig);
       }
+    }
+
+    if (adminConfig.WebLiveConfig?.some((source) => source.platform === 'kuaishou')) {
+      adminConfig = await db.updateAdminConfig((latest) => { removeUnsupportedLiveSources(latest); });
     }
 
     // 检查是否有旧格式Emby配置需要迁移
@@ -537,10 +542,15 @@ export async function getConfig(): Promise<AdminConfig> {
 
     // 清除初始化 Promise
     configInitPromise = null;
-    return cachedConfig;
+    return adminConfig;
   })();
 
-  return configInitPromise;
+  const pending = configInitPromise;
+  try {
+    const config = await pending;
+    return trackAdminConfig(structuredClone(config), config);
+  }
+  finally { if (configInitPromise === pending) configInitPromise = null; }
 }
 
 export function configSelfCheck(adminConfig: AdminConfig): AdminConfig {

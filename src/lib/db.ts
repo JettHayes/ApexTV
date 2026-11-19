@@ -1,6 +1,7 @@
 /* eslint-disable no-console, @typescript-eslint/no-explicit-any, @typescript-eslint/no-non-null-assertion */
 
 import { AdminConfig } from './admin.types';
+import { getAdminConfigSnapshot, mergeAdminConfig, removeUnsupportedLiveSources, trackAdminConfig } from './admin-config-snapshot';
 import { MusicPlayRecord } from './db.client';
 import { MangaReadRecord, MangaShelfItem } from './manga.types';
 import { BookReadRecord, BookShelfItem } from './book.types';
@@ -1029,15 +1030,44 @@ export class DbManager {
   // ---------- 管理员配置 ----------
   async getAdminConfig(): Promise<AdminConfig | null> {
     if (typeof (this.storage as any).getAdminConfig === 'function') {
-      return (this.storage as any).getAdminConfig();
+      const config = await (this.storage as any).getAdminConfig();
+      return config ? trackAdminConfig(config) : null;
     }
     return null;
   }
 
-  async saveAdminConfig(config: AdminConfig): Promise<void> {
-    if (typeof (this.storage as any).setAdminConfig === 'function') {
-      await (this.storage as any).setAdminConfig(config);
+  async saveAdminConfig(config: AdminConfig, origin?: AdminConfig): Promise<void> {
+    const base = getAdminConfigSnapshot(origin || config);
+    if (base) {
+      const desired = structuredClone(config);
+      const saved = await this.updateAdminConfig((latest) => {
+        const merged = removeUnsupportedLiveSources(mergeAdminConfig(base, desired, latest));
+        for (const key of Object.keys(latest)) delete (latest as any)[key];
+        Object.assign(latest, merged);
+      });
+      for (const key of Object.keys(config)) delete (config as any)[key];
+      Object.assign(config, saved);
+      trackAdminConfig(config);
+      return;
     }
+    if (typeof (this.storage as any).setAdminConfig !== 'function') throw new Error('当前存储不支持保存管理员配置');
+    removeUnsupportedLiveSources(config);
+    await (this.storage as any).setAdminConfig(config);
+    trackAdminConfig(config);
+  }
+
+  async updateAdminConfig(update: (config: AdminConfig) => void): Promise<AdminConfig> {
+    if (typeof (this.storage as any).updateAdminConfig === 'function') {
+      const saved = await (this.storage as any).updateAdminConfig((config: AdminConfig) => { update(config); removeUnsupportedLiveSources(config); });
+      return trackAdminConfig(saved);
+    }
+    const config = await this.getAdminConfig();
+    if (!config) throw new Error('配置不存在，请刷新页面');
+    update(config);
+    removeUnsupportedLiveSources(config);
+    if (typeof (this.storage as any).setAdminConfig !== 'function') throw new Error('当前存储不支持保存管理员配置');
+    await (this.storage as any).setAdminConfig(config);
+    return trackAdminConfig(config);
   }
 
   // ---------- 本地设置云同步 ----------

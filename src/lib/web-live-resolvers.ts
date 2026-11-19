@@ -146,7 +146,7 @@ async function bilibili(roomId: string, signal?: AbortSignal): Promise<WebLivePl
   formats.sort((a, b) => (a.codec.codec_name === 'avc' ? 0 : 1) - (b.codec.codec_name === 'avc' ? 0 : 1) || (Number(b.codec.current_qn) || 0) - (Number(a.codec.current_qn) || 0) || (a.format === 'ts' ? 0 : a.format === 'fmp4' ? 1 : 2) - (b.format === 'ts' ? 0 : b.format === 'fmp4' ? 1 : 2));
   const variants: WebLiveVariant[] = [];
   const perQuality: Record<string, number> = {};
-  for (const { format, codec } of formats) for (const [index, item] of (codec.url_info || []).slice(0, 3).entries()) {
+  for (const { format, codec } of formats) for (const [index, item] of (codec.url_info || []).slice(0, 3).map((item: any, index: number) => [index, item] as const)) {
     const url = `${item.host || ''}${codec.base_url || ''}${item.extra || ''}`;
     if (!/^https?:\/\//i.test(url)) continue;
     const type = format === 'flv' ? 'flv' : 'hls';
@@ -198,7 +198,20 @@ async function douyin(roomId: string, signal?: AbortSignal): Promise<WebLivePlay
 
 async function douyu(roomId: string, signal?: AbortSignal): Promise<WebLivePlayback> {
   const h = headers('https://www.douyu.com/');
-  const metadata = await json(`https://www.douyu.com/betard/${encodeURIComponent(roomId)}`, signal, { headers: h });
+  let lookupId = roomId;
+  let metadataText = (await request(`https://www.douyu.com/betard/${encodeURIComponent(lookupId)}`, signal, { headers: h })).text;
+  let metadata: any;
+  try { metadata = JSON.parse(metadataText); } catch { /* The vanity-room endpoint may return HTML. */ }
+  if (!metadata?.room) {
+    // Short vanity room numbers are not accepted by betard or the playback API.
+    const page = (await request(`https://www.douyu.com/${encodeURIComponent(roomId)}`, signal, { headers: h })).text;
+    const canonical = page.match(/\broomID\s*:\s*(\d+)/i)?.[1];
+    if (!canonical || canonical === lookupId) throw new Error('斗鱼未返回房间信息，请确认房间可访问');
+    lookupId = canonical;
+    metadataText = (await request(`https://www.douyu.com/betard/${encodeURIComponent(lookupId)}`, signal, { headers: h })).text;
+  }
+  try { metadata = JSON.parse(metadataText); } catch { throw new Error('斗鱼未返回有效的房间信息'); }
+  if (metadata.error != null && metadata.error !== 0) throw new Error('斗鱼房间信息获取失败');
   const room = metadata.room;
   if (!room) throw new Error('获取斗鱼房间信息失败');
   if (Number(room.show_status) !== 1) throw new Error('直播未开启');
@@ -245,44 +258,6 @@ async function douyu(roomId: string, signal?: AbortSignal): Promise<WebLivePlayb
   return result(variants, { name: room.nickname, title: room.room_name, avatar: image(room.avatar), cover: image(room.room_src), category: room.cate_name, roomId: rid, anchorId: room.owner_uid != null ? String(room.owner_uid) : undefined, liveStatus: 'live', qualityNote: '画质以平台返回的访客权限为准' });
 }
 
-async function kuaishou(roomId: string, signal?: AbortSignal): Promise<WebLivePlayback> {
-  const page = (await request(`https://live.kuaishou.com/u/${encodeURIComponent(roomId)}`, signal, { headers: { ...headers('https://live.kuaishou.com/'), 'Accept-Language': 'zh-CN,zh;q=0.9' } })).text;
-  const marker = /\{\s*"liveStream"\s*:/g;
-  let match: RegExpExecArray | null;
-  let live: any;
-  while ((match = marker.exec(page))) {
-    const object = balancedObject(page, match.index);
-    if (!object) continue;
-    try {
-      const value = JSON.parse(object);
-      if (value.liveStream) { live = value; break; }
-    } catch { /* Ignore unrelated or incomplete state. */ }
-  }
-  if (!live) throw new Error('快手未返回可解析的公开直播数据，可能需要平台验证');
-  const stream = live.liveStream;
-  const playUrls = stream.playUrls;
-  const groups = [playUrls?.h264, playUrls?.hls, ...(Array.isArray(playUrls) ? playUrls : [])].filter(Boolean);
-  const variants: WebLiveVariant[] = [];
-  const seenUrls = new Set<string>();
-  if (typeof stream.hlsPlayUrl === 'string' && /^https?:\/\//i.test(stream.hlsPlayUrl)) {
-    seenUrls.add(stream.hlsPlayUrl);
-    variants.push({ id: 'kuaishou-hls', label: 'HLS', url: stream.hlsPlayUrl, type: 'hls' });
-  }
-  for (const group of groups) {
-    const sets = Array.isArray(group.adaptationSet) ? group.adaptationSet : [group.adaptationSet];
-    for (const set of sets) for (const item of (Array.isArray(set?.representation) ? set.representation : [])) {
-      if (typeof item.url !== 'string' || !/^https?:\/\//i.test(item.url) || seenUrls.has(item.url)) continue;
-      const path = new URL(item.url).pathname.toLowerCase();
-      const type = path.endsWith('.m3u8') || group === playUrls?.hls ? 'hls' : 'flv';
-      const quality = Number(item.bitrate) || 0;
-      seenUrls.add(item.url);
-      variants.push({ id: `kuaishou-${variants.length}`, label: item.name || item.qualityType || (quality ? `${quality} bps` : `线路${variants.length + 1}`), url: item.url, type, quality });
-    }
-  }
-  variants.sort((a, b) => (a.type === 'hls' ? 0 : 1) - (b.type === 'hls' ? 0 : 1) || (b.quality || 0) - (a.quality || 0));
-  return result(variants.slice(0, 8), { name: live.author?.name, avatar: image(live.author?.headUrl) || image(live.author?.avatar), title: stream.caption, cover: image(stream.coverUrl), roomId, anchorId: roomId, liveStatus: 'live', qualityNote: '画质以平台返回的访客权限为准' });
-}
-
 export async function resolveWebLivePlatform(platform: string, roomId: string, signal?: AbortSignal): Promise<WebLivePlayback> {
   if (!roomId || roomId.length > 128 || !/^[a-zA-Z0-9_-]+$/.test(roomId)) throw new Error('直播间 ID 无效');
   switch (platform) {
@@ -290,7 +265,6 @@ export async function resolveWebLivePlatform(platform: string, roomId: string, s
     case 'bilibili': return bilibili(roomId, signal);
     case 'douyin': return douyin(roomId, signal);
     case 'douyu': return douyu(roomId, signal);
-    case 'kuaishou': return kuaishou(roomId, signal);
     default: throw new Error('不支持的平台');
   }
 }

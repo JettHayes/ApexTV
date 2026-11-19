@@ -3,6 +3,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 import { AdminConfigResult } from '@/lib/admin.types';
+import { adminConfigVersion } from '@/lib/admin-config-version';
 import { getAuthInfoFromCookie } from '@/lib/auth';
 import { getConfig } from '@/lib/config';
 
@@ -30,6 +31,7 @@ export async function GET(request: NextRequest) {
     const result: AdminConfigResult = {
       Role: 'owner',
       Config: config,
+      Revision: adminConfigVersion(config),
     };
     if (username === process.env.USERNAME) {
       result.Role = 'owner';
@@ -82,6 +84,8 @@ export async function POST(request: NextRequest) {
 
   try {
     const newConfig = await request.json();
+    const revision = request.headers.get('if-match')?.replace(/^"|"$/g, '');
+    if (!revision) return NextResponse.json({ error: '页面配置版本已过期，请刷新后重新保存' }, { status: 428 });
 
     // 权限检查
     if (username !== process.env.USERNAME) {
@@ -95,19 +99,20 @@ export async function POST(request: NextRequest) {
 
     // 保存配置
     const { db } = await import('@/lib/db');
-    const { configSelfCheck, setCachedConfig } = await import('@/lib/config');
+    const { configSelfCheck } = await import('@/lib/config');
 
     // 自检配置
     const checkedConfig = configSelfCheck(newConfig);
 
-    // 保存到数据库
-    await db.saveAdminConfig(checkedConfig);
-
-    // 更新缓存
-    await setCachedConfig(checkedConfig);
+    await db.updateAdminConfig((latest) => {
+      if (adminConfigVersion(configSelfCheck(structuredClone(latest))) !== revision) throw new Error('CONFIG_VERSION_CONFLICT');
+      for (const key of Object.keys(latest)) delete (latest as any)[key];
+      Object.assign(latest, checkedConfig);
+    });
 
     return NextResponse.json({ success: true, message: '配置已保存' });
   } catch (error) {
+    if (error instanceof Error && error.message === 'CONFIG_VERSION_CONFLICT') return NextResponse.json({ error: '配置已被其他操作修改，请刷新后重新保存' }, { status: 409 });
     console.error('保存配置失败:', error);
     return NextResponse.json(
       { error: '保存配置失败: ' + (error as Error).message },

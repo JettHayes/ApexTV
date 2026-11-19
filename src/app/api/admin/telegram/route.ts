@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import type { AdminConfig } from '@/lib/admin.types';
 import { getAuthInfoFromCookie } from '@/lib/auth';
 import { getConfig } from '@/lib/config';
-import { getStorage } from '@/lib/db';
+import { db, getStorage } from '@/lib/db';
 import { getTelegramConfig, sendTelegramMessage, setTelegramBotCommands, setTelegramWebhook, TelegramApiError } from '@/lib/telegram';
 
 export const runtime = 'nodejs';
@@ -154,6 +154,6 @@ export async function POST(request: NextRequest) {
   if (telegramConfig.webhookSecret === '******') telegramConfig.webhookSecret = oldConfig?.webhookSecret || '';
 
   adminConfig.TelegramConfig = telegramConfig;
-  await auth.storage.setAdminConfig(adminConfig);
+  await db.saveAdminConfig(adminConfig);
   return NextResponse.json({ success: true, message: 'Telegram 配置保存成功' });
 }

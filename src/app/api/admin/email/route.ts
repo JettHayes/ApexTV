@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import type { AdminConfig } from '@/lib/admin.types';
 import { getAuthInfoFromCookie } from '@/lib/auth';
 import { getConfig } from '@/lib/config';
-import { getStorage } from '@/lib/db';
+import { db, getStorage } from '@/lib/db';
 import { EmailService } from '@/lib/email.service';
 
 export const runtime = 'nodejs';
@@ -171,7 +171,7 @@ export async function POST(request: NextRequest) {
 
       // 更新配置
       adminConfig.EmailConfig = emailConfig;
-      await storage.setAdminConfig(adminConfig);
+      await db.saveAdminConfig(adminConfig);
 
       return NextResponse.json({ success: true, message: '邮件配置保存成功' });
     }

@@ -140,5 +140,5 @@ export function readMediaTicket(value: string, username: string): MediaTicket {
 }
 
 export function platformReferer(platform: string): string {
-  return ({ huya: 'https://www.huya.com/', bilibili: 'https://live.bilibili.com/', douyin: 'https://live.douyin.com/', douyu: 'https://www.douyu.com/', kuaishou: 'https://live.kuaishou.com/' } as Record<string, string>)[platform] || '';
+  return ({ huya: 'https://www.huya.com/', bilibili: 'https://live.bilibili.com/', douyin: 'https://live.douyin.com/', douyu: 'https://www.douyu.com/' } as Record<string, string>)[platform] || '';
 }

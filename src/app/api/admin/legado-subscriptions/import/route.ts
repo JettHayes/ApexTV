@@ -27,7 +27,7 @@ export async function POST(request: NextRequest) {
     const meta = await legadoSubscriptionStore.sync({ name, url });
     const config = await getConfig();
     const nextConfig = legadoSubscriptionStore.mergeMeta(config, meta);
-    await db.saveAdminConfig(nextConfig);
+    await db.saveAdminConfig(nextConfig, config);
     await setCachedConfig(nextConfig);
     return NextResponse.json({ success: true, subscription: meta });
   } catch (error) {

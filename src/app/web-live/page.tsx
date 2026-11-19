@@ -5,7 +5,8 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 
 import { useWebLiveSync } from '@/hooks/useWebLiveSync';
-import { getWebLiveRoomUrl, type WebLivePlayback, type WebLiveRoomInfo, type WebLiveSource, webLivePlatformName } from '@/lib/web-live';
+import { getWebLiveRoomUrl, type WebLivePlayback, type WebLiveRoomInfo, type WebLiveSource, type WebLiveVariant, webLivePlatformName } from '@/lib/web-live';
+import { chooseVariant, qualityName, qualityOptions, resolveVariant, type WebLivePreference } from '@/lib/web-live-variants';
 
 import LiveTabs from '@/components/LiveTabs';
 import LoadingStyle, {
@@ -15,6 +16,7 @@ import LoadingStyle, {
 import PageLayout from '@/components/PageLayout';
 import WebLiveRoomDetails, { WebLiveAvatar } from '@/components/WebLiveRoomInfo';
 import WebLivePlayer from '@/components/WebLivePlayer';
+import WebLivePlatformIcon from '@/components/WebLivePlatformIcon';
 
 
 /* 初始化加载动画（后台「个性化配置 → 初始化加载样式」可切换旧版/方格/魔法阵）。
@@ -53,6 +55,8 @@ export default function WebLivePage() {
   const [currentSource, setCurrentSource] = useState<WebLiveSource | null>(null);
   const [playback, setPlayback] = useState<WebLivePlayback | null>(null);
   const [selectedVariant, setSelectedVariant] = useState('');
+  const [selectionNotice, setSelectionNotice] = useState('');
+  const preferenceRef = useRef<WebLivePreference | null>(null);
   const retryCountRef = useRef(0);
   const originalVideoUrl = playback?.originalUrl || '';
   const [streamInfo, setStreamInfo] = useState<WebLiveRoomInfo | null>(null);
@@ -161,7 +165,10 @@ export default function WebLivePage() {
   }, []);
 
   const handleSourceClick = async (source: WebLiveSource, automatic = false) => {
-    if (!automatic) retryCountRef.current = 0;
+    if (!automatic) {
+      retryCountRef.current = 0;
+      if (source.key !== currentSource?.key) preferenceRef.current = null;
+    }
     streamRequestRef.current?.abort();
     const controller = new AbortController();
     streamRequestRef.current = controller;
@@ -178,7 +185,21 @@ export default function WebLivePage() {
 
     try {
       const query = new URLSearchParams({ platform: source.platform, roomId: source.roomId, sourceKey: source.key });
-      const response = await fetch(`/api/web-live/stream?${query}`, { signal: controller.signal });
+      let response = await fetch(`/api/web-live/stream?${query}`, { signal: controller.signal });
+      if (response.status === 404) {
+        const refreshed = await fetch('/api/web-live/sources', { signal: controller.signal });
+        if (refreshed.ok) {
+          const updatedSources: WebLiveSource[] = await refreshed.json();
+          if (controller.signal.aborted) return;
+          setSources(updatedSources);
+          const updated = updatedSources.find((item) => item.key === source.key && !item.disabled);
+          if (!updated) throw new Error('直播源已不存在或已停用，请选择其他房间');
+          setCurrentSource(updated);
+          query.set('platform', updated.platform);
+          query.set('roomId', updated.roomId);
+          response = await fetch(`/api/web-live/stream?${query}`, { signal: controller.signal });
+        }
+      }
       const data = await response.json();
       if (controller.signal.aborted) return;
       if (!response.ok) throw new Error(data.error || '获取直播流失败');
@@ -186,7 +207,12 @@ export default function WebLivePage() {
       setPlayback(result);
       setStreamInfo(result);
       const variants = result.variants || [];
-      setSelectedVariant(variants[0]?.id || '');
+      const preference = preferenceRef.current;
+      const { selected: preferred, fallback } = resolveVariant(variants, preference);
+      setSelectedVariant(preferred?.id || '');
+      setSelectionNotice(fallback
+        ? '原画质或线路暂不可用，已切换到当前可用选项。' : '');
+      if (preferred) preferenceRef.current = { quality: qualityName(preferred), cdn: preferred.cdn, type: preferred.type };
     } catch (error) {
       if (!controller.signal.aborted) setErrorMessage(error instanceof Error ? error.message : '获取直播流失败');
     } finally {
@@ -205,6 +231,19 @@ export default function WebLivePage() {
 
   const getRoomUrl = (source: WebLiveSource) => getWebLiveRoomUrl(source.platform, source.roomId);
   const variant = playback?.variants?.find((item) => item.id === selectedVariant);
+  const variants = playback?.variants || [];
+  const qualities = qualityOptions(variants);
+  const qualityVariants = variant ? variants.filter((item) => qualityName(item) === qualityName(variant)) : [];
+  const cdns = Array.from(new Set(qualityVariants.map((item) => item.cdn || '')));
+  const protocols = qualityVariants.filter((item) => (item.cdn || '') === (variant?.cdn || ''));
+  const selectVariant = (item: WebLiveVariant | undefined, notice = '') => {
+    if (!item) return;
+    retryCountRef.current = 0;
+    setErrorMessage(null);
+    setSelectionNotice(notice);
+    preferenceRef.current = { quality: qualityName(item), cdn: item.cdn, type: item.type };
+    setSelectedVariant(item.id);
+  };
 
   const platforms = Array.from(new Set(sources.map(s => s.platform)));
 
@@ -452,21 +491,39 @@ export default function WebLivePage() {
               {currentSource && (
                 <WebLiveRoomDetails source={currentSource} info={streamInfo} loading={isVideoLoading} error={!!errorMessage} />
               )}
-              {currentSource && (errorMessage || playback?.kind === 'embed') && getRoomUrl(currentSource) && (
-                <div className='px-4 pb-3'>
-                  <a href={getRoomUrl(currentSource)} target='_blank' rel='noopener noreferrer' className='text-sm underline'>{currentSource.platform === 'custom' ? '打开直播源' : '在官方平台观看'}</a>
-                </div>
-              )}
               {playback?.kind === 'stream' && (
-                <div className='flex flex-wrap items-center gap-3 px-4 pb-3 text-sm'>
-                  {(playback.variants?.length || 0) > 1 && (
-                    <label>清晰度 / 线路
-                      <select value={selectedVariant} onChange={(event) => { retryCountRef.current = 0; setErrorMessage(null); setSelectedVariant(event.target.value); }} className='ml-2 rounded border border-gray-300 bg-transparent px-2 py-1 dark:border-gray-600'>
-                        {playback.variants?.map((item) => <option key={item.id} value={item.id}>{item.label}{item.cdn ? ` · ${item.cdn}` : ''}</option>)}
-                      </select>
-                    </label>
+                <div className='space-y-2 px-4 pb-3 text-sm'>
+                  {variant && (
+                    <div className='flex flex-wrap items-center gap-3'>
+                      <label>清晰度
+                        <select value={qualityName(variant)} onChange={(event) => {
+                          const next = chooseVariant(variants, event.target.value, variant.cdn, variant.type);
+                          selectVariant(next, next && (next.cdn !== variant.cdn || next.type !== variant.type) ? '该画质没有当前线路或协议，已选择可用选项。' : '');
+                        }} className='ml-2 min-h-[44px] rounded border border-gray-300 bg-transparent px-2 dark:border-gray-600'>
+                          {qualities.map((quality) => <option key={quality} value={quality}>{quality}</option>)}
+                        </select>
+                      </label>
+                      {cdns.length > 1 && <label>线路
+                        <select value={variant.cdn || ''} onChange={(event) => {
+                          const next = chooseVariant(qualityVariants.filter((item) => (item.cdn || '') === event.target.value), qualityName(variant), event.target.value || undefined, variant.type);
+                          selectVariant(next, next && next.type !== variant.type ? '该线路没有当前协议，已选择可用协议。' : '');
+                        }} className='ml-2 min-h-[44px] rounded border border-gray-300 bg-transparent px-2 dark:border-gray-600'>
+                          {cdns.map((cdn, index) => <option key={cdn} value={cdn}>线路 {index + 1}{cdn === 'AL' ? '（阿里云）' : cdn === 'TX' ? '（腾讯云）' : ''}</option>)}
+                        </select>
+                      </label>}
+                      {new Set(protocols.map((item) => item.type)).size > 1 && <details>
+                        <summary className='cursor-pointer py-3'>高级选项</summary>
+                        <label>播放协议
+                          <select value={variant.type} onChange={(event) => selectVariant(protocols.find((item) => item.type === event.target.value))} className='ml-2 min-h-[44px] rounded border border-gray-300 bg-transparent px-2 dark:border-gray-600'>
+                            {Array.from(new Set(protocols.map((item) => item.type))).map((protocol) => <option key={protocol} value={protocol}>{protocol === 'hls' ? 'HLS（手机优先）' : 'FLV（备用方案）'}</option>)}
+                          </select>
+                        </label>
+                      </details>}
+                    </div>
                   )}
-                  {playback.qualityNote && <span>{playback.qualityNote}</span>}
+                  {variant && <p className='text-xs text-gray-500 dark:text-gray-400'>{/\d+M/i.test(qualityName(variant)) ? '画质后的 M 是平台标注的码率，数值越高越吃带宽。' : '画质选项以平台当前向访客开放的结果为准。'}卡顿时先降低画质，再尝试其他线路。高级选项中的 HLS 优先适配手机，FLV 在部分手机上不可用。</p>}
+                  {selectionNotice && <p role='status'>{selectionNotice}</p>}
+                  {playback.qualityNote && <p>{playback.qualityNote}</p>}
                 </div>
               )}
 
@@ -729,15 +786,7 @@ export default function WebLivePage() {
                             className={`w-full flex items-start gap-3 px-2 py-3 rounded-lg bg-gray-200/50 dark:bg-white/10 hover:bg-gray-300/50 dark:hover:bg-white/20 active:scale-[0.97] transition-[transform,background-color,color,border-color] duration-150 cursor-pointer ${webLiveSync.shouldDisableControls ? 'opacity-50 cursor-not-allowed' : ''}`}
                           >
                             <div className='w-12 h-12 bg-gray-200 dark:bg-gray-600 rounded-lg flex items-center justify-center flex-shrink-0 overflow-hidden'>
-                              {platform === 'huya' ? (
-                                <img src='https://hd.huya.com/favicon.ico' alt='虎牙' className='w-8 h-8' />
-                              ) : platform === 'bilibili' ? (
-                                <img src='https://www.bilibili.com/favicon.ico' alt='哔哩哔哩' className='w-8 h-8' />
-                              ) : platform === 'douyin' ? (
-                                <img src='https://lf1-cdn-tos.bytegoofy.com/goofy/ies/douyin_web/public/favicon.ico' alt='抖音' className='w-8 h-8' />
-                              ) : (
-                                <Radio className='w-6 h-6 text-gray-500' />
-                              )}
+                              <WebLivePlatformIcon platform={platform} />
                             </div>
                             <div className='flex-1 min-w-0 text-left'>
                               <div className='text-sm font-medium text-gray-900 dark:text-gray-100 truncate'>

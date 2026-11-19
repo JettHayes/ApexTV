@@ -1888,6 +1888,16 @@ export abstract class BaseRedisStorage implements IStorage {
     );
   }
 
+  async updateAdminConfig(update: (config: AdminConfig) => void): Promise<AdminConfig> {
+    if (!this.adapter.compareAndSet) throw new Error('当前存储不支持安全配置更新');
+    const { updateStoredAdminConfig } = await import('./admin-config-update');
+    return updateStoredAdminConfig(
+      () => this.withRetry(() => this.adapter.get(this.adminConfigKey())),
+      (expected, value) => this.adapter.compareAndSet!(this.adminConfigKey(), expected, value),
+      update
+    );
+  }
+
   // ---------- 本地设置云同步 ----------
   // 使用单个 String key 存完整快照文档（单副本、覆盖式），字段与关系型表逐列对应
   private settingsSyncKey(user: string) {

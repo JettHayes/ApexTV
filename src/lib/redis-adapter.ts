@@ -17,6 +17,7 @@ export interface RedisAdapter {
 
   // String 操作
   set(key: string, value: string): Promise<void>;
+  compareAndSet?(key: string, expected: string, value: string): Promise<boolean>;
   get(key: string): Promise<string | null>;
   del(keys: string | string[]): Promise<number>;
   exists(...keys: string[]): Promise<number>;
@@ -73,6 +74,14 @@ export class StandardRedisAdapter implements RedisAdapter {
   // String 操作
   async set(key: string, value: string): Promise<void> {
     await this.client.set(key, value);
+  }
+
+  async compareAndSet(key: string, expected: string, value: string): Promise<boolean> {
+    const result = await this.client.eval(
+      "if redis.call('GET', KEYS[1]) == ARGV[1] then redis.call('SET', KEYS[1], ARGV[2]); return 1 else return 0 end",
+      { keys: [key], arguments: [expected, value] }
+    );
+    return Number(result) === 1;
   }
 
   async get(key: string): Promise<string | null> {
@@ -196,6 +205,14 @@ export class UpstashRedisAdapter implements RedisAdapter {
   // String 操作
   async set(key: string, value: string): Promise<void> {
     await this.client.set(key, value);
+  }
+
+  async compareAndSet(key: string, expected: string, value: string): Promise<boolean> {
+    const result = await this.client.eval(
+      "if redis.call('GET', KEYS[1]) == ARGV[1] then redis.call('SET', KEYS[1], ARGV[2]); return 1 else return 0 end",
+      [key], [expected, value]
+    );
+    return Number(result) === 1;
   }
 
   async get(key: string): Promise<string | null> {

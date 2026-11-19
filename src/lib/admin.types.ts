@@ -451,6 +451,7 @@ export interface AdminConfig {
 }
 
 export interface AdminConfigResult {
+  Revision?: string;
   Role: 'owner' | 'admin';
   Config: AdminConfig;
 }

@@ -92,6 +92,6 @@ export async function GET(request: NextRequest) {
     return new NextResponse(stream, { status: response.status, headers: outputHeaders });
   } catch {
     cleanup?.();
-    return NextResponse.json({ error: '直播代理请求失败，请刷新线路或前往官方直播间' }, { status: 502 });
+    return NextResponse.json({ error: '直播代理请求失败，请刷新线路后重试' }, { status: 502 });
   }
 }

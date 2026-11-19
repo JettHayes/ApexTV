@@ -75,6 +75,7 @@ import {
 import { createPortal } from 'react-dom';
 
 import { AdminConfig, AdminConfigResult, OpenListExtraSource } from '@/lib/admin.types';
+import { adminConfigSaveError, getAdminConfigVersion, mergePendingOrder, registerAdminConfigVersion } from '@/lib/admin-config-client';
 import { getAuthInfoFromBrowserCookie } from '@/lib/auth';
 import { BookSource } from '@/lib/book.types';
 import {
@@ -82,7 +83,7 @@ import {
   FEATURE_PERMISSION_OPTIONS,
 } from '@/lib/feature-permissions';
 import { MAIN_SOURCE_NAME } from '@/lib/openlist-sources';
-import { WEB_LIVE_PLATFORMS, normalizeWebLiveRoomId, webLivePlatformName } from '@/lib/web-live';
+import { WEB_LIVE_PLATFORMS, isWebLivePlatformEnabled, normalizeWebLiveRoomId, webLivePlatformName } from '@/lib/web-live';
 import { getProgressThumbPreset, PROGRESS_THUMB_PRESETS } from '@/lib/progress-thumb-presets';
 import { isCustomCSSEnabled } from '@/styles/themes';
 
@@ -1059,13 +1060,11 @@ const UserConfig = ({
         setSelectedUsers(new Set());
         setShowBatchUserGroupModal(false);
         setSelectedUserGroup('');
+        await refreshConfig();
         showSuccess(
           `已为 ${userCount} 个用户设置用户组: ${userGroup}`,
           showAlert
         );
-
-        // 刷新配置
-        await refreshConfig();
       } catch (err) {
         showError('批量设置用户组失败', showAlert);
         throw err;
@@ -1233,13 +1232,13 @@ const UserConfig = ({
                               throw new Error(errorData.error || '迁移失败');
                             }
 
+                            await refreshConfig();
                             showAlert({
                               type: 'success',
                               title: '用户数据迁移成功',
                               message: '所有用户已迁移到新的存储结构',
                               timer: 2000,
                             });
-                            await refreshConfig();
                           } catch (error: any) {
                             console.error('迁移用户数据失败:', error);
                             showAlert({
@@ -3677,8 +3676,8 @@ const OpenListConfigComponent = ({
           throw new Error(data.error || '保存失败');
         }
 
-        showSuccess('保存成功', showAlert);
         await refreshConfig();
+        showSuccess('保存成功', showAlert);
       } catch (error) {
         showError(
           error instanceof Error ? error.message : '保存失败',
@@ -3885,7 +3884,7 @@ const OpenListConfigComponent = ({
 
           showSuccess('删除成功', showAlert);
           await fetchVideos(true); // 强制从数据库重新读取
-          refreshConfig(); // 异步刷新配置以更新资源数量（不等待，避免重复刷新）
+          void refreshConfig().catch(() => {}); // 刷新错误由 fetchConfig 显示
         } catch (error) {
           showError(
             error instanceof Error ? error.message : '删除失败',
@@ -5190,8 +5189,8 @@ const NetDiskConfigComponent = ({
         throw new Error(data.error || '保存失败');
       }
 
-      showSuccess('保存成功', showAlert);
       await refreshConfig();
+      showSuccess('保存成功', showAlert);
     });
   };
 
@@ -6143,7 +6142,7 @@ const EmbyConfigComponent = ({
         // 保存到配置
         const response = await fetch('/api/admin/config', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 'Content-Type': 'application/json', 'If-Match': getAdminConfigVersion(config) },
           body: JSON.stringify({
             ...config,
             EmbyConfig: {
@@ -6153,7 +6152,7 @@ const EmbyConfigComponent = ({
         });
 
         if (!response.ok) {
-          throw new Error('保存失败');
+          throw adminConfigSaveError(response.status, '保存失败');
         }
 
         await refreshConfig();
@@ -6180,7 +6179,7 @@ const EmbyConfigComponent = ({
 
         const response = await fetch('/api/admin/config', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 'Content-Type': 'application/json', 'If-Match': getAdminConfigVersion(config) },
           body: JSON.stringify({
             ...config,
             EmbyConfig: {
@@ -6190,7 +6189,7 @@ const EmbyConfigComponent = ({
         });
 
         if (!response.ok) {
-          throw new Error('删除失败');
+          throw adminConfigSaveError(response.status, '删除失败');
         }
 
         await refreshConfig();
@@ -6214,7 +6213,7 @@ const EmbyConfigComponent = ({
 
         const response = await fetch('/api/admin/config', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 'Content-Type': 'application/json', 'If-Match': getAdminConfigVersion(config) },
           body: JSON.stringify({
             ...config,
             EmbyConfig: {
@@ -6224,7 +6223,7 @@ const EmbyConfigComponent = ({
         });
 
         if (!response.ok) {
-          throw new Error('更新失败');
+          throw adminConfigSaveError(response.status, '更新失败');
         }
 
         await refreshConfig();
@@ -6349,8 +6348,8 @@ const EmbyConfigComponent = ({
           const result = await response.json();
 
           if (result.success) {
-            showSuccess('导入成功', showAlert);
             await refreshConfig();
+            showSuccess('导入成功', showAlert);
           } else {
             showError(result.error || '导入失败', showAlert);
           }
@@ -6375,13 +6374,13 @@ const EmbyConfigComponent = ({
         );
         const response = await fetch('/api/admin/config', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 'Content-Type': 'application/json', 'If-Match': getAdminConfigVersion(config) },
           body: JSON.stringify({
             ...config,
             EmbyConfig: { Sources: newSources },
           }),
         });
-        if (!response.ok) throw new Error('批量启用失败');
+        if (!response.ok) throw adminConfigSaveError(response.status, '批量启用失败');
         await refreshConfig();
         setSelectedSources(new Set());
         showSuccess(`已启用 ${selectedSources.size} 个源`, showAlert);
@@ -6404,13 +6403,13 @@ const EmbyConfigComponent = ({
         );
         const response = await fetch('/api/admin/config', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 'Content-Type': 'application/json', 'If-Match': getAdminConfigVersion(config) },
           body: JSON.stringify({
             ...config,
             EmbyConfig: { Sources: newSources },
           }),
         });
-        if (!response.ok) throw new Error('批量禁用失败');
+        if (!response.ok) throw adminConfigSaveError(response.status, '批量禁用失败');
         await refreshConfig();
         setSelectedSources(new Set());
         showSuccess(`已禁用 ${selectedSources.size} 个源`, showAlert);
@@ -6439,13 +6438,13 @@ const EmbyConfigComponent = ({
             );
             const response = await fetch('/api/admin/config', {
               method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
+              headers: { 'Content-Type': 'application/json', 'If-Match': getAdminConfigVersion(config) },
               body: JSON.stringify({
                 ...config,
                 EmbyConfig: { Sources: newSources },
               }),
             });
-            if (!response.ok) throw new Error('批量删除失败');
+            if (!response.ok) throw adminConfigSaveError(response.status, '批量删除失败');
             await refreshConfig();
             setSelectedSources(new Set());
             showSuccess(`已删除 ${selectedSources.size} 个源`, showAlert);
@@ -9311,9 +9310,10 @@ const CategoryConfig = ({
   // 初始化
   useEffect(() => {
     if (config?.CustomCategories) {
-      setCategories(config.CustomCategories);
-      // 进入时重置 orderChanged
-      setOrderChanged(false);
+      const latest = config.CustomCategories;
+      setCategories((previous) => orderChanged
+        ? mergePendingOrder(previous, latest, (item) => `${item.query}:${item.type}`)
+        : latest);
     }
   }, [config]);
 
@@ -10334,8 +10334,8 @@ const ConfigFileComponent = ({
           throw new Error(data.error || `保存失败: ${resp.status}`);
         }
 
-        showSuccess('配置文件保存成功', showAlert);
         await refreshConfig();
+        showSuccess('配置文件保存成功', showAlert);
       } catch (err) {
         showError(err instanceof Error ? err.message : '保存失败', showAlert);
         throw err;
@@ -10718,14 +10718,13 @@ const ThemeConfigComponent = ({
           throw new Error(data.error || '保存失败');
         }
 
+        await refreshConfig();
         showAlert({
           type: 'success',
           title: '保存成功',
           message: '个性化配置已更新',
           timer: 2000,
         });
-
-        await refreshConfig();
 
         // 刷新页面以应用新主题
         setTimeout(() => {
@@ -11813,8 +11812,8 @@ const SiteConfigComponent = ({
           throw new Error(data.error || `保存失败: ${resp.status}`);
         }
 
-        showSuccess('保存成功, 请刷新页面', showAlert);
         await refreshConfig();
+        showSuccess('保存成功, 请刷新页面', showAlert);
       } catch (err) {
         showError(err instanceof Error ? err.message : '保存失败', showAlert);
         throw err;
@@ -13385,8 +13384,8 @@ const RegistrationConfigComponent = ({
           throw new Error(data.error || `保存失败: ${resp.status}`);
         }
 
-        showSuccess('保存成功, 请刷新页面', showAlert);
         await refreshConfig();
+        showSuccess('保存成功, 请刷新页面', showAlert);
       } catch (err) {
         showError(err instanceof Error ? err.message : '保存失败', showAlert);
         throw err;
@@ -14492,7 +14491,7 @@ const SuwayomiConfigComponent = ({
 
         const response = await fetch('/api/admin/config', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 'Content-Type': 'application/json', 'If-Match': getAdminConfigVersion(config) },
           body: JSON.stringify({
             ...config,
             SuwayomiConfig: buildConfig(),
@@ -14501,11 +14500,11 @@ const SuwayomiConfigComponent = ({
 
         if (!response.ok) {
           const data = await response.json();
-          throw new Error(data.error || '保存失败');
+          throw adminConfigSaveError(response.status, data.error || '保存失败');
         }
 
-        showSuccess('漫画后端配置已保存', showAlert);
         await refreshConfig();
+        showSuccess('漫画后端配置已保存', showAlert);
       } catch (error) {
         showError(
           error instanceof Error ? error.message : '保存失败',
@@ -14928,13 +14927,13 @@ const OPDSConfigComponent = ({
         if (!config) throw new Error('配置未加载');
         const response = await fetch('/api/admin/config', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 'Content-Type': 'application/json', 'If-Match': getAdminConfigVersion(config) },
           body: JSON.stringify({ ...config, OPDSConfig: buildConfig() }),
         });
         const data = await response.json().catch(() => ({}));
-        if (!response.ok) throw new Error(data.error || '保存失败');
-        showSuccess('电子书源配置已保存', showAlert);
+        if (!response.ok) throw adminConfigSaveError(response.status, data.error || '保存失败');
         await refreshConfig();
+        showSuccess('电子书源配置已保存', showAlert);
       } catch (error) {
         showError(
           error instanceof Error ? error.message : '保存失败',
@@ -14997,11 +14996,11 @@ const OPDSConfigComponent = ({
           throw new Error(data.error || '导入 Legado 订阅失败');
         setLegadoSubscriptionName('');
         setLegadoSubscriptionUrl('');
+        await refreshConfig();
         showSuccess(
           `已导入 ${data.subscription?.sourceCount || 0} 个 Legado 书源`,
           showAlert
         );
-        await refreshConfig();
       } catch (error) {
         showError(
           error instanceof Error ? error.message : '导入 Legado 订阅失败',
@@ -15022,11 +15021,11 @@ const OPDSConfigComponent = ({
         const data = await response.json();
         if (!response.ok || !data.success)
           throw new Error(data.error || '刷新 Legado 订阅失败');
+        await refreshConfig();
         showSuccess(
           `已同步 ${data.subscription?.sourceCount || 0} 个 Legado 书源`,
           showAlert
         );
-        await refreshConfig();
       } catch (error) {
         showError(
           error instanceof Error ? error.message : '刷新 Legado 订阅失败',
@@ -15047,8 +15046,8 @@ const OPDSConfigComponent = ({
         const data = await response.json();
         if (!response.ok || !data.success)
           throw new Error(data.error || '删除 Legado 订阅失败');
-        showSuccess('Legado 订阅已删除', showAlert);
         await refreshConfig();
+        showSuccess('Legado 订阅已删除', showAlert);
       } catch (error) {
         showError(
           error instanceof Error ? error.message : '删除 Legado 订阅失败',
@@ -15563,8 +15562,8 @@ const XiaoyaConfigComponent = ({
           throw new Error(data.error || '保存失败');
         }
 
-        showSuccess('保存成功', showAlert);
         await refreshConfig();
+        showSuccess('保存成功', showAlert);
       } catch (error) {
         showError(
           error instanceof Error ? error.message : '保存失败',
@@ -15823,8 +15822,8 @@ const TelegramConfigComponent = ({
         });
         const data = await response.json().catch(() => ({}));
         if (!response.ok) throw new Error(data.error || '保存失败');
-        showSuccess('Telegram 配置保存成功', showAlert);
         await refreshConfig();
+        showSuccess('Telegram 配置保存成功', showAlert);
       } catch (error) {
         showError(error instanceof Error ? error.message : '保存失败', showAlert);
         throw error;
@@ -16090,8 +16089,8 @@ const EmailConfigComponent = ({
           throw new Error(data.error || '保存失败');
         }
 
-        showSuccess('保存成功', showAlert);
         await refreshConfig();
+        showSuccess('保存成功', showAlert);
       } catch (error) {
         showError(
           error instanceof Error ? error.message : '保存失败',
@@ -16525,14 +16524,14 @@ const MovieRequestsComponent = ({
 
       const response = await fetch('/api/admin/config', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', 'If-Match': getAdminConfigVersion(config) },
         body: JSON.stringify(updatedConfig),
       });
 
-      if (!response.ok) throw new Error('保存失败');
+      if (!response.ok) throw adminConfigSaveError(response.status, '保存失败');
 
-      showSuccess('求片设置已保存', showAlert);
       await refreshConfig();
+      showSuccess('求片设置已保存', showAlert);
     } catch (err) {
       showError(err instanceof Error ? err.message : '保存失败', showAlert);
     } finally {
@@ -16867,8 +16866,8 @@ const AIConfigComponent = ({
           throw new Error(data.error || '保存失败');
         }
 
-        showSuccess('AI配置保存成功', showAlert);
         await refreshConfig();
+        showSuccess('AI配置保存成功', showAlert);
       } catch (error) {
         showError(
           error instanceof Error ? error.message : '保存失败',
@@ -17637,8 +17636,8 @@ const MusicConfigComponent = ({
           throw new Error(data.error || '保存失败');
         }
 
-        showSuccess('音乐配置保存成功', showAlert);
         await refreshConfig();
+        showSuccess('音乐配置保存成功', showAlert);
       } catch (error) {
         showError(
           error instanceof Error ? error.message : '保存失败',
@@ -18059,10 +18058,11 @@ const LiveSourceConfig = ({
   // 初始化
   useEffect(() => {
     if (config?.LiveConfig) {
-      setLiveSources(config.LiveConfig);
+      const latest = config.LiveConfig;
+      setLiveSources((previous) => orderChanged
+        ? mergePendingOrder(previous, latest, (item) => item.key)
+        : latest);
       setRefreshIntervalHours(config.LiveRefreshIntervalHours || 12);
-      // 进入时重置 orderChanged
-      setOrderChanged(false);
     }
   }, [config]);
 
@@ -18160,7 +18160,7 @@ const LiveSourceConfig = ({
 
       const response = await fetch('/api/admin/config', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', 'If-Match': getAdminConfigVersion(config) },
         body: JSON.stringify({
           ...config,
           LiveRefreshIntervalHours: Math.max(1, refreshIntervalHours || 12),
@@ -18169,7 +18169,7 @@ const LiveSourceConfig = ({
 
       if (!response.ok) {
         const data = await response.json().catch(() => ({}));
-        throw new Error(data.error || `保存失败: ${response.status}`);
+        throw adminConfigSaveError(response.status, data.error || `保存失败: ${response.status}`);
       }
 
       await refreshConfig();
@@ -18657,6 +18657,7 @@ const WebLiveForm = ({ value, onChange, onSubmit, onCancel, busy, editing }: { v
   const submit = () => {
     try {
       if (!value.name.trim()) throw new Error('请输入名称');
+      if (!isWebLivePlatformEnabled(value.platform)) throw new Error('该平台暂不支持，请选择其他平台或删除此直播源');
       normalizeWebLiveRoomId(value.platform, value.roomId.trim());
       for (const field of ['avatar', 'cover']) {
         if (value[field]?.trim()) {
@@ -18670,12 +18671,12 @@ const WebLiveForm = ({ value, onChange, onSubmit, onCancel, busy, editing }: { v
   return <div className='space-y-4 rounded-lg border border-gray-200 bg-gray-50 p-4 dark:border-gray-700 dark:bg-gray-900'>
     <h5 className='text-sm font-semibold text-gray-800 dark:text-gray-100'>{editing ? '编辑网络直播' : '添加网络直播'}</h5>
     <div className='grid gap-4 sm:grid-cols-2'>
-      <label className='space-y-1 text-sm text-gray-700 dark:text-gray-300'><span>名称</span><input className={inputClass} value={value.name} onChange={(e) => onChange({ ...value, name: e.target.value })} placeholder='例如：我的直播' /></label>
-      <label className='space-y-1 text-sm text-gray-700 dark:text-gray-300'><span>平台</span><select className={inputClass} value={value.platform} onChange={(e) => onChange({ ...value, platform: e.target.value })}>{WEB_LIVE_PLATFORMS.map((item) => <option key={item.value} value={item.value}>{item.label}</option>)}</select></label>
-      <label className='space-y-1 text-sm text-gray-700 dark:text-gray-300 sm:col-span-2'><span>{value.platform === 'custom' ? '直播流网址' : '房间、视频或频道'}</span><input className={inputClass} value={value.roomId} onChange={(e) => onChange({ ...value, roomId: e.target.value })} placeholder={platform?.placeholder} /><span className='block text-xs text-gray-500 dark:text-gray-400'>{platform?.help}</span></label>
+      <label className='space-y-1 text-sm text-gray-700 dark:text-gray-300'><span>展示名称</span><input className={inputClass} value={value.name} onChange={(e) => onChange({ ...value, name: e.target.value })} placeholder='填写列表中显示的名称' /><span className='block text-xs text-gray-500 dark:text-gray-400'>仅用于展示，不用于搜索主播。</span></label>
+      <label className='space-y-1 text-sm text-gray-700 dark:text-gray-300'><span>平台</span><select className={inputClass} value={value.platform} onChange={(e) => onChange({ ...value, platform: e.target.value })}>{platform && !platform.enabled && <option value={platform.value} disabled>{platform.label}（暂不支持）</option>}{WEB_LIVE_PLATFORMS.filter((item) => item.enabled).map((item) => <option key={item.value} value={item.value}>{item.label}</option>)}</select></label>
+      <label className='space-y-1 text-sm text-gray-700 dark:text-gray-300 sm:col-span-2'><span>{platform?.inputLabel || '直播地址'}</span><input className={inputClass} value={value.roomId} onChange={(e) => onChange({ ...value, roomId: e.target.value })} placeholder={platform?.placeholder} /><span className='block text-xs text-gray-500 dark:text-gray-400'>{platform?.help}</span></label>
       {value.platform === 'custom' && <label className='space-y-1 text-sm text-gray-700 dark:text-gray-300'><span>直播流格式</span><select className={inputClass} value={value.streamFormat || 'auto'} onChange={(e) => onChange({ ...value, streamFormat: e.target.value })}><option value='auto'>自动识别</option><option value='hls'>HLS</option><option value='flv'>FLV</option></select></label>}
-      <label className='space-y-1 text-sm text-gray-700 dark:text-gray-300'><span>头像网址（可选）</span><input className={inputClass} value={value.avatar || ''} onChange={(e) => onChange({ ...value, avatar: e.target.value })} placeholder='https://…' /></label>
-      <label className='space-y-1 text-sm text-gray-700 dark:text-gray-300'><span>封面网址（可选）</span><input className={inputClass} value={value.cover || ''} onChange={(e) => onChange({ ...value, cover: e.target.value })} placeholder='https://…' /></label>
+      <label className='space-y-1 text-sm text-gray-700 dark:text-gray-300'><span>头像网址（可选，默认自动获取）</span><input className={inputClass} value={value.avatar || ''} onChange={(e) => onChange({ ...value, avatar: e.target.value })} placeholder='https://…' /></label>
+      <label className='space-y-1 text-sm text-gray-700 dark:text-gray-300'><span>封面网址（可选，默认自动获取）</span><input className={inputClass} value={value.cover || ''} onChange={(e) => onChange({ ...value, cover: e.target.value })} placeholder='https://…' /></label>
     </div>
     {error && <p role='alert' className='text-sm text-red-600 dark:text-red-400'>{error}</p>}
     <div className='flex justify-end gap-2'><button onClick={onCancel} className={buttonStyles.secondary}>取消</button><button onClick={submit} disabled={busy} className={busy ? buttonStyles.disabled : buttonStyles.success}>{busy ? '保存中…' : editing ? '保存' : '添加'}</button></div>
@@ -18686,7 +18687,7 @@ const WebLiveRow = ({ source, busy, onToggle, onEdit, onDelete }: { source: any;
   const { attributes, listeners, setNodeRef, setActivatorNodeRef, transform, transition, isDragging } = useSortable({ id: source.key, disabled: busy });
   return <li ref={setNodeRef} style={{ transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.65 : 1 }} className='flex items-center gap-2 border-b border-gray-200 px-2 py-3 last:border-0 dark:border-gray-700 sm:px-4'>
     <button ref={setActivatorNodeRef} {...attributes} {...listeners} disabled={busy} aria-label={`拖动排序 ${source.name}`} className='touch-none rounded p-2 text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800'><GripVertical className='h-5 w-5' /></button>
-    <div className='min-w-0 flex-1'><div className='flex flex-wrap items-center gap-2'><span className='truncate text-sm font-medium text-gray-900 dark:text-gray-100'>{source.name}</span><span className='text-xs text-gray-500'>{source.disabled ? '已禁用' : '启用中'}</span></div><p className='truncate text-xs text-gray-500 dark:text-gray-400'>{webLivePlatformName(source.platform)} · {source.roomId}</p></div>
+    <div className='min-w-0 flex-1'><div className='flex flex-wrap items-center gap-2'><span className='truncate text-sm font-medium text-gray-900 dark:text-gray-100'>{source.name}</span><span className='text-xs text-gray-500'>{source.disabled ? '已禁用' : '启用中'}</span></div><p className='truncate text-xs text-gray-500 dark:text-gray-400'>{webLivePlatformName(source.platform)}{!isWebLivePlatformEnabled(source.platform) ? '（暂不支持）' : ''} · {source.roomId}</p></div>
     <div className='flex flex-wrap justify-end gap-1'><button onClick={onToggle} disabled={busy} className={source.disabled ? buttonStyles.roundedSuccess : buttonStyles.roundedDanger}>{source.disabled ? '启用' : '禁用'}</button>{source.from !== 'config' && <><button onClick={onEdit} disabled={busy} className={buttonStyles.roundedPrimary}>编辑</button><button onClick={onDelete} disabled={busy} className={buttonStyles.roundedSecondary}>删除</button></>}</div>
   </li>;
 };
@@ -19012,7 +19013,8 @@ function AdminPageClient() {
         throw new Error(`获取配置失败: ${data.error}`);
       }
 
-      const data = (await response.json()) as AdminConfigResult;
+      const data = (await response.json()) as AdminConfigResult & { Revision?: string };
+      registerAdminConfigVersion(data.Config, data.Revision);
       setConfig(data.Config);
       setRole(data.Role);
     } catch (err) {
@@ -19023,6 +19025,7 @@ function AdminPageClient() {
       } else {
         showError(msg, showAlert);
       }
+      throw err;
     } finally {
       if (showLoading) {
         setLoading(false);
@@ -19086,7 +19089,7 @@ function AdminPageClient() {
 
   useEffect(() => {
     // 首次加载时显示骨架
-    fetchConfig(true);
+    void fetchConfig(true).catch(() => {});
     // 若恢复的区块是用户管理，则补拉一次用户列表
     if (activeKey === 'userConfig') {
       fetchUsersV2();

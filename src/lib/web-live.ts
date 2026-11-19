@@ -12,6 +12,7 @@ export interface WebLiveRoomInfo {
 export interface WebLiveVariant {
   id: string;
   label: string;
+  qualityLabel?: string;
   url: string;
   type: 'hls' | 'flv';
   quality?: number;
@@ -41,15 +42,18 @@ export interface WebLiveSource {
 }
 
 export const WEB_LIVE_PLATFORMS = [
-  { value: 'huya', label: '虎牙', kind: 'stream', placeholder: '998 或虎牙直播间链接', help: '支持房间号和直播间链接，自动选择当前访客可用画质。' },
-  { value: 'bilibili', label: '哔哩哔哩', kind: 'stream', placeholder: '35 或 B 站直播间链接', help: '支持短房间号和真实房间号，画质以访客实际可用范围为准。' },
-  { value: 'douyin', label: '抖音', kind: 'stream', placeholder: '网页直播间号或 live.douyin.com 链接', help: '填写网页直播间地址中的号码，不是抖音账号；短分享链接请先在浏览器打开。' },
-  { value: 'douyu', label: '斗鱼', kind: 'stream', placeholder: '房间号或 douyu.com 直播间链接', help: '支持公开直播间，画质和线路以平台当前返回结果为准。' },
-  { value: 'kuaishou', label: '快手', kind: 'stream', placeholder: '主播 ID 或 live.kuaishou.com/u/…', help: '解析公开网页直播；遇到平台登录或风控要求时，可前往官方直播间观看。' },
-  { value: 'custom', label: '自定义直播地址', kind: 'stream', placeholder: 'https://example.com/live/index.m3u8', help: '填写自己持有或获授权的公网 HLS / FLV 地址，无后缀地址请指定格式。' },
-  { value: 'youtube', label: 'YouTube Live', kind: 'embed', placeholder: '直播视频链接、视频 ID 或 @频道名', help: '使用 YouTube 官方播放器，画质在播放器中选择；受频道嵌入权限和设备网络影响。' },
-  { value: 'twitch', label: 'Twitch', kind: 'embed', placeholder: '频道名或 twitch.tv/频道名', help: '使用 Twitch 官方播放器，画质和账号限制由平台控制。' },
+  { enabled: true, value: 'huya', label: '虎牙', kind: 'stream', inputLabel: '直播间链接或房间标识', placeholder: 'https://www.huya.com/直播间标识', help: '粘贴虎牙直播间完整链接，或填写直播间路径中的标识。' },
+  { enabled: true, value: 'bilibili', label: '哔哩哔哩', kind: 'stream', inputLabel: '直播间链接或房间号', placeholder: 'https://live.bilibili.com/房间号', help: '粘贴 B 站直播间链接，或填写数字房间号；不支持个人空间和视频链接。' },
+  { enabled: true, value: 'douyin', label: '抖音', kind: 'stream', inputLabel: '网页直播间链接或房间号', placeholder: 'https://live.douyin.com/房间号', help: '填写网页直播间链接或其中的数字房间号；分享短链接请先在浏览器打开，复制直播间地址。' },
+  { enabled: true, value: 'douyu', label: '斗鱼', kind: 'stream', inputLabel: '直播间链接或房间号', placeholder: 'https://www.douyu.com/房间号', help: '粘贴斗鱼直播间链接，或填写数字房间号。' },
+  { enabled: true, value: 'custom', label: '自定义直播地址', kind: 'stream', inputLabel: '直播流网址', placeholder: 'https://example.com/live/index.m3u8', help: '填写自己持有或获授权的公网 HLS / FLV 地址，无后缀地址请指定格式。' },
+  { enabled: true, value: 'youtube', label: 'YouTube Live', kind: 'embed', inputLabel: '直播视频链接、视频 ID 或频道链接', placeholder: 'https://www.youtube.com/@频道handle/live', help: '支持直播视频链接、视频 ID、@频道handle 或频道链接；@handle 不是频道显示名称。使用官方播放器，受嵌入权限及网络影响。' },
+  { enabled: true, value: 'twitch', label: 'Twitch', kind: 'embed', inputLabel: '频道链接或频道名', placeholder: 'https://www.twitch.tv/频道名', help: '填写频道链接或频道名；不支持视频、目录或设置页面链接。使用官方播放器。' },
 ] as const;
+
+export function isWebLivePlatformEnabled(platform: string): boolean {
+  return WEB_LIVE_PLATFORMS.some((item) => item.value === platform && item.enabled);
+}
 
 export function webLivePlatformName(platform: string): string {
   return WEB_LIVE_PLATFORMS.find((item) => item.value === platform)?.label || platform;
@@ -67,21 +71,32 @@ export function normalizeWebLiveRoomId(platform: string, value: string): string 
     return url.href;
   }
   if (url && !(platform === 'youtube' && id.startsWith('channel:'))) {
-    if (url.protocol !== 'https:' && url.protocol !== 'http:') throw new Error('不支持此链接协议');
+    if (!['https:', 'http:'].includes(url.protocol) || url.username || url.password) throw new Error('请填写不含账号凭据的 HTTP 或 HTTPS 链接');
     const host = url.hostname.toLowerCase();
-    const paths = url.pathname.split('/').filter(Boolean);
-    const matchHost = (domain: string) => host === domain || host.endsWith(`.${domain}`);
-    const domains: Record<string, string> = { huya: 'huya.com', bilibili: 'bilibili.com', douyin: 'douyin.com', douyu: 'douyu.com', kuaishou: 'kuaishou.com', twitch: 'twitch.tv' };
+    let paths: string[];
+    try { paths = url.pathname.split('/').filter(Boolean).map(decodeURIComponent); }
+    catch { throw new Error('链接格式无效'); }
+    const isHost = (...hosts: string[]) => hosts.includes(host);
+    const invalid = () => { throw new Error(`请填写有效的${webLivePlatformName(platform)}直播链接`); };
     if (platform === 'youtube') {
-      if (host === 'youtu.be') id = paths[0] || '';
-      else if (matchHost('youtube.com')) {
-        if (paths[0]?.startsWith('@')) id = decodeURIComponent(paths[0]);
-        else if (paths[0] === 'channel') id = `channel:${paths[1] || ''}`;
-        else id = url.searchParams.get('v') || (['live', 'embed', 'shorts'].includes(paths[0]) ? paths[1] : '') || '';
-      } else throw new Error('请填写 YouTube 视频或频道链接');
+      if (isHost('youtu.be', 'www.youtu.be') && paths.length === 1) id = paths[0];
+      else if (isHost('youtube.com', 'www.youtube.com', 'm.youtube.com')) {
+        if (paths.length === 1 && paths[0] === 'watch') id = url.searchParams.get('v') || '';
+        else if (paths.length === 2 && paths[0] === 'live') id = paths[1];
+        else if ((paths.length === 1 || paths.length === 2 && paths[1] === 'live') && paths[0]?.startsWith('@')) id = paths[0];
+        else if ((paths.length === 2 || paths.length === 3 && paths[2] === 'live') && paths[0] === 'channel') id = `channel:${paths[1]}`;
+        else invalid();
+      } else invalid();
     } else {
-      if (!matchHost(domains[platform])) throw new Error(`请填写${webLivePlatformName(platform)}的直播间链接`);
-      id = platform === 'kuaishou' && paths[0] === 'u' ? paths[1] || '' : platform === 'douyu' && paths[0] === 'topic' ? paths[1] || '' : paths[0] || '';
+      const hosts: Record<string, string[]> = {
+        huya: ['huya.com', 'www.huya.com', 'm.huya.com'],
+        bilibili: ['live.bilibili.com'],
+        douyin: ['live.douyin.com'],
+        douyu: ['douyu.com', 'www.douyu.com', 'm.douyu.com'],
+        twitch: ['twitch.tv', 'www.twitch.tv', 'm.twitch.tv'],
+      };
+      if (!hosts[platform]?.includes(host) || paths.length !== 1) invalid();
+      id = paths[0];
     }
   }
   const patterns: Record<string, RegExp> = {
@@ -89,10 +104,10 @@ export function normalizeWebLiveRoomId(platform: string, value: string): string 
     bilibili: /^\d{1,24}$/,
     douyin: /^\d{1,24}$/,
     douyu: /^\d{1,24}$/,
-    kuaishou: /^[a-zA-Z0-9_-]{1,128}$/,
     twitch: /^[a-zA-Z0-9_]{1,25}$/,
     youtube: /^(?:[a-zA-Z0-9_-]{11}|@[^\s/?#]{1,100}|channel:UC[a-zA-Z0-9_-]{22})$/,
   };
+  if (platform === 'twitch' && new Set(['videos', 'video', 'directory', 'settings', 'search', 'downloads', 'subscriptions', 'inventory', 'jobs', 'p', 'turbo', 'wallet', 'login', 'signup']).has(id.toLowerCase())) throw new Error('请填写 Twitch 频道名或频道链接');
   if (!patterns[platform].test(id)) throw new Error(`请检查${webLivePlatformName(platform)}的房间号或链接格式`);
   return platform === 'twitch' ? id.toLowerCase() : id;
 }
@@ -106,7 +121,7 @@ export function getWebLiveRoomUrl(platform: string, roomId: string): string {
     if (id.startsWith('channel:')) return `https://www.youtube.com/channel/${encodeURIComponent(id.slice(8))}/live`;
     return `https://www.youtube.com/watch?v=${encodeURIComponent(id)}`;
   }
-  const origins: Record<string, string> = { huya: 'https://www.huya.com/', bilibili: 'https://live.bilibili.com/', douyin: 'https://live.douyin.com/', douyu: 'https://www.douyu.com/', kuaishou: 'https://live.kuaishou.com/u/', twitch: 'https://www.twitch.tv/' };
+  const origins: Record<string, string> = { huya: 'https://www.huya.com/', bilibili: 'https://live.bilibili.com/', douyin: 'https://live.douyin.com/', douyu: 'https://www.douyu.com/', twitch: 'https://www.twitch.tv/' };
   return `${origins[platform]}${encodeURIComponent(id)}`;
 }
 

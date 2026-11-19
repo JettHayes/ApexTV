@@ -55,6 +55,7 @@ export async function resolveWebLiveEmbed(platform: string, roomId: string, host
       const $ = load(await page(officialUrl, signal));
       name = $('meta[property="og:profile:username"]').attr('content') || roomId;
       title = ($('meta[property="og:title"]').attr('content') || $('title').text() || name).replace(/\s*[-–]\s*Twitch$/i, '');
+      if (!title.trim() || title.trim().toLowerCase() === 'twitch') title = name;
       avatar = webLiveImageUrl($('meta[property="og:image"]').attr('content'));
     } catch { /* Metadata must not prevent the official player from opening. */ }
     return { kind: 'embed', url: embed.href, embedUrl: embed.href, originalUrl: officialUrl, name, title, avatar, anchorId: roomId, roomId, liveStatus: 'unknown', qualityNote: '画质在 Twitch 播放器内选择，实际选项由平台提供' };
