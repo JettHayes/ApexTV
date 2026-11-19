@@ -68,6 +68,7 @@ import {
   Suspense,
   useCallback,
   useEffect,
+  useId,
   useMemo,
   useRef,
   useState,
@@ -98,54 +99,54 @@ import './admin.css';
 
 // 统一按钮样式系统
 const buttonStyles = {
-  // 主要操作按钮（蓝色）- 用于配置、设置、确认等
+  // 保存与添加使用品牌实色，其余操作使用描边与语义色。
   primary:
-    'px-3 py-1.5 text-sm font-medium bg-blue-600 hover:bg-blue-700 dark:bg-blue-600 dark:hover:bg-blue-700 text-white rounded-lg transition-colors',
+    'apex-admin-button apex-admin-button--secondary',
   // 成功操作按钮（绿色）- 用于添加、启用、保存等
   success:
-    'px-3 py-1.5 text-sm font-medium bg-green-600 hover:bg-green-700 dark:bg-green-600 dark:hover:bg-green-700 text-white rounded-lg transition-colors',
+    'apex-admin-button apex-admin-button--primary',
   // 危险操作按钮（红色）- 用于删除、禁用、重置等
   danger:
-    'px-3 py-1.5 text-sm font-medium bg-red-600 hover:bg-red-700 dark:bg-red-600 dark:hover:bg-red-700 text-white rounded-lg transition-colors',
+    'apex-admin-button apex-admin-button--danger',
   // 次要操作按钮（灰色）- 用于取消、关闭等
   secondary:
-    'px-3 py-1.5 text-sm font-medium bg-gray-600 hover:bg-gray-700 dark:bg-gray-600 dark:hover:bg-gray-700 text-white rounded-lg transition-colors',
+    'apex-admin-button apex-admin-button--neutral',
   // 警告操作按钮（黄色）- 用于批量禁用等
   warning:
-    'px-3 py-1.5 text-sm font-medium bg-yellow-600 hover:bg-yellow-700 dark:bg-yellow-600 dark:hover:bg-yellow-700 text-white rounded-lg transition-colors',
+    'apex-admin-button apex-admin-button--warning',
   // 小尺寸主要按钮
   primarySmall:
-    'px-2 py-1 text-xs font-medium bg-blue-600 hover:bg-blue-700 dark:bg-blue-600 dark:hover:bg-blue-700 text-white rounded-md transition-colors',
+    'apex-admin-button apex-admin-button--secondary apex-admin-button--compact',
   // 小尺寸成功按钮
   successSmall:
-    'px-2 py-1 text-xs font-medium bg-green-600 hover:bg-green-700 dark:bg-green-600 dark:hover:bg-green-700 text-white rounded-md transition-colors',
+    'apex-admin-button apex-admin-button--primary apex-admin-button--compact',
   // 小尺寸危险按钮
   dangerSmall:
-    'px-2 py-1 text-xs font-medium bg-red-600 hover:bg-red-700 dark:bg-red-600 dark:hover:bg-red-700 text-white rounded-md transition-colors',
+    'apex-admin-button apex-admin-button--danger apex-admin-button--compact',
   // 小尺寸次要按钮
   secondarySmall:
-    'px-2 py-1 text-xs font-medium bg-gray-600 hover:bg-gray-700 dark:bg-gray-600 dark:hover:bg-gray-700 text-white rounded-md transition-colors',
+    'apex-admin-button apex-admin-button--neutral apex-admin-button--compact',
   // 小尺寸警告按钮
   warningSmall:
-    'px-2 py-1 text-xs font-medium bg-yellow-600 hover:bg-yellow-700 dark:bg-yellow-600 dark:hover:bg-yellow-700 text-white rounded-md transition-colors',
+    'apex-admin-button apex-admin-button--warning apex-admin-button--compact',
   // 圆角小按钮（用于表格操作）
   roundedPrimary:
-    'inline-flex items-center px-3 py-1.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 hover:bg-blue-200 dark:bg-blue-900/40 dark:hover:bg-blue-900/60 dark:text-blue-200 transition-colors',
+    'apex-admin-button apex-admin-button--secondary apex-admin-button--compact',
   roundedSuccess:
-    'inline-flex items-center px-3 py-1.5 rounded-full text-xs font-medium bg-green-100 text-green-800 hover:bg-green-200 dark:bg-green-900/40 dark:hover:bg-green-900/60 dark:text-green-200 transition-colors',
+    'apex-admin-button apex-admin-button--success apex-admin-button--compact',
   roundedDanger:
-    'inline-flex items-center px-3 py-1.5 rounded-full text-xs font-medium bg-red-100 text-red-800 hover:bg-red-200 dark:bg-red-900/40 dark:hover:bg-red-900/60 dark:text-red-200 transition-colors',
+    'apex-admin-button apex-admin-button--danger apex-admin-button--compact',
   roundedSecondary:
-    'inline-flex items-center px-3 py-1.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800 hover:bg-gray-200 dark:bg-gray-700/40 dark:hover:bg-gray-700/60 dark:text-gray-200 transition-colors',
+    'apex-admin-button apex-admin-button--neutral apex-admin-button--compact',
   roundedWarning:
-    'inline-flex items-center px-3 py-1.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800 hover:bg-yellow-200 dark:bg-yellow-900/40 dark:hover:bg-yellow-900/60 dark:text-yellow-200 transition-colors',
+    'apex-admin-button apex-admin-button--warning apex-admin-button--compact',
   roundedPurple:
-    'inline-flex items-center px-3 py-1.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800 hover:bg-purple-200 dark:bg-purple-900/40 dark:hover:bg-purple-900/60 dark:text-purple-200 transition-colors',
+    'apex-admin-button apex-admin-button--secondary apex-admin-button--compact',
   // 禁用状态
   disabled:
-    'px-3 py-1.5 text-sm font-medium bg-gray-400 dark:bg-gray-600 cursor-not-allowed text-white rounded-lg transition-colors',
+    'apex-admin-button apex-admin-button--disabled',
   disabledSmall:
-    'px-2 py-1 text-xs font-medium bg-gray-400 dark:bg-gray-600 cursor-not-allowed text-white rounded-md transition-colors',
+    'apex-admin-button apex-admin-button--disabled apex-admin-button--compact',
   // 开关按钮样式
   toggleOn: 'bg-green-600 dark:bg-green-600',
   toggleOff: 'bg-gray-200 dark:bg-gray-700',
@@ -154,7 +155,7 @@ const buttonStyles = {
   toggleThumbOff: 'translate-x-1',
   // 快速操作按钮样式
   quickAction:
-    'px-3 py-1.5 text-xs font-medium text-gray-600 dark:text-gray-400 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-md transition-colors',
+    'apex-admin-button apex-admin-button--neutral apex-admin-button--compact',
 };
 
 const DEFAULT_GROUP_PERMISSIONS = [...ALL_FEATURE_PERMISSION_KEYS];
@@ -198,6 +199,11 @@ const AlertModal = ({
   const [closing, setClosing] = useState(false);
   const onCloseRef = useRef(onClose);
   onCloseRef.current = onClose;
+  const titleId = useId();
+  const messageId = useId();
+  const dialogRef = useRef<HTMLDivElement>(null);
+  const confirmInFlight = useRef(false);
+  const [confirming, setConfirming] = useState(false);
 
   useEffect(() => {
     if (isOpen) {
@@ -221,6 +227,24 @@ const AlertModal = ({
     }, timer);
     return () => clearTimeout(hideTimer);
   }, [isOpen, timer]);
+
+  useEffect(() => {
+    const dialog = dialogRef.current;
+    if (!isOpen || !rendered || !dialog) return;
+    const previous = document.activeElement as HTMLElement | null;
+    dialog.querySelector<HTMLButtonElement>('button:not(:disabled)')?.focus();
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape' && !confirmInFlight.current) { event.preventDefault(); onCloseRef.current(); }
+      if (event.key !== 'Tab') return;
+      const buttons = Array.from(dialog.querySelectorAll<HTMLButtonElement>('button:not(:disabled)'));
+      const first = buttons[0], last = buttons[buttons.length - 1];
+      if (!first) { event.preventDefault(); return; }
+      if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last.focus(); }
+      else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
+    };
+    dialog.addEventListener('keydown', onKeyDown);
+    return () => { dialog.removeEventListener('keydown', onKeyDown); if (previous?.isConnected) previous.focus(); };
+  }, [isOpen, rendered]);
 
   if (!rendered) return null;
 
@@ -257,26 +281,33 @@ const AlertModal = ({
       }`}
     >
       <div
-        className={`bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-sm w-full border ${getBgColor()} ${
+        ref={dialogRef}
+        role={showConfirm && onConfirm ? 'alertdialog' : 'dialog'}
+        aria-modal='true'
+        aria-labelledby={titleId}
+        aria-describedby={message ? messageId : undefined}
+        className={`apex-admin-feedback bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-sm w-full border ${getBgColor()} ${
           closing ? 'ptv-modal-out' : 'ptv-modal-in'
         }`}
       >
-        <div className='p-6 text-center'>
-          <div className='flex justify-center mb-4'>{getIcon()}</div>
+        <div className='apex-admin-feedback-copy p-6'>
+          <div className='flex mb-4' aria-hidden='true'>{getIcon()}</div>
 
-          <h3 className='text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2'>
+          <h3 id={titleId} className='text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2'>
             {title}
           </h3>
 
           {message && (
-            <p className='text-gray-600 dark:text-gray-400 mb-4'>{message}</p>
+            <p id={messageId} className='text-gray-600 dark:text-gray-400 mb-4'>{message}</p>
           )}
 
           {showConfirm ? (
             onConfirm ? (
               // 确认操作：显示取消和确定按钮
-              <div className='flex gap-3 justify-center'>
+              <div className='apex-admin-feedback-actions'>
                 <button
+                  type='button'
+                  disabled={confirming}
                   onClick={() => {
                     onClose();
                   }}
@@ -285,13 +316,19 @@ const AlertModal = ({
                   取消
                 </button>
                 <button
-                  onClick={() => {
-                    if (onConfirm) onConfirm();
-                    // 不要在这里调用onClose，让onConfirm自己决定何时关闭
+                  type='button'
+                  disabled={confirming}
+                  onClick={async () => {
+                    if (confirmInFlight.current) return;
+                    confirmInFlight.current = true;
+                    setConfirming(true);
+                    try { await onConfirm?.(); }
+                    catch (error) { console.error('确认操作失败', error); }
+                    finally { confirmInFlight.current = false; setConfirming(false); }
                   }}
                   className={buttonStyles.danger}
                 >
-                  确定
+                  {confirming ? '处理中…' : title.includes('删除') ? '确认删除' : '确定'}
                 </button>
               </div>
             ) : (
@@ -356,6 +393,23 @@ const showSuccess = (message: string, showAlert?: (config: any) => void) => {
   } else {
     console.log(message);
   }
+};
+
+const confirmAdminDelete = (
+  showAlert: (config: any) => void,
+  hideAlert: () => void,
+  { target, description = '删除后不会自动恢复。', onConfirm }: { target: string; description?: string; onConfirm: () => void | Promise<unknown> }
+) => {
+  showAlert({
+    type: 'warning', title: '确认删除',
+    message: `确定删除「${target}」吗？${description}`,
+    showConfirm: true,
+    onConfirm: async () => {
+      hideAlert();
+      try { await onConfirm(); }
+      catch (error) { showError(error instanceof Error ? error.message : '删除失败，请重试', showAlert); }
+    },
+  });
 };
 
 // 通用加载状态管理系统
@@ -4117,16 +4171,22 @@ const OpenListConfigComponent = ({
                         );
                       };
                       const removeSource = () => {
-                        setExtraSources((prev) =>
-                          prev.filter((_, i) => i !== index)
-                        );
-                        // 删除后同步平移索引，避免展开 / 检查状态错位
-                        setExtraSourceExpanded((prev) =>
-                          shiftIndexSetAfterRemove(prev, index)
-                        );
-                        setExtraSourceChecking((prev) =>
-                          shiftIndexSetAfterRemove(prev, index)
-                        );
+                        confirmAdminDelete(showAlert, hideAlert, {
+                          target: source.name || 'OpenList 备用源',
+                          description: '仅移除此备用源设置，保存配置后生效。',
+                          onConfirm: () => {
+                            setExtraSources((prev) =>
+                              prev.filter((_, i) => i !== index)
+                            );
+                            // 删除后同步平移索引，避免展开 / 检查状态错位
+                            setExtraSourceExpanded((prev) =>
+                              shiftIndexSetAfterRemove(prev, index)
+                            );
+                            setExtraSourceChecking((prev) =>
+                              shiftIndexSetAfterRemove(prev, index)
+                            );
+                          },
+                        });
                       };
                       const collapseSource = () => {
                         if (!source.name.trim()) {
@@ -4353,8 +4413,7 @@ const OpenListConfigComponent = ({
                   <button
                     type='button'
                     onClick={() => {
-                      const newPaths = rootPaths.filter((_, i) => i !== index);
-                      setRootPaths(newPaths);
+                      confirmAdminDelete(showAlert, hideAlert, { target: rootPaths[index] || '扫描根目录', description: '仅移除此扫描目录设置，保存配置后生效。', onConfirm: () => setRootPaths((paths) => paths.filter((_, i) => i !== index)) });
                     }}
                     disabled={!enabled}
                     className='px-3 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 disabled:opacity-50 disabled:cursor-not-allowed'
@@ -4608,9 +4667,7 @@ const OpenListConfigComponent = ({
                             <button
                               type='button'
                               onClick={() =>
-                                setPathMetaRows((rows) =>
-                                  rows.filter((_, i) => i !== index)
-                                )
+                                confirmAdminDelete(showAlert, hideAlert, { target: '路径元信息设置', description: '仅移除此设置项，保存配置后生效。', onConfirm: () => setPathMetaRows((rows) => rows.filter((_, i) => i !== index)) })
                               }
                               className='inline-flex flex-shrink-0 items-center justify-center rounded-lg p-1.5 text-sm text-red-600 transition-colors hover:bg-red-50 hover:text-red-700 dark:text-red-400 dark:hover:bg-red-900/20'
                               aria-label='删除'
@@ -6169,37 +6226,39 @@ const EmbyConfigComponent = ({
 
   // 删除源
   const handleDelete = async (source: any) => {
-    if (!confirm(`确定要删除 "${source.name}" 吗？`)) {
-      return;
-    }
+    confirmAdminDelete(showAlert, hideAlert, {
+      target: source.name || 'Emby 源',
+      description: '仅删除此媒体源配置，不会删除服务器中的媒体文件。',
+      onConfirm: async () => {
+        await withLoading('deleteEmbySource', async () => {
+          try {
+            const newSources = sources.filter((s) => s.key !== source.key);
 
-    await withLoading('deleteEmbySource', async () => {
-      try {
-        const newSources = sources.filter((s) => s.key !== source.key);
+            const response = await fetch('/api/admin/config', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json', 'If-Match': getAdminConfigVersion(config) },
+              body: JSON.stringify({
+                ...config,
+                EmbyConfig: {
+                  Sources: newSources,
+                },
+              }),
+            });
 
-        const response = await fetch('/api/admin/config', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'If-Match': getAdminConfigVersion(config) },
-          body: JSON.stringify({
-            ...config,
-            EmbyConfig: {
-              Sources: newSources,
-            },
-          }),
+            if (!response.ok) {
+              throw adminConfigSaveError(response.status, '删除失败');
+            }
+
+            await refreshConfig();
+            showSuccess('删除成功', showAlert);
+          } catch (error) {
+            showError(
+              error instanceof Error ? error.message : '删除失败',
+              showAlert
+            );
+          }
         });
-
-        if (!response.ok) {
-          throw adminConfigSaveError(response.status, '删除失败');
-        }
-
-        await refreshConfig();
-        showSuccess('删除成功', showAlert);
-      } catch (error) {
-        showError(
-          error instanceof Error ? error.message : '删除失败',
-          showAlert
-        );
-      }
+      },
     });
   };
 
@@ -7340,10 +7399,9 @@ const VideoSourceConfig = ({
   };
 
   const handleDelete = (key: string) => {
-    withLoading(`deleteSource_${key}`, () =>
-      callSourceApi({ action: 'delete', key })
-    ).catch(() => {
-      console.error('操作失败', 'delete', key);
+    confirmAdminDelete(showAlert, hideAlert, {
+      target: sources.find((source) => source.key === key)?.name || '视频源',
+      onConfirm: () => withLoading(`deleteSource_${key}`, () => callSourceApi({ action: 'delete', key })),
     });
   };
 
@@ -7970,7 +8028,7 @@ const VideoSourceConfig = ({
             disabled={isLoading(`toggleSource_${source.key}`)}
             className={`inline-flex items-center px-3 py-1.5 rounded-full text-xs font-medium ${
               !source.disabled
-                ? buttonStyles.roundedDanger
+                ? buttonStyles.roundedWarning
                 : buttonStyles.roundedSuccess
             } transition-colors ${
               isLoading(`toggleSource_${source.key}`)
@@ -7991,7 +8049,7 @@ const VideoSourceConfig = ({
               <button
                 onClick={() => handleDelete(source.key)}
                 disabled={isLoading(`deleteSource_${source.key}`)}
-                className={`${buttonStyles.roundedSecondary} ${
+                className={`${buttonStyles.roundedDanger} ${
                   isLoading(`deleteSource_${source.key}`)
                     ? 'opacity-50 cursor-not-allowed'
                     : ''
@@ -9241,7 +9299,7 @@ const CategoryDraggableRow = ({
           )}
           className={`inline-flex items-center px-3 py-1.5 rounded-full text-xs font-medium ${
             !category.disabled
-              ? buttonStyles.roundedDanger
+              ? buttonStyles.roundedWarning
               : buttonStyles.roundedSuccess
           } transition-colors ${
             isLoading(`toggleCategory_${category.query}_${category.type}`)
@@ -9257,7 +9315,7 @@ const CategoryDraggableRow = ({
             disabled={isLoading(
               `deleteCategory_${category.query}_${category.type}`
             )}
-            className={`${buttonStyles.roundedSecondary} ${
+            className={`${buttonStyles.roundedDanger} ${
               isLoading(`deleteCategory_${category.query}_${category.type}`)
                 ? 'opacity-50 cursor-not-allowed'
                 : ''
@@ -9351,10 +9409,9 @@ const CategoryConfig = ({
   };
 
   const handleDelete = (query: string, type: 'movie' | 'tv') => {
-    withLoading(`deleteCategory_${query}_${type}`, () =>
-      callCategoryApi({ action: 'delete', query, type })
-    ).catch(() => {
-      console.error('操作失败', 'delete', query, type);
+    confirmAdminDelete(showAlert, hideAlert, {
+      target: categories.find((category) => category.query === query && category.type === type)?.name || query,
+      onConfirm: () => withLoading(`deleteCategory_${query}_${type}`, () => callCategoryApi({ action: 'delete', query, type })),
     });
   };
 
@@ -10563,6 +10620,7 @@ const ConfigFileComponent = ({
         message={alertModal.message}
         timer={alertModal.timer}
         showConfirm={alertModal.showConfirm}
+        onConfirm={alertModal.onConfirm}
       />
     </div>
   );
@@ -10881,9 +10939,7 @@ const ThemeConfigComponent = ({
                     <button
                       type='button'
                       onClick={() => {
-                        setLoginBackgroundImages(
-                          loginBackgroundImages.filter((_, i) => i !== index)
-                        );
+                        confirmAdminDelete(showAlert, hideAlert, { target: '登录页背景图', description: '仅移除此背景图设置，保存配置后生效。', onConfirm: () => setLoginBackgroundImages((images) => images.filter((_, i) => i !== index)) });
                       }}
                       className='px-3 py-2 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors'
                       title='删除'
@@ -10953,9 +11009,7 @@ const ThemeConfigComponent = ({
                     <button
                       type='button'
                       onClick={() => {
-                        setRegisterBackgroundImages(
-                          registerBackgroundImages.filter((_, i) => i !== index)
-                        );
+                        confirmAdminDelete(showAlert, hideAlert, { target: '注册页背景图', description: '仅移除此背景图设置，保存配置后生效。', onConfirm: () => setRegisterBackgroundImages((images) => images.filter((_, i) => i !== index)) });
                       }}
                       className='px-3 py-2 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors'
                       title='删除'
@@ -11025,9 +11079,7 @@ const ThemeConfigComponent = ({
                     <button
                       type='button'
                       onClick={() => {
-                        setHomeBackgroundImages(
-                          homeBackgroundImages.filter((_, i) => i !== index)
-                        );
+                        confirmAdminDelete(showAlert, hideAlert, { target: '首页背景图', description: '仅移除此背景图设置，保存配置后生效。', onConfirm: () => setHomeBackgroundImages((images) => images.filter((_, i) => i !== index)) });
                       }}
                       className='px-3 py-2 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors'
                       title='删除'
@@ -11530,6 +11582,7 @@ const ThemeConfigComponent = ({
         message={alertModal.message}
         timer={alertModal.timer}
         showConfirm={alertModal.showConfirm}
+        onConfirm={alertModal.onConfirm}
       />
     </div>
   );
@@ -13172,6 +13225,7 @@ const SiteConfigComponent = ({
         message={alertModal.message}
         timer={alertModal.timer}
         showConfirm={alertModal.showConfirm}
+        onConfirm={alertModal.onConfirm}
       />
 
       {/* 开启评论确认弹窗 */}
@@ -14074,6 +14128,7 @@ const RegistrationConfigComponent = ({
         message={alertModal.message}
         timer={alertModal.timer}
         showConfirm={alertModal.showConfirm}
+        onConfirm={alertModal.onConfirm}
       />
 
       {/* 开启注册确认弹窗 */}
@@ -14420,6 +14475,7 @@ const CustomAdFilterConfig = ({
         message={alertModal.message}
         timer={alertModal.timer}
         showConfirm={alertModal.showConfirm}
+        onConfirm={alertModal.onConfirm}
       />
     </div>
   );
@@ -14798,6 +14854,7 @@ const SuwayomiConfigComponent = ({
         message={alertModal.message}
         timer={alertModal.timer}
         showConfirm={alertModal.showConfirm}
+        onConfirm={alertModal.onConfirm}
       />
     </div>
   );
@@ -14889,10 +14946,16 @@ const OPDSConfigComponent = ({
   };
 
   const removeSource = (index: number) => {
-    setSources((prev) => prev.filter((_, idx) => idx !== index));
-    setEditingIndex((prev) =>
-      prev === index ? null : prev !== null && prev > index ? prev - 1 : prev
-    );
+    confirmAdminDelete(showAlert, hideAlert, {
+      target: sources[index]?.name || '书源',
+      description: '仅移除此书源设置，保存配置后生效。',
+      onConfirm: () => {
+        setSources((prev) => prev.filter((_, idx) => idx !== index));
+        setEditingIndex((prev) =>
+          prev === index ? null : prev !== null && prev > index ? prev - 1 : prev
+        );
+      },
+    });
   };
 
   const normalizeSource = (source: BookSource, index: number) => ({
@@ -15037,24 +15100,30 @@ const OPDSConfigComponent = ({
   };
 
   const deleteLegadoSubscription = async (id: string) => {
-    await withLoading(`deleteLegadoSubscription-${id}`, async () => {
-      try {
-        const response = await fetch(
-          `/api/admin/legado-subscriptions/${encodeURIComponent(id)}`,
-          { method: 'DELETE' }
-        );
-        const data = await response.json();
-        if (!response.ok || !data.success)
-          throw new Error(data.error || '删除 Legado 订阅失败');
-        await refreshConfig();
-        showSuccess('Legado 订阅已删除', showAlert);
-      } catch (error) {
-        showError(
-          error instanceof Error ? error.message : '删除 Legado 订阅失败',
-          showAlert
-        );
-        throw error;
-      }
+    confirmAdminDelete(showAlert, hideAlert, {
+      target: (legadoSubscriptions || []).find((subscription) => subscription.id === id)?.name || 'Legado 订阅',
+      description: '删除此订阅及其导入的书源。',
+      onConfirm: async () => {
+        await withLoading(`deleteLegadoSubscription-${id}`, async () => {
+          try {
+            const response = await fetch(
+              `/api/admin/legado-subscriptions/${encodeURIComponent(id)}`,
+              { method: 'DELETE' }
+            );
+            const data = await response.json();
+            if (!response.ok || !data.success)
+              throw new Error(data.error || '删除 Legado 订阅失败');
+            await refreshConfig();
+            showSuccess('Legado 订阅已删除', showAlert);
+          } catch (error) {
+            showError(
+              error instanceof Error ? error.message : '删除 Legado 订阅失败',
+              showAlert
+            );
+            throw error;
+          }
+        });
+      },
     });
   };
 
@@ -15508,6 +15577,7 @@ const OPDSConfigComponent = ({
         message={alertModal.message}
         timer={alertModal.timer}
         showConfirm={alertModal.showConfirm}
+        onConfirm={alertModal.onConfirm}
       />
     </div>
   );
@@ -15752,6 +15822,7 @@ const XiaoyaConfigComponent = ({
         message={alertModal.message}
         timer={alertModal.timer}
         showConfirm={alertModal.showConfirm}
+        onConfirm={alertModal.onConfirm}
       />
     </div>
   );
@@ -15995,6 +16066,7 @@ const TelegramConfigComponent = ({
         message={alertModal.message}
         timer={alertModal.timer}
         showConfirm={alertModal.showConfirm}
+        onConfirm={alertModal.onConfirm}
       />
     </div>
   );
@@ -16410,6 +16482,7 @@ const EmailConfigComponent = ({
         message={alertModal.message}
         timer={alertModal.timer}
         showConfirm={alertModal.showConfirm}
+        onConfirm={alertModal.onConfirm}
       />
     </div>
   );
@@ -16494,17 +16567,23 @@ const MovieRequestsComponent = ({
   };
 
   const handleDelete = async (id: string) => {
-    await withLoading(`delete_${id}`, async () => {
-      try {
-        const response = await fetch(`/api/movie-requests/${id}`, {
-          method: 'DELETE',
+    confirmAdminDelete(showAlert, hideAlert, {
+      target: requests.find((request) => request.id === id)?.title || '求片记录',
+      description: '删除后不会自动恢复。',
+      onConfirm: async () => {
+        await withLoading(`delete_${id}`, async () => {
+          try {
+            const response = await fetch(`/api/movie-requests/${id}`, {
+              method: 'DELETE',
+            });
+            if (!response.ok) throw new Error('删除失败');
+            showSuccess('删除成功', showAlert);
+            await loadRequests();
+          } catch (err) {
+            showError(err instanceof Error ? err.message : '删除失败', showAlert);
+          }
         });
-        if (!response.ok) throw new Error('删除失败');
-        showSuccess('删除成功', showAlert);
-        await loadRequests();
-      } catch (err) {
-        showError(err instanceof Error ? err.message : '删除失败', showAlert);
-      }
+      },
     });
   };
 
@@ -16708,6 +16787,7 @@ const MovieRequestsComponent = ({
         message={alertModal.message}
         timer={alertModal.timer}
         showConfirm={alertModal.showConfirm}
+        onConfirm={alertModal.onConfirm}
       />
     </div>
   );
@@ -17572,6 +17652,7 @@ const AIConfigComponent = ({
         message={alertModal.message}
         timer={alertModal.timer}
         showConfirm={alertModal.showConfirm}
+        onConfirm={alertModal.onConfirm}
       />
     </div>
   );
@@ -17850,6 +17931,7 @@ const MusicConfigComponent = ({
         message={alertModal.message}
         timer={alertModal.timer}
         showConfirm={alertModal.showConfirm}
+        onConfirm={alertModal.onConfirm}
       />
     </div>
   );
@@ -17946,7 +18028,9 @@ const LiveSourceDraggableRow = ({
         </span>
       </td>
       <td className='px-6 py-4 whitespace-nowrap'>
+        <span className='apex-admin-proxy-select'>
         <select
+          aria-label={`${liveSource.name}的代理模式`}
           value={liveSource.proxyMode || 'full'}
           onChange={(e) => {
             onSetProxyMode(
@@ -17955,16 +18039,13 @@ const LiveSourceDraggableRow = ({
             );
           }}
           disabled={isLoading(`setLiveProxyMode_${liveSource.key}`)}
-          className={`px-2 py-1 text-xs rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 ${
-            isLoading(`setLiveProxyMode_${liveSource.key}`)
-              ? 'opacity-50 cursor-not-allowed'
-              : 'cursor-pointer'
-          }`}
         >
           <option value='full'>全量代理</option>
           <option value='m3u8-only'>仅代理m3u8</option>
           <option value='direct'>直连</option>
         </select>
+        <ChevronDown aria-hidden='true' />
+        </span>
       </td>
       <td className='px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-2'>
         <button
@@ -17972,7 +18053,7 @@ const LiveSourceDraggableRow = ({
           disabled={isLoading(`toggleLiveSource_${liveSource.key}`)}
           className={`inline-flex items-center px-3 py-1.5 rounded-full text-xs font-medium ${
             !liveSource.disabled
-              ? buttonStyles.roundedDanger
+              ? buttonStyles.roundedWarning
               : buttonStyles.roundedSuccess
           } transition-colors ${
             isLoading(`toggleLiveSource_${liveSource.key}`)
@@ -17998,7 +18079,7 @@ const LiveSourceDraggableRow = ({
             <button
               onClick={() => onDelete(liveSource.key)}
               disabled={isLoading(`deleteLiveSource_${liveSource.key}`)}
-              className={`${buttonStyles.roundedSecondary} ${
+              className={`${buttonStyles.roundedDanger} ${
                 isLoading(`deleteLiveSource_${liveSource.key}`)
                   ? 'opacity-50 cursor-not-allowed'
                   : ''
@@ -18146,10 +18227,9 @@ const LiveSourceConfig = ({
   };
 
   const handleDelete = (key: string) => {
-    withLoading(`deleteLiveSource_${key}`, () =>
-      callLiveSourceApi({ action: 'delete', key })
-    ).catch(() => {
-      console.error('操作失败', 'delete', key);
+    confirmAdminDelete(showAlert, hideAlert, {
+      target: liveSources.find((source) => source.key === key)?.name || '电视直播源',
+      onConfirm: () => withLoading(`deleteLiveSource_${key}`, () => callLiveSourceApi({ action: 'delete', key })),
     });
   };
 
@@ -18645,6 +18725,7 @@ const LiveSourceConfig = ({
         message={alertModal.message}
         timer={alertModal.timer}
         showConfirm={alertModal.showConfirm}
+        onConfirm={alertModal.onConfirm}
       />
     </div>
   );
@@ -18683,12 +18764,12 @@ const WebLiveForm = ({ value, onChange, onSubmit, onCancel, busy, editing }: { v
   </div>;
 };
 
-const WebLiveRow = ({ source, busy, onToggle, onEdit, onDelete }: { source: any; busy: boolean; onToggle: () => void; onEdit: () => void; onDelete: () => void }) => {
-  const { attributes, listeners, setNodeRef, setActivatorNodeRef, transform, transition, isDragging } = useSortable({ id: source.key, disabled: busy });
+const WebLiveRow = ({ source, busy, sortMode, position, onToggle, onEdit, onDelete }: { source: any; busy: boolean; sortMode: boolean; position: number; onToggle: () => void; onEdit: () => void; onDelete: () => void }) => {
+  const { attributes, listeners, setNodeRef, setActivatorNodeRef, transform, transition, isDragging } = useSortable({ id: source.key, disabled: busy || !sortMode });
   return <li ref={setNodeRef} style={{ transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.65 : 1 }} className='flex items-center gap-2 border-b border-gray-200 px-2 py-3 last:border-0 dark:border-gray-700 sm:px-4'>
-    <button ref={setActivatorNodeRef} {...attributes} {...listeners} disabled={busy} aria-label={`拖动排序 ${source.name}`} className='touch-none rounded p-2 text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800'><GripVertical className='h-5 w-5' /></button>
+    {sortMode && <button ref={setActivatorNodeRef} {...attributes} {...listeners} disabled={busy} aria-label={`拖动排序 ${source.name}`} className='apex-live-drag-handle touch-none rounded p-2 text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800'><GripVertical className='h-5 w-5' /></button>}
     <div className='min-w-0 flex-1'><div className='flex flex-wrap items-center gap-2'><span className='truncate text-sm font-medium text-gray-900 dark:text-gray-100'>{source.name}</span><span className='text-xs text-gray-500'>{source.disabled ? '已禁用' : '启用中'}</span></div><p className='truncate text-xs text-gray-500 dark:text-gray-400'>{webLivePlatformName(source.platform)}{!isWebLivePlatformEnabled(source.platform) ? '（暂不支持）' : ''} · {source.roomId}</p></div>
-    <div className='flex flex-wrap justify-end gap-1'><button onClick={onToggle} disabled={busy} className={source.disabled ? buttonStyles.roundedSuccess : buttonStyles.roundedDanger}>{source.disabled ? '启用' : '禁用'}</button>{source.from !== 'config' && <><button onClick={onEdit} disabled={busy} className={buttonStyles.roundedPrimary}>编辑</button><button onClick={onDelete} disabled={busy} className={buttonStyles.roundedSecondary}>删除</button></>}</div>
+    {sortMode ? <span className='apex-live-sort-position' aria-label={`第 ${position} 项`}>{String(position).padStart(2, '0')}</span> : <div className='flex flex-wrap justify-end gap-1'><button onClick={onToggle} disabled={busy} className={source.disabled ? buttonStyles.roundedSuccess : buttonStyles.roundedWarning}>{source.disabled ? '启用' : '禁用'}</button>{source.from !== 'config' && <><button onClick={onEdit} disabled={busy} className={buttonStyles.roundedPrimary}>编辑</button><button onClick={onDelete} disabled={busy} className={buttonStyles.roundedDanger}>删除</button></>}</div>}
   </li>;
 };
 
@@ -18714,15 +18795,18 @@ const WebLiveConfig = ({
   const [showDisclaimerModal, setShowDisclaimerModal] = useState(false);
   const [countdown, setCountdown] = useState(10);
   const [isEnabling, setIsEnabling] = useState(false);
-  const [sorting, setSorting] = useState(false);
-  const sortingRef = useRef(false);
+  const [sortMode, setSortMode] = useState(false);
+  const sortModeRef = useRef(false);
   const requestInFlight = useRef(false);
+  const savingOrder = isLoading('saveWebLiveOrder');
+  const orderChanged = webLiveSources.length !== (config?.WebLiveConfig?.length || 0) || webLiveSources.some((source, index) => source.key !== config?.WebLiveConfig?.[index]?.key);
   const sensors = useSensors(useSensor(MouseSensor, { activationConstraint: { distance: 6 } }), useSensor(TouchSensor, { activationConstraint: { delay: 250, tolerance: 8 } }), useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }));
 
   useEffect(() => {
-    if (config?.WebLiveConfig) {
-      setWebLiveSources(config.WebLiveConfig);
-    }
+    const latest = config?.WebLiveConfig || [];
+    setWebLiveSources((previous) => sortModeRef.current
+      ? mergePendingOrder(previous, latest, (item) => item.key)
+      : latest);
   }, [config]);
 
   useEffect(() => {
@@ -18796,23 +18880,36 @@ const WebLiveConfig = ({
   };
 
   const handleDelete = (key: string) => {
-    withLoading(`deleteWebLive_${key}`, () =>
-      callApi({ action: 'delete', key })
-    ).catch(() => {});
+    confirmAdminDelete(showAlert, hideAlert, {
+      target: webLiveSources.find((source) => source.key === key)?.name || '网络直播源',
+      onConfirm: () => withLoading(`deleteWebLive_${key}`, () => callApi({ action: 'delete', key })),
+    });
   };
 
-  const handleSort = async ({ active, over }: any) => {
-    if (!over || active.id === over.id || sortingRef.current) return;
-    if (requestInFlight.current) { showError('正在保存，请稍后再试', showAlert); return; }
-    const oldIndex = webLiveSources.findIndex((source) => source.key === active.id);
-    const newIndex = webLiveSources.findIndex((source) => source.key === over.id);
-    if (oldIndex < 0 || newIndex < 0) return;
-    const previous = webLiveSources;
-    const next = arrayMove(previous, oldIndex, newIndex);
-    sortingRef.current = true; setSorting(true); setWebLiveSources(next);
-    try { await callApi({ action: 'sort', keys: next.map((source) => source.key) }); }
-    catch { setWebLiveSources(previous); }
-    finally { sortingRef.current = false; setSorting(false); }
+  const handleSort = ({ active, over }: any) => {
+    if (!sortModeRef.current || !over || active.id === over.id || requestInFlight.current || savingOrder) return;
+    setWebLiveSources((previous) => {
+      const oldIndex = previous.findIndex((source) => source.key === active.id);
+      const newIndex = previous.findIndex((source) => source.key === over.id);
+      return oldIndex < 0 || newIndex < 0 ? previous : arrayMove(previous, oldIndex, newIndex);
+    });
+  };
+
+  const handleCancelOrder = () => {
+    if (requestInFlight.current || savingOrder) return;
+    sortModeRef.current = false;
+    setSortMode(false);
+    setWebLiveSources(config?.WebLiveConfig || []);
+  };
+
+  const handleSaveOrder = () => {
+    if (!sortModeRef.current || !orderChanged || requestInFlight.current) return;
+    void withLoading('saveWebLiveOrder', async () => {
+      await callApi({ action: 'sort', keys: webLiveSources.map((source) => source.key) });
+      sortModeRef.current = false;
+      setSortMode(false);
+      showSuccess('排序已保存', showAlert);
+    }).catch(() => {});
   };
 
   const handleToggleWebLiveEnabled = async () => {
@@ -18949,8 +19046,9 @@ const WebLiveConfig = ({
         </h4>
         <button
           onClick={() => setShowAddForm(!showAddForm)}
+          disabled={sortMode || savingOrder}
           className={
-            showAddForm ? buttonStyles.secondary : buttonStyles.success
+            sortMode || savingOrder ? buttonStyles.disabled : showAddForm ? buttonStyles.secondary : buttonStyles.success
           }
         >
           {showAddForm ? '取消' : '添加网络直播'}
@@ -18959,11 +19057,25 @@ const WebLiveConfig = ({
 
       {showAddForm && <WebLiveForm value={newSource} onChange={setNewSource} onSubmit={handleAdd} onCancel={() => setShowAddForm(false)} busy={isLoading('addWebLive')} editing={false} />}
       {editingSource && <WebLiveForm key={editingSource.key} value={editingSource} onChange={setEditingSource} onSubmit={handleEdit} onCancel={() => setEditingSource(null)} busy={isLoading('editWebLive')} editing />}
-      <p className='text-xs text-gray-500 dark:text-gray-400' aria-live='polite'>{sorting ? '正在保存顺序…' : '按住手柄拖动排序；也可使用键盘调整顺序。'}</p>
+      <div className='apex-live-sortbar' data-active={sortMode}>
+        <div className='apex-live-sortbar-main'>
+          <button type='button' role='switch' aria-checked={sortMode} aria-labelledby='web-live-sort-label' aria-describedby='web-live-sort-help' disabled={savingOrder || showAddForm || !!editingSource} className='apex-live-sort-switch' onClick={() => {
+            if (requestInFlight.current) return;
+            if (sortMode) handleCancelOrder();
+            else { sortModeRef.current = true; setSortMode(true); }
+          }}><span /></button>
+          <div><p id='web-live-sort-label' className='apex-live-sort-label'>调整展示顺序</p><p id='web-live-sort-help' className='apex-live-sort-help'>{sortMode ? '按住手柄拖动，也可用键盘调整；完成后统一保存。关闭开关会取消调整。' : showAddForm || editingSource ? '完成或取消当前编辑后，即可开启排序。' : '开启后调整列表顺序，确认后一次性保存。'}</p></div>
+        </div>
+        {sortMode && <div className='apex-live-sort-actions'>
+          <span role='status' className='apex-live-sort-status'>{savingOrder ? '正在保存…' : orderChanged ? '顺序未保存' : '尚未调整顺序'}</span>
+          <button type='button' onClick={handleCancelOrder} disabled={savingOrder} className={buttonStyles.secondary}>取消</button>
+          <button type='button' onClick={handleSaveOrder} disabled={savingOrder || !orderChanged} className={savingOrder || !orderChanged ? buttonStyles.disabled : buttonStyles.success}>{savingOrder ? <><Loader2 className='mr-1.5 inline h-4 w-4 animate-spin' />保存中…</> : '保存排序'}</button>
+        </div>}
+      </div>
       <DndContext sensors={sensors} collisionDetection={closestCenter} modifiers={[restrictToVerticalAxis]} onDragEnd={handleSort}>
         <SortableContext items={webLiveSources.map((source) => source.key)} strategy={verticalListSortingStrategy}>
           <ul className='rounded-lg border border-gray-200 dark:border-gray-700'>
-            {webLiveSources.map((source) => <WebLiveRow key={source.key} source={source} busy={sorting || isLoading(`toggleWebLive_${source.key}`) || isLoading(`deleteWebLive_${source.key}`)} onToggle={() => handleToggle(source.key)} onEdit={() => setEditingSource({ ...source })} onDelete={() => handleDelete(source.key)} />)}
+            {webLiveSources.map((source, index) => <WebLiveRow key={source.key} source={source} sortMode={sortMode} position={index + 1} busy={savingOrder || isLoading(`toggleWebLive_${source.key}`) || isLoading(`deleteWebLive_${source.key}`)} onToggle={() => handleToggle(source.key)} onEdit={() => setEditingSource({ ...source })} onDelete={() => handleDelete(source.key)} />)}
             {!webLiveSources.length && <li className='p-4 text-sm text-gray-500'>还没有直播源，点击上方按钮添加。</li>}
           </ul>
         </SortableContext>
@@ -18977,6 +19089,7 @@ const WebLiveConfig = ({
         message={alertModal.message}
         timer={alertModal.timer}
         showConfirm={alertModal.showConfirm}
+        onConfirm={alertModal.onConfirm}
       />
     </div>
   );
@@ -19656,6 +19769,7 @@ function AdminPageClient() {
         message={alertModal.message}
         timer={alertModal.timer}
         showConfirm={alertModal.showConfirm}
+        onConfirm={alertModal.onConfirm}
       />
 
       {/* 重置配置确认弹窗 */}

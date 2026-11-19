@@ -1,6 +1,6 @@
 'use client';
 
-import { AlertTriangle, Download, Loader2, Play, Radio } from 'lucide-react';
+import { AlertTriangle, ChevronDown, Download, Info, Loader2, Play, Radio, SlidersHorizontal } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 
@@ -56,6 +56,7 @@ export default function WebLivePage() {
   const [playback, setPlayback] = useState<WebLivePlayback | null>(null);
   const [selectedVariant, setSelectedVariant] = useState('');
   const [selectionNotice, setSelectionNotice] = useState('');
+  const [showAdvancedPlayback, setShowAdvancedPlayback] = useState(false);
   const preferenceRef = useRef<WebLivePreference | null>(null);
   const retryCountRef = useRef(0);
   const originalVideoUrl = playback?.originalUrl || '';
@@ -236,6 +237,7 @@ export default function WebLivePage() {
   const qualityVariants = variant ? variants.filter((item) => qualityName(item) === qualityName(variant)) : [];
   const cdns = Array.from(new Set(qualityVariants.map((item) => item.cdn || '')));
   const protocols = qualityVariants.filter((item) => (item.cdn || '') === (variant?.cdn || ''));
+  const protocolTypes = Array.from(new Set(protocols.map((item) => item.type)));
   const selectVariant = (item: WebLiveVariant | undefined, notice = '') => {
     if (!item) return;
     retryCountRef.current = 0;
@@ -492,39 +494,66 @@ export default function WebLivePage() {
                 <WebLiveRoomDetails source={currentSource} info={streamInfo} loading={isVideoLoading} error={!!errorMessage} />
               )}
               {playback?.kind === 'stream' && (
-                <div className='space-y-2 px-4 pb-3 text-sm'>
+                <section className='ptv-live-settings' aria-label='直播画质与线路'>
                   {variant && (
-                    <div className='flex flex-wrap items-center gap-3'>
-                      <label>清晰度
+                    <div className='ptv-live-controls'>
+                      <label className='ptv-live-field'>
+                        <span>清晰度</span>
+                        <span className='ptv-live-select'>
                         <select value={qualityName(variant)} onChange={(event) => {
                           const next = chooseVariant(variants, event.target.value, variant.cdn, variant.type);
                           selectVariant(next, next && (next.cdn !== variant.cdn || next.type !== variant.type) ? '该画质没有当前线路或协议，已选择可用选项。' : '');
-                        }} className='ml-2 min-h-[44px] rounded border border-gray-300 bg-transparent px-2 dark:border-gray-600'>
+                        }}>
                           {qualities.map((quality) => <option key={quality} value={quality}>{quality}</option>)}
                         </select>
+                        <ChevronDown aria-hidden='true' />
+                        </span>
                       </label>
-                      {cdns.length > 1 && <label>线路
+                      {cdns.length > 1 && <label className='ptv-live-field ptv-live-field--route'>
+                        <span>播放线路</span>
+                        <span className='ptv-live-select'>
                         <select value={variant.cdn || ''} onChange={(event) => {
                           const next = chooseVariant(qualityVariants.filter((item) => (item.cdn || '') === event.target.value), qualityName(variant), event.target.value || undefined, variant.type);
                           selectVariant(next, next && next.type !== variant.type ? '该线路没有当前协议，已选择可用协议。' : '');
-                        }} className='ml-2 min-h-[44px] rounded border border-gray-300 bg-transparent px-2 dark:border-gray-600'>
-                          {cdns.map((cdn, index) => <option key={cdn} value={cdn}>线路 {index + 1}{cdn === 'AL' ? '（阿里云）' : cdn === 'TX' ? '（腾讯云）' : ''}</option>)}
+                        }}>
+                          {cdns.map((cdn, index) => <option key={cdn} value={cdn}>线路 {index + 1}{cdn === 'AL' ? ' · 阿里云' : cdn === 'TX' ? ' · 腾讯云' : ''}</option>)}
                         </select>
+                        <ChevronDown aria-hidden='true' />
+                        </span>
                       </label>}
-                      {new Set(protocols.map((item) => item.type)).size > 1 && <details>
-                        <summary className='cursor-pointer py-3'>高级选项</summary>
-                        <label>播放协议
-                          <select value={variant.type} onChange={(event) => selectVariant(protocols.find((item) => item.type === event.target.value))} className='ml-2 min-h-[44px] rounded border border-gray-300 bg-transparent px-2 dark:border-gray-600'>
-                            {Array.from(new Set(protocols.map((item) => item.type))).map((protocol) => <option key={protocol} value={protocol}>{protocol === 'hls' ? 'HLS（手机优先）' : 'FLV（备用方案）'}</option>)}
-                          </select>
-                        </label>
-                      </details>}
+                      {protocolTypes.length > 1 && (
+                        <button type='button' className='ptv-live-advanced-toggle' aria-expanded={showAdvancedPlayback} aria-controls='web-live-advanced' onClick={() => setShowAdvancedPlayback((open) => !open)}>
+                          <SlidersHorizontal aria-hidden='true' />高级选项<ChevronDown aria-hidden='true' className='ptv-live-disclosure-arrow' />
+                        </button>
+                      )}
                     </div>
                   )}
-                  {variant && <p className='text-xs text-gray-500 dark:text-gray-400'>{/\d+M/i.test(qualityName(variant)) ? '画质后的 M 是平台标注的码率，数值越高越吃带宽。' : '画质选项以平台当前向访客开放的结果为准。'}卡顿时先降低画质，再尝试其他线路。高级选项中的 HLS 优先适配手机，FLV 在部分手机上不可用。</p>}
-                  {selectionNotice && <p role='status'>{selectionNotice}</p>}
-                  {playback.qualityNote && <p>{playback.qualityNote}</p>}
-                </div>
+                  {variant && protocolTypes.length > 1 && showAdvancedPlayback && (
+                    <div id='web-live-advanced' className='ptv-live-advanced'>
+                      <label className='ptv-live-field ptv-live-field--protocol'>
+                        <span>播放协议</span>
+                        <span className='ptv-live-select'>
+                          <select value={variant.type} onChange={(event) => selectVariant(protocols.find((item) => item.type === event.target.value))}>
+                            {protocolTypes.map((protocol) => <option key={protocol} value={protocol}>{protocol === 'hls' ? 'HLS · 兼容优先' : 'FLV · 备用协议'}</option>)}
+                          </select>
+                          <ChevronDown aria-hidden='true' />
+                        </span>
+                      </label>
+                      <p>手机优先选择 HLS；部分移动浏览器无法播放 FLV。</p>
+                    </div>
+                  )}
+                  {selectionNotice && <p className='ptv-live-notice' role='status'><Info aria-hidden='true' />{selectionNotice}</p>}
+                  {variant && (
+                    <details className='ptv-live-help'>
+                      <summary><Info aria-hidden='true' /><span>画质与播放提示</span><ChevronDown aria-hidden='true' className='ptv-live-disclosure-arrow' /></summary>
+                      <dl>
+                        <div><dt>可选画质</dt><dd>{playback.qualityNote || '当前列表仅显示平台向访客开放的画质。'}</dd></div>
+                        {/\d+M/i.test(qualityName(variant)) && <div><dt>码率标识</dt><dd>M 表示平台标注的码率，数值越高，所需带宽越大。</dd></div>}
+                        <div><dt>播放卡顿</dt><dd>先降低清晰度；仍不流畅时，再切换播放线路。</dd></div>
+                      </dl>
+                    </details>
+                  )}
+                </section>
               )}
 
               {/* 外部播放器按钮 */}

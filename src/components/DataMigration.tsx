@@ -72,8 +72,8 @@ const AlertModal = ({
   };
 
   return createPortal(
-    <div className={`fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4 ptv-scrim-in`} onClick={onClose}>
-      <div className={`bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full border ${getBgColor()} ptv-modal-in`} onClick={(e) => e.stopPropagation()}>
+    <div className={`ptv-dialog apex-admin-overlay fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4 ptv-scrim-in`} onClick={onClose}>
+      <div className={`apex-admin-feedback bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full border ${getBgColor()} ptv-modal-in`} onClick={(e) => e.stopPropagation()}>
         <div className="p-6 text-center">
           <div className="flex justify-center mb-4">
             {getIcon()}

@@ -110,7 +110,7 @@ const AlertModal = ({
 
   return createPortal(
     <div
-      className={`fixed inset-0 z-[9999] flex items-center justify-center ${
+      className={`apex-admin-overlay fixed inset-0 z-[9999] flex items-center justify-center ${
         closing ? 'pointer-events-none' : ''
       }`}
     >
@@ -121,7 +121,7 @@ const AlertModal = ({
         onClick={onClose}
       />
       <div
-        className={`relative bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full mx-4 p-6 ${
+        className={`ptv-dialog apex-admin-feedback relative bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full mx-4 p-6 ${
           closing ? 'ptv-modal-out' : 'ptv-modal-in'
         }`}
       >

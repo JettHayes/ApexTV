@@ -133,6 +133,57 @@
   line-height: 1.4;
 }
 .apex-admin-content button:disabled { cursor: not-allowed; }
+html[data-moontvplus] { --apex-admin-warning: #875600; }
+html[data-moontvplus].dark { --apex-admin-warning: #edc474; }
+
+/* Shared actions also cover dialogs rendered outside the admin content. */
+:is(.apex-admin-content, .apex-admin-overlay) button.apex-admin-button {
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+  min-height: var(--admin-action-size, 40px); padding: 9px 15px; border: 1px solid var(--admin-button-line, var(--ptv-line)); border-radius: 9px;
+  background: var(--admin-button-bg, var(--ptv-panel)); color: var(--admin-button-ink, var(--ptv-text));
+  font-size: 13px; font-weight: 600; line-height: 1.4; text-align: center; white-space: nowrap; box-shadow: none;
+  transition: background-color 150ms, border-color 150ms, color 150ms, transform 100ms;
+}
+.apex-admin-button--primary { --admin-button-bg: var(--ptv-action); --admin-button-ink: var(--ptv-action-ink); --admin-button-line: var(--ptv-action); --admin-button-hover: var(--ptv-action-hover); --admin-button-hover-line: var(--ptv-action-hover); }
+.apex-admin-button--secondary { --admin-button-bg: var(--ptv-panel); --admin-button-ink: var(--ptv-accent); --admin-button-line: color-mix(in srgb, var(--ptv-accent) 35%, var(--ptv-line)); --admin-button-hover: var(--ptv-selected); --admin-button-hover-line: var(--ptv-accent); }
+.apex-admin-button--neutral { --admin-button-hover: var(--ptv-soft); --admin-button-hover-line: var(--ptv-field-line); }
+.apex-admin-button--danger { --admin-button-ink: var(--ptv-error); --admin-button-bg: color-mix(in srgb, var(--ptv-error) 6%, var(--ptv-panel)); --admin-button-line: color-mix(in srgb, var(--ptv-error) 24%, var(--ptv-line)); --admin-button-hover: color-mix(in srgb, var(--ptv-error) 13%, var(--ptv-panel)); --admin-button-hover-line: var(--ptv-error); }
+.apex-admin-button--warning { --admin-button-ink: var(--apex-admin-warning); --admin-button-bg: color-mix(in srgb, var(--apex-admin-warning) 7%, var(--ptv-panel)); --admin-button-line: color-mix(in srgb, var(--apex-admin-warning) 28%, var(--ptv-line)); --admin-button-hover: color-mix(in srgb, var(--apex-admin-warning) 14%, var(--ptv-panel)); --admin-button-hover-line: var(--apex-admin-warning); }
+.apex-admin-button--success { --admin-button-ink: var(--ptv-success); --admin-button-bg: color-mix(in srgb, var(--ptv-success) 6%, var(--ptv-panel)); --admin-button-line: color-mix(in srgb, var(--ptv-success) 26%, var(--ptv-line)); --admin-button-hover: color-mix(in srgb, var(--ptv-success) 13%, var(--ptv-panel)); --admin-button-hover-line: var(--ptv-success); }
+:is(.apex-admin-content, .apex-admin-overlay) button.apex-admin-button--compact { min-height: var(--admin-action-size, 36px); padding: 7px 11px; font-size: 12px; border-radius: 8px; }
+:is(.apex-admin-content, .apex-admin-overlay) button.apex-admin-button:is(:disabled, .apex-admin-button--disabled) { background: var(--ptv-soft); color: var(--ptv-muted); border-color: var(--ptv-line); opacity: .6; cursor: not-allowed; }
+:is(.apex-admin-content, .apex-admin-overlay) button.apex-admin-button:focus-visible { outline: 2px solid var(--ptv-accent); outline-offset: 3px; }
+:is(.apex-admin-content, .apex-admin-overlay) button.apex-admin-button:not(:disabled):not(.apex-admin-button--disabled):active { transform: translateY(1px); }
+.apex-admin-button > svg { flex-shrink: 0; }
+.apex-admin-content button:is([title='删除'], [aria-label='删除']) { display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-width: 36px; min-height: 36px; padding: 7px; border: 1px solid color-mix(in srgb, var(--ptv-error) 24%, var(--ptv-line)); border-radius: 8px; background: color-mix(in srgb, var(--ptv-error) 6%, var(--ptv-panel)); color: var(--ptv-error); }
+
+/* Older action markup in embedded settings keeps its layout and semantics. */
+:is(.apex-admin-content, .apex-admin-overlay) button:not(.apex-admin-button):is(.px-2, .px-3, .px-4, .px-6):not(.flex-col):not([role='switch']):not(.w-11):not(.h-6):is(.bg-blue-500, .bg-blue-600, .bg-blue-700, .bg-green-500, .bg-green-600, .bg-green-700, .bg-red-500, .bg-red-600, .bg-red-700, .bg-yellow-500, .bg-yellow-600, .bg-gray-600, .bg-gray-100) {
+  min-height: var(--admin-action-size, 36px); padding: 8px 12px; border: 1px solid var(--admin-button-line, var(--ptv-line)); border-radius: 9px;
+  background: var(--admin-button-bg, var(--ptv-panel)); color: var(--admin-button-ink, var(--ptv-text)); font-weight: 600; box-shadow: none;
+}
+:is(.apex-admin-content, .apex-admin-overlay) button:is(.bg-blue-500, .bg-blue-600, .bg-blue-700):not([role='switch']) { --admin-button-ink: var(--ptv-accent); --admin-button-line: color-mix(in srgb, var(--ptv-accent) 35%, var(--ptv-line)); --admin-button-hover: var(--ptv-selected); }
+:is(.apex-admin-content, .apex-admin-overlay) button:is(.bg-green-500, .bg-green-600, .bg-green-700):not([role='switch']):not(.w-11):not(.h-6) { --admin-button-bg: var(--ptv-action); --admin-button-ink: var(--ptv-action-ink); --admin-button-line: var(--ptv-action); --admin-button-hover: var(--ptv-action-hover); }
+:is(.apex-admin-content, .apex-admin-overlay) button:is(.bg-red-500, .bg-red-600, .bg-red-700):not([role='switch']) { --admin-button-bg: color-mix(in srgb, var(--ptv-error) 6%, var(--ptv-panel)); --admin-button-ink: var(--ptv-error); --admin-button-line: color-mix(in srgb, var(--ptv-error) 24%, var(--ptv-line)); --admin-button-hover: color-mix(in srgb, var(--ptv-error) 13%, var(--ptv-panel)); }
+:is(.apex-admin-content, .apex-admin-overlay) button:is(.bg-yellow-500, .bg-yellow-600):not([role='switch']) { --admin-button-bg: color-mix(in srgb, var(--apex-admin-warning) 7%, var(--ptv-panel)); --admin-button-ink: var(--apex-admin-warning); --admin-button-line: color-mix(in srgb, var(--apex-admin-warning) 28%, var(--ptv-line)); --admin-button-hover: color-mix(in srgb, var(--apex-admin-warning) 14%, var(--ptv-panel)); }
+
+.apex-admin-proxy-select { position: relative; display: block; width: 148px; }
+.apex-admin-content .apex-admin-proxy-select select { width: 100%; min-height: 40px; padding: 9px 34px 9px 12px; appearance: none; -webkit-appearance: none; border: 1px solid color-mix(in srgb, var(--ptv-accent) 30%, var(--ptv-line)); border-radius: 9px; background: var(--ptv-panel); color: var(--ptv-text); font-size: 12px; font-weight: 500; line-height: 1.5; cursor: pointer; }
+.apex-admin-proxy-select > svg { position: absolute; inset-inline-end: 12px; top: 50%; width: 15px; height: 15px; transform: translateY(-50%); color: var(--ptv-accent); pointer-events: none; }
+.apex-admin-proxy-select select:disabled { opacity: .55; cursor: progress; }
+.apex-admin-overlay .apex-admin-feedback { background: var(--ptv-panel); border-color: var(--ptv-line); border-radius: 16px; color: var(--ptv-text); }
+.apex-admin-feedback .apex-admin-feedback-copy { text-align: left; }
+.apex-admin-feedback .apex-admin-feedback-copy > p { font-size: 13px; line-height: 1.85; overflow-wrap: anywhere; }
+.apex-admin-feedback .apex-admin-feedback-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 10px; margin-top: 24px; }
+@media (hover: hover) {
+  :is(.apex-admin-content, .apex-admin-overlay) button.apex-admin-button:not(:disabled):not(.apex-admin-button--disabled):hover { background: var(--admin-button-hover, var(--ptv-soft)); border-color: var(--admin-button-hover-line, var(--ptv-field-line)); }
+  :is(.apex-admin-content, .apex-admin-overlay) button:not(.apex-admin-button):not(:disabled):is(.px-2, .px-3, .px-4, .px-6):is(.bg-blue-500, .bg-blue-600, .bg-green-600, .bg-red-500, .bg-red-600, .bg-yellow-600, .bg-gray-600):not(.w-11):not(.h-6):hover { background: var(--admin-button-hover, var(--ptv-soft)); }
+}
+@media (pointer: coarse) {
+  .apex-admin-page, .apex-admin-overlay { --admin-action-size: 44px; }
+  :is(.apex-admin-content, .apex-admin-overlay) button.apex-admin-button, .apex-admin-content .apex-admin-proxy-select select { min-height: 44px; }
+  .apex-admin-content button:is([title='删除'], [aria-label='删除']) { min-width: 44px; min-height: 44px; }
+}
 .apex-admin-content .relative.inline-flex { flex-shrink: 0; }
 .apex-admin-content label.relative.inline-flex { min-height: 44px; }
 .apex-admin-content label.relative.inline-flex > div { position: relative; }
@@ -168,6 +219,24 @@ html[data-moontvplus] .ptv-dialog.apex-admin-overlay { background-color: rgb(7 1
 .apex-admin-overlay { padding: max(16px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) max(16px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left)); }
 .apex-admin-overlay > div:not(.fixed) { max-height: calc(100dvh - 32px - env(safe-area-inset-top) - env(safe-area-inset-bottom)); overflow-y: auto; overscroll-behavior-y: contain; }
 .apex-admin-overlay button:is(.px-2, .px-3, .px-4, .px-6) { min-height: 40px; }
+
+.apex-live-sortbar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 16px 24px; padding: 16px 18px; border: 1px solid var(--ptv-line); border-radius: 12px; background: var(--ptv-soft); }
+.apex-live-sortbar[data-active='true'] { background: var(--ptv-selected); }
+.apex-live-sortbar-main { display: flex; flex: 1 1 300px; align-items: center; gap: 14px; min-width: 0; }
+.apex-live-sort-switch { position: relative; display: inline-flex; flex-shrink: 0; align-items: center; width: 44px; height: 26px; padding: 3px; border: 1px solid var(--ptv-field-line); border-radius: 999px; background: var(--ptv-panel); }
+.apex-live-sort-switch span { width: 18px; height: 18px; border-radius: 50%; background: var(--ptv-muted); transition: transform 160ms var(--ptv-ease); }
+.apex-live-sort-switch[aria-checked='true'] { border-color: var(--ptv-action); background: var(--ptv-action); }
+.apex-live-sort-switch[aria-checked='true'] span { background: var(--ptv-action-ink); transform: translateX(18px); }
+.apex-live-sort-label { color: var(--ptv-text); font-size: 13px; font-weight: 600; }
+.apex-live-sort-help { margin-top: 4px; color: var(--ptv-muted); font-size: 12px; line-height: 1.7; }
+.apex-live-sort-actions { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 8px; margin-inline-start: auto; }
+.apex-live-sort-status { margin-inline-end: 6px; color: var(--ptv-accent); font-size: 12px; }
+.apex-live-sort-position { min-width: 32px; color: var(--ptv-muted); text-align: center; font-size: 13px; font-variant-numeric: tabular-nums; }
+.apex-live-drag-handle { min-width: 44px; min-height: 44px; cursor: grab; }
+.apex-live-drag-handle:active { cursor: grabbing; }
+.apex-live-sort-switch:disabled { cursor: not-allowed; opacity: .5; }
+.apex-live-sortbar button:not([role='switch']) { min-height: 44px; }
+.apex-live-sort-switch::after { content: ''; position: absolute; inset: -9px 0; }
 
 @container admin (min-width: 58rem) {
   .apex-admin-workspace { grid-template-columns: 208px minmax(0, 1fr); gap: 24px; }

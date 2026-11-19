@@ -428,6 +428,51 @@ html[data-moontvplus].dark .ptv-login-error { color: #fda29b; background: rgba(2
 .ptv-room-meta { display: flex; align-items: center; flex-wrap: wrap; gap: 6px 12px; margin-top: 8px; font-size: 12px; line-height: 1.6; color: var(--ptv-muted); }
 .ptv-room-platform { color: var(--ptv-accent); font-weight: 600; }
 .ptv-room-id { overflow-wrap: anywhere; }
+.ptv-live-settings { container: live-settings / inline-size; padding: 0 clamp(16px, 2vw, 24px) 16px; color: var(--ptv-text); }
+.ptv-live-controls { display: grid; grid-template-columns: minmax(0, 1fr); align-items: end; gap: 14px 18px; }
+.ptv-live-field { display: grid; min-width: 0; gap: 7px; }
+.ptv-live-field > span:first-child { color: var(--ptv-muted); font-size: 12px; font-weight: 600; line-height: 1.5; }
+.ptv-live-select { position: relative; display: block; min-width: 0; }
+.ptv-page .ptv-live-select select { display: block; width: 100%; min-width: 0; min-height: 44px; margin: 0; padding: 10px 42px 10px 14px; appearance: none; -webkit-appearance: none; border: 1px solid var(--ptv-field-line); border-radius: 10px; background: var(--ptv-panel); color: var(--ptv-text); font-size: 14px; font-weight: 500; line-height: 1.5; cursor: pointer; }
+.ptv-live-select > svg { position: absolute; inset-inline-end: 14px; top: 50%; width: 16px; height: 16px; transform: translateY(-50%); color: var(--ptv-muted); pointer-events: none; }
+.ptv-live-advanced-toggle { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 44px; padding: 10px 14px; border: 1px solid var(--ptv-line); border-radius: 10px; color: var(--ptv-muted); font-size: 13px; font-weight: 500; }
+.ptv-live-advanced-toggle > svg, .ptv-live-help summary > svg, .ptv-live-notice > svg { width: 16px; height: 16px; flex-shrink: 0; }
+.ptv-live-advanced-toggle[aria-expanded='true'] { background: var(--ptv-selected); border-color: var(--ptv-accent); color: var(--ptv-accent); }
+.ptv-live-disclosure-arrow { transition: transform 160ms var(--ptv-ease); }
+.ptv-live-advanced-toggle[aria-expanded='true'] .ptv-live-disclosure-arrow, .ptv-live-help[open] .ptv-live-disclosure-arrow { transform: rotate(180deg); }
+.ptv-live-advanced { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 24px; margin-top: 16px; padding: 16px; border-radius: 10px; background: var(--ptv-soft); }
+.ptv-live-field--protocol { flex: 0 1 232px; }
+.ptv-live-advanced > p { flex: 1 1 220px; color: var(--ptv-muted); font-size: 12px; line-height: 1.7; }
+.ptv-live-help { margin-top: 14px; border-top: 1px solid var(--ptv-line); }
+.ptv-live-help summary { display: flex; align-items: center; gap: 8px; width: fit-content; min-height: 44px; padding-block: 10px; color: var(--ptv-muted); font-size: 12px; list-style: none; cursor: pointer; }
+.ptv-live-help summary::-webkit-details-marker { display: none; }
+.ptv-live-help summary:focus-visible { outline: 2px solid var(--ptv-accent); outline-offset: 3px; border-radius: 4px; }
+.ptv-live-help summary .ptv-live-disclosure-arrow { width: 14px; height: 14px; margin-inline-start: 4px; }
+.ptv-live-help dl { display: grid; gap: 12px 24px; padding: 2px 0 8px 24px; font-size: 12px; line-height: 1.8; }
+.ptv-live-help dl > div { min-width: 0; }
+.ptv-live-help dt { margin-bottom: 3px; color: var(--ptv-text); font-weight: 600; }
+.ptv-live-help dd { margin: 0; color: var(--ptv-muted); overflow-wrap: anywhere; }
+.ptv-live-notice { display: flex; align-items: flex-start; gap: 8px; margin-top: 14px; padding: 10px 12px; border-radius: 8px; background: var(--ptv-selected); color: var(--ptv-accent); font-size: 12px; line-height: 1.7; }
+.ptv-live-notice > svg { margin-top: 2px; }
+@container live-settings (min-width: 30rem) {
+  .ptv-live-controls { grid-template-columns: minmax(0, 1fr) minmax(0, 1.25fr); }
+  .ptv-live-advanced-toggle { grid-column: 1 / -1; justify-self: start; }
+  .ptv-live-help dl { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@container live-settings (min-width: 45rem) {
+  .ptv-live-controls { display: flex; flex-wrap: wrap; }
+  .ptv-live-field { flex: 0 1 188px; }
+  .ptv-live-field--route { flex-basis: 260px; }
+  .ptv-live-advanced-toggle { margin-inline-start: auto; }
+  .ptv-live-help dl { grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); }
+}
+@media (max-width: 767px) {
+  .ptv-page .ptv-live-select select { font-size: 16px; }
+}
+@media (hover: hover) {
+  .ptv-live-advanced-toggle:hover { background: var(--ptv-soft); color: var(--ptv-text); }
+  .ptv-live-help summary:hover { color: var(--ptv-accent); }
+}
 .ptv-room-tools { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px clamp(16px, 2vw, 24px); border-top: 1px solid var(--ptv-line); }
 .ptv-room-tools-label { flex-shrink: 0; color: var(--ptv-muted); font-size: 12px; }
 .ptv-room-tools button { box-shadow: none; background: transparent; transition: color 160ms, background-color 160ms; }
