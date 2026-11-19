@@ -1,0 +1,114 @@
+'use client';
+
+import { useEffect, useRef } from 'react';
+
+export default function WebLivePlayer({ url, type, onFailure }: {
+  url: string;
+  type: 'hls' | 'flv';
+  onFailure: (message: string, retryable: boolean) => void;
+}) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const failureRef = useRef(onFailure);
+  failureRef.current = onFailure;
+
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container || !url) return;
+    let cancelled = false;
+    let reported = false;
+    let art: any = null;
+    let destroyStream = () => {};
+    let video: HTMLVideoElement | null = null;
+    const fail = (message: string, retryable: boolean) => {
+      if (!cancelled && !reported) {
+        reported = true;
+        failureRef.current(message, retryable);
+      }
+    };
+
+    const loadStream = async (element: HTMLVideoElement, streamUrl: string) => {
+      video = element;
+      try {
+        if (type === 'hls' && element.canPlayType('application/vnd.apple.mpegurl')) {
+          element.src = streamUrl;
+          element.onerror = () => fail('直播流播放失败', true);
+        } else if (type === 'hls') {
+          const Hls = (await import('hls.js')).default;
+          if (cancelled) return;
+          if (!Hls.isSupported()) {
+            fail('当前浏览器不支持 HLS 播放', false);
+            return;
+          }
+          const hls = new Hls({ enableWorker: true, lowLatencyMode: true });
+          destroyStream = () => hls.destroy();
+          let mediaRecoveries = 0;
+          hls.on(Hls.Events.ERROR, (_event, data) => {
+            if (!data.fatal) return;
+            if (data.type === Hls.ErrorTypes.MEDIA_ERROR && mediaRecoveries++ < 1) {
+              hls.recoverMediaError();
+            } else {
+              fail('直播流连接失败', true);
+            }
+          });
+          hls.loadSource(streamUrl);
+          hls.attachMedia(element);
+        } else {
+          const flv = (await import('flv.js')).default;
+          if (cancelled) return;
+          if (!flv.isSupported()) {
+            fail('当前浏览器不支持 FLV，请尝试 HLS 线路或其他设备', false);
+            return;
+          }
+          const player = flv.createPlayer({ type: 'flv', url: streamUrl, isLive: true });
+          destroyStream = () => {
+            player.unload();
+            player.detachMediaElement();
+            player.destroy();
+          };
+          player.on(flv.Events.ERROR, () => fail('直播流连接失败', true));
+          player.attachMediaElement(element);
+          player.load();
+        }
+        element.play().catch(() => {});
+      } catch {
+        fail('播放器初始化失败', true);
+      }
+    };
+
+    const start = async () => {
+      try {
+        const Artplayer = (await import('artplayer')).default;
+        if (cancelled) return;
+        art = new Artplayer({
+          container,
+          url,
+          type: type === 'hls' ? 'm3u8' : 'flv',
+          isLive: true,
+          autoplay: true,
+          fullscreen: true,
+          fullscreenWeb: true,
+          volume: 0.7,
+          muted: false,
+          setting: true,
+          playsInline: true,
+          customType: { m3u8: loadStream, flv: loadStream },
+          icons: { loading: '<svg xmlns="http://www.w3.org/2000/svg" width="50" height="50" viewBox="0 0 100 100"><circle cx="50" cy="50" fill="none" stroke="currentColor" stroke-width="4" r="35" stroke-dasharray="164.93361431346415 56.97787143782138"><animateTransform attributeName="transform" type="rotate" repeatCount="indefinite" dur="1s" values="0 50 50;360 50 50" keyTimes="0;1"/></circle></svg>' },
+        });
+      } catch {
+        fail('播放器初始化失败', true);
+      }
+    };
+    void start();
+    return () => {
+      cancelled = true;
+      if (video) (video as HTMLVideoElement).onerror = null;
+      try {
+        destroyStream();
+      } finally {
+        art?.destroy();
+      }
+    };
+  }, [url, type]);
+
+  return <div ref={containerRef} className='h-full w-full bg-black' />;
+}

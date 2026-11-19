@@ -1,185 +1,97 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 import { requireFeaturePermission } from '@/lib/permissions';
+import { fetchPublicMedia, platformReferer, readMediaTicket, webLiveProxyUrl } from '@/lib/web-live-server';
 
 export const dynamic = 'force-dynamic';
+export const runtime = 'nodejs';
 
-const REFERERS = [
-  'https://www.huya.com/',
-  'https://live.bilibili.com/',
-  'https://live.douyin.com/',
-];
-
-function getReferer(url: URL, requestedReferer: string | null): string {
-  if (requestedReferer && REFERERS.includes(requestedReferer)) {
-    return requestedReferer;
-  }
-
-  const hostname = url.hostname.toLowerCase();
-  const matchesDomain = (domain: string) =>
-    hostname === domain || hostname.endsWith(`.${domain}`);
-
-  if (matchesDomain('bilivideo.com') || matchesDomain('bilibili.com')) {
-    return REFERERS[1];
-  }
-
-  if (
-    matchesDomain('douyin.com') ||
-    matchesDomain('douyincdn.com') ||
-    matchesDomain('livehwc4.com')
-  ) {
-    return REFERERS[2];
-  }
-
-  return REFERERS[0];
-}
-
-function getProxyUrl(uri: string, baseUrl: string, referer: string): string {
-  const target = new URL(uri, baseUrl);
-
-  if (target.protocol !== 'http:' && target.protocol !== 'https:') {
-    return uri;
-  }
-
-  const filename = target.pathname.split('/').pop() || 'proxy';
-
-  return (
-    `/api/web-live/proxy/${encodeURIComponent(filename)}` +
-    `?url=${encodeURIComponent(target.href)}` +
-    `&referer=${encodeURIComponent(referer)}`
-  );
-}
-
-function processM3u8Content(
-  content: string,
-  baseUrl: string,
-  referer: string
-): string {
-  return content
-    .split('\n')
-    .map((line) => {
-      const trimmedLine = line.trim();
-
-      if (!trimmedLine) return line;
-
-      if (trimmedLine.startsWith('#')) {
-        // 同时代理加密密钥、初始化片段和其他带 URI 的 HLS 标签。
-        return line.replace(
-          /(\bURI\s*=\s*)"([^"]+)"/g,
-          (_match, prefix: string, uri: string) =>
-            `${prefix}"${getProxyUrl(uri, baseUrl, referer)}"`
-        );
-      }
-
-      // 子清单和视频分片，无论是 HTTP、HTTPS 还是相对路径，都走本站代理。
-      return getProxyUrl(trimmedLine, baseUrl, referer);
-    })
-    .join('\n');
+function rewritePlaylist(content: string, base: string, platform: string, username: string, root: string, expires: number): string {
+  const rewrite = (value: string) => {
+    if (value.startsWith('data:')) return value;
+    const target = new URL(value, base);
+    return webLiveProxyUrl(target.href, platform, username, root, expires);
+  };
+  return content.split('\n').map((line) => {
+    const value = line.trim();
+    if (!value) return line;
+    if (value.startsWith('#')) return line.replace(/(\bURI\s*=\s*)"([^"]+)"/g, (_match, prefix: string, uri: string) => prefix + '"' + rewrite(uri) + '"');
+    return rewrite(value);
+  }).join('\n');
 }
 
 export async function GET(request: NextRequest) {
+  const auth = await requireFeaturePermission(request, 'web_live', '无权限访问网络直播');
+  if (auth instanceof NextResponse) return auth;
+  let ticket: ReturnType<typeof readMediaTicket>;
+  try { ticket = readMediaTicket(request.nextUrl.searchParams.get('ticket') || '', auth.username); }
+  catch { return NextResponse.json({ error: '直播链接已失效，请重新打开直播间' }, { status: 403 }); }
+  let cleanup: (() => void) | undefined;
   try {
-    const authResult = await requireFeaturePermission(
-      request,
-      'web_live',
-      '无权限访问网络直播'
-    );
-    if (authResult instanceof NextResponse) return authResult;
-
-    const { searchParams } = new URL(request.url);
-    const url = searchParams.get('url');
-
-    if (!url) {
-      return NextResponse.json({ error: '缺少URL参数' }, { status: 400 });
-    }
-
-    let sourceUrl: URL;
-    try {
-      sourceUrl = new URL(url);
-    } catch {
-      return NextResponse.json({ error: '直播地址格式无效' }, { status: 400 });
-    }
-
-    if (sourceUrl.protocol !== 'http:' && sourceUrl.protocol !== 'https:') {
-      return NextResponse.json({ error: '不支持的直播地址协议' }, { status: 400 });
-    }
-
-    const referer = getReferer(sourceUrl, searchParams.get('referer'));
-    const headers: Record<string, string> = {
-      'User-Agent':
-        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
-      Referer: referer,
-    };
-
-    // 保留 HLS 初始化片段、字节范围分片等请求所需的 Range 信息。
+    const headers: Record<string, string> = {};
+    const referer = platformReferer(ticket.p);
+    if (referer) headers.Referer = referer;
     const range = request.headers.get('range');
     if (range) {
+      if (!/^bytes=\d*-\d*$/.test(range)) return NextResponse.json({ error: '无效的分段请求' }, { status: 400 });
       headers.Range = range;
       const ifRange = request.headers.get('if-range');
       if (ifRange) headers['If-Range'] = ifRange;
     }
-
-    const streamRes = await fetch(sourceUrl.href, {
-      headers,
-      cache: 'no-store',
-    });
-
-    if (!streamRes.ok) {
-      return NextResponse.json(
-        { error: '无法获取直播流', upstreamStatus: streamRes.status },
-        { status: streamRes.status >= 400 ? streamRes.status : 502 }
-      );
+    const { response, dispose } = await fetchPublicMedia(ticket.u, { signal: request.signal, headers });
+    cleanup = dispose;
+    if (!response.ok) {
+      response.body?.destroy();
+      dispose();
+      return NextResponse.json({ error: '上游直播连接失败，请刷新线路', upstreamStatus: response.status }, { status: response.status === 403 || response.status === 404 ? response.status : 502 });
     }
-
-    // 使用重定向后的地址解析相对路径；判断后缀时排除签名查询参数。
-    const finalUrl = streamRes.url || sourceUrl.href;
-    const contentType = streamRes.headers.get('Content-Type') || '';
-    const isM3u8 =
-      /\.m3u8$/i.test(sourceUrl.pathname) ||
-      /\.m3u8$/i.test(new URL(finalUrl).pathname) ||
-      /application\/(?:vnd\.apple\.mpegurl|x-mpegurl)/i.test(contentType);
-
-    if (isM3u8) {
-      const content = (await streamRes.text()).trimStart();
-      if (!content.startsWith('#EXTM3U')) {
-        return NextResponse.json(
-          { error: '上游未返回有效的直播清单' },
-          { status: 502 }
-        );
-      }
-
-      return new NextResponse(
-        processM3u8Content(content, finalUrl, referer),
-        {
-          headers: {
-            'Content-Type': 'application/vnd.apple.mpegurl',
-            'Cache-Control': 'no-store',
-            'Access-Control-Allow-Origin': '*',
-          },
+    const finalUrl = response.url || ticket.u;
+    const contentType = response.headers.get('content-type') || '';
+    const isPlaylist = /\.m3u8$/i.test(new URL(ticket.u).pathname) || /\.m3u8$/i.test(new URL(finalUrl).pathname) || /mpegurl/i.test(contentType);
+    if (isPlaylist) {
+      const timer = setTimeout(dispose, 15000);
+      try {
+        const body = (await response.text()).trimStart();
+        if (!body.startsWith('#EXTM3U')) throw new Error('上游没有返回有效直播清单');
+        return new NextResponse(rewritePlaylist(body, finalUrl, ticket.p, auth.username, ticket.r, ticket.e), {
+          headers: { 'Content-Type': 'application/vnd.apple.mpegurl', 'Cache-Control': 'no-store', 'X-Content-Type-Options': 'nosniff' },
+        });
+      } finally { clearTimeout(timer); dispose(); }
+    }
+    if (/text\/html|application\/(?:json|javascript)|image\/svg/i.test(contentType)) {
+      response.body?.destroy(); dispose();
+      return NextResponse.json({ error: '上游未返回媒体数据' }, { status: 502 });
+    }
+    const upstream = response.body;
+    if (!upstream) { dispose(); throw new Error('没有直播数据'); }
+    const iterator = upstream[Symbol.asyncIterator]();
+    let idle: ReturnType<typeof setTimeout>;
+    const resetIdle = () => {
+      clearTimeout(idle);
+      idle = setTimeout(() => { upstream.destroy(new Error('直播上游响应超时')); dispose(); }, 30000);
+    };
+    resetIdle();
+    const stream = new ReadableStream<Uint8Array>({
+      async pull(controller) {
+        try {
+          const part = await iterator.next();
+          if (part.done) { clearTimeout(idle); dispose(); controller.close(); return; }
+          resetIdle();
+          controller.enqueue(new Uint8Array(part.value));
+        } catch {
+          clearTimeout(idle); dispose(); controller.error(new Error('直播连接中断'));
         }
-      );
-    }
-
-    const responseHeaders = new Headers({
-      'Content-Type': contentType || 'application/octet-stream',
-      'Cache-Control': 'no-store',
-      'Access-Control-Allow-Origin': '*',
+      },
+      cancel() { clearTimeout(idle); upstream.destroy(); dispose(); },
     });
-
+    const outputHeaders = new Headers({ 'Content-Type': contentType || 'application/octet-stream', 'Cache-Control': 'no-store', 'X-Content-Type-Options': 'nosniff' });
     for (const name of ['Content-Range', 'Accept-Ranges']) {
-      const value = streamRes.headers.get(name);
-      if (value) responseHeaders.set(name, value);
+      const value = response.headers.get(name);
+      if (value) outputHeaders.set(name, value);
     }
-
-    // 虎牙 FLV、视频分片和密钥保持二进制流式转发。
-    return new NextResponse(streamRes.body, {
-      status: streamRes.status,
-      headers: responseHeaders,
-    });
+    return new NextResponse(stream, { status: response.status, headers: outputHeaders });
   } catch {
-    return NextResponse.json(
-      { error: '直播代理请求失败，请稍后重试' },
-      { status: 502 }
-    );
+    cleanup?.();
+    return NextResponse.json({ error: '直播代理请求失败，请刷新线路或前往官方直播间' }, { status: 502 });
   }
 }

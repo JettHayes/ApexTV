@@ -45,7 +45,6 @@ export function useWebLiveSync({
       channelUrl: `${currentSourcePlatform}:${currentSourceRoomId}`,
     };
 
-    console.log('[WebLiveSync] Broadcasting source change:', state);
     watchRoom.changeLiveChannel(state);
   }, [isOwner, socket, currentSourceKey, currentSourceName, currentSourcePlatform, currentSourceRoomId, watchRoom]);
 
@@ -56,12 +55,13 @@ export function useWebLiveSync({
     const handleLiveChange = (state: LiveState) => {
       if (syncingRef.current) return;
 
-      console.log('[WebLiveSync] Received source change:', state);
       syncingRef.current = true;
 
       try {
         // 解析 channelUrl 获取 platform 和 roomId
-        const [platform, roomId] = state.channelUrl.split(':');
+        const separator = state.channelUrl.indexOf(':');
+        const platform = separator < 0 ? '' : state.channelUrl.slice(0, separator);
+        const roomId = separator < 0 ? '' : state.channelUrl.slice(separator + 1);
 
         // 调用回调函数来切换直播源
         if (onSourceChange && platform && roomId) {

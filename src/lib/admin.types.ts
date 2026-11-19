@@ -149,6 +149,9 @@ export interface AdminConfig {
     key: string;
     name: string;
     platform: string; // 直播平台类型，如 'huya'
+    streamFormat?: 'auto' | 'hls' | 'flv';
+    avatar?: string;
+    cover?: string;
     roomId: string; // 房间ID
     from: 'config' | 'custom';
     disabled?: boolean;

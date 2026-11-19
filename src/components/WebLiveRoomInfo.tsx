@@ -6,13 +6,13 @@ import { useState } from 'react';
 import { type WebLiveRoomInfo, webLiveImageUrl, webLivePlatformName } from '@/lib/web-live';
 
 export function WebLiveAvatar({ avatar, cover }: Pick<WebLiveRoomInfo, 'avatar' | 'cover'>) {
-  const [failedUrl, setFailedUrl] = useState('');
-  const url = webLiveImageUrl(avatar) || webLiveImageUrl(cover);
+  const [failedUrls, setFailedUrls] = useState<string[]>([]);
+  const url = [webLiveImageUrl(avatar), webLiveImageUrl(cover)].find((item) => item && !failedUrls.includes(item));
   return (
     <span className='ptv-room-avatar' aria-hidden='true'>
-      {url && failedUrl !== url ? (
+      {url ? (
         // eslint-disable-next-line @next/next/no-img-element
-        <img src={url} alt='' width={56} height={56} referrerPolicy='no-referrer' loading='lazy' onError={() => setFailedUrl(url)} />
+        <img src={url} alt='' width={56} height={56} referrerPolicy='no-referrer' loading='lazy' onError={() => setFailedUrls((previous) => [...previous, url])} />
       ) : <Radio size={24} />}
     </span>
   );
@@ -32,15 +32,16 @@ export default function WebLiveRoomDetails({ source, info, loading, error }: {
       <div className='ptv-room-copy'>
         <div className='ptv-room-heading'>
           <h2>{title}</h2>
-          <span className='ptv-room-state' data-state={error ? 'error' : loading ? 'loading' : 'ready'}>
-            {error ? '连接失败' : loading ? '获取中' : '直播'}
+          <span className='ptv-room-state' data-state={error ? 'error' : loading ? 'loading' : info?.liveStatus === 'live' ? 'ready' : 'unknown'}>
+            {error ? '连接失败' : loading ? '获取中' : info?.liveStatus === 'live' ? '直播中' : info?.liveStatus === 'offline' ? '未开播' : '状态未知'}
           </span>
         </div>
         {owner && owner !== title && <p className='ptv-room-owner'>{owner}</p>}
         <div className='ptv-room-meta'>
           <span className='ptv-room-platform'>{webLivePlatformName(source.platform)}</span>
           {info?.category && <span>{info.category}</span>}
-          <span className='ptv-room-id'>房间 {source.roomId}</span>
+          {info?.anchorId && <span>主播 ID: {info.anchorId}</span>}
+          <span className='ptv-room-id'>{source.platform === 'custom' ? '自定义直播源' : `房间 ${info?.roomId || source.roomId}`}</span>
         </div>
       </div>
     </section>

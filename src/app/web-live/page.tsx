@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 
 import { useWebLiveSync } from '@/hooks/useWebLiveSync';
-import type { WebLiveRoomInfo } from '@/lib/web-live';
+import { getWebLiveRoomUrl, type WebLivePlayback, type WebLiveRoomInfo, type WebLiveSource, webLivePlatformName } from '@/lib/web-live';
 
 import LiveTabs from '@/components/LiveTabs';
 import LoadingStyle, {
@@ -14,10 +14,8 @@ import LoadingStyle, {
 } from '@/components/LoadingStyle';
 import PageLayout from '@/components/PageLayout';
 import WebLiveRoomDetails, { WebLiveAvatar } from '@/components/WebLiveRoomInfo';
+import WebLivePlayer from '@/components/WebLivePlayer';
 
-let Artplayer: any = null;
-let Hls: any = null;
-let flvjs: any = null;
 
 /* 初始化加载动画（后台「个性化配置 → 初始化加载样式」可切换旧版/方格/魔法阵）。
  * 款式本身见 components/LoadingStyle。 */
@@ -47,15 +45,16 @@ const WEB_LIVE_PLAYER_STEPS: LoadingStep[] = [
 export default function WebLivePage() {
   const searchParams = useSearchParams();
   const router = useRouter();
-  const artRef = useRef<HTMLDivElement | null>(null);
-  const artPlayerRef = useRef<any>(null);
   const [loading, setLoading] = useState(true);
   const [loadingStage, setLoadingStage] = useState<'loading' | 'fetching' | 'ready'>('loading');
   const [loadingMessage, setLoadingMessage] = useState('正在加载直播源...');
-  const [sources, setSources] = useState<any[]>([]);
-  const [currentSource, setCurrentSource] = useState<any | null>(null);
-  const [videoUrl, setVideoUrl] = useState('');
-  const [originalVideoUrl, setOriginalVideoUrl] = useState('');
+  const [sources, setSources] = useState<WebLiveSource[]>([]);
+  const [sourcesError, setSourcesError] = useState('');
+  const [currentSource, setCurrentSource] = useState<WebLiveSource | null>(null);
+  const [playback, setPlayback] = useState<WebLivePlayback | null>(null);
+  const [selectedVariant, setSelectedVariant] = useState('');
+  const retryCountRef = useRef(0);
+  const originalVideoUrl = playback?.originalUrl || '';
   const [streamInfo, setStreamInfo] = useState<WebLiveRoomInfo | null>(null);
   const [activeTab, setActiveTab] = useState<'rooms' | 'platforms'>('rooms');
   const [isChannelListCollapsed, setIsChannelListCollapsed] = useState(false);
@@ -63,7 +62,6 @@ export default function WebLivePage() {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [selectedPlatform, setSelectedPlatform] = useState<string | null>(null);
   const [isWebLiveEnabled, setIsWebLiveEnabled] = useState<boolean | null>(null);
-  const [librariesLoaded, setLibrariesLoaded] = useState(false);
   const hasAutoLoadedRef = useRef(false); // 防止重复自动加载
   const streamRequestRef = useRef<AbortController | null>(null);
 
@@ -84,62 +82,49 @@ export default function WebLivePage() {
   });
 
   useEffect(() => {
-    const meta = document.createElement('meta');
-    meta.name = 'referrer';
-    meta.content = 'no-referrer';
-    document.head.appendChild(meta);
+    const controller = new AbortController();
 
     if (typeof window !== 'undefined') {
-      // 异步加载所有必需的库
-      Promise.all([
-        import('artplayer').then(mod => { Artplayer = mod.default; }),
-        import('hls.js').then(mod => { Hls = mod.default; }),
-        import('flv.js').then(mod => { flvjs = mod.default; })
-      ]).then(() => {
-        setLibrariesLoaded(true);
-      });
-
       // 检查网络直播功能是否启用
       const runtimeConfig = (window as any).RUNTIME_CONFIG;
       const enabled = runtimeConfig?.WEB_LIVE_ENABLED ?? false;
       setIsWebLiveEnabled(enabled);
 
       if (enabled) {
-        fetchSources();
+        fetchSources(controller.signal);
       } else {
         setLoading(false);
       }
     }
 
     return () => {
-      document.head.removeChild(meta);
+      controller.abort();
     };
   }, []);
 
-  const fetchSources = async () => {
+  const fetchSources = async (signal: AbortSignal) => {
     try {
       setLoading(true);
       setLoadingStage('loading');
       setLoadingMessage('正在加载直播源...');
-      const res = await fetch('/api/web-live/sources');
-      if (res.ok) {
-        setLoadingStage('fetching');
-        const data = await res.json();
-        setSources(data);
-        setLoadingStage('ready');
-        await new Promise(resolve => setTimeout(resolve, 500));
-      }
-    } catch (err) {
-      console.error('获取直播源失败:', err);
+      setSourcesError('');
+      const res = await fetch('/api/web-live/sources', { signal });
+      if (!res.ok) throw new Error('获取直播源失败');
+      setLoadingStage('fetching');
+      const data = await res.json();
+      if (signal.aborted) return;
+      setSources(data);
+      setLoadingStage('ready');
+    } catch {
+      if (!signal.aborted) setSourcesError('获取直播源失败，请刷新页面重试。');
     } finally {
-      setLoading(false);
+      if (!signal.aborted) setLoading(false);
     }
   };
 
   // 当 sources 加载完成后，检查 URL 参数并自动加载对应的频道
   useEffect(() => {
     if (!sources || sources.length === 0) return;
-    if (!librariesLoaded) return; // 等待库加载完成
 
     // 直接从 searchParams 读取，而不是从 useState
     const needLoadPlatform = searchParams.get('platform');
@@ -169,194 +154,57 @@ export default function WebLivePage() {
     } else {
       hasAutoLoadedRef.current = false; // 重置标志以便重试
     }
-  }, [sources, librariesLoaded, searchParams]);
+  }, [sources, searchParams]);
 
-  function m3u8Loader(video: HTMLVideoElement, url: string) {
-    if (!Hls) return;
-    const hls = new Hls({ debug: false, enableWorker: true, lowLatencyMode: true });
-    hls.loadSource(url);
-    hls.attachMedia(video);
-    (video as any).hls = hls;
-  }
-
-  function flvLoader(video: HTMLVideoElement, url: string) {
-    if (!flvjs) return;
-    const flvPlayer = flvjs.createPlayer({ type: 'flv', url, isLive: true });
-    flvPlayer.attachMediaElement(video);
-    flvPlayer.on(flvjs.Events.ERROR, (errorType: string, errorDetail: string) => {
-      console.error('FLV.js error:', errorType, errorDetail);
-      setErrorMessage(`播放失败: ${errorType} - ${errorDetail}`);
-      setVideoUrl('');
-    });
-    flvPlayer.load();
-    (video as any).flv = flvPlayer;
-  }
-
-  // 清理播放器资源的统一函数
-  const cleanupPlayer = () => {
-    if (artPlayerRef.current) {
-      try {
-        // 先暂停播放
-        if (artPlayerRef.current.video) {
-          artPlayerRef.current.video.pause();
-          artPlayerRef.current.video.src = '';
-          artPlayerRef.current.video.load();
-        }
-
-        // 销毁 HLS 实例
-        if (artPlayerRef.current.video && artPlayerRef.current.video.hls) {
-          artPlayerRef.current.video.hls.destroy();
-          artPlayerRef.current.video.hls = null;
-        }
-
-        // 销毁 FLV 实例
-        if (artPlayerRef.current.video && (artPlayerRef.current.video as any).flv) {
-          try {
-            if ((artPlayerRef.current.video as any).flv.unload) {
-              (artPlayerRef.current.video as any).flv.unload();
-            }
-            (artPlayerRef.current.video as any).flv.destroy();
-            (artPlayerRef.current.video as any).flv = null;
-          } catch (flvError) {
-            console.warn('FLV实例销毁时出错:', flvError);
-            (artPlayerRef.current.video as any).flv = null;
-          }
-        }
-
-        // 移除所有事件监听器
-        artPlayerRef.current.off('ready');
-        artPlayerRef.current.off('error');
-
-        // 销毁 ArtPlayer 实例
-        artPlayerRef.current.destroy();
-        artPlayerRef.current = null;
-      } catch (err) {
-        console.warn('清理播放器资源时出错:', err);
-        artPlayerRef.current = null;
-      }
-    }
-  };
-
-  useEffect(() => {
-    if (!Artplayer || !Hls || !flvjs || !videoUrl || !artRef.current) return;
-
-    // 销毁旧的播放器实例
-    cleanupPlayer();
-
-    artPlayerRef.current = new Artplayer({
-      container: artRef.current,
-      url: videoUrl,
-      isLive: true,
-      autoplay: true,
-      fullscreen: true,
-      customType: {
-        m3u8: m3u8Loader,
-        flv: flvLoader
-      },
-      icons: { loading: '<svg xmlns="http://www.w3.org/2000/svg" width="50" height="50" viewBox="0 0 100 100"><circle cx="50" cy="50" fill="none" stroke="currentColor" stroke-width="4" r="35" stroke-dasharray="164.93361431346415 56.97787143782138"><animateTransform attributeName="transform" type="rotate" repeatCount="indefinite" dur="1s" values="0 50 50;360 50 50" keyTimes="0;1"/></circle></svg>' }
-    });
-
-    return () => {
-      cleanupPlayer();
-    };
-  }, [videoUrl]);
-
-  // 组件卸载时清理
-  useEffect(() => {
-    return () => {
-      streamRequestRef.current?.abort();
-      cleanupPlayer();
-    };
+  useEffect(() => () => {
+    streamRequestRef.current?.abort();
   }, []);
 
-  // 页面卸载前清理
-  useEffect(() => {
-    const handleBeforeUnload = () => {
-      cleanupPlayer();
-    };
-
-    window.addEventListener('beforeunload', handleBeforeUnload);
-
-    return () => {
-      window.removeEventListener('beforeunload', handleBeforeUnload);
-      cleanupPlayer();
-    };
-  }, []);
-
-  const handleSourceClick = async (source: any) => {
+  const handleSourceClick = async (source: WebLiveSource, automatic = false) => {
+    if (!automatic) retryCountRef.current = 0;
     streamRequestRef.current?.abort();
     const controller = new AbortController();
     streamRequestRef.current = controller;
-    // 立即清理旧的播放器
-    cleanupPlayer();
-
-    setVideoUrl('');
-    setOriginalVideoUrl('');
+    setPlayback(null);
     setCurrentSource(source);
     setIsVideoLoading(true);
     setErrorMessage(null);
-    setStreamInfo(null);
+    if (!automatic) setStreamInfo(null);
 
-    // 更新 URL 参数
-    const newSearchParams = new URLSearchParams(searchParams.toString());
-    newSearchParams.set('platform', source.platform);
-    newSearchParams.set('roomId', source.roomId);
-    router.replace(`/web-live?${newSearchParams.toString()}`);
+    const params = new URLSearchParams(searchParams.toString());
+    params.set('platform', source.platform);
+    params.set('roomId', source.roomId);
+    router.replace(`/web-live?${params.toString()}`);
 
     try {
-      const res = await fetch(`/api/web-live/stream?platform=${encodeURIComponent(source.platform)}&roomId=${encodeURIComponent(source.roomId)}`, { signal: controller.signal });
-      if (res.ok) {
-        const data = await res.json();
-        if (controller.signal.aborted) return;
-
-        // 等待 DOM 渲染完成后再设置 videoUrl
-        const waitForDom = () => {
-          if (controller.signal.aborted) return;
-          if (artRef.current) {
-            setVideoUrl(data.url);
-            setOriginalVideoUrl(data.originalUrl || data.url);
-          } else {
-            requestAnimationFrame(waitForDom);
-          }
-        };
-
-        // 使用 requestAnimationFrame 等待下一帧
-        requestAnimationFrame(waitForDom);
-
-        // 保存主播信息
-        setStreamInfo({
-          name: data.name,
-          title: data.title,
-          avatar: data.avatar,
-          cover: data.cover,
-          category: data.category
-        });
-      } else {
-        const data = await res.json();
-        if (controller.signal.aborted) return;
-        setErrorMessage(data.error || '获取直播流失败');
-      }
-    } catch (err) {
+      const query = new URLSearchParams({ platform: source.platform, roomId: source.roomId, sourceKey: source.key });
+      const response = await fetch(`/api/web-live/stream?${query}`, { signal: controller.signal });
+      const data = await response.json();
       if (controller.signal.aborted) return;
-      console.error('获取直播流失败:', err);
-      setErrorMessage(err instanceof Error ? err.message : '获取直播流失败');
+      if (!response.ok) throw new Error(data.error || '获取直播流失败');
+      const result = data as WebLivePlayback;
+      setPlayback(result);
+      setStreamInfo(result);
+      const variants = result.variants || [];
+      setSelectedVariant(variants[0]?.id || '');
+    } catch (error) {
+      if (!controller.signal.aborted) setErrorMessage(error instanceof Error ? error.message : '获取直播流失败');
     } finally {
       if (!controller.signal.aborted) setIsVideoLoading(false);
     }
   };
 
-  const getRoomUrl = (source: any) => {
-    if (source.platform === 'huya') {
-      return `https://huya.com/${source.roomId}`;
+  const handlePlaybackFailure = (message: string, retryable: boolean) => {
+    if (retryable && currentSource && retryCountRef.current < 2) {
+      retryCountRef.current += 1;
+      void handleSourceClick(currentSource, true);
+    } else {
+      setErrorMessage(message);
     }
-    if (source.platform === 'bilibili') {
-      return `https://live.bilibili.com/${source.roomId}`;
-    }
-    if (source.platform === 'douyin') {
-      return `https://live.douyin.com/${source.roomId}`;
-    }
-    return '';
   };
+
+  const getRoomUrl = (source: WebLiveSource) => getWebLiveRoomUrl(source.platform, source.roomId);
+  const variant = playback?.variants?.find((item) => item.id === selectedVariant);
 
   const platforms = Array.from(new Set(sources.map(s => s.platform)));
 
@@ -531,8 +379,14 @@ export default function WebLivePage() {
 
           <div className={`ptv-player-grid ${isChannelListCollapsed ? 'ptv-player-grid-collapsed' : ''}`}>
             <div className='ptv-player-stage'>
-              <div className='ptv-player-canvas relative w-full aspect-video'>
-                <div ref={artRef} className='bg-black w-full h-full rounded-xl overflow-hidden shadow-lg border border-white/0 dark:border-white/30'></div>
+              <div className='ptv-player-canvas relative w-full aspect-video' style={currentSource?.platform === 'twitch' ? { minHeight: 300 } : undefined}>
+                <div className='bg-black w-full h-full rounded-xl overflow-hidden shadow-lg border border-white/0 dark:border-white/30'>
+                  {playback?.kind === 'embed' && playback.embedUrl ? (
+                    <iframe key={currentSource?.key} src={playback.embedUrl} title={streamInfo?.title || currentSource?.name || '直播'} className='h-full w-full border-0' style={currentSource?.platform === 'twitch' ? { minHeight: 300 } : undefined} referrerPolicy='strict-origin-when-cross-origin' allow='autoplay; encrypted-media; fullscreen; picture-in-picture' allowFullScreen />
+                  ) : playback?.kind === 'stream' && (
+                    <WebLivePlayer url={variant?.url || playback.url} type={variant?.type || playback.type || 'hls'} onFailure={handlePlaybackFailure} />
+                  )}
+                </div>
 
                 {errorMessage && (
                   <div className='absolute inset-0 bg-black/90 backdrop-blur-sm rounded-xl overflow-hidden shadow-lg border border-white/0 dark:border-white/30 flex items-center justify-center z-[600] transition-all duration-300'>
@@ -560,7 +414,7 @@ export default function WebLivePage() {
                         <div className='mtv-err-box bg-orange-500/20 border border-orange-500/30 rounded-lg p-4'>
                           <p className='text-orange-300 font-medium'>{errorMessage}</p>
                         </div>
-                        <p className='text-sm text-gray-300'>请尝试其他房间</p>
+                        <button type='button' onClick={() => currentSource && handleSourceClick(currentSource)} className='rounded-lg bg-green-600 px-4 py-2 text-white'>重试</button>
                       </div>
                     </div>
                   </div>
@@ -598,9 +452,26 @@ export default function WebLivePage() {
               {currentSource && (
                 <WebLiveRoomDetails source={currentSource} info={streamInfo} loading={isVideoLoading} error={!!errorMessage} />
               )}
+              {currentSource && (errorMessage || playback?.kind === 'embed') && getRoomUrl(currentSource) && (
+                <div className='px-4 pb-3'>
+                  <a href={getRoomUrl(currentSource)} target='_blank' rel='noopener noreferrer' className='text-sm underline'>{currentSource.platform === 'custom' ? '打开直播源' : '在官方平台观看'}</a>
+                </div>
+              )}
+              {playback?.kind === 'stream' && (
+                <div className='flex flex-wrap items-center gap-3 px-4 pb-3 text-sm'>
+                  {(playback.variants?.length || 0) > 1 && (
+                    <label>清晰度 / 线路
+                      <select value={selectedVariant} onChange={(event) => { retryCountRef.current = 0; setErrorMessage(null); setSelectedVariant(event.target.value); }} className='ml-2 rounded border border-gray-300 bg-transparent px-2 py-1 dark:border-gray-600'>
+                        {playback.variants?.map((item) => <option key={item.id} value={item.id}>{item.label}{item.cdn ? ` · ${item.cdn}` : ''}</option>)}
+                      </select>
+                    </label>
+                  )}
+                  {playback.qualityNote && <span>{playback.qualityNote}</span>}
+                </div>
+              )}
 
               {/* 外部播放器按钮 */}
-              {currentSource && !webLiveSync.isInRoom && (
+              {currentSource && playback?.kind === 'stream' && originalVideoUrl && !webLiveSync.isInRoom && (
                 <div className='ptv-room-tools'>
                   <span className='ptv-room-tools-label'>外部播放</span>
                   <div className='min-w-0 overflow-x-auto'>
@@ -800,7 +671,7 @@ export default function WebLivePage() {
                         <div className='flex items-center gap-2'>
                           <span className='text-xs text-green-700 dark:text-green-300'>筛选平台:</span>
                           <span className='text-sm font-medium text-green-800 dark:text-green-200'>
-                            {selectedPlatform === 'huya' ? '虎牙' : selectedPlatform === 'bilibili' ? '哔哩哔哩' : selectedPlatform === 'douyin' ? '抖音' : selectedPlatform}
+                            {webLivePlatformName(selectedPlatform)}
                           </span>
                         </div>
                         <button
@@ -811,7 +682,9 @@ export default function WebLivePage() {
                         </button>
                       </div>
                     )}
-                    {filteredSources.length > 0 ? (
+                    {sourcesError ? (
+                      <p role='alert' className='px-2 py-4 text-sm text-red-600 dark:text-red-400'>{sourcesError}</p>
+                    ) : filteredSources.length > 0 ? (
                       filteredSources.map((source) => {
                         const isActive = source.key === currentSource?.key;
                         return (
@@ -822,10 +695,10 @@ export default function WebLivePage() {
                             className={`w-full p-3 rounded-lg text-left active:scale-[0.97] transition-[transform,background-color,color,border-color] duration-150 ${isActive ? 'bg-green-100 dark:bg-green-900/30 border border-green-300 dark:border-green-700' : 'hover:bg-gray-100 dark:hover:bg-gray-700'} ${webLiveSync.shouldDisableControls ? 'opacity-50 cursor-not-allowed' : ''}`}
                           >
                             <div className='flex items-center gap-3'>
-                              <WebLiveAvatar avatar={isActive ? streamInfo?.avatar : undefined} cover={isActive ? streamInfo?.cover : undefined} />
+                              <WebLiveAvatar avatar={isActive ? streamInfo?.avatar || source.avatar : source.avatar} cover={isActive ? streamInfo?.cover || source.cover : source.cover} />
                               <div className='flex-1 min-w-0'>
                                 <div className='text-sm font-medium text-gray-900 dark:text-gray-100 truncate'>{source.name}</div>
-                                <div className='text-xs text-gray-500 dark:text-gray-400 mt-1'>房间ID: {source.roomId}</div>
+                                <div className='text-xs text-gray-500 dark:text-gray-400 mt-1'>{source.platform === 'custom' ? '自定义直播源' : `房间ID: ${source.roomId}`}</div>
                               </div>
                             </div>
                           </button>
@@ -868,7 +741,7 @@ export default function WebLivePage() {
                             </div>
                             <div className='flex-1 min-w-0 text-left'>
                               <div className='text-sm font-medium text-gray-900 dark:text-gray-100 truncate'>
-                                {platform === 'huya' ? '虎牙' : platform === 'bilibili' ? '哔哩哔哩' : platform === 'douyin' ? '抖音' : platform}
+                                {webLivePlatformName(platform)}
                               </div>
                               <div className='text-xs text-gray-500 dark:text-gray-400 mt-1'>
                                 {sources.filter(s => s.platform === platform).length} 个房间
