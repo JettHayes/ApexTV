@@ -3,6 +3,10 @@ import { NextRequest, NextResponse } from 'next/server';
 import { BookAcquisitionLink } from '@/lib/book.types';
 import { db } from '@/lib/db';
 import { bookProvider } from '@/lib/book-provider';
+import {
+  BookRuleParseError,
+  BookSourceRequestError,
+} from '@/lib/book-source-error';
 
 import { getAuthorizedBooksUsername } from '../_utils';
 
@@ -32,27 +36,43 @@ async function resolveDetail(username: string, payload: DetailPayload) {
 
   const shelfItem = await db.getBookShelf(username, sourceId, bookId);
   const readRecord = await db.getBookReadRecord(username, sourceId, bookId);
-  const href = payload.href?.trim() || shelfItem?.detailHref || readRecord?.detailHref || '';
-  const acquisitionLinks = (payload.acquisitionLinks && payload.acquisitionLinks.length > 0)
-    ? payload.acquisitionLinks
-    : shelfItem?.acquisitionHref
-      ? [{
-          rel: 'http://opds-spec.org/acquisition',
-          type: shelfItem.format === 'pdf' ? 'application/pdf' : 'application/epub+zip',
-          href: shelfItem.acquisitionHref,
-        }]
-      : readRecord?.acquisitionHref
-        ? [{
+  const href =
+    payload.href?.trim() ||
+    shelfItem?.detailHref ||
+    readRecord?.detailHref ||
+    '';
+  const acquisitionLinks =
+    payload.acquisitionLinks && payload.acquisitionLinks.length > 0
+      ? payload.acquisitionLinks
+      : shelfItem?.acquisitionHref
+      ? [
+          {
             rel: 'http://opds-spec.org/acquisition',
-            type: readRecord.format === 'pdf' ? 'application/pdf' : 'application/epub+zip',
+            type:
+              shelfItem.format === 'pdf'
+                ? 'application/pdf'
+                : 'application/epub+zip',
+            href: shelfItem.acquisitionHref,
+          },
+        ]
+      : readRecord?.acquisitionHref
+      ? [
+          {
+            rel: 'http://opds-spec.org/acquisition',
+            type:
+              readRecord.format === 'pdf'
+                ? 'application/pdf'
+                : 'application/epub+zip',
             href: readRecord.acquisitionHref,
-          }]
-        : undefined;
+          },
+        ]
+      : undefined;
 
   const detail = await bookProvider.getBookDetail(sourceId, href, {
     id: bookId,
     title: payload.title || shelfItem?.title || readRecord?.title || undefined,
-    author: payload.author || shelfItem?.author || readRecord?.author || undefined,
+    author:
+      payload.author || shelfItem?.author || readRecord?.author || undefined,
     cover: payload.cover || shelfItem?.cover || readRecord?.cover || undefined,
     summary: payload.summary || undefined,
     detailHref: href || undefined,
@@ -73,7 +93,18 @@ export async function GET(request: NextRequest) {
       bookId: searchParams.get('bookId') || undefined,
     });
   } catch (error) {
-    return NextResponse.json({ error: (error as Error).message }, { status: 500 });
+    return NextResponse.json(
+      { error: (error as Error).message },
+      {
+        status:
+          error instanceof BookRuleParseError
+            ? 422
+            : error instanceof BookSourceRequestError
+            ? 502
+            : 500,
+        headers: { 'Cache-Control': 'no-store' },
+      }
+    );
   }
 }
 
@@ -82,9 +113,20 @@ export async function POST(request: NextRequest) {
   if (username instanceof NextResponse) return username;
 
   try {
-    const payload = await request.json() as DetailPayload;
+    const payload = (await request.json()) as DetailPayload;
     return await resolveDetail(username, payload);
   } catch (error) {
-    return NextResponse.json({ error: (error as Error).message }, { status: 500 });
+    return NextResponse.json(
+      { error: (error as Error).message },
+      {
+        status:
+          error instanceof BookRuleParseError
+            ? 422
+            : error instanceof BookSourceRequestError
+            ? 502
+            : 500,
+        headers: { 'Cache-Control': 'no-store' },
+      }
+    );
   }
 }

@@ -143,6 +143,7 @@ export interface BookListItem {
 }
 
 export interface BookDetail extends BookListItem {
+  readingUnavailableReason?: string;
   publisher?: string;
   identifier?: string;
   series?: string;

@@ -48,6 +48,7 @@ This branch is maintained around deployment on Vercel. It customizes the brandin
 | TV channels | Configure M3U channel lists and program guides |
 | Live platforms | Configure sources by platform and room, with available room information |
 | Music | Connect a compatible backend for search, charts, playlists, lyrics, and a playback queue |
+| E-books | Connect OPDS libraries or compatible Legado sources to search books, browse chapters, and read accessible content |
 | Administration | Manage users, permissions, media sources, and site appearance |
 | Multiple devices | Desktop sidebar, mobile bottom navigation, compact tablet layouts, and PWA installation |
 
@@ -146,11 +147,23 @@ The person deploying the app configures each service. Confirm that content is ac
 | TV channels | Import an M3U channel list you are authorized to use, optionally with a program guide |
 | Live platforms | Adapters for Huya, Bilibili, and Douyin are included; availability depends on interface changes and access conditions |
 | Music | Configure a compatible LX music backend and its authentication |
+| E-books | Add an OPDS library or import a Legado JSON subscription in the admin panel; Legado support remains experimental |
 | Reading and other extensions | Configure the reading, model, notification, or realtime service required by each feature |
 
 Title metadata and playback URLs come from different services. A poster does not mean a playable source exists, and a listed file may use a codec your browser cannot decode.
 
 Third-party interfaces, permissions, and access rules can change. The project does not guarantee availability for every source, region, or device.
+
+<details>
+<summary>📚 E-book compatibility</summary>
+
+OPDS libraries provide catalogs and e-book files. A Legado subscription contains webpage parsing rules. Importing it only saves those rules; search, details, chapter lists, and chapter text must each work separately.
+
+The current implementation supports some HTML/JSON rules, nested field replacements, and simple dynamic expressions, with batched search, progress, and failure reporting. Rules that depend on Android/WebView, interactive sign-in, or unimplemented scripting APIs may not work. Apex TV does not provide the full Legado runtime. Chapter parsing failures are reported, and finding a book does not guarantee access to its full text.
+
+Start with a few sources and confirm that chapters can be opened before adding larger subscriptions. Duplicate or unavailable sources increase waiting time. This repository does not supply or guarantee third-party book sources.
+
+</details>
 
 <details>
 <summary>⚙️ Common optional environment variables</summary>

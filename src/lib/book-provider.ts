@@ -9,6 +9,7 @@ import {
 import { legadoClient } from './legado.client';
 import { opdsClient } from './opds.client';
 import { getConfig } from './config';
+import { BookRuleParseError } from './book-source-error';
 import {
   abortable,
   BOOK_SEARCH_BATCH_SIZE,
@@ -194,6 +195,7 @@ export class BookProvider {
     const source = await this.getSourceById(sourceId);
     if (sourceKind(source) === 'legado') {
       const detail = await legadoClient.getBookDetail(sourceId, href);
+      if (detail.readingUnavailableReason) throw new BookRuleParseError(detail.readingUnavailableReason);
       const chapters =
         detail.acquisitionLinks.find(
           (item) => item.type === 'application/x-legado-chapters+json'

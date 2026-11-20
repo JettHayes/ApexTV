@@ -74,6 +74,7 @@ export function createBookSearchPlan(sources: BookSource[]) {
   });
   const revision = crypto
     .createHash('sha256')
+    .update('book-rules-v2|')
     .update(
       searchable
         .map((source) => `${source.id}:${bookSourceFingerprint(source)}`)

@@ -50,7 +50,12 @@ function DetailSkeleton() {
       <section
         className={cn('grid gap-6 md:grid-cols-[220px_1fr]', PANEL_CLASS)}
       >
-        <div className={cn('mx-auto aspect-[3/4] w-36 sm:w-44 md:w-full', LIBRARY_SKELETON)} />
+        <div
+          className={cn(
+            'mx-auto aspect-[3/4] w-36 sm:w-44 md:w-full',
+            LIBRARY_SKELETON
+          )}
+        />
         <div className='space-y-4'>
           <div className={cn('h-8 w-2/3', LIBRARY_SKELETON)} />
           <div className={cn('h-4 w-1/3', LIBRARY_SKELETON)} />
@@ -146,6 +151,7 @@ export default function BookDetailPage() {
   const [chapters, setChapters] = useState<BookChapter[]>([]);
   const [chaptersLoading, setChaptersLoading] = useState(false);
   const [chaptersError, setChaptersError] = useState('');
+  const [failedCover, setFailedCover] = useState('');
   const [error, setError] = useState('');
   const [fileBusy, setFileBusy] = useState<'open' | 'download' | ''>('');
   const [showAllChapters, setShowAllChapters] = useState(false);
@@ -165,7 +171,11 @@ export default function BookDetailPage() {
 
   useEffect(() => {
     if (!sourceId || !bookId) return;
+    const abort = new AbortController();
+    setDetail(null);
+    setError('');
     fetch('/api/books/detail', {
+      signal: abort.signal,
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -182,10 +192,14 @@ export default function BookDetailPage() {
       .then(async (res) => {
         const json = await res.json();
         if (!res.ok) throw new Error(json.error || '获取详情失败');
+        if (abort.signal.aborted) return;
         setDetail(json);
         cacheBookDetail(json);
       })
-      .catch((err) => setError(err.message || '获取详情失败'));
+      .catch((err) => {
+        if (!abort.signal.aborted) setError(err.message || '获取详情失败');
+      });
+    return () => abort.abort();
   }, [sourceId, bookId, cached]);
 
   const readable = detail?.acquisitionLinks.find((item) => {
@@ -217,7 +231,7 @@ export default function BookDetailPage() {
     setChaptersError('');
     const params = new URLSearchParams({
       sourceId: detail.sourceId,
-      bookId: detail.id,
+      href: readable.href,
     });
     fetch(`/api/books/read/chapters?${params.toString()}`, {
       cache: 'no-store',
@@ -288,12 +302,14 @@ export default function BookDetailPage() {
             BOOK_COVER_LIFT
           )}
         >
-          {detail.cover ? (
+          {detail.cover && failedCover !== detail.cover ? (
             <>
               <ProxyImage
                 originalSrc={detail.cover}
                 alt={detail.title}
                 className='h-full w-full object-cover'
+                retryOnError={false}
+                onError={() => setFailedCover(detail.cover || '')}
               />
               <span className={BOOK_SPINE_OVERLAY} aria-hidden />
             </>
@@ -311,9 +327,12 @@ export default function BookDetailPage() {
         </div>
         <div className='flex min-w-0 flex-col justify-between gap-5'>
           <div>
-            <span className='inline-flex items-center gap-1.5 rounded-sm bg-library-ochre-tint px-2.5 py-1 text-xs font-medium text-library-ochre dark:bg-library-night-ochre-tint dark:text-library-night-ochre'>
-              <BookOpen className='h-3.5 w-3.5' />
-              {detail.sourceName}
+            <span
+              title={detail.sourceName}
+              className='inline-flex max-w-full items-center gap-1.5 rounded-sm bg-library-ochre-tint px-2.5 py-1 text-xs font-medium text-library-ochre dark:bg-library-night-ochre-tint dark:text-library-night-ochre'
+            >
+              <BookOpen className='h-3.5 w-3.5 shrink-0' />
+              <span className='truncate'>{detail.sourceName}</span>
             </span>
             <h1
               className={cn(
@@ -348,7 +367,9 @@ export default function BookDetailPage() {
             </div>
           </div>
           <div className='flex flex-wrap gap-3'>
-            {readable ? (
+            {readable &&
+            (readableFormat !== 'chapters' ||
+              (!chaptersLoading && !chaptersError && chapters.length > 0)) ? (
               <Link
                 href={buildBookReadPath(detail.sourceId, detail.id)}
                 onClick={() => cacheBookDetail(detail)}
@@ -405,6 +426,17 @@ export default function BookDetailPage() {
       </section>
 
       <section className={PANEL_CLASS}>
+        {detail.readingUnavailableReason && (
+          <p
+            role='status'
+            className={cn(
+              'mb-4 rounded-md border border-library-edge bg-library-paper p-4 text-sm leading-relaxed dark:border-library-night-edge dark:bg-library-night',
+              LIBRARY_MUTED
+            )}
+          >
+            {detail.readingUnavailableReason}
+          </p>
+        )}
         <div className='flex items-center gap-2'>
           <FileText className='h-5 w-5 text-library-ochre dark:text-library-night-ochre' />{' '}
           <h2
@@ -442,7 +474,12 @@ export default function BookDetailPage() {
                 </div>
                 <button
                   type='button'
-                  disabled={!format || fileBusy !== ''}
+                  disabled={
+                    !format ||
+                    fileBusy !== '' ||
+                    (format === 'chapters' &&
+                      (chaptersLoading || !!chaptersError || !chapters.length))
+                  }
                   onClick={async () => {
                     if (!format) return;
                     if (format === 'epub' || format === 'chapters') {
@@ -499,7 +536,11 @@ export default function BookDetailPage() {
                 LIBRARY_MUTED
               )}
             >
-              {chaptersLoading ? '加载中...' : `${chapters.length} 章`}
+              {chaptersLoading
+                ? '加载中...'
+                : chaptersError
+                ? '目录不可用'
+                : `${chapters.length} 章`}
             </div>
           </div>
           {chaptersError ? (
@@ -509,7 +550,7 @@ export default function BookDetailPage() {
           ) : null}
           {!chaptersLoading && !chaptersError && chapters.length === 0 ? (
             <div className={cn('mt-4 text-sm', ROW_CLASS, LIBRARY_MUTED)}>
-              源站当前没有返回章节，这不是 EPUB 文件缺失；请换有章节的搜索结果。
+              当前未获取到可用章节，请检查书源规则或访问条件；搜索成功不代表目录和正文可用。
             </div>
           ) : null}
           {chapters.length > 0 ? (

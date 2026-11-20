@@ -10,7 +10,7 @@ import xpath from 'xpath';
 import { getConfig } from './config';
 import type { AdminConfig } from './admin.types';
 import { abortable, bookSourceFingerprint, cacheBookValue, createBookSearchPlan, hasLegadoSearchRules, runBookSearchBatch, type BookSearchOptions } from './book-search';
-import {
+import type {
   BookAcquisitionLink,
   BookCatalogResult,
   BookChapter,
@@ -25,7 +25,7 @@ import {
 } from './book.types';
 import { validateProxyUrlServerSide } from './server/ssrf';
 import { legadoSubscriptionStore } from './legado/subscription-store';
-import { BookCatalogTargetError, BookSourceRequestError } from './book-source-error';
+import { BookCatalogTargetError, BookRuleParseError, BookSourceRequestError } from './book-source-error';
 
 interface ResolvedLegadoConfig {
   enabled: boolean;
@@ -168,7 +168,30 @@ function normalizeUrl(base: string, href?: string): string {
   }
 }
 
-function encodeRuleParam(value: string) {
+let gbkEncoding: Map<string, string> | undefined;
+
+function encodeRuleParam(value: string, charset = 'utf-8') {
+  if (/^(?:gbk|gb2312|gb18030)$/i.test(charset)) {
+    if (!gbkEncoding) {
+      gbkEncoding = new Map();
+      const decoder = new TextDecoder('gb18030');
+      const bytes = new Uint8Array(2);
+      for (let lead = 0x81; lead <= 0xfe; lead += 1) {
+        for (let trail = 0x40; trail <= 0xfe; trail += 1) {
+          if (trail === 0x7f) continue;
+          bytes[0] = lead; bytes[1] = trail;
+          const character = decoder.decode(bytes);
+          if (character.length === 1 && character !== '\ufffd' && !gbkEncoding.has(character)) gbkEncoding.set(character, `%${lead.toString(16).toUpperCase()}%${trail.toString(16).toUpperCase()}`);
+        }
+      }
+    }
+    return Array.from(value).map((character) => {
+      if (character.charCodeAt(0) < 0x80) return encodeURIComponent(character).replace(/%20/g, '+');
+      const encoded = gbkEncoding?.get(character);
+      if (!encoded) throw new BookRuleParseError('搜索关键词含当前 GBK 编码不支持的字符，请换用其他书源');
+      return encoded;
+    }).join('');
+  }
   return encodeURIComponent(value).replace(/%20/g, '+');
 }
 
@@ -214,19 +237,19 @@ function safeEvalTemplateExpression(expr: string, keyword: string, page: number)
   }
 }
 
-function renderTemplateExpressions(raw: string, keyword = '', page = 1) {
+function renderTemplateExpressions(raw: string, keyword = '', page = 1, charset = 'utf-8') {
   return raw.replace(/<([^,<>]*),\s*\{\{(.*?)\}\}>/g, (_, prefix, expr) => {
     const value = safeEvalTemplateExpression(String(expr).trim(), keyword, page);
     return value ? `${prefix || ''}${value}` : '';
   }).replace(/\{\{(.*?)\}\}/g, (_, expr) => {
     const value = String(expr).trim();
-    if (/^(key|keyword|searchTerms)$/.test(value)) return encodeRuleParam(keyword || '');
+    if (/^(key|keyword|searchTerms)$/.test(value)) return encodeRuleParam(keyword || '', charset);
     if (/^(page|pageIndex)$/.test(value)) return String(page);
     const evaluated = safeEvalTemplateExpression(value, keyword, page);
     // 表达式里如果已经显式调用 encodeURIComponent/encodeURI/java.encodeURI，
     // 结果就是编码后的参数，不能再 encode 一次，否则会把 % 编成 %25。
     if (/\b(?:encodeURIComponent|encodeURI|java\.encodeURI|java\.encodeURIComponent)\s*\(/.test(value)) return evaluated;
-    return encodeRuleParam(evaluated);
+    return encodeRuleParam(evaluated, charset);
   });
 }
 
@@ -383,11 +406,12 @@ function buildUrlFromTemplate(template: string, source: BookSource, keyword?: st
     if (!evaluated || isJsRuleString(evaluated)) throw new Error('书源的动态请求地址暂时无法解析');
     raw = evaluated;
   }
-  raw = renderTemplateExpressions(raw, keyword || '', page);
+  const charset = splitUrlOptions(raw).charset || 'utf-8';
+  raw = renderTemplateExpressions(raw, keyword || '', page, charset);
   raw = raw
-    .replace(/\{searchTerms\}/g, encodeRuleParam(keyword || ''))
-    .replace(/\{key\}/g, encodeRuleParam(keyword || ''))
-    .replace(/\{keyword\}/g, encodeRuleParam(keyword || ''))
+    .replace(/\{searchTerms\}/g, encodeRuleParam(keyword || '', charset))
+    .replace(/\{key\}/g, encodeRuleParam(keyword || '', charset))
+    .replace(/\{keyword\}/g, encodeRuleParam(keyword || '', charset))
     .replace(/\{page\}/g, String(page))
     .replace(/\{pageIndex\}/g, String(page));
   return normalizeUrl(base, raw);
@@ -538,14 +562,25 @@ function evaluateJsListRule(rule: string | undefined, context: Record<string, an
 function renderTemplateWithJson(template: string, json: any, source: BookSource, baseUrl: string) {
   const isUrl = /^(?:https?:\/\/|\/?\.\/|\/)/i.test(template);
   const rendered = template.replace(/\{\{(.*?)\}\}/g, (_, expr) => {
-    const normalizedExpr = String(expr).trim().replace(/^@json:/, '');
-    const value = readJsonPath(json, normalizedExpr);
+    const normalizedExpr = String(expr).trim().replace(/^@@/, '').replace(/^@json:/, '');
+    const value = /^(?:\$|[\w-]+(?:\.|\[|$))/.test(normalizedExpr) && !/^(?:baseUrl|result|source)\b/.test(normalizedExpr)
+      ? readJsonPath(json, normalizedExpr)
+      : evaluateFieldExpression(normalizedExpr, { result: json, src: json, baseUrl, source: source?.legado });
     return isUrl ? encodeRuleParam(jsonPrimitiveToString(value)) : jsonPrimitiveToString(value);
   });
   return isUrl ? normalizeUrl(baseUrl || sourceBase(source), rendered) : rendered;
 }
 
 function readJsonRule(json: any, rule?: string, source?: BookSource, baseUrl?: string): string {
+  for (const alternative of splitAlternatives(rule)) {
+    const { base, filters } = splitRuleFilters(alternative);
+    const value = applyRuleFilters(readJsonRuleCore(json, base, source, baseUrl), filters);
+    if (value) return value;
+  }
+  return '';
+}
+
+function readJsonRuleCore(json: any, rule?: string, source?: BookSource, baseUrl?: string): string {
   if (!rule) return '';
   const trimmed = rule.trim();
   const jsIndex = trimmed.indexOf('@js:');
@@ -553,7 +588,7 @@ function readJsonRule(json: any, rule?: string, source?: BookSource, baseUrl?: s
     const result = readJsonRule(json, trimmed.slice(0, jsIndex), source, baseUrl);
     return runJsSnippet(trimmed.slice(jsIndex), { result, baseUrl, src: json });
   }
-  if (trimmed.includes('{{')) return renderTemplateWithJson(trimmed, json, source as BookSource, baseUrl || sourceBase(source as BookSource));
+  if (trimmed.includes('{{')) return renderTemplateWithJson(trimmed, json, source as BookSource, baseUrl || (source ? sourceBase(source) : ''));
   if (isJsRuleString(trimmed)) {
     if (/result\s*=\s*['"]([^'"]+)['"]\s*\+\s*result\.([A-Za-z0-9_$-]+)/.test(trimmed)) {
       const match = trimmed.match(/result\s*=\s*['"]([^'"]+)['"]\s*\+\s*result\.([A-Za-z0-9_$-]+)/);
@@ -591,22 +626,75 @@ function fallbackChapterHrefFromItem(item: any, rule?: string, baseUrl?: string)
 }
 
 function splitAlternatives(rule?: string): string[] {
-  return (rule || '').split('||').map((item) => item.trim()).filter(Boolean);
+  return splitRuleSyntax(rule || '', '||').map((item) => item.trim()).filter(Boolean);
 }
 
 function splitRuleFilters(rule: string) {
-  const parts = (rule || '').split('##');
+  const parts = splitRuleSyntax(rule || '', '##');
   return { base: (parts.shift() || '').trim(), filters: parts };
 }
 
+// Separators inside a template or script belong to that expression, not its parent rule.
+function splitRuleSyntax(rule: string, delimiter: string): string[] {
+  const parts: string[] = [];
+  const lower = rule.toLowerCase();
+  let depth = 0;
+  let start = 0;
+  for (let index = 0; index < rule.length; index += 1) {
+    if (lower.startsWith('<js>', index)) {
+      const end = lower.indexOf('</js>', index + 4);
+      if (end < 0) break;
+      index = end + 4;
+      continue;
+    }
+    if (rule.startsWith('{{', index)) { depth += 1; index += 1; continue; }
+    if (rule.startsWith('}}', index) && depth) { depth -= 1; index += 1; continue; }
+    if (depth) continue;
+    if (lower.startsWith('@js:', index)) break;
+    if (rule.startsWith(delimiter, index)) {
+      parts.push(rule.slice(start, index));
+      start = index + delimiter.length;
+      index += delimiter.length - 1;
+    }
+  }
+  parts.push(rule.slice(start));
+  return parts;
+}
+
+function evaluateFieldExpression(expression: string, context: Record<string, any>): string {
+  if (/\bcookie\s*\.|\bjava\.(?:ajax|connect|getCookie)|\bwebView\b/i.test(expression)) {
+    throw new BookRuleParseError('该规则依赖 Cookie 或浏览器环境，当前网页阅读模式暂不支持');
+  }
+  try {
+    const value = vm.runInNewContext(`(${expression.trim().replace(/;\s*$/, '')})`, {
+      baseUrl: context.baseUrl || '', result: context.result, src: context.src,
+      source: makeSourceRuntime(context.source, context.baseUrl), book: context.book || {},
+      encodeURIComponent, encodeURI,
+    }, { timeout: 100 });
+    return jsonPrimitiveToString(value);
+  } catch {
+    throw new BookRuleParseError('书源包含当前不支持的动态字段表达式');
+  }
+}
+
+function bookHttpUrl(value?: string, base = ''): string {
+  const raw = value?.trim().replace(/\\\//g, '/') || '';
+  if (!raw || /^https?:\/*$/i.test(raw) || /\{\{|##|<\/?js>|@js:/i.test(raw)) return '';
+  try {
+    const url = new URL(raw, base || undefined);
+    return /^https?:$/.test(url.protocol) && !!url.hostname ? url.href : '';
+  } catch { return ''; }
+}
+
 function applyRuleFilters(value: string, filters: string[]) {
+  if (!value) return '';
   let result = value;
   for (let index = 0; index < filters.length; index += 2) {
     const pattern = filters[index];
     const replacement = filters[index + 1] ?? '';
     if (!pattern) continue;
     try {
-      result = result.replace(new RegExp(pattern, 'g'), replacement.replace(/\$(\d+)/g, '$$$$1'));
+      result = result.replace(new RegExp(pattern, 'g'), replacement.replace(/\\\//g, '/'));
     } catch {
       result = result.split(pattern).join(replacement);
     }
@@ -875,18 +963,29 @@ function selectXPath($: cheerio.CheerioAPI, root: cheerio.Cheerio<any>, rule: st
 
 function readValue($: cheerio.CheerioAPI, root: cheerio.Cheerio<any>, rule?: string, baseUrl?: string, jsContext?: Record<string, any>, rawUrl = false): string {
   for (const alternative of splitAlternatives(rule)) {
-    const templateKind = alternative.match(/\{\{\s*@@([\s\S]*?)\}\}/);
-    if (templateKind) {
-      const value = alternative.replace(/\{\{\s*@@([\s\S]*?)\}\}/g, (_, innerRule) => readValue($, root, String(innerRule).trim(), baseUrl, jsContext, rawUrl));
-      if (value) return value;
-      continue;
+    const { base, filters } = splitRuleFilters(alternative);
+    let value: string;
+    if (base.includes('{{')) {
+      value = base.replace(/\{\{([\s\S]*?)\}\}/g, (_, expression) => {
+        const inner = String(expression).trim();
+        return inner.startsWith('@@')
+          ? readValue($, root, inner.slice(2), baseUrl, jsContext, true)
+          : evaluateFieldExpression(inner, { ...jsContext, baseUrl, result: $.html(root), src: $.html(root) });
+      });
+    } else if (/^https?:\/\//i.test(base)) {
+      value = base;
+    } else {
+      value = readValueCore($, root, base, baseUrl, jsContext, true);
     }
-    if (alternative.includes('{{baseUrl}}')) {
-      const { base, filters } = splitRuleFilters(alternative);
-      const value = applyRuleFilters(base.replace(/\{\{baseUrl\}\}/g, baseUrl || ''), filters);
-      if (value) return value;
-      continue;
-    }
+    value = applyRuleFilters(value, filters);
+    if (!rawUrl && value && baseUrl && (/^(?:https?:)?\/\//i.test(value) || value.startsWith('/') || /(?:@|::|\.)(?:href|src)$/.test(base))) value = normalizeUrl(baseUrl, value);
+    if (value) return value;
+  }
+  return '';
+}
+
+function readValueCore($: cheerio.CheerioAPI, root: cheerio.Cheerio<any>, rule?: string, baseUrl?: string, jsContext?: Record<string, any>, rawUrl = false): string {
+  for (const alternative of splitAlternatives(rule)) {
     if (isJsRuleString(alternative)) {
       const blockIndex = alternative.search(/<js>/i);
       // `选择器@属性<js>…</js>`：legado 会先按选择器取值，再把值作为 result 执行 JS。
@@ -1312,6 +1411,9 @@ async function fetchText(source: BookSource, url: string, options: BookSearchOpt
       const cookie = getCookieHeader(source.id);
       if (source.legado?.enabledCookieJar && cookie) headers.Cookie = cookie;
       const method = (request.method || (request.body ? 'POST' : 'GET')).toUpperCase();
+      if (request.body && method !== 'GET' && method !== 'HEAD' && !Object.keys(headers).some((name) => name.toLowerCase() === 'content-type')) {
+        headers['Content-Type'] = /^\s*[\[{]/.test(request.body) ? 'application/json' : `application/x-www-form-urlencoded; charset=${request.charset || 'UTF-8'}`;
+      }
       const response = await fetch(request.url, {
         method,
         headers,
@@ -1369,7 +1471,7 @@ function makeItem(source: BookSource, partial: Partial<BookListItem> & { detailH
     sourceName: source.name,
     title: partial.title || '未命名电子书',
     author: partial.author,
-    cover: partial.cover,
+    cover: bookHttpUrl(partial.cover, /^https?:\/\//i.test(detailHref) ? detailHref : sourceBase(source)) || undefined,
     summary: partial.summary,
     tags: partial.tags,
     detailHref,
@@ -1378,7 +1480,7 @@ function makeItem(source: BookSource, partial: Partial<BookListItem> & { detailH
 }
 
 function usableSearchItem(rule: LegadoBookSourceRule, title: string, href: string) {
-  if (!title?.trim() || !href?.trim() || /@js:|<\/?js>|\{\{/.test(title + href)) return false;
+  if (!title?.trim() || !href?.trim() || /@js:|<\/?js>|\{\{|##/.test(title + href)) return false;
   // Some API-based rules use opaque book IDs and compose the URL in bookInfoUrl.
   return /^https?:\/\//i.test(href) || (!!rule.bookInfoUrl && !/^javascript:/i.test(href));
 }
@@ -1510,7 +1612,7 @@ export class LegadoClient {
     if (!hasLegadoSearchRules({ ...source, legado: rule })) throw new Error('该书源使用动态 JS 列表规则，当前解析器暂不支持');
     const startPage = options.startPage ?? 1;
     const pageLimit = options.pageLimit ?? DEFAULT_LEGADO_SEARCH_PAGES;
-    const cacheKey = `search|${source.id}|${source.revision || bookSourceFingerprint(source)}|${q}|${startPage}|${pageLimit}`;
+    const cacheKey = `search-v2|${source.id}|${source.revision || bookSourceFingerprint(source)}|${q}|${startPage}|${pageLimit}`;
     const cacheTTL = options.cacheTTL ?? (await resolveLegadoConfig()).cacheTTL;
     const cached = searchCache.get(cacheKey);
     if (!options.forceRefresh && cached && cached.expiresAt > Date.now()) return { source, results: cached.data };
@@ -1713,18 +1815,26 @@ export class LegadoClient {
     if (!detailHref) throw new Error('该 Legado 书源无法通过 bookId 定位详情，请重新搜索后打开');
     const detail = await this.getBookDetail(sourceId, detailHref, { id: bookId, detailHref });
     const tocHref = detail.acquisitionLinks.find((item) => item.rel === 'legado:chapters' || item.type.toLowerCase().includes('legado-chapters'))?.href;
-    if (!tocHref) return [];
+    if (!tocHref) throw new BookRuleParseError(detail.readingUnavailableReason || '当前书源未提供可用的章节目录');
     return this.getChapters(sourceId, tocHref);
   }
 
   async getBookDetail(sourceId: string, href: string, fallback?: Partial<BookDetail>): Promise<BookDetail> {
     const source = await getSourceById(sourceId);
     const rule = getRule(source);
-    const detailHref = href || fallback?.detailHref || '';
-    const cacheKey = `detail|${source.id}|${detailHref}`;
+    const detailHref = href || fallback?.detailHref || (fallback?.id && (/^https?:\/\//i.test(fallback.id) || rule.bookInfoUrl) ? fallback.id : '');
+    if (/\{\{|##|<\/?js>|@js:/i.test(detailHref)) throw new BookRuleParseError('书籍链接包含未解析的旧规则，请重新搜索后打开');
+    const cacheKey = `detail-v2|${source.id}|${source.revision || bookSourceFingerprint(source)}|${detailHref}`;
     const { cacheTTL } = await resolveLegadoConfig();
     const cached = detailCache.get(cacheKey);
-    if (cached && cached.expiresAt > Date.now()) return { ...cached.data, ...(!href && fallback ? fallback : {}) };
+    if (cached && cached.expiresAt > Date.now()) return {
+      ...cached.data,
+      id: fallback?.id || cached.data.id,
+      title: cached.data.title === '未命名电子书' && fallback?.title ? fallback.title : cached.data.title,
+      author: cached.data.author || fallback?.author,
+      cover: bookHttpUrl(cached.data.cover, detailHref) || bookHttpUrl(fallback?.cover, detailHref) || undefined,
+      summary: cached.data.summary || fallback?.summary,
+    };
 
     let detail: BookDetail | null = null;
     if (detailHref && rule.ruleBookInfo) {
@@ -1740,15 +1850,27 @@ export class LegadoClient {
         : json
           ? readJsonRule(json, itemRule, source, targetUrl)
           : readValue($ as cheerio.CheerioAPI, root as cheerio.Cheerio<any>, itemRule, targetUrl);
-      const tocUrl = read(rule.ruleBookInfo.tocUrl) || (rule.tocUrl ? buildUrlFromTemplate(rule.tocUrl, source, undefined, 1, detailHref).replace(/\{bookUrl\}/g, encodeURIComponent(detailHref)) : targetUrl);
-      const cover = read(rule.ruleBookInfo.coverUrl) || fallback?.cover;
+      let tocUrl = '';
+      let readingUnavailableReason: string | undefined;
+      try {
+        const toc = read(rule.ruleBookInfo.tocUrl) || (rule.tocUrl ? buildUrlFromTemplate(rule.tocUrl, source, undefined, 1, detailHref).replace(/\{bookUrl\}/g, encodeURIComponent(detailHref)) : rule.ruleBookInfo.tocUrl ? '' : targetUrl);
+        if (toc && !/\bwebView\s*['"]?\s*:\s*true/i.test(toc) && bookHttpUrl(splitUrlOptions(toc).url, targetUrl)) tocUrl = toc;
+        else throw new BookRuleParseError('未能解析有效的目录地址，书源规则可能已变更或依赖浏览器环境');
+        if (!rule.ruleToc?.chapterList || !rule.ruleContent?.content) throw new BookRuleParseError('该书源缺少目录或正文规则，当前仅能展示书籍信息');
+      } catch (error) {
+        if (!(error instanceof BookRuleParseError)) throw error;
+        readingUnavailableReason = error.message;
+      }
+      const cover = bookHttpUrl(read(rule.ruleBookInfo.coverUrl), targetUrl) || bookHttpUrl(fallback?.cover, targetUrl);
       const title = read(rule.ruleBookInfo.name) || fallback?.title || '未命名电子书';
+      const tags = read(rule.ruleBookInfo.kind).split(/[,，\s]+/).map((tag) => tag.replace(/^["']+|["']+$/g, '')).filter(Boolean);
       const chapterCountText = json
         ? jsonPrimitiveToString(readJsonPath(json, '@json:$.data.nums') ?? readJsonPath(json, '@json:$.data.chapter_nums'))
         : '';
       const chapterCount = chapterCountText ? Number(chapterCountText) : NaN;
       const hasKnownEmptyChapters = Number.isFinite(chapterCount) && chapterCount <= 0;
-      const acquisitionLinks: BookAcquisitionLink[] = hasKnownEmptyChapters ? [] : [{ rel: 'legado:chapters', type: 'application/x-legado-chapters+json', href: tocUrl, title: '章节目录' }];
+      if (hasKnownEmptyChapters) readingUnavailableReason = '书源返回的章节数量为 0，当前没有可用章节';
+      const acquisitionLinks: BookAcquisitionLink[] = readingUnavailableReason ? [] : [{ rel: 'legado:chapters', type: 'application/x-legado-chapters+json', href: tocUrl, title: '章节目录' }];
       detail = {
         id: fallback?.id || stableId(`${source.id}|${detailHref || title}`),
         sourceId,
@@ -1756,31 +1878,34 @@ export class LegadoClient {
         title,
         author: read(rule.ruleBookInfo.author) || fallback?.author,
         cover: cover || undefined,
+        readingUnavailableReason,
         summary: read(rule.ruleBookInfo.intro) || fallback?.summary,
-        tags: read(rule.ruleBookInfo.kind).split(/[,，\s]+/).filter(Boolean),
-        categories: read(rule.ruleBookInfo.kind).split(/[,，\s]+/).filter(Boolean),
+        tags,
+        categories: tags,
         detailHref,
         acquisitionLinks,
-        navigation: hasKnownEmptyChapters ? [] : [{ title: '目录', href: tocUrl, rel: 'legado:toc', type: 'application/x-legado-chapters+json' }],
+        navigation: readingUnavailableReason ? [] : [{ title: '目录', href: tocUrl, rel: 'legado:toc', type: 'application/x-legado-chapters+json' }],
       };
     }
 
     if (!detail) {
       const tocUrl = fallback?.acquisitionLinks?.[0]?.href || detailHref;
+      const readable = !!bookHttpUrl(splitUrlOptions(tocUrl).url, sourceBase(source)) && !!rule.ruleToc?.chapterList && !!rule.ruleContent?.content;
       detail = {
         id: fallback?.id || stableId(`${source.id}|${detailHref || fallback?.title || ''}`),
         sourceId,
         sourceName: source.name,
         title: fallback?.title || '未命名电子书',
         author: fallback?.author,
-        cover: fallback?.cover,
+        cover: bookHttpUrl(fallback?.cover, sourceBase(source)) || undefined,
+        readingUnavailableReason: readable ? undefined : '该书源未提供可用的目录和正文规则，当前仅能展示书籍信息',
         summary: fallback?.summary,
         detailHref,
-        acquisitionLinks: [{ rel: 'legado:chapters', type: 'application/x-legado-chapters+json', href: tocUrl, title: '章节目录' }],
-        navigation: [{ title: '目录', href: tocUrl, rel: 'legado:toc', type: 'application/x-legado-chapters+json' }],
+        acquisitionLinks: readable ? [{ rel: 'legado:chapters', type: 'application/x-legado-chapters+json', href: tocUrl, title: '章节目录' }] : [],
+        navigation: readable ? [{ title: '目录', href: tocUrl, rel: 'legado:toc', type: 'application/x-legado-chapters+json' }] : [],
       };
     }
-    detailCache.set(cacheKey, { data: detail, expiresAt: Date.now() + cacheTTL });
+    if (detailHref) cacheBookValue(detailCache, cacheKey, detail, cacheTTL, 64);
     return detail;
   }
 
@@ -1788,7 +1913,7 @@ export class LegadoClient {
     const source = await getSourceById(sourceId);
     const rule = getRule(source);
     if (!rule.ruleToc?.chapterList) throw new Error('该 Legado 书源缺少目录规则');
-    const cacheKey = `toc|${source.id}|${tocHref}`;
+    const cacheKey = `toc-v2|${source.id}|${source.revision || bookSourceFingerprint(source)}|${tocHref}`;
     const { cacheTTL } = await resolveLegadoConfig();
     const cached = tocCache.get(cacheKey);
     if (cached && cached.expiresAt > Date.now()) return cached.data;
@@ -1855,7 +1980,8 @@ export class LegadoClient {
         nextTocUrl = contentFromRule(nextHtml, rule.ruleToc.nextTocUrl, normalizedNext);
       }
     }
-    tocCache.set(cacheKey, { data: chapters, expiresAt: Date.now() + cacheTTL });
+    if (!chapters.length) throw new BookRuleParseError('未能解析章节目录：可能是目录规则不兼容、页面已变更，或源站要求登录与验证');
+    cacheBookValue(tocCache, cacheKey, chapters, cacheTTL, 64);
     return chapters;
   }
 
@@ -1864,7 +1990,7 @@ export class LegadoClient {
     const rule = getRule(source);
     if (!rule.ruleContent?.content) throw new Error('该 Legado 书源缺少正文规则');
     const targetUrl = normalizeUrl(sourceBase(source), chapterHref);
-    const cacheKey = `chapter|${source.id}|${targetUrl}`;
+    const cacheKey = `chapter-v2|${source.id}|${source.revision || bookSourceFingerprint(source)}|${targetUrl}`;
     const cached = chapterCache.get(cacheKey);
     if (cached && cached.expiresAt > Date.now()) return cached.data;
 
@@ -1882,7 +2008,8 @@ export class LegadoClient {
       if (chapterPageStem(normalizedNext) !== chapterPageStem(targetUrl)) break;
       pageUrl = normalizedNext;
     }
-    const rawContent = parts.join('\\n\\n');
+    const rawContent = parts.join('\n\n');
+    if (!rawContent.trim()) throw new BookRuleParseError('未能解析正文：可能是正文规则不兼容、页面已变更，或源站要求登录与验证');
     const chapters = tocHref ? await this.getChapters(sourceId, tocHref).catch(() => []) : [];
     const index = chapters.findIndex((item) => item.href === targetUrl || item.href === chapterHref);
     const content: BookChapterContent = {

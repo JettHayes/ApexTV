@@ -1308,9 +1308,7 @@ function ChapterReader({ manifest }: { manifest: BookReadManifest }) {
     return (
       <div className='mx-auto max-w-2xl p-4'>
         <div className='rounded-md border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800 dark:border-amber-800 dark:bg-amber-900/20 dark:text-amber-200'>
-          暂无章节。该 Legado 源返回的是章节/图片接口，不是 EPUB
-          文件；如果详情接口显示章节数为
-          0，说明源站当前还没放出可读章节，请换一本有章节的结果再试。
+          当前未获取到可用章节。搜索、目录和正文使用不同规则；请检查书源规则与访问条件，或切换其他书源。
         </div>
       </div>
     );

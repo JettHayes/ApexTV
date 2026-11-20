@@ -4,6 +4,7 @@ import {
   AlertCircle,
   ArrowDown,
   Check,
+  ChevronDown,
   Loader2,
   Search,
   Square,
@@ -26,6 +27,10 @@ import {
   traverseBookSearchBatches,
   type BookSearchPlanSummary,
 } from '@/lib/book-search.client';
+import {
+  buildBookSourceOptions,
+  filterBookSourceOptions,
+} from '@/lib/book-source-display';
 import { cn } from '@/lib/cn';
 
 import BooksPagination from '@/components/books/BooksPagination';
@@ -117,6 +122,7 @@ export default function BooksSearchPage() {
   const [sourceId, setSourceId] = useState(urlSource);
   const [sources, setSources] = useState<BookSource[]>([]);
   const [sourceError, setSourceError] = useState('');
+  const [sourceFilter, setSourceFilter] = useState('');
   const [view, setView] = useState<SearchView>(EMPTY_VIEW);
   const [page, setPage] = useState(1);
   const viewRef = useRef(view);
@@ -319,8 +325,21 @@ export default function BooksSearchPage() {
       router.replace('/books/search?' + next);
     }
   };
+  const sourceOptions = useMemo(
+    () => buildBookSourceOptions(sources),
+    [sources]
+  );
+  const matchingSources = useMemo(
+    () => filterBookSourceOptions(sourceOptions, sourceFilter),
+    [sourceOptions, sourceFilter]
+  );
+  const selectedSource = sourceOptions.find((source) => source.id === sourceId);
+  const selectionOutsideFilter =
+    !!selectedSource &&
+    !matchingSources.some((source) => source.id === sourceId);
   const scope = view.scope
-    ? sources.find((source) => source.id === view.scope)?.name || '所选书源'
+    ? sourceOptions.find((source) => source.id === view.scope)?.label ||
+      '所选书源'
     : '全部书源';
   const timedOut = view.failures.filter((failure) => failure.timedOut).length;
   const total = view.plan?.totalSources || 0;
@@ -416,7 +435,7 @@ export default function BooksSearchPage() {
             </label>
             <label className='min-w-0 sm:col-span-2 lg:col-span-1'>
               <span className={cn('mb-2 block text-xs', LIBRARY_MUTED)}>
-                搜索范围
+                搜索范围{sourceFilter.trim() ? ' · 已筛选选项' : ''}
               </span>
               <select
                 aria-label='选择书源'
@@ -428,9 +447,17 @@ export default function BooksSearchPage() {
                 )}
               >
                 <option value=''>全部书源</option>
-                {sources.map((source) => (
+                {sourceId && !selectedSource && (
+                  <option value={sourceId}>当前书源（列表暂不可用）</option>
+                )}
+                {selectionOutsideFilter && selectedSource && (
+                  <option value={selectedSource.id}>
+                    {selectedSource.label} · 当前已选
+                  </option>
+                )}
+                {matchingSources.map((source) => (
                   <option key={source.id} value={source.id}>
-                    {source.name}
+                    {source.label}
                   </option>
                 ))}
               </select>
@@ -467,6 +494,107 @@ export default function BooksSearchPage() {
             </div>
           </div>
         </form>
+        <details className='group mt-3 border-b border-library-edge pb-2 dark:border-library-night-edge'>
+          <summary
+            className={cn(
+              'flex min-h-11 cursor-pointer items-center gap-2 rounded-sm text-sm',
+              LIBRARY_MUTED,
+              LIBRARY_FOCUS
+            )}
+          >
+            <Search aria-hidden className='h-3.5 w-3.5' />
+            筛选书源与说明
+            <span className='ml-auto text-xs tabular-nums'>
+              {sourceFilter.trim()
+                ? `${matchingSources.length} 项匹配`
+                : `${sourceOptions.length} 个书源`}
+            </span>
+            <ChevronDown
+              aria-hidden
+              className='h-4 w-4 transition-transform duration-150 group-open:rotate-180 motion-reduce:transition-none'
+            />
+          </summary>
+          <div className='grid gap-5 pb-3 pt-2 sm:grid-cols-[minmax(0,1fr)_minmax(0,2fr)]'>
+            <div className='min-w-0'>
+              <label
+                className={cn('mb-2 block text-xs', LIBRARY_MUTED)}
+                htmlFor='book-source-filter'
+              >
+                名称或域名
+              </label>
+              <div className='relative'>
+                <input
+                  id='book-source-filter'
+                  value={sourceFilter}
+                  onChange={(event) => setSourceFilter(event.target.value)}
+                  placeholder='例如：起点、qidian.com'
+                  autoComplete='off'
+                  aria-describedby='book-source-filter-help'
+                  className={cn(LIBRARY_FIELD, 'h-11 pr-11 text-base')}
+                />
+                {sourceFilter && (
+                  <button
+                    type='button'
+                    onClick={() => setSourceFilter('')}
+                    aria-label='清除书源筛选'
+                    className={cn(
+                      'absolute right-0 top-0 flex h-11 w-11 items-center justify-center rounded-md',
+                      LIBRARY_MUTED,
+                      LIBRARY_FOCUS
+                    )}
+                  >
+                    <X aria-hidden className='h-4 w-4' />
+                  </button>
+                )}
+              </div>
+              <p
+                id='book-source-filter-help'
+                className={cn('mt-2 text-xs leading-relaxed', LIBRARY_MUTED)}
+              >
+                只筛选上方选项；“全部书源”仍搜索全部来源。
+              </p>
+              {!matchingSources.length && sourceFilter.trim() && (
+                <p role='status' className={cn('mt-2 text-xs', LIBRARY_MUTED)}>
+                  没有匹配的书源，可以清除筛选。
+                  {selectionOutsideFilter ? '当前选择已保留。' : ''}
+                </p>
+              )}
+            </div>
+            <div
+              className={cn(
+                'min-w-0 border-l border-library-edge pl-4 dark:border-library-night-edge',
+                LIBRARY_MUTED
+              )}
+            >
+              <p className={cn('text-sm font-medium', LIBRARY_TEXT)}>
+                {selectedSource
+                  ? selectedSource.label
+                  : sourceId
+                  ? '当前书源信息暂不可用'
+                  : '全部书源'}
+              </p>
+              {selectedSource ? (
+                <>
+                  {selectedSource.hostname && (
+                    <p className='mt-1 break-all text-xs'>
+                      {selectedSource.hostname}
+                    </p>
+                  )}
+                  <p className='mt-3 text-xs'>原始名称与说明</p>
+                  <p className='mt-1 whitespace-pre-wrap break-words text-xs leading-relaxed'>
+                    {selectedSource.originalName}
+                  </p>
+                </>
+              ) : (
+                <p className='mt-2 text-xs leading-relaxed'>
+                  {sourceId
+                    ? '列表恢复后可查看完整名称与说明；当前选择不会被清空。'
+                    : '精简名称仅用于展示；选择具体书源后，可在这里查看完整名称与说明。'}
+                </p>
+              )}
+            </div>
+          </div>
+        </details>
         <div className='mt-3 flex flex-wrap items-center gap-x-4 gap-y-2'>
           <span className={cn('text-xs', LIBRARY_MUTED)}>试试</span>
           {QUICK_SEARCHES.map((keyword) => (

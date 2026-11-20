@@ -26,3 +26,11 @@ export class BookCatalogTargetError extends Error {
     this.name = 'BookCatalogTargetError';
   }
 }
+
+export class BookRuleParseError extends Error {
+  readonly code = 'SOURCE_RULE_PARSE_ERROR';
+  constructor(message: string) {
+    super(message);
+    this.name = 'BookRuleParseError';
+  }
+}
