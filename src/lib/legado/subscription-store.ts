@@ -32,7 +32,7 @@ interface StoredManifest {
 const CHUNK_SIZE = Number(process.env.LEGADO_SUBSCRIPTION_CHUNK_SIZE || 100);
 const TIMEOUT_MS = Number(process.env.LEGADO_SUBSCRIPTION_TIMEOUT_MS || process.env.LEGADO_TIMEOUT_MS || 30000);
 const MAX_BYTES = Number(process.env.LEGADO_SUBSCRIPTION_MAX_BYTES || 20 * 1024 * 1024);
-const sourcesCache = new Map<string, BookSource[]>();
+const sourcesCache = new Map<string, { sources: BookSource[]; expiresAt: number }>();
 const sourcesLoadPromises = new Map<string, Promise<BookSource[]>>();
 
 function stableId(input: string) {
@@ -135,16 +135,17 @@ async function readManifest(id: string): Promise<StoredManifest | null> {
 
 async function readSourcesFromDb(id: string): Promise<BookSource[]> {
   const manifest = await readManifest(id);
-  if (!manifest) return [];
+  if (!manifest) throw new Error('订阅规则尚未完整加载，请重新同步订阅');
   const chunks = await Promise.all(
     Array.from({ length: manifest.chunkCount }, async (_, index) => {
       const raw = await db.getGlobalValue(chunkKey(id, index));
-      if (!raw) return [] as BookSource[];
+      if (!raw) throw new Error('订阅规则分片缺失，请重新同步订阅');
       try {
         const parsed = JSON.parse(raw);
-        return Array.isArray(parsed) ? (parsed as BookSource[]) : [];
+        if (!Array.isArray(parsed)) throw new Error('invalid chunk');
+        return parsed as BookSource[];
       } catch {
-        return [] as BookSource[];
+        throw new Error('订阅规则分片损坏，请重新同步订阅');
       }
     })
   );
@@ -183,41 +184,45 @@ export const legadoSubscriptionStore = {
     }
     const manifest: StoredManifest = { id, name, url, hash, sourceCount: sources.length, chunkCount, updatedAt: Date.now(), etag, lastModified };
     await db.setGlobalValue(manifestKey(id), JSON.stringify(manifest));
-    sourcesLoadPromises.delete(id);
-    sourcesCache.set(id, sources);
+    this.clearCache(id);
+    sourcesCache.set(`${id}|${manifest.updatedAt}`, { sources, expiresAt: Date.now() + 60000 });
     return { id, name, url, enabled: true, sourceCount: sources.length, lastSyncAt: manifest.updatedAt, lastSuccessAt: manifest.updatedAt, lastError: '' };
   },
 
-  async getSources(id: string): Promise<BookSource[]> {
-    const cached = sourcesCache.get(id);
-    if (cached) return cached;
+  async getSources(id: string, version?: number): Promise<BookSource[]> {
+    const key = `${id}|${version || 0}`;
+    const cached = sourcesCache.get(key);
+    if (cached && cached.expiresAt > Date.now()) return cached.sources;
 
-    const pending = sourcesLoadPromises.get(id);
+    const pending = sourcesLoadPromises.get(key);
     if (pending) return pending;
 
     const promise = readSourcesFromDb(id)
       .then((sources) => {
-        sourcesCache.set(id, sources);
-        sourcesLoadPromises.delete(id);
+        if (sourcesCache.size >= 16) {
+          const oldest = sourcesCache.keys().next().value;
+          if (oldest) sourcesCache.delete(oldest);
+        }
+        sourcesCache.set(key, { sources, expiresAt: Date.now() + 60000 });
+        sourcesLoadPromises.delete(key);
         return sources;
       })
       .catch((error) => {
-        sourcesLoadPromises.delete(id);
+        sourcesLoadPromises.delete(key);
         throw error;
       });
-    sourcesLoadPromises.set(id, promise);
+    sourcesLoadPromises.set(key, promise);
     return promise;
   },
 
   async getSourcesForSubscriptions(subscriptions: LegadoSubscriptionMeta[] = []): Promise<BookSource[]> {
     const enabled = subscriptions.filter((item) => item.enabled !== false);
-    const groups = await Promise.all(enabled.map((item) => this.getSources(item.id)));
+    const groups = await Promise.all(enabled.map((item) => this.getSources(item.id, item.lastSuccessAt || item.lastSyncAt)));
     return groups.flat().filter((source) => source.enabled !== false);
   },
 
   async delete(id: string): Promise<void> {
-    sourcesLoadPromises.delete(id);
-    sourcesCache.delete(id);
+    this.clearCache(id);
     const manifest = await readManifest(id);
     if (manifest) {
       for (let index = 0; index < manifest.chunkCount; index += 1) {
@@ -229,8 +234,8 @@ export const legadoSubscriptionStore = {
 
   clearCache(id?: string): void {
     if (id) {
-      sourcesLoadPromises.delete(id);
-      sourcesCache.delete(id);
+      for (const key of Array.from(sourcesLoadPromises.keys())) if (key.startsWith(`${id}|`)) sourcesLoadPromises.delete(key);
+      for (const key of Array.from(sourcesCache.keys())) if (key.startsWith(`${id}|`)) sourcesCache.delete(key);
       return;
     }
     sourcesLoadPromises.clear();

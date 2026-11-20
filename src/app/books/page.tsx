@@ -2,7 +2,7 @@
 
 import { CheckCircle2, Compass, Search, XCircle } from 'lucide-react';
 import Link from 'next/link';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 import { getAllBookReadRecords } from '@/lib/book.db.client';
 import { BookReadRecord, BookSource } from '@/lib/book.types';
@@ -10,10 +10,12 @@ import { buildBookReadPath } from '@/lib/book-route-cache.client';
 import { cn } from '@/lib/cn';
 
 import ContinueReadingCard from '@/components/media/ContinueReadingCard';
+import BooksPagination from '@/components/books/BooksPagination';
 import EmptyState from '@/components/media/EmptyState';
 import {
   BOOK_RAIL_ITEM,
   LIBRARY_BUTTON,
+  LIBRARY_FIELD,
   LIBRARY_GHOST_BUTTON,
   LIBRARY_MUTED,
   LIBRARY_PANEL,
@@ -77,6 +79,9 @@ export default function BooksHomePage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [readRecords, setReadRecords] = useState<BookReadRecord[]>([]);
+  const [filter, setFilter] = useState('');
+  const [capability, setCapability] = useState('all');
+  const [page, setPage] = useState(1);
 
   useEffect(() => {
     if (
@@ -88,7 +93,11 @@ export default function BooksHomePage() {
       return;
     }
     fetch('/api/books/sources')
-      .then((res) => res.json())
+      .then(async (res) => {
+        const json = await res.json();
+        if (!res.ok) throw new Error(json.error || '加载书源失败');
+        return json;
+      })
       .then((data) => setSources(data.sources || []))
       .catch((err) => setError(err.message || '加载书源失败'))
       .finally(() => setLoading(false));
@@ -105,6 +114,11 @@ export default function BooksHomePage() {
   const currentRecord = readRecords[0];
   // 顶部「正在读」大卡已经摊开第一本，这里只列其余的，避免同一本重复出现。
   const recentRecords = readRecords.slice(1, 13);
+  const filteredSources = useMemo(() => sources.filter((source) =>
+    source.name.toLowerCase().includes(filter.trim().toLowerCase()) &&
+    (capability === 'all' || (capability === 'catalog' ? source.capabilities?.catalogSupported : source.capabilities?.searchSupported))
+  ), [sources, filter, capability]);
+  const currentPage = Math.min(page, Math.max(1, Math.ceil(filteredSources.length / 24)));
 
   return (
     <div className='space-y-8'>
@@ -192,8 +206,23 @@ export default function BooksHomePage() {
 
         {error ? <EmptyState tone='error' description={error} /> : null}
 
+        {!loading && sources.length > 0 && <div className='grid gap-3 sm:grid-cols-[minmax(0,1fr)_12rem]'>
+          <label className='min-w-0'>
+            <span className={cn('mb-2 block text-xs', LIBRARY_MUTED)}>查找书源</span>
+            <input aria-label='筛选书源名称' placeholder='按书源名称筛选' value={filter}
+              onChange={(event) => { setFilter(event.target.value); setPage(1); }} className={cn(LIBRARY_FIELD, 'min-h-11 text-base')} />
+          </label>
+          <label>
+            <span className={cn('mb-2 block text-xs', LIBRARY_MUTED)}>规则类型</span>
+            <select aria-label='筛选书源规则类型' value={capability} onChange={(event) => { setCapability(event.target.value); setPage(1); }}
+              className={cn(LIBRARY_FIELD, 'min-h-11 text-base')}>
+              <option value='all'>全部书源</option><option value='search'>已配置搜索</option><option value='catalog'>已配置目录</option>
+            </select>
+          </label>
+        </div>}
+
         <div className='grid gap-4 md:grid-cols-2 xl:grid-cols-3'>
-          {sources.map((source) => (
+          {filteredSources.slice((currentPage - 1) * 24, currentPage * 24).map((source) => (
             <article key={source.id} className={cn(LIBRARY_PANEL, 'p-5')}>
               <div className='min-w-0'>
                 <div
@@ -211,18 +240,17 @@ export default function BooksHomePage() {
 
               <div className='mt-4 flex flex-wrap gap-2'>
                 <CapabilityPill enabled={source.capabilities?.catalogSupported}>
-                  分类
-                  {source.capabilities?.catalogSupported ? '可用' : '不可用'}
+                  {source.capabilities?.catalogSupported ? '已配置目录' : '无目录规则'}
                 </CapabilityPill>
                 <CapabilityPill enabled={source.capabilities?.searchSupported}>
-                  搜索
-                  {source.capabilities?.searchSupported ? '可用' : '不可用'}
+                  {source.capabilities?.searchSupported ? '已配置搜索' : source.legado?.searchUrl ? '搜索规则待适配' : '无搜索规则'}
                 </CapabilityPill>
               </div>
 
               <div className='mt-5 flex flex-wrap gap-2'>
                 {source.capabilities?.catalogSupported && (
                   <Link
+                    prefetch={false}
                     href={`/books/catalog?sourceId=${encodeURIComponent(
                       source.id
                     )}`}
@@ -233,6 +261,7 @@ export default function BooksHomePage() {
                 )}
                 {source.capabilities?.searchSupported && (
                   <Link
+                    prefetch={false}
                     href={`/books/search?sourceId=${encodeURIComponent(
                       source.id
                     )}`}
@@ -245,6 +274,13 @@ export default function BooksHomePage() {
             </article>
           ))}
         </div>
+
+        <BooksPagination page={currentPage} total={filteredSources.length} pageSize={24} onChange={setPage} />
+        {!loading && sources.length > 0 && filteredSources.length === 0 && <EmptyState
+          title='没有符合筛选条件的书源' description='试试其他名称，或将规则类型切回全部书源。' />}
+        {!loading && sources.length > 0 && <p className={cn('text-xs leading-relaxed', LIBRARY_MUTED)}>
+          已配置规则表示订阅提供了对应配置，不代表网站当前可访问；搜索时会跳过完全重复的规则。
+        </p>}
 
         {!loading && !error && sources.length === 0 ? (
           <EmptyState

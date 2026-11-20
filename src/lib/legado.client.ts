@@ -1,12 +1,15 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import * as cheerio from 'cheerio/slim';
 import crypto from 'crypto';
+import { AsyncLocalStorage } from 'async_hooks';
 import he from 'he';
 import vm from 'vm';
 import { DOMParser } from '@xmldom/xmldom';
 import xpath from 'xpath';
 
 import { getConfig } from './config';
+import type { AdminConfig } from './admin.types';
+import { abortable, bookSourceFingerprint, cacheBookValue, createBookSearchPlan, hasLegadoSearchRules, runBookSearchBatch, type BookSearchOptions } from './book-search';
 import {
   BookAcquisitionLink,
   BookCatalogResult,
@@ -14,7 +17,6 @@ import {
   BookChapterContent,
   BookDetail,
   BookListItem,
-  BookSearchFailure,
   BookSearchResult,
   BookSource,
   BookSourceCapabilities,
@@ -23,6 +25,7 @@ import {
 } from './book.types';
 import { validateProxyUrlServerSide } from './server/ssrf';
 import { legadoSubscriptionStore } from './legado/subscription-store';
+import { BookCatalogTargetError, BookSourceRequestError } from './book-source-error';
 
 interface ResolvedLegadoConfig {
   enabled: boolean;
@@ -50,6 +53,8 @@ interface RequestOptions {
 
 const cookieJar = new Map<string, string>();
 const variableStore = new Map<string, any>();
+const searchVariables = new AsyncLocalStorage<Map<string, any>>();
+const ruleVariables = () => searchVariables.getStore() || variableStore;
 const imageMemoryCache = new Map<string, { expiresAt: number; contentType: string; data: Uint8Array }>();
 
 function stableId(input: string) {
@@ -202,11 +207,10 @@ function safeEvalTemplateExpression(expr: string, keyword: string, page: number)
     encodeURIComponent: (value: unknown) => encodeURIComponent(String(value ?? '')),
   };
   try {
-    // eslint-disable-next-line no-new-func
-    const fn = new Function('key', 'keyword', 'searchTerms', 'page', 'java', `return (${expr});`);
-    return jsonPrimitiveToString(fn(key, keyword, searchTerms, page, java));
+    return jsonPrimitiveToString(vm.runInNewContext(`(${expr})`,
+      { key, keyword, searchTerms, page, java }, { timeout: 100 }));
   } catch {
-    return '';
+    throw new Error('书源模板包含当前不支持的表达式');
   }
 }
 
@@ -288,8 +292,8 @@ function runJsSnippetRaw(code: string, context: Record<string, any>, timeout = 1
     startBrowserAwait: () => ({ body: () => '' }),
     encodeURI: (value: unknown) => encodeURIComponent(String(value ?? '')),
     encodeURIComponent: (value: unknown) => encodeURIComponent(String(value ?? '')),
-    put: (key: string, value: any) => { lastPut = { key, value }; variableStore.set(key, value); return value; },
-    get: (key: string) => variableStore.get(key),
+    put: (key: string, value: any) => { lastPut = { key, value }; ruleVariables().set(key, value); return value; },
+    get: (key: string) => ruleVariables().get(key),
     log: () => undefined,
     htmlFormat: (value: unknown) => he.decode(String(value ?? '')).replace(/<br\s*\/?/gi, '\n').replace(/<[^>]+>/g, ''),
   };
@@ -357,14 +361,14 @@ function applyPutGetRules(rule: string, value: string) {
   if (putMatch) {
     try {
       const obj = JSON.parse(`{${putMatch[1]}}`);
-      Object.entries(obj).forEach(([key, val]) => variableStore.set(key, val));
+      Object.entries(obj).forEach(([key, val]) => ruleVariables().set(key, val));
     } catch {
       const pair = putMatch[1].match(/([A-Za-z0-9_$-]+)\s*:\s*['"]?([^,'"]+)['"]?/);
-      if (pair) variableStore.set(pair[1], value || pair[2]);
+      if (pair) ruleVariables().set(pair[1], value || pair[2]);
     }
   }
   const getMatch = rule.match(/@get:\s*\{\s*([A-Za-z0-9_$-]+)\s*\}/);
-  if (getMatch) return jsonPrimitiveToString(variableStore.get(getMatch[1]));
+  if (getMatch) return jsonPrimitiveToString(ruleVariables().get(getMatch[1]));
   return value;
 }
 
@@ -376,8 +380,8 @@ function buildUrlFromTemplate(template: string, source: BookSource, keyword?: st
       return `https://www.rrssk.com/k-${encryptTongrenKeyword(keyword || '')}-${page}.html`;
     }
     const evaluated = evaluateJsRuleString(raw, { key: keyword || '', keyword: keyword || '', page, baseUrl: base, source: { ...(source.legado || {}), key: base } });
-    raw = evaluated || raw;
-    if (/,(\s*)\{/.test(raw)) return raw;
+    if (!evaluated || isJsRuleString(evaluated)) throw new Error('书源的动态请求地址暂时无法解析');
+    raw = evaluated;
   }
   raw = renderTemplateExpressions(raw, keyword || '', page);
   raw = raw
@@ -532,17 +536,23 @@ function evaluateJsListRule(rule: string | undefined, context: Record<string, an
 }
 
 function renderTemplateWithJson(template: string, json: any, source: BookSource, baseUrl: string) {
+  const isUrl = /^(?:https?:\/\/|\/?\.\/|\/)/i.test(template);
   const rendered = template.replace(/\{\{(.*?)\}\}/g, (_, expr) => {
     const normalizedExpr = String(expr).trim().replace(/^@json:/, '');
     const value = readJsonPath(json, normalizedExpr);
-    return encodeRuleParam(jsonPrimitiveToString(value));
+    return isUrl ? encodeRuleParam(jsonPrimitiveToString(value)) : jsonPrimitiveToString(value);
   });
-  return normalizeUrl(baseUrl || sourceBase(source), rendered);
+  return isUrl ? normalizeUrl(baseUrl || sourceBase(source), rendered) : rendered;
 }
 
 function readJsonRule(json: any, rule?: string, source?: BookSource, baseUrl?: string): string {
   if (!rule) return '';
   const trimmed = rule.trim();
+  const jsIndex = trimmed.indexOf('@js:');
+  if (jsIndex > 0) {
+    const result = readJsonRule(json, trimmed.slice(0, jsIndex), source, baseUrl);
+    return runJsSnippet(trimmed.slice(jsIndex), { result, baseUrl, src: json });
+  }
   if (trimmed.includes('{{')) return renderTemplateWithJson(trimmed, json, source as BookSource, baseUrl || sourceBase(source as BookSource));
   if (isJsRuleString(trimmed)) {
     if (/result\s*=\s*['"]([^'"]+)['"]\s*\+\s*result\.([A-Za-z0-9_$-]+)/.test(trimmed)) {
@@ -921,7 +931,7 @@ function readValue($: cheerio.CheerioAPI, root: cheerio.Cheerio<any>, rule?: str
     const normalized = stripFilters(alternative);
     const getMatch = normalized.match(/^@get:\s*\{\s*([A-Za-z0-9_$-]+)\s*\}$/);
     if (getMatch) {
-      const value = jsonPrimitiveToString(variableStore.get(getMatch[1]));
+      const value = jsonPrimitiveToString(ruleVariables().get(getMatch[1]));
       if (value) return value;
       continue;
     }
@@ -1015,7 +1025,7 @@ function applyBookInfoInit($: cheerio.CheerioAPI, root: cheerio.Cheerio<any>, in
   while ((match = entryRegex.exec(body)) !== null) {
     const key = match[1];
     const selector = match[2].replace(/\\"/g, '"').replace(/\\n/g, '\n');
-    variableStore.set(key, readValue($, root, selector, baseUrl));
+    ruleVariables().set(key, readValue($, root, selector, baseUrl));
   }
 }
 
@@ -1145,7 +1155,7 @@ function proxyChapterImages(content: string, source: BookSource) {
   });
 }
 
-async function resolveLegadoConfig(): Promise<ResolvedLegadoConfig> {
+async function resolveLegadoConfig(snapshot?: AdminConfig): Promise<ResolvedLegadoConfig> {
   let enabled = process.env.OPDS_ENABLED === 'true' || process.env.LEGADO_ENABLED === 'true';
   let sources: BookSource[] = [];
   const cacheTTL = Number(process.env.LEGADO_CACHE_TTL_MS || process.env.OPDS_CACHE_TTL_MS || 10 * 60 * 1000);
@@ -1159,15 +1169,18 @@ async function resolveLegadoConfig(): Promise<ResolvedLegadoConfig> {
   }
 
   try {
-    const config = await getConfig();
+    const config = snapshot || await getConfig();
     if (config.OPDSConfig) {
       enabled = config.OPDSConfig.Enabled ?? enabled;
       const subscriptionSources = await legadoSubscriptionStore.getSourcesForSubscriptions(config.OPDSConfig.LegadoSubscriptions || []);
       sources = [...sources, ...subscriptionSources];
     }
-  } catch {}
+  } catch (error) {
+    if (snapshot || !envJson) throw error;
+  }
 
-  return { enabled, cacheTTL, sources: sources.filter((source) => !!source.url && source.enabled !== false) };
+  return { enabled, cacheTTL, sources: sources.filter((source) => !!source.url && source.enabled !== false)
+    .map((source) => ({ ...source, revision: bookSourceFingerprint(source) })) };
 }
 
 export function normalizeImportedSources(input: unknown): BookSource[] {
@@ -1273,20 +1286,23 @@ function mergeSetCookie(sourceId: string, setCookie: string | null) {
   cookieJar.set(sourceId, Array.from(current.entries()).map(([key, value]) => `${key}=${value}`).join('; '));
 }
 
-async function fetchText(source: BookSource, url: string): Promise<string> {
+async function fetchText(source: BookSource, url: string, options: BookSearchOptions = {}): Promise<string> {
   if (!url?.trim()) throw new Error('书源请求地址为空');
   const request = splitUrlOptions(url);
-  const safe = await validateProxyUrlServerSide(request.url);
+  const safe = await abortable(validateProxyUrlServerSide(request.url), options.signal);
   if (!safe) throw new Error(`书源地址未通过安全校验: ${request.url}`);
-  const cacheKey = `text|${source.id}|${request.method || 'GET'}|${request.url}|${request.body || ''}`;
+  const cacheKey = `text|${source.id}|${source.revision || bookSourceFingerprint(source)}|${request.method || 'GET'}|${request.url}|${request.body || ''}`;
   const cached = textCache.get(cacheKey);
-  const { cacheTTL } = await resolveLegadoConfig();
-  if (cached && cached.expiresAt > Date.now()) return cached.data;
+  const cacheTTL = options.cacheTTL ?? (await resolveLegadoConfig()).cacheTTL;
+  if (!options.forceRefresh && cached && cached.expiresAt > Date.now()) return cached.data;
 
   let lastError: unknown;
-  const maxAttempts = Math.max(1, (request.retry ?? 2) + 1);
+  const maxAttempts = options.signal ? 1 : Math.min(3, Math.max(1, (request.retry ?? 2) + 1));
   for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
+    if (options.signal?.aborted) throw options.signal.reason;
     const controller = new AbortController();
+    const onAbort = () => controller.abort(options.signal?.reason);
+    options.signal?.addEventListener('abort', onAbort, { once: true });
     const timeout = setTimeout(() => controller.abort(), DEFAULT_TIMEOUT_MS);
     try {
       const headers: Record<string, string> = {
@@ -1304,7 +1320,7 @@ async function fetchText(source: BookSource, url: string): Promise<string> {
         cache: 'no-store',
       });
       if (source.legado?.enabledCookieJar) mergeSetCookie(source.id, response.headers.get('set-cookie'));
-      if (!response.ok) throw new Error(`请求失败: ${response.status}`);
+      if (!response.ok) throw new BookSourceRequestError(response.status);
       const contentLength = Number(response.headers.get('content-length') || '0');
       if (contentLength > MAX_TEXT_BYTES) throw new Error('响应内容过大');
       const buffer = await response.arrayBuffer();
@@ -1318,13 +1334,16 @@ async function fetchText(source: BookSource, url: string): Promise<string> {
         text = new TextDecoder('utf-8').decode(buffer);
       }
       if (text.length > MAX_TEXT_BYTES) throw new Error('响应内容过大');
-      textCache.set(cacheKey, { data: text, expiresAt: Date.now() + cacheTTL });
+      cacheBookValue(textCache, cacheKey, text, cacheTTL, 32);
       return text;
     } catch (error) {
+      if (options.signal?.aborted) throw options.signal.reason;
+      if (error instanceof BookSourceRequestError && error.upstreamStatus < 500) throw error;
       lastError = error;
       if (attempt < maxAttempts - 1) await wait(300 * (attempt + 1));
     } finally {
       clearTimeout(timeout);
+      options.signal?.removeEventListener('abort', onAbort);
     }
   }
   throw lastError instanceof Error ? lastError : new Error('请求失败');
@@ -1358,10 +1377,17 @@ function makeItem(source: BookSource, partial: Partial<BookListItem> & { detailH
   };
 }
 
+function usableSearchItem(rule: LegadoBookSourceRule, title: string, href: string) {
+  if (!title?.trim() || !href?.trim() || /@js:|<\/?js>|\{\{/.test(title + href)) return false;
+  // Some API-based rules use opaque book IDs and compose the URL in bookInfoUrl.
+  return /^https?:\/\//i.test(href) || (!!rule.bookInfoUrl && !/^javascript:/i.test(href));
+}
+
 interface ExploreTarget {
   title: string;
   template: string;
   page: number;
+  sourceId?: string;
 }
 
 function hasRuleBookList(rule?: LegadoRuleSearch) {
@@ -1409,8 +1435,10 @@ function decodeExploreTarget(href?: string): ExploreTarget | null {
   try {
     const raw = Buffer.from(href.slice('legado-explore:'.length), 'base64url').toString('utf8');
     const parsed = JSON.parse(raw);
-    if (!parsed?.template) return null;
-    return { title: parsed.title || '分类', template: parsed.template, page: Number(parsed.page || 1) || 1 };
+    const page = Number(parsed?.page ?? 1);
+    if (typeof parsed?.template !== 'string' || !parsed.template || !Number.isSafeInteger(page) || page < 1) return null;
+    return { title: typeof parsed.title === 'string' ? parsed.title : '分类', template: parsed.template, page,
+      sourceId: typeof parsed.sourceId === 'string' ? parsed.sourceId : undefined };
   } catch {
     return null;
   }
@@ -1449,17 +1477,17 @@ async function resolveExploreCategories(source: BookSource, rule: LegadoBookSour
 }
 
 export class LegadoClient {
-  async getSources(): Promise<BookSource[]> {
-    const config = await resolveLegadoConfig();
+  async getSources(snapshot?: AdminConfig): Promise<BookSource[]> {
+    const config = await resolveLegadoConfig(snapshot);
     if (!config.enabled) return [];
     return config.sources.map((source) => {
       const resolved = resolveLegadoSource(source);
       return {
         ...resolved,
         capabilities: {
-          searchSupported: !!resolved.legado?.searchUrl,
+          searchSupported: hasLegadoSearchRules(resolved),
           catalogSupported: hasExplore(resolved.legado || {}),
-          searchMode: resolved.legado?.searchUrl ? 'legado' : 'disabled',
+          searchMode: hasLegadoSearchRules(resolved) ? 'legado' : 'disabled',
           catalogMode: hasExplore(resolved.legado || {}) ? 'legado' : 'disabled',
           acquisitionTypes: ['application/x-legado-chapters+json'],
           lastCheckedAt: Date.now(),
@@ -1472,19 +1500,28 @@ export class LegadoClient {
     return sourceId ? [await getSourceById(sourceId)] : (await resolveLegadoConfig()).sources;
   }
 
-  async searchBooksSource(q: string, source: BookSource): Promise<{ source: BookSource; results: BookListItem[] }> {
+  async searchBooksSource(q: string, source: BookSource, options: BookSearchOptions = {}): Promise<{ source: BookSource; results: BookListItem[] }> {
+    return searchVariables.run(new Map(), () => this.searchSource(q, source, options));
+  }
+
+  private async searchSource(q: string, source: BookSource, options: BookSearchOptions): Promise<{ source: BookSource; results: BookListItem[] }> {
     const rule = getRule(source);
     if (!rule.searchUrl || !rule.ruleSearch?.bookList) throw new Error('该 Legado 书源不支持搜索');
-    const cacheKey = `search|${source.id}|${q}`;
-    const { cacheTTL } = await resolveLegadoConfig();
+    if (!hasLegadoSearchRules({ ...source, legado: rule })) throw new Error('该书源使用动态 JS 列表规则，当前解析器暂不支持');
+    const startPage = options.startPage ?? 1;
+    const pageLimit = options.pageLimit ?? DEFAULT_LEGADO_SEARCH_PAGES;
+    const cacheKey = `search|${source.id}|${source.revision || bookSourceFingerprint(source)}|${q}|${startPage}|${pageLimit}`;
+    const cacheTTL = options.cacheTTL ?? (await resolveLegadoConfig()).cacheTTL;
     const cached = searchCache.get(cacheKey);
-    if (cached && cached.expiresAt > Date.now()) return { source, results: cached.data };
+    if (!options.forceRefresh && cached && cached.expiresAt > Date.now()) return { source, results: cached.data };
 
     const results: BookListItem[] = [];
     const seen = new Set<string>();
-    for (let page = 1; page <= DEFAULT_LEGADO_SEARCH_PAGES; page += 1) {
+    for (let page = startPage; page < startPage + pageLimit; page += 1) {
+      if (options.signal?.aborted) throw options.signal.reason;
       const targetUrl = buildUrlFromTemplate(rule.searchUrl, source, q, page);
-      const html = await fetchText(source, targetUrl);
+      if (/\{\{(?:key|keyword|searchTerms|page|pageIndex)\}\}/.test(targetUrl)) throw new Error('书源搜索参数未能解析');
+      const html = await fetchText(source, targetUrl, options);
       applyRuleJsBlocks(html, rule.ruleSearch.bookList);
       if (page === 1 && rule.ruleSearch.checkKeyWord && !html.includes(rule.ruleSearch.checkKeyWord) && !html.includes(q)) {
         throw new Error('搜索结果校验失败');
@@ -1492,13 +1529,14 @@ export class LegadoClient {
       let pageCount = 0;
       const json = parseJsonMaybe(html);
       const searchBookListRule = stripRuleJsBlocks(rule.ruleSearch.bookList);
+      if (!searchBookListRule) throw new Error('该书源使用动态 JS 列表规则，当前解析器暂不支持');
       if (json && ruleIsJson(searchBookListRule)) {
         const items = selectJsonItems(json, searchBookListRule);
         pageCount = items.length;
         items.forEach((item) => {
           const detailHref = readJsonRule(item, rule.ruleSearch?.bookUrl, source, targetUrl);
           const title = readJsonRule(item, rule.ruleSearch?.name, source, targetUrl);
-          if (!title && !detailHref) return;
+          if (!usableSearchItem(rule, title, detailHref)) return;
           const cover = readJsonRule(item, rule.ruleSearch?.coverUrl, source, targetUrl);
           const itemId = jsonPrimitiveToString(item?.id) || undefined;
           const dedupeKey = itemId || detailHref || `${title}|${cover}`;
@@ -1520,7 +1558,7 @@ export class LegadoClient {
         items.forEach((item) => {
           const detailHref = readRegexItem(item, rule.ruleSearch?.bookUrl, targetUrl);
           const title = readRegexItem(item, rule.ruleSearch?.name, targetUrl);
-          if (!title && !detailHref) return;
+          if (!usableSearchItem(rule, title, detailHref)) return;
           const cover = readRegexItem(item, rule.ruleSearch?.coverUrl, targetUrl);
           const dedupeKey = detailHref || `${title}|${cover}`;
           if (dedupeKey && seen.has(dedupeKey)) return;
@@ -1543,7 +1581,7 @@ export class LegadoClient {
           const root = $(element);
           const detailHref = readValue($, root, rule.ruleSearch?.bookUrl, targetUrl, { source: rule });
           const title = readValue($, root, rule.ruleSearch?.name, targetUrl);
-          if (!title && !detailHref) return;
+          if (!usableSearchItem(rule, title, detailHref)) return;
           const cover = readValue($, root, rule.ruleSearch?.coverUrl, targetUrl);
           const dedupeKey = detailHref || `${title}|${cover}`;
           if (dedupeKey && seen.has(dedupeKey)) return;
@@ -1561,23 +1599,15 @@ export class LegadoClient {
       }
       if (pageCount === 0) break;
     }
-    searchCache.set(cacheKey, { data: results, expiresAt: Date.now() + cacheTTL });
+    cacheBookValue(searchCache, cacheKey, results, cacheTTL);
     return { source, results };
   }
 
   async searchBooks(q: string, sourceId?: string): Promise<BookSearchResult> {
-    const sources = await this.getSearchSources(sourceId);
-    const results: BookListItem[] = [];
-    const failedSources: BookSearchFailure[] = [];
-    await Promise.all(sources.map(async (source) => {
-      try {
-        const sourceResult = await this.searchBooksSource(q, source);
-        results.push(...sourceResult.results);
-      } catch (error) {
-        failedSources.push({ sourceId: source.id, sourceName: source.name, error: (error as Error).message });
-      }
-    }));
-    return { results, failedSources };
+    const config = await resolveLegadoConfig();
+    const sources = sourceId ? config.sources.filter((source) => source.id === sourceId) : config.sources;
+    return runBookSearchBatch(createBookSearchPlan(sources).sources,
+      (source, signal) => this.searchBooksSource(q, source, { signal, cacheTTL: config.cacheTTL, pageLimit: 1 }));
   }
 
   async getCatalog(sourceId: string, href?: string): Promise<BookCatalogResult> {
@@ -1589,9 +1619,14 @@ export class LegadoClient {
 
     const categories = await resolveExploreCategories(source, rule);
     const target = decodeExploreTarget(href) || null;
+    if ((href?.startsWith('legado-explore:') && !target) ||
+      (target?.sourceId && target.sourceId !== source.id) ||
+      (target && !isJsRuleString(rule.exploreUrl) && !categories.some((item) => item.template === target.template))) {
+      throw new BookCatalogTargetError();
+    }
     const navigation = categories.map((item) => ({
       title: item.title,
-      href: item.template.startsWith('__group__:') ? '' : encodeExploreTarget({ title: item.title, template: item.template, page: 1 }),
+      href: item.template.startsWith('__group__:') ? '' : encodeExploreTarget({ title: item.title, template: item.template, page: 1, sourceId: source.id }),
       rel: item.template.startsWith('__group__:') ? 'legado:group' : 'legado:explore',
       type: 'application/x-legado-explore',
     }));
@@ -1657,8 +1692,8 @@ export class LegadoClient {
       href: href || encodeExploreTarget(target),
       entries,
       navigation,
-      nextHref: pageCount > 0 ? encodeExploreTarget({ ...target, page: target.page + 1 }) : undefined,
-      previousHref: target.page > 1 ? encodeExploreTarget({ ...target, page: target.page - 1 }) : undefined,
+      nextHref: pageCount > 0 ? encodeExploreTarget({ ...target, sourceId: source.id, page: target.page + 1 }) : undefined,
+      previousHref: target.page > 1 ? encodeExploreTarget({ ...target, sourceId: source.id, page: target.page - 1 }) : undefined,
     };
   }
 
@@ -1871,9 +1906,9 @@ export class LegadoClient {
 
   async detectCapabilitiesFromSource(source: BookSource): Promise<BookSourceCapabilities> {
     return {
-      searchSupported: !!source.legado?.searchUrl,
+      searchSupported: hasLegadoSearchRules(source),
       catalogSupported: hasExplore(source.legado || {}),
-      searchMode: source.legado?.searchUrl ? 'legado' : 'disabled',
+      searchMode: hasLegadoSearchRules(source) ? 'legado' : 'disabled',
       catalogMode: hasExplore(source.legado || {}) ? 'legado' : 'disabled',
       acquisitionTypes: ['application/x-legado-chapters+json'],
       lastCheckedAt: Date.now(),

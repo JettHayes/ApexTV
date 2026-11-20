@@ -20,6 +20,8 @@ export function useNavigationItems(searchHref = '/search') {
     ...(config.LIVE_ENABLED ? [{ icon: TvMinimalPlay, label: '电视直播', href: '/live' }] : []),
     ...(config.WEB_LIVE_ENABLED ? [{ icon: Globe, label: '网络直播', href: '/web-live' }] : []),
     ...(config.MUSIC_ENABLED ? [{ icon: Music2, label: '音乐', href: '/music/rankings' }] : []),
+    ...(config.BOOKS_ENABLED ? [{ icon: BookOpen, label: '电子书', href: '/books' }] : []),
+    ...(config.SUWAYOMI_ENABLED ? [{ icon: Library, label: '漫画', href: '/manga' }] : []),
   ];
   const categories = [
     { icon: Film, label: '电影', href: '/douban?type=movie' },
@@ -29,8 +31,6 @@ export function useNavigationItems(searchHref = '/search') {
     ...(config.CUSTOM_CATEGORIES?.length ? [{ icon: Star, label: '自定义', href: '/douban?type=custom' }] : []),
   ];
   const other = [
-    ...(config.SUWAYOMI_ENABLED ? [{ icon: Library, label: '漫画', href: '/manga' }] : []),
-    ...(config.BOOKS_ENABLED ? [{ icon: BookOpen, label: '电子书', href: '/books' }] : []),
     ...(config.ADVANCED_RECOMMENDATION_ENABLED ? [{ icon: Blend, label: '高级推荐', href: '/advanced-recommendation' }] : []),
     ...(watchRoom?.isEnabled ? [{ icon: Users, label: '观影室', href: '/watch-room' }] : []),
   ];

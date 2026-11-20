@@ -1367,7 +1367,10 @@ function ChapterReader({ manifest }: { manifest: BookReadManifest }) {
               onClick={() => setSettingsOpen(false)}
             >
               <div
-                className={cn(READER_SHEET, 'ptv-modal-in w-full max-w-sm p-5')}
+                role='dialog'
+                aria-modal='true'
+                aria-label='阅读设置'
+                className={cn(READER_SHEET, 'ptv-modal-in max-h-[90vh] w-full max-w-sm overflow-y-auto overscroll-contain p-5 supports-[height:100dvh]:max-h-[calc(100dvh-2rem)]')}
                 onClick={(event) => event.stopPropagation()}
               >
                 <div className='mb-4'>
@@ -3623,7 +3626,10 @@ export default function BookReadPage() {
               onClick={() => setSettingsOpen(false)}
             >
               <div
-                className={cn(READER_SHEET, 'ptv-modal-in w-full max-w-sm p-5')}
+                role='dialog'
+                aria-modal='true'
+                aria-label='阅读设置'
+                className={cn(READER_SHEET, 'ptv-modal-in max-h-[90vh] w-full max-w-sm overflow-y-auto overscroll-contain p-5 supports-[height:100dvh]:max-h-[calc(100dvh-2rem)]')}
                 onClick={(event) => event.stopPropagation()}
               >
                 <div className='mb-4'>

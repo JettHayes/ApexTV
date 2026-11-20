@@ -50,7 +50,7 @@ function DetailSkeleton() {
       <section
         className={cn('grid gap-6 md:grid-cols-[220px_1fr]', PANEL_CLASS)}
       >
-        <div className={cn('aspect-[3/4]', LIBRARY_SKELETON)} />
+        <div className={cn('mx-auto aspect-[3/4] w-36 sm:w-44 md:w-full', LIBRARY_SKELETON)} />
         <div className='space-y-4'>
           <div className={cn('h-8 w-2/3', LIBRARY_SKELETON)} />
           <div className={cn('h-4 w-1/3', LIBRARY_SKELETON)} />
@@ -284,7 +284,7 @@ export default function BookDetailPage() {
       >
         <div
           className={cn(
-            'relative aspect-[3/4] overflow-hidden rounded-md bg-library-ochre-tint dark:bg-library-night-ochre-tint',
+            'relative mx-auto aspect-[3/4] w-36 overflow-hidden rounded-md bg-library-ochre-tint dark:bg-library-night-ochre-tint sm:w-44 md:w-full',
             BOOK_COVER_LIFT
           )}
         >
@@ -317,7 +317,7 @@ export default function BookDetailPage() {
             </span>
             <h1
               className={cn(
-                'mt-4 text-2xl font-semibold sm:text-3xl',
+                'mt-4 break-words text-2xl font-semibold sm:text-3xl',
                 LIBRARY_TEXT,
                 LIBRARY_SERIF
               )}

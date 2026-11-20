@@ -2,12 +2,14 @@
 import { parseStringPromise } from 'xml2js';
 
 import { getConfig } from './config';
+import type { AdminConfig } from './admin.types';
+import { BookSourceRequestError } from './book-source-error';
+import { bookSourceFingerprint, cacheBookValue, createBookSearchPlan, runBookSearchBatch, type BookSearchOptions } from './book-search';
 import {
   BookAcquisitionLink,
   BookCatalogResult,
   BookDetail,
   BookListItem,
-  BookSearchFailure,
   BookSearchResult,
   BookSource,
   BookSourceCapabilities,
@@ -192,10 +194,10 @@ function mapEntryToDetail(source: BookSource, entry: ParsedFeedEntry): BookDetai
   };
 }
 
-async function resolveOPDSConfig(): Promise<ResolvedOPDSConfig> {
+async function resolveOPDSConfig(snapshot?: AdminConfig): Promise<ResolvedOPDSConfig> {
   let enabled = process.env.OPDS_ENABLED === 'true';
   let sources: BookSource[] = [];
-  const cacheTTL = Number(process.env.OPDS_CACHE_TTL_MS || 10 * 60 * 1000);
+  let cacheTTL = Number(process.env.OPDS_CACHE_TTL_MS || 10 * 60 * 1000);
 
   const envJson = process.env.OPDS_SOURCES_JSON;
   if (envJson) {
@@ -220,15 +222,16 @@ async function resolveOPDSConfig(): Promise<ResolvedOPDSConfig> {
   }
 
   try {
-    const config = await getConfig();
+    const config = snapshot || await getConfig();
     if (config.OPDSConfig) {
+      cacheTTL = config.OPDSConfig.CacheTTL ?? cacheTTL;
       enabled = config.OPDSConfig.Enabled ?? enabled;
       if (Array.isArray(config.OPDSConfig.Sources) && config.OPDSConfig.Sources.length > 0) {
         sources = config.OPDSConfig.Sources as BookSource[];
       }
     }
-  } catch {
-    // ignore and fallback to env
+  } catch (error) {
+    if (snapshot || (!envJson && !process.env.OPDS_URL && !process.env.NEXT_PUBLIC_OPDS_URL)) throw error;
   }
 
   return {
@@ -252,8 +255,11 @@ function buildHeaders(source: BookSource): HeadersInit {
   return {};
 }
 
-async function fetchText(url: string, headers: HeadersInit): Promise<string> {
+async function fetchText(url: string, headers: HeadersInit, options: BookSearchOptions = {}): Promise<string> {
+  if (options.signal?.aborted) throw options.signal.reason;
   const controller = new AbortController();
+  const onAbort = () => controller.abort(options.signal?.reason);
+  options.signal?.addEventListener('abort', onAbort, { once: true });
   const timeout = setTimeout(() => controller.abort(), DEFAULT_TIMEOUT_MS);
   try {
     const response = await fetch(url, {
@@ -261,10 +267,11 @@ async function fetchText(url: string, headers: HeadersInit): Promise<string> {
       signal: controller.signal,
       cache: 'no-store',
     });
-    if (!response.ok) throw new Error(`请求失败: ${response.status}`);
+    if (!response.ok) throw new BookSourceRequestError(response.status);
     return await response.text();
   } finally {
     clearTimeout(timeout);
+    options.signal?.removeEventListener('abort', onAbort);
   }
 }
 
@@ -336,17 +343,17 @@ function fillSearchTermsTemplate(template: string, keyword: string) {
   }
 }
 
-async function resolveSearchTargetUrl(source: BookSource, q: string): Promise<string> {
+async function resolveSearchTargetUrl(source: BookSource, q: string, options: BookSearchOptions = {}): Promise<string> {
   if (source.searchTemplate) {
     return fillSearchTermsTemplate(source.searchTemplate, q);
   }
 
-  const rootFeed = await getFeed(source);
+  const rootFeed = await getFeed(source, undefined, options);
   const searchLink = rootFeed.links.find((link) => link.rel === 'search');
   if (!searchLink?.href) throw new Error('该书源不支持搜索');
 
   if ((searchLink.type || '').toLowerCase().includes('opensearchdescription+xml')) {
-    const xml = await fetchText(searchLink.href, buildHeaders(source));
+    const xml = await fetchText(searchLink.href, buildHeaders(source), options);
     const parsed = await parseXmlWithFallback(xml);
     const description = parsed.OpenSearchDescription || parsed['os:OpenSearchDescription'] || parsed['OpenSearchDescription'];
     const urlNodes = asArray(description?.Url || description?.url);
@@ -361,16 +368,16 @@ async function resolveSearchTargetUrl(source: BookSource, q: string): Promise<st
     : `${searchLink.href}${searchLink.href.includes('?') ? '&' : '?'}q=${encodeURIComponent(q)}`;
 }
 
-async function getFeed(source: BookSource, href?: string): Promise<ParsedFeed> {
+async function getFeed(source: BookSource, href?: string, options: BookSearchOptions = {}): Promise<ParsedFeed> {
   const target = normalizeUrl(source.url, href || source.url);
-  const cacheKey = `${source.id}|${target}`;
+  const cacheKey = `${source.id}|${bookSourceFingerprint(source)}|${target}`;
   const cached = feedCache.get(cacheKey);
-  const { cacheTTL } = await resolveOPDSConfig();
-  if (cached && cached.expiresAt > Date.now()) return cached.data;
+  const cacheTTL = options.cacheTTL ?? (await resolveOPDSConfig()).cacheTTL;
+  if (!options.forceRefresh && cached && cached.expiresAt > Date.now()) return cached.data;
 
-  const xml = await fetchText(target, buildHeaders(source));
+  const xml = await fetchText(target, buildHeaders(source), options);
   const data = await parseFeed(xml, target);
-  feedCache.set(cacheKey, { data, expiresAt: Date.now() + cacheTTL });
+  cacheBookValue(feedCache, cacheKey, data, cacheTTL, 32);
   return data;
 }
 
@@ -381,13 +388,14 @@ async function getSourceById(sourceId: string): Promise<BookSource> {
   return source;
 }
 
-async function detectCapabilities(source: BookSource): Promise<BookSourceCapabilities> {
-  const cached = sourceCapabilityCache.get(source.id);
+async function detectCapabilities(source: BookSource, options: BookSearchOptions = {}): Promise<BookSourceCapabilities> {
+  const key = `${source.id}|${bookSourceFingerprint(source)}`;
+  const cached = sourceCapabilityCache.get(key);
   const now = Date.now();
   if (cached && cached.expiresAt > now) return cached.data;
 
   try {
-    const feed = await getFeed(source);
+    const feed = await getFeed(source, undefined, options);
     const searchLink = feed.links.find((link) => link.rel === 'search');
     const navigationEntries = feed.entries.filter((entry) => isLikelyNavigationEntry(entry));
     const bookEntries = feed.entries.filter((entry) => !isLikelyNavigationEntry(entry));
@@ -406,7 +414,7 @@ async function detectCapabilities(source: BookSource): Promise<BookSourceCapabil
       lastCheckedAt: now,
     };
 
-    sourceCapabilityCache.set(source.id, { data, expiresAt: now + SOURCE_CAPABILITY_SUCCESS_TTL_MS });
+    cacheBookValue(sourceCapabilityCache, key, data, SOURCE_CAPABILITY_SUCCESS_TTL_MS);
     return data;
   } catch (error) {
     const failureData: BookSourceCapabilities = {
@@ -420,11 +428,11 @@ async function detectCapabilities(source: BookSource): Promise<BookSourceCapabil
     };
 
     if (cached?.data && !cached.data.lastError) {
-      sourceCapabilityCache.set(source.id, { data: cached.data, expiresAt: now + SOURCE_CAPABILITY_FAILURE_TTL_MS });
+      cacheBookValue(sourceCapabilityCache, key, cached.data, SOURCE_CAPABILITY_FAILURE_TTL_MS);
       return cached.data;
     }
 
-    sourceCapabilityCache.set(source.id, { data: failureData, expiresAt: now + SOURCE_CAPABILITY_FAILURE_TTL_MS });
+    cacheBookValue(sourceCapabilityCache, key, failureData, SOURCE_CAPABILITY_FAILURE_TTL_MS);
     return failureData;
   }
 }
@@ -434,12 +442,13 @@ export async function getOPDSConfig() {
 }
 
 export class OPDSClient {
-  async getSources(): Promise<BookSource[]> {
-    const config = await resolveOPDSConfig();
+  async getSources(snapshot?: AdminConfig, detect = true): Promise<BookSource[]> {
+    const config = await resolveOPDSConfig(snapshot);
     if (!config.enabled) return [];
+    if (!detect) return config.sources;
     const withCapabilities = await Promise.all(config.sources.map(async (source) => ({
       ...source,
-      capabilities: await detectCapabilities(source),
+      capabilities: await detectCapabilities(source, { cacheTTL: config.cacheTTL }),
     })));
     return withCapabilities;
   }
@@ -488,28 +497,19 @@ export class OPDSClient {
     return sourceId ? [await getSourceById(sourceId)] : (await resolveOPDSConfig()).sources;
   }
 
-  async searchBooksSource(q: string, source: BookSource): Promise<{ source: BookSource; results: BookListItem[] }> {
-    const targetUrl = await resolveSearchTargetUrl(source, q);
+  async searchBooksSource(q: string, source: BookSource, options: BookSearchOptions = {}): Promise<{ source: BookSource; results: BookListItem[] }> {
+    const targetUrl = await resolveSearchTargetUrl(source, q, options);
     if (!targetUrl) throw new Error('未配置可用的搜索地址');
-    const feed = await getFeed(source, targetUrl);
-    return { source, results: feed.entries.map((entry) => mapEntryToItem(source, entry)) };
+    const feed = await getFeed(source, targetUrl, options);
+    return { source, results: feed.entries.filter((entry) => !isLikelyNavigationEntry(entry) && !!entry.title)
+      .map((entry) => mapEntryToItem(source, entry)) };
   }
 
   async searchBooks(q: string, sourceId?: string): Promise<BookSearchResult> {
-    const sources = await this.getSearchSources(sourceId);
-    const results: BookListItem[] = [];
-    const failedSources: BookSearchFailure[] = [];
-
-    await Promise.all(sources.map(async (source) => {
-      try {
-        const sourceResult = await this.searchBooksSource(q, source);
-        results.push(...sourceResult.results);
-      } catch (error) {
-        failedSources.push({ sourceId: source.id, sourceName: source.name, error: (error as Error).message });
-      }
-    }));
-
-    return { results, failedSources };
+    const config = await resolveOPDSConfig();
+    const sources = sourceId ? config.sources.filter((source) => source.id === sourceId) : config.sources;
+    return runBookSearchBatch(createBookSearchPlan(sources).sources,
+      (source, signal) => this.searchBooksSource(q, source, { signal, cacheTTL: config.cacheTTL }));
   }
 
   async getBookDetail(sourceId: string, href: string, fallback?: Partial<BookDetail>): Promise<BookDetail> {

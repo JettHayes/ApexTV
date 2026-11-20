@@ -1,23 +1,34 @@
 'use client';
 
-import { Loader2, Search, X } from 'lucide-react';
-import { useRouter, useSearchParams } from 'next/navigation';
 import {
-  startTransition,
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from 'react';
+  AlertCircle,
+  ArrowDown,
+  Check,
+  Loader2,
+  Search,
+  Square,
+  X,
+} from 'lucide-react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
-import { BookListItem, BookSearchResult, BookSource } from '@/lib/book.types';
+import type {
+  BookListItem,
+  BookSearchFailure,
+  BookSource,
+} from '@/lib/book.types';
 import {
   buildBookDetailPath,
   cacheBookListItem,
 } from '@/lib/book-route-cache.client';
+import {
+  fetchBookSearchPlan,
+  traverseBookSearchBatches,
+  type BookSearchPlanSummary,
+} from '@/lib/book-search.client';
 import { cn } from '@/lib/cn';
 
+import BooksPagination from '@/components/books/BooksPagination';
 import { bookCardItem } from '@/components/media/adapters';
 import EmptyState from '@/components/media/EmptyState';
 import {
@@ -27,560 +38,394 @@ import {
   LIBRARY_GHOST_BUTTON,
   LIBRARY_MUTED,
   LIBRARY_PANEL,
-  LIBRARY_PROGRESS_BAR,
-  LIBRARY_PROGRESS_TRACK,
   LIBRARY_SERIF,
   LIBRARY_TEXT,
 } from '@/components/media/library';
 import MediaCard from '@/components/media/MediaCard';
 import MediaGrid from '@/components/media/MediaGrid';
 import MediaGridSkeleton from '@/components/media/MediaGridSkeleton';
-import MediaSectionHeader from '@/components/media/MediaSectionHeader';
 
-type RuntimeWindow = Window & { RUNTIME_CONFIG?: { FLUID_SEARCH?: boolean } };
-
-const PANEL_CLASS = cn(LIBRARY_PANEL, 'p-5 sm:p-6');
-const FIELD_CLASS = cn(LIBRARY_FIELD, 'h-12 py-0');
-const CHIP_CLASS = cn(
-  LIBRARY_GHOST_BUTTON,
-  'cursor-pointer gap-1.5 rounded-full px-3 py-1.5 text-xs'
-);
-
-function detailHref(item: BookListItem) {
-  return buildBookDetailPath(item.sourceId, item.id);
-}
-
-const BOOK_SEARCH_STATE_KEY = 'book_search_state';
-const EMPTY_RESULT: BookSearchResult = { results: [], failedSources: [] };
+type SearchStatus = 'idle' | 'running' | 'complete' | 'stopped' | 'error';
+type SearchView = {
+  keyword: string;
+  scope: string;
+  mode: 'quick' | 'deep';
+  status: SearchStatus;
+  results: BookListItem[];
+  failures: BookSearchFailure[];
+  completed: number;
+  plan: BookSearchPlanSummary | null;
+  error: string;
+  quickRevision?: string;
+};
+const EMPTY_VIEW: SearchView = {
+  keyword: '',
+  scope: '',
+  mode: 'quick',
+  status: 'idle',
+  results: [],
+  failures: [],
+  completed: 0,
+  plan: null,
+  error: '',
+};
+const STATE_KEY = 'apex_book_search_v3';
+const CACHE_MS = 10 * 60 * 1000;
+const PAGE_SIZE = 48;
 const QUICK_SEARCHES = ['三体', '刘慈欣', '东野圭吾', '哈利波特'];
+
+function readState(): (SearchView & { savedAt: number }) | null {
+  try {
+    const saved = JSON.parse(sessionStorage.getItem(STATE_KEY) || 'null');
+    return saved &&
+      Date.now() - saved.savedAt < CACHE_MS &&
+      Array.isArray(saved.results)
+      ? saved
+      : null;
+  } catch {
+    return null;
+  }
+}
+function saveState(view: SearchView) {
+  if (view.status === 'idle' || view.status === 'running') return;
+  try {
+    const json = JSON.stringify({ ...view, savedAt: Date.now() });
+    if (json.length <= 2 * 1024 * 1024) sessionStorage.setItem(STATE_KEY, json);
+  } catch {
+    /* Storage may be unavailable or full. */
+  }
+}
+function fluidSearchEnabled() {
+  try {
+    const saved = localStorage.getItem('fluidSearch');
+    if (saved !== null) return JSON.parse(saved) !== false;
+  } catch {
+    /* Use the site preference if browser storage is unavailable. */
+  }
+  return (
+    (window as Window & { RUNTIME_CONFIG?: { FLUID_SEARCH?: boolean } })
+      .RUNTIME_CONFIG?.FLUID_SEARCH !== false
+  );
+}
 
 export default function BooksSearchPage() {
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const urlQuery = searchParams.get('q') || '';
-  const urlSourceId = searchParams.get('sourceId') || '';
-
+  const params = useSearchParams();
+  const urlQuery = params.get('q') || '';
+  const urlSource = params.get('sourceId') || '';
   const [q, setQ] = useState(urlQuery);
-  const [sourceId, setSourceId] = useState(urlSourceId);
+  const [sourceId, setSourceId] = useState(urlSource);
   const [sources, setSources] = useState<BookSource[]>([]);
-  const [result, setResult] = useState<BookSearchResult>(EMPTY_RESULT);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
-  const [hasSearched, setHasSearched] = useState(false);
-  // 已经**执行过**的那次搜索用的书源，用来标注「当前范围」。
-  // 不能直接拿下拉框的值：下拉框是下一次搜索的参数，它一变就改写标注的话，
-  // 标注会和下面那批书对不上（下拉切到 A，展示的还是 B 的结果）。
-  const [executedScope, setExecutedScope] = useState('');
-  const [totalSources, setTotalSources] = useState(0);
-  const [completedSources, setCompletedSources] = useState(0);
-  const [useFluidSearch, setUseFluidSearch] = useState(true);
-
-  const restoredRef = useRef(false);
-  const forceNextUrlSearchRef = useRef(false);
-  const eventSourceRef = useRef<EventSource | null>(null);
-  const currentSearchKeyRef = useRef('');
-  const pendingResultsRef = useRef<BookListItem[]>([]);
-  const flushTimerRef = useRef<number | null>(null);
-
-  const getCacheKey = useCallback(
-    (keyword: string, selectedSourceId: string) =>
-      `book_search_cache_${selectedSourceId || 'all'}_${keyword.trim()}`,
-    []
+  const [sourceError, setSourceError] = useState('');
+  const [view, setView] = useState<SearchView>(EMPTY_VIEW);
+  const [page, setPage] = useState(1);
+  const viewRef = useRef(view);
+  const generation = useRef(0);
+  const active = useRef<{ abort: AbortController; flush: () => void } | null>(
+    null
   );
+  const restored = useRef(false);
+  const forceNext = useRef(false);
+  const loading = view.status === 'running';
 
-  const getCachedResult = useCallback(
-    (keyword: string, selectedSourceId: string) => {
-      if (typeof window === 'undefined' || !keyword.trim()) return null;
-      try {
-        const raw = sessionStorage.getItem(
-          getCacheKey(keyword, selectedSourceId)
-        );
-        return raw ? (JSON.parse(raw) as BookSearchResult) : null;
-      } catch {
-        return null;
-      }
-    },
-    [getCacheKey]
-  );
-
-  const setCachedResult = useCallback(
-    (
-      keyword: string,
-      selectedSourceId: string,
-      nextResult: BookSearchResult
-    ) => {
-      if (typeof window === 'undefined' || !keyword.trim()) return;
-      try {
-        sessionStorage.setItem(
-          getCacheKey(keyword, selectedSourceId),
-          JSON.stringify(nextResult)
-        );
-      } catch {
-        // Ignore storage/browser cleanup failures.
-      }
-    },
-    [getCacheKey]
-  );
-
-  const readFluidSearchSetting = useCallback(() => {
-    if (typeof window === 'undefined') return true;
-    try {
-      const savedFluidSearch = localStorage.getItem('fluidSearch');
-      if (savedFluidSearch !== null)
-        return JSON.parse(savedFluidSearch) !== false;
-    } catch {
-      // Ignore storage/browser cleanup failures.
-    }
-    return (window as RuntimeWindow).RUNTIME_CONFIG?.FLUID_SEARCH !== false;
+  const publish = useCallback((next: SearchView) => {
+    viewRef.current = next;
+    setView(next);
   }, []);
 
-  const closeEventSource = useCallback(() => {
-    if (eventSourceRef.current) {
-      try {
-        eventSourceRef.current.close();
-      } catch {
-        // Ignore cleanup failures.
-      }
-      eventSourceRef.current = null;
-    }
-  }, []);
-
-  const clearPendingResults = useCallback(() => {
-    pendingResultsRef.current = [];
-    if (flushTimerRef.current) {
-      window.clearTimeout(flushTimerRef.current);
-      flushTimerRef.current = null;
-    }
-  }, []);
-
-  const appendBufferedResults = useCallback((nextResults: BookListItem[]) => {
-    if (nextResults.length === 0) return;
-    pendingResultsRef.current.push(...nextResults);
-    if (!flushTimerRef.current) {
-      flushTimerRef.current = window.setTimeout(() => {
-        const toAppend = pendingResultsRef.current;
-        pendingResultsRef.current = [];
-        startTransition(() => {
-          setResult((prev) => ({
-            ...prev,
-            results: prev.results.concat(toAppend),
-          }));
-        });
-        flushTimerRef.current = null;
-      }, 80);
-    }
-  }, []);
-
-  const saveSearchState = useCallback(
-    (nextState: { q: string; sourceId: string; result: BookSearchResult }) => {
-      if (typeof window === 'undefined') return;
-      try {
-        sessionStorage.setItem(
-          BOOK_SEARCH_STATE_KEY,
-          JSON.stringify(nextState)
-        );
-      } catch {
-        // Ignore storage failures.
-      }
-    },
-    []
-  );
-
-  const restoreSearchState = useCallback(() => {
-    if (typeof window === 'undefined') return null;
-    try {
-      const raw = sessionStorage.getItem(BOOK_SEARCH_STATE_KEY);
-      return raw
-        ? (JSON.parse(raw) as {
-            q: string;
-            sourceId: string;
-            result: BookSearchResult;
-          })
-        : null;
-    } catch {
-      return null;
-    }
-  }, []);
-
-  const performSearch = useCallback(
+  const beginSearch = useCallback(
     async (
       keyword: string,
-      selectedSourceId: string,
-      options?: { forceRefresh?: boolean }
+      scope: string,
+      options: { deep?: boolean; force?: boolean } = {}
     ) => {
-      const trimmed = keyword.trim();
-      if (!trimmed) return;
-      const normalizedSourceId = selectedSourceId || '';
-      const searchKey = `${normalizedSourceId}::${trimmed}`;
-      const forceRefresh = options?.forceRefresh === true;
-
-      closeEventSource();
-      clearPendingResults();
-      currentSearchKeyRef.current = searchKey;
-      setLoading(true);
-      setError('');
-      setHasSearched(true);
-      setExecutedScope(normalizedSourceId);
-      setTotalSources(0);
-      setCompletedSources(0);
-
-      const cached = forceRefresh
-        ? null
-        : getCachedResult(trimmed, normalizedSourceId);
-      if (cached) {
-        setResult(cached);
-        saveSearchState({
-          q: trimmed,
-          sourceId: normalizedSourceId,
-          result: cached,
-        });
-        setLoading(false);
-        setTotalSources(1);
-        setCompletedSources(1);
-        return;
-      }
-
-      setResult(EMPTY_RESULT);
-
-      const currentFluidSearch = readFluidSearchSetting();
-      setUseFluidSearch((prev) =>
-        prev === currentFluidSearch ? prev : currentFluidSearch
+      active.current?.abort.abort();
+      const id = ++generation.current;
+      const abort = new AbortController();
+      active.current = { abort, flush: () => undefined };
+      const mode = options.deep ? 'deep' : 'quick';
+      let current: SearchView = {
+        ...EMPTY_VIEW,
+        keyword,
+        scope,
+        mode,
+        status: 'running',
+        results: options.deep ? viewRef.current.results : [],
+        quickRevision: options.deep
+          ? viewRef.current.quickRevision || viewRef.current.plan?.revision
+          : undefined,
+      };
+      const results = new Map(
+        current.results.map((item) => [item.sourceId + '|' + item.id, item])
       );
-
-      const params = new URLSearchParams({ q: trimmed });
-      if (normalizedSourceId) params.set('sourceId', normalizedSourceId);
-
-      if (currentFluidSearch) {
-        const es = new EventSource(`/api/books/search/ws?${params.toString()}`);
-        eventSourceRef.current = es;
-
-        es.onmessage = (event) => {
-          if (!event.data || currentSearchKeyRef.current !== searchKey) return;
-          try {
-            const payload = JSON.parse(event.data);
-            switch (payload.type) {
-              case 'start':
-                setTotalSources(payload.totalSources || 0);
-                setCompletedSources(0);
-                break;
-              case 'source_result':
-                setCompletedSources((prev) =>
-                  Math.max(prev + 1, payload.completedSources || 0)
-                );
-                if (
-                  Array.isArray(payload.results) &&
-                  payload.results.length > 0
-                ) {
-                  appendBufferedResults(payload.results as BookListItem[]);
-                }
-                break;
-              case 'source_error':
-                setCompletedSources((prev) =>
-                  Math.max(prev + 1, payload.completedSources || 0)
-                );
-                break;
-              case 'error':
-                setError(payload.error || '搜索失败');
-                setLoading(false);
-                closeEventSource();
-                break;
-              case 'complete': {
-                const finalFailedSources: BookSearchResult['failedSources'] =
-                  [];
-                setCompletedSources(
-                  payload.completedSources || payload.totalSources || 0
-                );
-                if (pendingResultsRef.current.length > 0) {
-                  const toAppend = pendingResultsRef.current;
-                  pendingResultsRef.current = [];
-                  if (flushTimerRef.current) {
-                    window.clearTimeout(flushTimerRef.current);
-                    flushTimerRef.current = null;
-                  }
-                  startTransition(() => {
-                    setResult((prev) => {
-                      const nextResult = {
-                        results: prev.results.concat(toAppend),
-                        failedSources: finalFailedSources,
-                      };
-                      setCachedResult(trimmed, normalizedSourceId, nextResult);
-                      saveSearchState({
-                        q: trimmed,
-                        sourceId: normalizedSourceId,
-                        result: nextResult,
-                      });
-                      return nextResult;
-                    });
-                  });
-                } else {
-                  setResult((prev) => {
-                    const nextResult = {
-                      results: prev.results,
-                      failedSources: finalFailedSources,
-                    };
-                    setCachedResult(trimmed, normalizedSourceId, nextResult);
-                    saveSearchState({
-                      q: trimmed,
-                      sourceId: normalizedSourceId,
-                      result: nextResult,
-                    });
-                    return nextResult;
-                  });
-                }
-                setLoading(false);
-                closeEventSource();
-                break;
-              }
-            }
-          } catch {
-            // Ignore malformed streaming payloads.
-          }
+      const failures = new Map<string, BookSearchFailure>();
+      let timer: ReturnType<typeof setTimeout> | undefined;
+      const flush = () => {
+        clearTimeout(timer);
+        timer = undefined;
+        current = {
+          ...current,
+          results: Array.from(results.values()),
+          failures: Array.from(failures.values()),
         };
-
-        es.onerror = () => {
-          if (currentSearchKeyRef.current !== searchKey) return;
-          if (pendingResultsRef.current.length > 0) {
-            const toAppend = pendingResultsRef.current;
-            pendingResultsRef.current = [];
-            if (flushTimerRef.current) {
-              window.clearTimeout(flushTimerRef.current);
-              flushTimerRef.current = null;
-            }
-            startTransition(() => {
-              setResult((prev) => ({
-                ...prev,
-                results: prev.results.concat(toAppend),
-              }));
-            });
-          }
-          setLoading(false);
-          closeEventSource();
-        };
-        return;
-      }
-
+        if (id === generation.current) publish(current);
+      };
+      const schedule = () => {
+        if (!timer) timer = setTimeout(flush, 80);
+      };
+      active.current.flush = flush;
+      publish(current);
+      if (!options.deep) setPage(1);
+      const searchParams = new URLSearchParams({ mode });
+      if (scope) searchParams.set('sourceId', scope);
       try {
-        const res = await fetch(`/api/books/search?${params.toString()}`);
-        const json = await res.json();
-        if (currentSearchKeyRef.current !== searchKey) return;
-        if (!res.ok) throw new Error(json.error || '搜索失败');
-        const nextResult: BookSearchResult = {
-          results: json.results || [],
-          failedSources: [],
-        };
-        setResult(nextResult);
-        setTotalSources(1);
-        setCompletedSources(1);
-        setCachedResult(trimmed, normalizedSourceId, nextResult);
-        saveSearchState({
-          q: trimmed,
-          sourceId: normalizedSourceId,
-          result: nextResult,
-        });
-      } catch (err) {
-        if (currentSearchKeyRef.current !== searchKey) return;
-        setError((err as Error).message || '搜索失败');
-        setResult(EMPTY_RESULT);
-      } finally {
-        if (currentSearchKeyRef.current === searchKey) {
-          setLoading(false);
+        const plan = await fetchBookSearchPlan(searchParams, abort.signal);
+        if (id !== generation.current) return;
+        current = { ...current, plan };
+        flush();
+        const saved = options.force || options.deep ? null : readState();
+        if (
+          saved?.status === 'complete' &&
+          saved.keyword === keyword &&
+          saved.scope === scope &&
+          (saved.mode === 'deep'
+            ? saved.quickRevision
+            : saved.plan?.revision) === plan.revision
+        ) {
+          publish(saved);
+          return;
         }
+        const streaming = fluidSearchEnabled();
+        searchParams.set('q', keyword);
+        if (options.force) searchParams.set('refresh', '1');
+        await traverseBookSearchBatches(
+          plan,
+          searchParams,
+          abort.signal,
+          streaming,
+          (payload, offset) => {
+            if (id !== generation.current || abort.signal.aborted) return;
+            for (const item of payload.results || [])
+              results.set(item.sourceId + '|' + item.id, item);
+            if (payload.type === 'source_error' && payload.sourceId)
+              failures.set(payload.sourceId, {
+                sourceId: payload.sourceId,
+                sourceName: payload.sourceName || '书源',
+                error: payload.error || '搜索失败',
+                timedOut: payload.timedOut,
+              });
+            for (const failure of payload.failedSources || [])
+              failures.set(failure.sourceId, failure);
+            if (typeof payload.completedSources === 'number')
+              current = {
+                ...current,
+                completed: Math.min(
+                  plan.totalSources,
+                  offset + payload.completedSources
+                ),
+              };
+            if (payload.type !== 'heartbeat') schedule();
+          }
+        );
+        if (abort.signal.aborted || id !== generation.current) return;
+        current = { ...current, status: 'complete' };
+        flush();
+        saveState(current);
+      } catch (error) {
+        if (id !== generation.current) return;
+        current = {
+          ...current,
+          status: abort.signal.aborted ? 'stopped' : 'error',
+          error: abort.signal.aborted
+            ? ''
+            : error instanceof Error
+            ? error.message
+            : '搜索失败',
+        };
+        flush();
+        saveState(current);
+      } finally {
+        clearTimeout(timer);
+        if (id === generation.current) active.current = null;
       }
     },
-    [
-      appendBufferedResults,
-      clearPendingResults,
-      closeEventSource,
-      getCachedResult,
-      readFluidSearchSetting,
-      saveSearchState,
-      setCachedResult,
-    ]
+    [publish]
   );
 
+  const stopSearch = useCallback(() => {
+    active.current?.flush();
+    active.current?.abort.abort();
+    generation.current += 1;
+    active.current = null;
+    const stopped: SearchView = { ...viewRef.current, status: 'stopped' };
+    publish(stopped);
+    saveState(stopped);
+  }, [publish]);
+
   useEffect(() => {
-    setUseFluidSearch(readFluidSearchSetting());
-    fetch('/api/books/sources')
-      .then((res) => res.json())
-      .then((json) => setSources(json.sources || []))
-      .catch(() => undefined);
+    const abort = new AbortController();
+    fetch('/api/books/sources', { signal: abort.signal, cache: 'no-store' })
+      .then(async (response) => {
+        const data = await response.json();
+        if (!response.ok)
+          throw new Error('书源列表加载失败；仍可尝试全部书源搜索');
+        setSources(data.sources || []);
+      })
+      .catch((error) => {
+        if (!abort.signal.aborted) setSourceError(error.message);
+      });
     return () => {
-      closeEventSource();
-      clearPendingResults();
+      abort.abort();
+      active.current?.abort.abort();
+      generation.current += 1;
     };
-  }, [clearPendingResults, closeEventSource, readFluidSearchSetting]);
+  }, []);
 
   useEffect(() => {
-    const keyword = urlQuery;
-    const source = urlSourceId;
-
-    if (!restoredRef.current) {
-      restoredRef.current = true;
-      if (!keyword) {
-        const cachedState = restoreSearchState();
-        if (cachedState?.q?.trim()) {
-          setQ(cachedState.q);
-          setSourceId(cachedState.sourceId || '');
-          setResult(cachedState.result || EMPTY_RESULT);
-          setHasSearched(true);
-          setExecutedScope(cachedState.sourceId || '');
+    setQ(urlQuery);
+    setSourceId(urlSource);
+    if (!urlQuery.trim()) {
+      active.current?.abort.abort();
+      generation.current += 1;
+      if (!restored.current) {
+        restored.current = true;
+        const saved = readState();
+        if (saved) {
+          publish(saved);
+          setQ(saved.keyword);
+          setSourceId(saved.scope);
+          return;
         }
-        return;
       }
-    }
-
-    setQ(keyword);
-    setSourceId(source);
-    if (!keyword) {
-      closeEventSource();
-      clearPendingResults();
-      setResult(EMPTY_RESULT);
-      setLoading(false);
-      setHasSearched(false);
-      setExecutedScope('');
-      setTotalSources(0);
-      setCompletedSources(0);
-      setError('');
+      publish(EMPTY_VIEW);
       return;
     }
+    restored.current = true;
+    const force = forceNext.current;
+    forceNext.current = false;
+    void beginSearch(urlQuery.trim(), urlSource, { force });
+  }, [urlQuery, urlSource, beginSearch, publish]);
 
-    const forceRefresh = forceNextUrlSearchRef.current;
-    forceNextUrlSearchRef.current = false;
-    void performSearch(keyword, source, { forceRefresh });
-  }, [
-    clearPendingResults,
-    closeEventSource,
-    performSearch,
-    restoreSearchState,
-    urlQuery,
-    urlSourceId,
-  ]);
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    const trimmed = q.trim();
-    if (!trimmed) return;
-    const params = new URLSearchParams();
-    params.set('q', trimmed);
-    if (sourceId) params.set('sourceId', sourceId);
-    const nextUrl = `/books/search?${params.toString()}`;
-    if (urlQuery === trimmed && urlSourceId === sourceId) {
-      await performSearch(trimmed, sourceId, { forceRefresh: true });
+  const submit = (keyword: string) => {
+    const text = keyword.trim();
+    if (!text) return;
+    setQ(text);
+    if (urlQuery === text && urlSource === sourceId) {
+      void beginSearch(text, sourceId, { force: true });
     } else {
-      forceNextUrlSearchRef.current = true;
-      router.replace(nextUrl);
+      const next = new URLSearchParams({ q: text });
+      if (sourceId) next.set('sourceId', sourceId);
+      forceNext.current = true;
+      router.replace('/books/search?' + next);
     }
   };
-
-  // 书源是单选：选了某一个源时「当前范围」就是它本身，后面再缀一个总源数
-  // 只会让人以为这次搜了 2 个源。只有「全部书源」才需要靠数量说明范围多大。
-  const scopeLabel = useMemo(() => {
-    if (executedScope) {
-      return (
-        sources.find((source) => source.id === executedScope)?.name ||
-        '当前书源'
-      );
-    }
-    if (sources.length === 0) return '全部书源';
-    return `全部书源 · ${sources.length} 个书源`;
-  }, [executedScope, sources]);
-
-  const searchProgress =
-    totalSources > 0
-      ? Math.min(100, Math.round((completedSources / totalSources) * 100))
-      : 0;
-
-  const submitSearch = useCallback(
-    (keyword: string) => {
-      const trimmed = keyword.trim();
-      if (!trimmed) return;
-      const params = new URLSearchParams();
-      params.set('q', trimmed);
-      if (sourceId) params.set('sourceId', sourceId);
-      forceNextUrlSearchRef.current = true;
-      router.replace(`/books/search?${params.toString()}`);
-    },
-    [router, sourceId]
+  const scope = view.scope
+    ? sources.find((source) => source.id === view.scope)?.name || '所选书源'
+    : '全部书源';
+  const timedOut = view.failures.filter((failure) => failure.timedOut).length;
+  const total = view.plan?.totalSources || 0;
+  const progress = total
+    ? Math.min(100, Math.round((view.completed / total) * 100))
+    : 0;
+  const pages = Math.max(1, Math.ceil(view.results.length / PAGE_SIZE));
+  const currentPage = Math.min(page, pages);
+  const visible = useMemo(
+    () =>
+      view.results.slice(
+        (currentPage - 1) * PAGE_SIZE,
+        currentPage * PAGE_SIZE
+      ),
+    [currentPage, view.results]
   );
+  const statusLabel = loading
+    ? view.mode === 'deep'
+      ? '深入搜索中'
+      : '搜索中'
+    : view.status === 'stopped'
+    ? '已停止'
+    : view.status === 'error'
+    ? '搜索中断'
+    : '搜索完成';
 
   return (
-    <div className='space-y-6'>
-      <section className={PANEL_CLASS}>
+    <div className='space-y-7 sm:space-y-9'>
+      <section
+        aria-labelledby='book-search-heading'
+        className='border-b border-library-edge pb-6 dark:border-library-night-edge sm:pb-8'
+      >
+        <p
+          className={cn(
+            'mb-2 text-xs font-semibold tracking-[0.16em]',
+            LIBRARY_MUTED
+          )}
+        >
+          书名 · 作者 · 跨源查找
+        </p>
         <h1
-          className={cn('text-2xl font-semibold', LIBRARY_TEXT, LIBRARY_SERIF)}
+          id='book-search-heading'
+          className={cn(
+            'text-2xl font-semibold sm:text-3xl',
+            LIBRARY_SERIF,
+            LIBRARY_TEXT
+          )}
         >
           搜索电子书
         </h1>
-        <p className={cn('mt-2 text-sm', LIBRARY_MUTED)}>
-          按书名或作者搜索全部已配置的书源。
-        </p>
-
-        <div className='mt-4 flex flex-wrap gap-2'>
-          {QUICK_SEARCHES.map((keyword) => (
-            <button
-              key={keyword}
-              type='button'
-              onClick={() => {
-                setQ(keyword);
-                submitSearch(keyword);
-              }}
-              className={CHIP_CLASS}
-            >
-              <Search className='h-3.5 w-3.5' />
-              {keyword}
-            </button>
-          ))}
-        </div>
-
-        <form onSubmit={handleSubmit} className='mt-5'>
-          <div className='grid gap-3 lg:grid-cols-[1fr_13rem_auto]'>
-            <label className='block'>
-              <span
-                className={cn('mb-2 block text-xs font-medium', LIBRARY_MUTED)}
-              >
+        <form
+          onSubmit={(event) => {
+            event.preventDefault();
+            submit(q);
+          }}
+          className='mt-6'
+        >
+          <div className='grid items-end gap-3 sm:grid-cols-[minmax(0,1fr)_minmax(10rem,14rem)_auto]'>
+            <label className='min-w-0 sm:col-span-3 lg:col-span-1'>
+              <span className={cn('mb-2 block text-xs', LIBRARY_MUTED)}>
                 关键词
               </span>
-              <div className='relative'>
+              <span className='relative block'>
                 <Search
+                  aria-hidden
                   className={cn(
-                    'pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2',
+                    'pointer-events-none absolute left-3.5 top-1/2 h-5 w-5 -translate-y-1/2',
                     LIBRARY_MUTED
                   )}
                 />
                 <input
                   value={q}
-                  onChange={(e) => setQ(e.target.value)}
+                  onChange={(event) => setQ(event.target.value)}
                   placeholder='搜索书名 / 作者'
                   aria-label='搜索书名或作者'
-                  className={`${FIELD_CLASS} pl-11 pr-11`}
+                  className={cn(LIBRARY_FIELD, 'h-12 pl-11 pr-11 text-base')}
                 />
-                {q ? (
+                {q && (
                   <button
                     type='button'
                     onClick={() => setQ('')}
+                    aria-label='清空搜索关键词'
                     className={cn(
-                      'absolute right-2.5 top-1/2 inline-flex h-7 w-7 -translate-y-1/2 cursor-pointer items-center justify-center rounded-full text-library-muted transition-colors duration-200 hover:bg-library-ochre-tint hover:text-library-ochre dark:text-library-night-muted dark:hover:bg-library-night-ochre-tint dark:hover:text-library-night-ochre',
+                      'absolute right-0 top-0 inline-flex h-12 w-11 items-center justify-center rounded-md',
+                      LIBRARY_MUTED,
                       LIBRARY_FOCUS
                     )}
-                    aria-label='清空搜索关键词'
                   >
-                    <X className='h-4 w-4' />
+                    <X aria-hidden className='h-4 w-4' />
                   </button>
-                ) : null}
-              </div>
+                )}
+              </span>
             </label>
-
-            <label className='block'>
-              <span
-                className={cn('mb-2 block text-xs font-medium', LIBRARY_MUTED)}
-              >
-                书源
+            <label className='min-w-0 sm:col-span-2 lg:col-span-1'>
+              <span className={cn('mb-2 block text-xs', LIBRARY_MUTED)}>
+                搜索范围
               </span>
               <select
-                value={sourceId}
-                onChange={(e) => setSourceId(e.target.value)}
                 aria-label='选择书源'
-                className={`${FIELD_CLASS} cursor-pointer`}
+                value={sourceId}
+                onChange={(event) => setSourceId(event.target.value)}
+                className={cn(
+                  LIBRARY_FIELD,
+                  'h-12 cursor-pointer truncate text-base'
+                )}
               >
                 <option value=''>全部书源</option>
                 {sources.map((source) => (
@@ -590,96 +435,280 @@ export default function BooksSearchPage() {
                 ))}
               </select>
             </label>
-
-            <div className='flex items-end'>
+            <div className='flex gap-2'>
               <button
                 type='submit'
-                disabled={loading}
+                disabled={!q.trim() || loading}
                 className={cn(
                   LIBRARY_BUTTON,
-                  'h-12 w-full cursor-pointer px-6 disabled:cursor-not-allowed disabled:opacity-70 lg:w-auto'
+                  'h-12 flex-1 px-5 disabled:opacity-50'
                 )}
               >
                 {loading ? (
-                  <Loader2 className='h-4 w-4 animate-spin' />
+                  <Loader2
+                    aria-hidden
+                    className='h-4 w-4 animate-spin motion-reduce:animate-none'
+                  />
                 ) : (
-                  <Search className='h-4 w-4' />
+                  <Search aria-hidden className='h-4 w-4' />
                 )}
-                {loading ? '搜索中' : '搜索'}
+                搜索
               </button>
+              {loading && (
+                <button
+                  type='button'
+                  onClick={stopSearch}
+                  className={cn(LIBRARY_GHOST_BUTTON, 'h-12 px-4')}
+                >
+                  <Square aria-hidden className='h-3.5 w-3.5' />
+                  停止
+                </button>
+              )}
             </div>
           </div>
         </form>
+        <div className='mt-3 flex flex-wrap items-center gap-x-4 gap-y-2'>
+          <span className={cn('text-xs', LIBRARY_MUTED)}>试试</span>
+          {QUICK_SEARCHES.map((keyword) => (
+            <button
+              type='button'
+              key={keyword}
+              onClick={() => submit(keyword)}
+              className={cn(
+                LIBRARY_GHOST_BUTTON,
+                'min-h-10 border-transparent px-2 text-xs'
+              )}
+            >
+              {keyword}
+            </button>
+          ))}
+        </div>
+        {sourceError && (
+          <p role='status' className={cn('mt-3 text-sm', LIBRARY_MUTED)}>
+            {sourceError}
+          </p>
+        )}
       </section>
 
-      <section className='space-y-4'>
-        <MediaSectionHeader
-          title={
-            hasSearched
-              ? `搜索结果${
-                  result.results.length > 0
-                    ? `（${result.results.length}）`
-                    : ''
-                }`
-              : '等待搜索'
-          }
-          subtitle={hasSearched ? `当前范围：${scopeLabel}` : undefined}
-          action={
-            loading && useFluidSearch && totalSources > 0 ? (
-              <span className={cn('shrink-0 text-xs', LIBRARY_MUTED)}>
-                搜索中 {completedSources}/{totalSources}
-              </span>
-            ) : undefined
-          }
-        />
-
-        {loading && useFluidSearch && totalSources > 0 ? (
-          <div className={cn(LIBRARY_PROGRESS_TRACK, 'h-1.5')}>
+      {view.status !== 'idle' && (
+        <section
+          aria-label='搜索进度'
+          className={cn(LIBRARY_PANEL, 'overflow-hidden')}
+        >
+          <div className='flex flex-wrap items-center justify-between gap-3 px-4 py-4 sm:px-5'>
+            <div className='flex min-w-0 items-center gap-2.5'>
+              {loading ? (
+                <Loader2
+                  aria-hidden
+                  className='h-4 w-4 shrink-0 animate-spin text-library-ochre motion-reduce:animate-none dark:text-library-night-ochre'
+                />
+              ) : view.status === 'complete' ? (
+                <Check
+                  aria-hidden
+                  className='h-4 w-4 shrink-0 text-library-ochre dark:text-library-night-ochre'
+                />
+              ) : (
+                <AlertCircle
+                  aria-hidden
+                  className={cn('h-4 w-4 shrink-0', LIBRARY_MUTED)}
+                />
+              )}
+              <div className='min-w-0'>
+                <p
+                  role='status'
+                  className={cn('text-sm font-semibold', LIBRARY_TEXT)}
+                >
+                  {statusLabel}
+                  <span
+                    className={cn(
+                      'ml-2 font-normal tabular-nums',
+                      LIBRARY_MUTED
+                    )}
+                  >
+                    {view.plan
+                      ? view.completed + ' / ' + total
+                      : '正在准备书源'}
+                  </span>
+                </p>
+                <p
+                  className={cn('mt-1 truncate text-xs', LIBRARY_MUTED)}
+                  title={scope}
+                >
+                  {scope} ·{' '}
+                  {view.mode === 'deep'
+                    ? '继续检索第 2–5 页'
+                    : '逐批检索各书源第一页'}
+                </p>
+              </div>
+            </div>
             <div
-              className={LIBRARY_PROGRESS_BAR}
-              style={{ width: `${searchProgress}%` }}
+              className={cn(
+                'flex flex-wrap gap-x-4 gap-y-1 text-xs tabular-nums',
+                LIBRARY_MUTED
+              )}
+            >
+              <span>
+                找到{' '}
+                <strong className={LIBRARY_TEXT}>{view.results.length}</strong>{' '}
+                本
+              </span>
+              <span>失败 {view.failures.length - timedOut}</span>
+              <span>超时 {timedOut}</span>
+              {!!view.plan?.duplicateSources && (
+                <span>跳过重复 {view.plan.duplicateSources}</span>
+              )}
+              {!!view.plan?.unsupportedSources && (
+                <span>不支持搜索 {view.plan.unsupportedSources}</span>
+              )}
+            </div>
+          </div>
+          <div
+            role='progressbar'
+            aria-label='书源处理进度'
+            aria-valuemin={0}
+            aria-valuemax={100}
+            aria-valuenow={progress}
+            className='h-1 overflow-hidden bg-library-edge dark:bg-library-night-edge'
+          >
+            <div
+              className='h-full origin-left bg-library-ochre transition-transform duration-200 motion-reduce:transition-none dark:bg-library-night-ochre'
+              style={{ transform: 'scaleX(' + progress / 100 + ')' }}
             />
           </div>
-        ) : null}
+          {view.error && (
+            <p
+              role='alert'
+              className='border-t border-library-edge px-4 py-3 text-sm text-red-700 dark:border-library-night-edge dark:text-red-300'
+            >
+              {view.error}
+            </p>
+          )}
+          {view.failures.length > 0 && (
+            <details className='border-t border-library-edge px-4 py-3 dark:border-library-night-edge sm:px-5'>
+              <summary className={cn('cursor-pointer text-xs', LIBRARY_MUTED)}>
+                查看失败与超时详情 · {view.failures.length} 个书源
+              </summary>
+              <ul className='mt-3 max-h-64 space-y-2 overflow-y-auto overscroll-contain pr-2 text-xs'>
+                {view.failures.map((failure) => (
+                  <li
+                    key={failure.sourceId}
+                    className='grid gap-1 border-t border-library-edge/70 py-2 first:border-0 dark:border-library-night-edge/70 sm:grid-cols-[minmax(8rem,1fr)_2fr]'
+                  >
+                    <span
+                      className={cn('break-words font-medium', LIBRARY_TEXT)}
+                    >
+                      {failure.sourceName}
+                    </span>
+                    <span className={cn('break-words', LIBRARY_MUTED)}>
+                      {failure.error}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </details>
+          )}
+        </section>
+      )}
 
-        {loading && result.results.length === 0 ? (
-          <MediaGridSkeleton count={12} />
-        ) : null}
-        {error ? <EmptyState tone='error' description={error} /> : null}
-
-        {result.results.length > 0 ? (
-          <MediaGrid>
-            {result.results.map((item) => (
-              <MediaCard
-                key={`${item.sourceId}-${item.id}`}
-                item={bookCardItem(item)}
-                href={detailHref(item)}
-                onNavigate={() => cacheBookListItem(item)}
-              />
-            ))}
-          </MediaGrid>
-        ) : null}
-
-        {!loading && hasSearched && !error && result.results.length === 0 ? (
+      <section aria-label='搜索结果' className='space-y-5'>
+        {view.status === 'idle' ? (
           <EmptyState
-            icon={<Search className='h-7 w-7' />}
-            title='没有找到匹配书籍'
-            description='试试更短的关键词、作者名，或切换到全部书源重新搜索。'
-            action={QUICK_SEARCHES.map((keyword) => (
-              <button
-                key={keyword}
-                type='button'
-                onClick={() => {
-                  setQ(keyword);
-                  submitSearch(keyword);
-                }}
-                className={CHIP_CLASS}
-              >
-                搜索 {keyword}
-              </button>
-            ))}
+            icon={<Search className='h-6 w-6' />}
+            title='从一本书开始'
+            description='输入书名或作者，跨书源搜索；找到的书会陆续出现在这里。'
           />
-        ) : null}
+        ) : (
+          <>
+            <div className='flex flex-wrap items-center justify-between gap-3'>
+              <h2
+                className={cn(
+                  'text-lg font-semibold',
+                  LIBRARY_SERIF,
+                  LIBRARY_TEXT
+                )}
+              >
+                搜索结果{' '}
+                <span
+                  className={cn(
+                    'ml-1 text-sm font-normal tabular-nums',
+                    LIBRARY_MUTED
+                  )}
+                >
+                  {view.results.length}
+                </span>
+              </h2>
+              {!loading && (
+                <div className='flex flex-wrap gap-2'>
+                  <button
+                    type='button'
+                    onClick={() =>
+                      void beginSearch(view.keyword, view.scope, {
+                        force: true,
+                      })
+                    }
+                    className={LIBRARY_GHOST_BUTTON}
+                  >
+                    重新搜索
+                  </button>
+                  {view.status === 'complete' && view.mode === 'quick' && (
+                    <button
+                      type='button'
+                      onClick={() =>
+                        void beginSearch(view.keyword, view.scope, {
+                          deep: true,
+                          force: true,
+                        })
+                      }
+                      className={LIBRARY_GHOST_BUTTON}
+                    >
+                      <ArrowDown className='h-4 w-4' />
+                      深入搜索
+                    </button>
+                  )}
+                </div>
+              )}
+            </div>
+            {loading && !view.results.length && <MediaGridSkeleton count={6} />}
+            {visible.length > 0 && (
+              <MediaGrid className='sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-6'>
+                {visible.map((item) => (
+                  <MediaCard
+                    key={item.sourceId + '-' + item.id}
+                    item={bookCardItem(item)}
+                    href={buildBookDetailPath(item.sourceId, item.id)}
+                    onNavigate={() => cacheBookListItem(item)}
+                  />
+                ))}
+              </MediaGrid>
+            )}
+            <BooksPagination
+              page={currentPage}
+              total={view.results.length}
+              pageSize={PAGE_SIZE}
+              onChange={setPage}
+            />
+            {!loading && !view.results.length && (
+              <EmptyState
+                title={
+                  view.status === 'complete' && !view.failures.length
+                    ? '暂未找到匹配书籍'
+                    : '本次未获得可用结果'
+                }
+                description={
+                  view.status === 'stopped'
+                    ? '搜索已停止，可以重新搜索。'
+                    : view.plan &&
+                      !view.plan.totalSources &&
+                      view.plan.unsupportedSources
+                    ? '当前范围内没有已适配的搜索规则，请切换其他书源。'
+                    : view.failures.length
+                    ? '部分书源请求失败，可展开上方详情查看。也可以换个关键词或指定单个书源。'
+                    : '试试更短的书名、作者名，或使用深入搜索查询后续页面。'
+                }
+              />
+            )}
+          </>
+        )}
       </section>
     </div>
   );

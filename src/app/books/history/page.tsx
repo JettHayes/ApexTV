@@ -35,9 +35,11 @@ import { subscribeToDataUpdates } from '@/lib/db.client';
 import { processImageUrl } from '@/lib/utils';
 
 import EmptyState from '@/components/media/EmptyState';
+import BooksPagination from '@/components/books/BooksPagination';
 import {
   LIBRARY_ACCENT_ICON,
   LIBRARY_FOCUS,
+  LIBRARY_FIELD,
   LIBRARY_GHOST_BUTTON,
   LIBRARY_ICON_BUTTON,
   LIBRARY_ICON_BUTTON_DANGER,
@@ -92,6 +94,9 @@ export default function BookHistoryPage() {
   const [cacheItems, setCacheItems] = useState<CachedBookFile[]>([]);
   const [cacheLoading, setCacheLoading] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const [filter, setFilter] = useState('');
+  const [page, setPage] = useState(1);
+  const [loadError, setLoadError] = useState('');
   const [confirmAction, setConfirmAction] = useState<{
     type: 'delete-one' | 'clear-all';
     key?: string;
@@ -108,7 +113,7 @@ export default function BookHistoryPage() {
 
     getAllBookReadRecords()
       .then(setRecords)
-      .catch(() => undefined)
+      .catch(() => setLoadError('阅读记录同步失败，当前保留已有记录'))
       .finally(() => setLoading(false));
     getAllBookShelf()
       .then(setShelf)
@@ -162,6 +167,8 @@ export default function BookHistoryPage() {
     () => cacheItems.reduce((sum, item) => sum + item.size, 0),
     [cacheItems]
   );
+  const filtered = items.filter((item) => (item.title + ' ' + (item.author || '')).toLowerCase().includes(filter.trim().toLowerCase()));
+  const currentPage = Math.min(page, Math.max(1, Math.ceil(filtered.length / 48)));
 
   const handleDelete = async (item: (typeof items)[number]) => {
     const [deleteSourceId = item.sourceId, deleteBookId = item.bookId] =
@@ -210,6 +217,10 @@ export default function BookHistoryPage() {
         </button>
       </div>
 
+      <input aria-label='筛选阅读记录' placeholder='查找历史中的书名或作者' value={filter}
+        onChange={(event) => { setFilter(event.target.value); setPage(1); }} className={cn(LIBRARY_FIELD, 'min-h-11 text-base sm:max-w-md')} />
+      {loadError && <p role='alert' className='text-sm text-red-700 dark:text-red-300'>{loadError}</p>}
+
       {loading ? (
         <MediaGridSkeleton count={12} />
       ) : items.length === 0 ? (
@@ -219,8 +230,8 @@ export default function BookHistoryPage() {
           description='打开过的电子书会按时间排在这里，点卡片即可接着上次的位置读，长按卡片可删除。'
         />
       ) : (
-        <MediaGrid>
-          {items.map((item) => {
+        <MediaGrid className='sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-6'>
+          {filtered.slice((currentPage - 1) * 48, currentPage * 48).map((item) => {
             const percent = Math.max(
               0,
               Math.min(100, Math.round(item.progressPercent || 0))
@@ -279,6 +290,9 @@ export default function BookHistoryPage() {
           })}
         </MediaGrid>
       )}
+
+      {!loading && items.length > 0 && !filtered.length && <EmptyState title='没有匹配的记录' description='试试其他书名或作者。' />}
+      <BooksPagination page={currentPage} total={filtered.length} pageSize={48} onChange={setPage} />
 
       {cacheModalOpen &&
         mounted &&

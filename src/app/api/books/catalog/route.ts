@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 import { bookProvider } from '@/lib/book-provider';
+import {
+  BookCatalogTargetError,
+  BookSourceRequestError,
+} from '@/lib/book-source-error';
 
 import { getAuthorizedBooksUsername } from '../_utils';
 
@@ -20,6 +24,23 @@ export async function GET(request: NextRequest) {
     const result = await bookProvider.getCatalog(sourceId, href);
     return NextResponse.json(result);
   } catch (error) {
-    return NextResponse.json({ error: (error as Error).message }, { status: 500 });
+    if (error instanceof BookCatalogTargetError)
+      return NextResponse.json(
+        { error: error.message, code: error.code },
+        { status: 400 }
+      );
+    if (error instanceof BookSourceRequestError)
+      return NextResponse.json(
+        {
+          error: error.message,
+          code: error.code,
+          upstreamStatus: error.upstreamStatus,
+        },
+        { status: 502, headers: { 'Cache-Control': 'no-store' } }
+      );
+    return NextResponse.json(
+      { error: (error as Error).message },
+      { status: 500 }
+    );
   }
 }

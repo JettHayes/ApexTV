@@ -126,6 +126,7 @@ export default function MediaCard({
       {href ? (
         <Link
           href={href}
+          prefetch={href.startsWith('/books') ? false : undefined}
           onClick={onNavigate}
           className={shellClass}
           aria-label={item.title}

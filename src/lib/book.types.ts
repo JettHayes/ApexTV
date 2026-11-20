@@ -94,6 +94,7 @@ export interface LegadoBookSourceRule {
 
 export interface BookSource {
   id: string;
+  revision?: string;
   name: string;
   type?: 'opds' | 'legado';
   url: string;
@@ -165,6 +166,7 @@ export interface BookSearchFailure {
   sourceId: string;
   sourceName: string;
   error: string;
+  timedOut?: boolean;
 }
 
 export interface BookSearchResult {

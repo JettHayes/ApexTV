@@ -1025,7 +1025,7 @@ html[data-loading-style='grid'] .mtv-err-box {
     left: 16rem; /* 侧边栏展开 = w-64 */
   }
   html[data-sidebar-collapsed] .mtv-load-overlay {
-    left: 4rem; /* 侧边栏收起 = w-16 */
+    left: var(--ptv-sidebar-collapsed-width, 4rem);
   }
 }
 

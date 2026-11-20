@@ -1,32 +1,30 @@
 'use client';
 
-import { BookX, Compass, RefreshCw } from 'lucide-react';
+import { BookX, Compass, Loader2, RefreshCw, Search } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
-import {
-  PointerEvent as ReactPointerEvent,
-  useCallback,
-  useEffect,
-  useLayoutEffect,
-  useMemo,
-  useRef,
-  useState,
-  WheelEvent as ReactWheelEvent,
-} from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
-import { BookCatalogResult, BookListItem, BookSource } from '@/lib/book.types';
+import type {
+  BookCatalogResult,
+  BookListItem,
+  BookSource,
+} from '@/lib/book.types';
 import {
   buildBookDetailPath,
   cacheBookListItem,
 } from '@/lib/book-route-cache.client';
 import { cn } from '@/lib/cn';
-import { smoothScrollBehavior } from '@/lib/motion';
 
+import BooksPagination from '@/components/books/BooksPagination';
 import { bookCardItem } from '@/components/media/adapters';
 import EmptyState from '@/components/media/EmptyState';
 import {
+  LIBRARY_FIELD,
   LIBRARY_GHOST_BUTTON,
-  LIBRARY_SKELETON,
+  LIBRARY_MUTED,
+  LIBRARY_SERIF,
+  LIBRARY_TEXT,
   SPINE_TAB,
   SPINE_TAB_ACTIVE,
   SPINE_TAB_IDLE,
@@ -35,635 +33,455 @@ import MediaCard from '@/components/media/MediaCard';
 import MediaGrid from '@/components/media/MediaGrid';
 import MediaGridSkeleton from '@/components/media/MediaGridSkeleton';
 
-function makeHref(sourceId: string, item: BookListItem) {
-  return buildBookDetailPath(sourceId, item.id);
-}
-
-/** 书源 / 分类两排都是书脊标签，横向拖拽滚动，隐藏滚动条。 */
-const CHIP_ROW =
-  'flex flex-nowrap gap-1 overflow-x-auto border-b border-library-edge px-1 pt-1 cursor-grab select-none touch-pan-x [scrollbar-width:none] active:cursor-grabbing dark:border-library-night-edge [&::-webkit-scrollbar]:hidden';
-
-function CatalogSkeleton() {
-  return (
-    <div className='space-y-6'>
-      <div className='flex gap-1 overflow-x-auto pb-1'>
-        {Array.from({ length: 4 }).map((_, index) => (
-          <div
-            key={index}
-            className={cn('h-9 w-24 shrink-0', LIBRARY_SKELETON)}
-          />
-        ))}
-      </div>
-      <div className='flex gap-1 overflow-x-auto pb-1'>
-        {Array.from({ length: 5 }).map((_, index) => (
-          <div
-            key={index}
-            className={cn('h-9 w-28 shrink-0', LIBRARY_SKELETON)}
-          />
-        ))}
-      </div>
-      <MediaGridSkeleton count={12} />
-    </div>
-  );
-}
-
-function LoadingMoreSkeleton() {
-  return <MediaGridSkeleton count={6} />;
-}
-
-function isMeaningfulNavTitle(title?: string) {
-  const text = (title || '').trim();
-  return !!text && text !== '目录';
-}
+const PAGE_SIZE = 48;
 
 export default function BooksCatalogPage() {
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const sourceId = searchParams.get('sourceId') || '';
-  const href = searchParams.get('href') || '';
+  const params = useSearchParams();
+  const sourceId = params.get('sourceId') || '';
+  const href = params.get('href') || '';
   const [sources, setSources] = useState<BookSource[]>([]);
-  const [selectedSourceId, setSelectedSourceId] = useState(sourceId);
-  const [selectedHref, setSelectedHref] = useState(href);
+  const [filter, setFilter] = useState('');
   const [data, setData] = useState<BookCatalogResult | null>(null);
-  const [catalogNavigation, setCatalogNavigation] = useState<
-    BookCatalogResult['navigation']
-  >([]);
+  const [navigation, setNavigation] = useState<BookCatalogResult['navigation']>(
+    []
+  );
+  const [navigationSource, setNavigationSource] = useState('');
   const [entries, setEntries] = useState<BookListItem[]>([]);
-  const [nextHref, setNextHref] = useState<string | undefined>(undefined);
+  const [nextHref, setNextHref] = useState<string>();
   const [error, setError] = useState('');
-  const [loadingCatalog, setLoadingCatalog] = useState(false);
+  const [sourceError, setSourceError] = useState('');
+  const [loading, setLoading] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
-  const loaderRef = useRef<HTMLDivElement | null>(null);
-  const sourceScrollerRef = useRef<HTMLDivElement | null>(null);
-  const activeSourceItemRef = useRef<HTMLAnchorElement | null>(null);
-  const navScrollerRef = useRef<HTMLDivElement | null>(null);
-  const activeNavItemRef = useRef<HTMLAnchorElement | null>(null);
-  const loadedPageHrefsRef = useRef<Set<string>>(new Set());
-  const failedPageHrefsRef = useRef<Set<string>>(new Set());
-  const sourceDragStateRef = useRef<{
-    pointerId: number;
-    startX: number;
-    startScrollLeft: number;
-    moved: boolean;
-    pointerType: string;
-  } | null>(null);
-  const suppressSourceClickRef = useRef(false);
-  const navDragStateRef = useRef<{
-    pointerId: number;
-    startX: number;
-    startScrollLeft: number;
-    moved: boolean;
-    pointerType: string;
-  } | null>(null);
-  const suppressNavClickRef = useRef(false);
-
-  const showImmediateContentLoading = useCallback(() => {
-    setError('');
-    setLoadingCatalog(true);
-    setEntries([]);
-    setNextHref(undefined);
-  }, []);
+  const [page, setPage] = useState(1);
+  const generation = useRef(0);
+  const active = useRef<AbortController | null>(null);
+  const busyMore = useRef(false);
+  const loaded = useRef(new Set<string>());
+  const failed = useRef(new Set<string>());
+  const loader = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
-    fetch('/api/books/sources')
-      .then((res) => res.json())
-      .then((json) => setSources(json.sources || []));
+    const abort = new AbortController();
+    fetch('/api/books/sources', { signal: abort.signal })
+      .then(async (res) => {
+        const json = await res.json();
+        if (!res.ok) throw new Error('书源列表加载失败');
+        return json;
+      })
+      .then((json) => setSources(json.sources || []))
+      .catch(() => {
+        if (!abort.signal.aborted)
+          setSourceError('书源列表加载失败，可返回发现页重试。');
+      });
+    return () => abort.abort();
   }, []);
 
+  const loadCatalog = useCallback(
+    async (target = '', append = false) => {
+      if (
+        !sourceId ||
+        (append && (busyMore.current || loaded.current.has(target)))
+      )
+        return;
+      if (!append) {
+        active.current?.abort();
+        active.current = new AbortController();
+        generation.current += 1;
+        busyMore.current = false;
+        loaded.current = new Set();
+        failed.current = new Set();
+        setEntries([]);
+        setNextHref(undefined);
+        setLoading(true);
+        setPage(1);
+      }
+      const abort = active.current;
+      if (!abort) return;
+      const id = generation.current;
+      if (append) {
+        busyMore.current = true;
+        setLoadingMore(true);
+      }
+      setError('');
+      try {
+        const query = new URLSearchParams({ sourceId });
+        if (target) query.set('href', target);
+        const res = await fetch('/api/books/catalog?' + query, {
+          signal: abort.signal,
+          cache: 'no-store',
+        });
+        const json = await res.json();
+        if (!res.ok) {
+          if (json.code === 'CATALOG_SOURCE_MISMATCH') {
+            if (id === generation.current && !abort.signal.aborted)
+              router.replace(
+                '/books/catalog?' + new URLSearchParams({ sourceId })
+              );
+            return;
+          }
+          if (
+            json.upstreamStatus === 403 ||
+            /请求失败[:：]?\s*403/.test(json.error || '')
+          ) {
+            throw new Error(
+              '书源网站拒绝了服务器访问（403）。此书源可能需要验证或限制了访问地区，可以换一个书源。'
+            );
+          }
+          throw new Error(json.error || '目录加载失败');
+        }
+        if (id !== generation.current || abort.signal.aborted) return;
+        const result = json as BookCatalogResult;
+        loaded.current.add(target);
+        setData(result);
+        if (!target) {
+          setNavigation(result.navigation || []);
+          setNavigationSource(sourceId);
+        }
+        setEntries((previous) => {
+          const combined = append
+            ? [...previous, ...(result.entries || [])]
+            : result.entries || [];
+          const seen = new Set<string>();
+          return combined.filter((item) => {
+            const key = item.sourceId + '|' + item.id;
+            if (seen.has(key)) return false;
+            seen.add(key);
+            return true;
+          });
+        });
+        setNextHref(result.nextHref);
+      } catch (cause) {
+        if (id !== generation.current || abort.signal.aborted) return;
+        if (append) failed.current.add(target);
+        setError(cause instanceof Error ? cause.message : '目录加载失败');
+      } finally {
+        if (id === generation.current) {
+          setLoading(false);
+          setLoadingMore(false);
+          busyMore.current = false;
+        }
+      }
+    },
+    [sourceId, router]
+  );
+
   useEffect(() => {
-    setSelectedSourceId(sourceId);
-    setCatalogNavigation([]);
+    setNavigation([]);
+    setNavigationSource('');
+    setData(null);
   }, [sourceId]);
 
   useEffect(() => {
-    setSelectedHref(href);
-  }, [href]);
-
-  useEffect(() => {
-    if (!sourceId || !href || catalogNavigation.length > 0) return;
-    let cancelled = false;
-
-    const loadRootNavigation = async () => {
-      try {
-        const params = new URLSearchParams({ sourceId });
-        const res = await fetch(`/api/books/catalog?${params.toString()}`);
-        const json = await res.json();
-        if (!res.ok) return;
-        if (!cancelled)
-          setCatalogNavigation((json as BookCatalogResult).navigation || []);
-      } catch {
-        // 当前分类内容仍可正常展示，根目录分类加载失败时忽略。
-      }
-    };
-
-    void loadRootNavigation();
+    if (sourceId) void loadCatalog(href);
     return () => {
-      cancelled = true;
+      active.current?.abort();
+      generation.current += 1;
     };
-  }, [sourceId, href, catalogNavigation.length]);
-
-  useEffect(() => {
-    if (!sourceId || href || catalogNavigation.length === 0) return;
-    const firstNavigationItem = catalogNavigation.find((item) => {
-      const rel = (item.rel || '').toLowerCase();
-      return (
-        item.href &&
-        rel !== 'next' &&
-        rel !== 'previous' &&
-        isMeaningfulNavTitle(item.title)
-      );
-    });
-    if (!firstNavigationItem?.href) return;
-    setSelectedHref(firstNavigationItem.href);
-    router.replace(
-      `/books/catalog?sourceId=${encodeURIComponent(
-        sourceId
-      )}&href=${encodeURIComponent(firstNavigationItem.href)}`
-    );
-  }, [catalogNavigation, href, router, sourceId]);
-
-  const mergeEntries = useCallback(
-    (prev: BookListItem[], next: BookListItem[]) => {
-      const seen = new Set(
-        prev.map(
-          (item) =>
-            `${item.sourceId}::${item.id}::${
-              item.detailHref || item.acquisitionLinks[0]?.href || ''
-            }`
-        )
-      );
-      const merged = [...prev];
-      for (const item of next) {
-        const key = `${item.sourceId}::${item.id}::${
-          item.detailHref || item.acquisitionLinks[0]?.href || ''
-        }`;
-        if (!seen.has(key)) {
-          seen.add(key);
-          merged.push(item);
-        }
-      }
-      return merged;
-    },
-    []
-  );
-
-  const loadCatalog = useCallback(
-    async (targetHref?: string, append = false) => {
-      if (!sourceId) return;
-      const normalizedHref = targetHref || '';
-      if (append) {
-        if (
-          !normalizedHref ||
-          loadedPageHrefsRef.current.has(normalizedHref) ||
-          failedPageHrefsRef.current.has(normalizedHref)
-        )
-          return;
-        setLoadingMore(true);
-      } else {
-        setError('');
-        setLoadingCatalog(true);
-        if (!normalizedHref) setData(null);
-        setEntries([]);
-        setNextHref(undefined);
-        loadedPageHrefsRef.current = new Set(
-          normalizedHref ? [normalizedHref] : ['__root__']
-        );
-        failedPageHrefsRef.current = new Set();
-      }
-
-      try {
-        const params = new URLSearchParams({ sourceId });
-        if (normalizedHref) params.set('href', normalizedHref);
-        const res = await fetch(`/api/books/catalog?${params.toString()}`);
-        const json = await res.json();
-        if (!res.ok) throw new Error(json.error || '获取目录失败');
-        const nextData = json as BookCatalogResult;
-        if (append) {
-          loadedPageHrefsRef.current.add(normalizedHref);
-          setEntries((prev) => mergeEntries(prev, nextData.entries || []));
-        } else {
-          setData(nextData);
-          setCatalogNavigation((prev) =>
-            normalizedHref
-              ? prev.length > 0
-                ? prev
-                : nextData.navigation || []
-              : nextData.navigation || []
-          );
-          setEntries(nextData.entries || []);
-        }
-        setNextHref(nextData.nextHref || undefined);
-        if (!append) setData(nextData);
-      } catch (err) {
-        if (append && normalizedHref) {
-          failedPageHrefsRef.current.add(normalizedHref);
-          setNextHref(undefined);
-        }
-        setError(err instanceof Error ? err.message : '获取目录失败');
-      } finally {
-        if (!append) setLoadingCatalog(false);
-        setLoadingMore(false);
-      }
-    },
-    [mergeEntries, sourceId]
-  );
-
-  useEffect(() => {
-    if (!sourceId) return;
-    void loadCatalog(href, false);
   }, [sourceId, href, loadCatalog]);
 
-  // 失败态和空目录态的「重试」都走这里：留在原页重取当前分类，不整页刷新。
-  const retryCatalog = useCallback(() => {
-    void loadCatalog(href, false);
-  }, [href, loadCatalog]);
-
   useEffect(() => {
-    const node = loaderRef.current;
-    if (!node || !nextHref || loadingMore || !data) return;
-
-    const observer = new IntersectionObserver(
-      (entries) => {
-        const entry = entries[0];
-        if (entry?.isIntersecting && nextHref && !loadingMore) {
-          void loadCatalog(nextHref, true);
+    if (!sourceId || !href || navigationSource === sourceId) return;
+    const abort = new AbortController();
+    fetch('/api/books/catalog?' + new URLSearchParams({ sourceId }), {
+      signal: abort.signal,
+    })
+      .then(async (res) => {
+        if (!res.ok) return null;
+        return res.json();
+      })
+      .then((json) => {
+        if (json && !abort.signal.aborted) {
+          setNavigation(json.navigation || []);
+          setNavigationSource(sourceId);
         }
-      },
-      { rootMargin: '800px 0px' }
-    );
-
-    observer.observe(node);
-    return () => observer.disconnect();
-  }, [data, nextHref, loadingMore, loadCatalog]);
-
-  const handleSourcePointerDown = useCallback(
-    (event: ReactPointerEvent<HTMLDivElement>) => {
-      if (event.pointerType === 'mouse' && event.button !== 0) return;
-      const node = sourceScrollerRef.current;
-      if (!node) return;
-      sourceDragStateRef.current = {
-        pointerId: event.pointerId,
-        startX: event.clientX,
-        startScrollLeft: node.scrollLeft,
-        moved: false,
-        pointerType: event.pointerType,
-      };
-      suppressSourceClickRef.current = false;
-      if (event.pointerType !== 'mouse') {
-        node.setPointerCapture?.(event.pointerId);
-      }
-    },
-    []
-  );
-
-  const handleSourcePointerMove = useCallback(
-    (event: ReactPointerEvent<HTMLDivElement>) => {
-      const node = sourceScrollerRef.current;
-      const dragState = sourceDragStateRef.current;
-      if (!node || !dragState || dragState.pointerId !== event.pointerId)
-        return;
-      const deltaX = event.clientX - dragState.startX;
-      const moveThreshold = dragState.pointerType === 'mouse' ? 8 : 4;
-      if (Math.abs(deltaX) > moveThreshold) {
-        dragState.moved = true;
-        suppressSourceClickRef.current = true;
-      }
-      node.scrollLeft = dragState.startScrollLeft - deltaX;
-    },
-    []
-  );
-
-  const handleSourcePointerUp = useCallback(
-    (event: ReactPointerEvent<HTMLDivElement>) => {
-      const node = sourceScrollerRef.current;
-      const dragState = sourceDragStateRef.current;
-      if (!dragState || dragState.pointerId !== event.pointerId) return;
-      if (dragState.moved) {
-        event.preventDefault();
-        window.setTimeout(() => {
-          suppressSourceClickRef.current = false;
-        }, 0);
-      }
-      sourceDragStateRef.current = null;
-      if (dragState.pointerType !== 'mouse') {
-        node?.releasePointerCapture?.(event.pointerId);
-      }
-    },
-    []
-  );
-
-  const handleSourcePointerLeave = useCallback(
-    (event: ReactPointerEvent<HTMLDivElement>) => {
-      if (event.pointerType === 'mouse') return;
-      handleSourcePointerUp(event);
-    },
-    [handleSourcePointerUp]
-  );
-
-  const handleSourceWheel = useCallback(
-    (event: ReactWheelEvent<HTMLDivElement>) => {
-      const node = sourceScrollerRef.current;
-      if (!node) return;
-      const delta =
-        Math.abs(event.deltaX) > Math.abs(event.deltaY)
-          ? event.deltaX
-          : event.deltaY;
-      if (!delta) return;
-      node.scrollLeft += delta;
-    },
-    []
-  );
-
-  const handleNavPointerDown = useCallback(
-    (event: ReactPointerEvent<HTMLDivElement>) => {
-      if (event.pointerType === 'mouse' && event.button !== 0) return;
-      const node = navScrollerRef.current;
-      if (!node) return;
-      navDragStateRef.current = {
-        pointerId: event.pointerId,
-        startX: event.clientX,
-        startScrollLeft: node.scrollLeft,
-        moved: false,
-        pointerType: event.pointerType,
-      };
-      suppressNavClickRef.current = false;
-      if (event.pointerType !== 'mouse') {
-        node.setPointerCapture?.(event.pointerId);
-      }
-    },
-    []
-  );
-
-  const handleNavPointerMove = useCallback(
-    (event: ReactPointerEvent<HTMLDivElement>) => {
-      const node = navScrollerRef.current;
-      const dragState = navDragStateRef.current;
-      if (!node || !dragState || dragState.pointerId !== event.pointerId)
-        return;
-      const deltaX = event.clientX - dragState.startX;
-      const moveThreshold = dragState.pointerType === 'mouse' ? 8 : 4;
-      if (Math.abs(deltaX) > moveThreshold) {
-        dragState.moved = true;
-        suppressNavClickRef.current = true;
-      }
-      node.scrollLeft = dragState.startScrollLeft - deltaX;
-    },
-    []
-  );
-
-  const handleNavPointerUp = useCallback(
-    (event: ReactPointerEvent<HTMLDivElement>) => {
-      const node = navScrollerRef.current;
-      const dragState = navDragStateRef.current;
-      if (!dragState || dragState.pointerId !== event.pointerId) return;
-      if (dragState.moved) {
-        event.preventDefault();
-        window.setTimeout(() => {
-          suppressNavClickRef.current = false;
-        }, 0);
-      }
-      navDragStateRef.current = null;
-      if (dragState.pointerType !== 'mouse') {
-        node?.releasePointerCapture?.(event.pointerId);
-      }
-    },
-    []
-  );
-
-  const handleNavPointerLeave = useCallback(
-    (event: ReactPointerEvent<HTMLDivElement>) => {
-      if (event.pointerType === 'mouse') return;
-      handleNavPointerUp(event);
-    },
-    [handleNavPointerUp]
-  );
-
-  const handleNavWheel = useCallback(
-    (event: ReactWheelEvent<HTMLDivElement>) => {
-      const node = navScrollerRef.current;
-      if (!node) return;
-      const delta =
-        Math.abs(event.deltaX) > Math.abs(event.deltaY)
-          ? event.deltaX
-          : event.deltaY;
-      if (!delta) return;
-      node.scrollLeft += delta;
-    },
-    []
-  );
+      })
+      .catch(() => undefined);
+    return () => abort.abort();
+  }, [sourceId, href, navigationSource]);
 
   const navigationItems = useMemo(() => {
-    const items = (catalogNavigation || []).filter((item) => {
-      const rel = (item.rel || '').toLowerCase();
-      if (rel === 'next' || rel === 'previous') return false;
-      return isMeaningfulNavTitle(item.title);
-    });
-
+    if (navigationSource !== sourceId) return [];
     const seen = new Set<string>();
-    return items.filter((item) => {
-      const key = `${item.href}::${(item.title || '').trim()}`;
-      if (!item.href || seen.has(key)) return false;
-      seen.add(key);
+    return navigation.filter((item) => {
+      if (
+        !item.href ||
+        !item.title?.trim() ||
+        item.title === '目录' ||
+        ['next', 'previous'].includes(item.rel || '') ||
+        seen.has(item.href)
+      )
+        return false;
+      seen.add(item.href);
       return true;
     });
-  }, [catalogNavigation]);
+  }, [navigation, navigationSource, sourceId]);
 
-  useLayoutEffect(() => {
-    if (!selectedHref || navigationItems.length === 0) return;
+  useEffect(() => {
+    // A navigation-only feed needs a category. Acquisition feeds already have
+    // books at the root and must not be redirected away from those books.
+    if (
+      !href &&
+      data &&
+      data.sourceId === sourceId &&
+      !entries.length &&
+      !loading &&
+      !error &&
+      navigationItems[0]?.href
+    ) {
+      router.replace(
+        '/books/catalog?' +
+          new URLSearchParams({ sourceId, href: navigationItems[0].href })
+      );
+    }
+  }, [
+    sourceId,
+    href,
+    data,
+    entries.length,
+    loading,
+    error,
+    navigationItems,
+    router,
+  ]);
 
-    const frameId = window.requestAnimationFrame(() => {
-      const container = navScrollerRef.current;
-      const activeItem = activeNavItemRef.current;
-      if (!container || !activeItem) return;
+  const pages = Math.max(1, Math.ceil(entries.length / PAGE_SIZE));
+  const currentPage = Math.min(page, pages);
+  useEffect(() => {
+    if (
+      !loader.current ||
+      !nextHref ||
+      loading ||
+      loadingMore ||
+      error ||
+      currentPage !== pages ||
+      failed.current.has(nextHref)
+    )
+      return;
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) void loadCatalog(nextHref, true);
+      },
+      { rootMargin: '160px 0px' }
+    );
+    observer.observe(loader.current);
+    return () => observer.disconnect();
+  }, [nextHref, loading, loadingMore, error, currentPage, pages, loadCatalog]);
 
-      const containerRect = container.getBoundingClientRect();
-      const activeRect = activeItem.getBoundingClientRect();
-      const targetLeft =
-        container.scrollLeft +
-        activeRect.left -
-        containerRect.left -
-        (container.clientWidth - activeItem.clientWidth) / 2;
-      container.scrollTo({ left: Math.max(0, targetLeft), behavior: smoothScrollBehavior() });
-    });
-
-    return () => window.cancelAnimationFrame(frameId);
-  }, [selectedHref, navigationItems]);
-
-  useLayoutEffect(() => {
-    if (!selectedSourceId || sources.length === 0) return;
-
-    const frameId = window.requestAnimationFrame(() => {
-      const container = sourceScrollerRef.current;
-      const activeItem = activeSourceItemRef.current;
-      if (!container || !activeItem) return;
-
-      const containerRect = container.getBoundingClientRect();
-      const activeRect = activeItem.getBoundingClientRect();
-      const targetLeft =
-        container.scrollLeft +
-        activeRect.left -
-        containerRect.left -
-        (container.clientWidth - activeItem.clientWidth) / 2;
-      container.scrollTo({ left: Math.max(0, targetLeft), behavior: smoothScrollBehavior() });
-    });
-
-    return () => window.cancelAnimationFrame(frameId);
-  }, [selectedSourceId, sources.length]);
+  const selected = sources.find((source) => source.id === sourceId);
+  const visibleSources = sources.filter(
+    (source) =>
+      source.id === sourceId ||
+      (source.capabilities?.catalogSupported &&
+        source.name.toLowerCase().includes(filter.trim().toLowerCase()))
+  );
+  const navigate = (nextSource: string, nextHref = '') => {
+    setError('');
+    const query = new URLSearchParams({ sourceId: nextSource });
+    if (nextHref) query.set('href', nextHref);
+    router.push('/books/catalog?' + query);
+  };
 
   return (
-    <div className='space-y-4'>
-      <div
-        ref={sourceScrollerRef}
-        className={CHIP_ROW}
-        onPointerDown={handleSourcePointerDown}
-        onPointerMove={handleSourcePointerMove}
-        onPointerUp={handleSourcePointerUp}
-        onPointerCancel={handleSourcePointerUp}
-        onPointerLeave={handleSourcePointerLeave}
-        onWheel={handleSourceWheel}
-      >
-        {sources.map((source) => (
-          <Link
-            key={source.id}
-            ref={
-              source.id === selectedSourceId ? activeSourceItemRef : undefined
-            }
-            href={`/books/catalog?sourceId=${encodeURIComponent(source.id)}`}
-            draggable={false}
-            onDragStart={(event) => event.preventDefault()}
-            onClick={(event) => {
-              if (suppressSourceClickRef.current) {
-                event.preventDefault();
-                suppressSourceClickRef.current = false;
-                return;
-              }
-              setSelectedSourceId(source.id);
-              setSelectedHref('');
-              showImmediateContentLoading();
-            }}
-            className={cn(
-              SPINE_TAB,
-              source.id === selectedSourceId ? SPINE_TAB_ACTIVE : SPINE_TAB_IDLE
-            )}
+    <div className='space-y-6'>
+      <section className='border-b border-library-edge pb-5 dark:border-library-night-edge'>
+        <div className='flex flex-wrap items-start justify-between gap-3'>
+          <div className='min-w-0'>
+            <p className={cn('text-xs', LIBRARY_MUTED)}>浏览目录</p>
+            <h1
+              className={cn(
+                'mt-1 break-words text-xl font-semibold sm:text-2xl',
+                LIBRARY_TEXT,
+                LIBRARY_SERIF
+              )}
+            >
+              {selected?.name || data?.sourceName || '选择书源'}
+            </h1>
+          </div>
+          {sourceId && (
+            <Link
+              prefetch={false}
+              href={'/books/search?' + new URLSearchParams({ sourceId })}
+              className={LIBRARY_GHOST_BUTTON}
+            >
+              <Search className='h-4 w-4' />
+              搜索此书源
+            </Link>
+          )}
+        </div>
+        <div className='mt-4 grid gap-3 sm:grid-cols-[minmax(10rem,1fr)_2fr]'>
+          <label>
+            <span className={cn('mb-2 block text-xs', LIBRARY_MUTED)}>
+              查找书源
+            </span>
+            <input
+              value={filter}
+              onChange={(event) => setFilter(event.target.value)}
+              aria-label='筛选目录书源'
+              placeholder='按名称筛选'
+              className={cn(LIBRARY_FIELD, 'min-h-11 text-base')}
+            />
+          </label>
+          <label className='min-w-0'>
+            <span className={cn('mb-2 block text-xs', LIBRARY_MUTED)}>
+              切换书源
+            </span>
+            <select
+              value={sourceId}
+              aria-label='切换目录书源'
+              onChange={(event) => navigate(event.target.value)}
+              className={cn(LIBRARY_FIELD, 'min-h-11 truncate text-base')}
+            >
+              <option value=''>请选择书源</option>
+              {sourceId && !selected && (
+                <option value={sourceId}>
+                  {data?.sourceName || '当前书源'}
+                </option>
+              )}
+              {visibleSources.map((source) => (
+                <option key={source.id} value={source.id}>
+                  {source.name}
+                </option>
+              ))}
+            </select>
+          </label>
+        </div>
+        {sourceError && (
+          <p className={cn('mt-2 text-xs', LIBRARY_MUTED)}>{sourceError}</p>
+        )}
+      </section>
+
+      {navigationItems.length > 0 &&
+        (navigationItems.length > 12 ? (
+          <label className='block sm:max-w-sm'>
+            <span className={cn('mb-2 block text-xs', LIBRARY_MUTED)}>
+              分类
+            </span>
+            <select
+              aria-label='切换书籍分类'
+              value={href}
+              onChange={(event) => navigate(sourceId, event.target.value)}
+              className={cn(LIBRARY_FIELD, 'min-h-11 text-base')}
+            >
+              <option value=''>全部目录</option>
+              {navigationItems.map((item) => (
+                <option key={item.href} value={item.href}>
+                  {item.title}
+                </option>
+              ))}
+            </select>
+          </label>
+        ) : (
+          <nav
+            aria-label='书籍分类'
+            className='flex gap-1 overflow-x-auto border-b border-library-edge pb-px dark:border-library-night-edge'
           >
-            {source.name}
-          </Link>
+            {navigationItems.map((item) => (
+              <Link
+                key={item.href}
+                prefetch={false}
+                href={
+                  '/books/catalog?' +
+                  new URLSearchParams({ sourceId, href: item.href })
+                }
+                aria-current={item.href === href ? 'page' : undefined}
+                className={cn(
+                  SPINE_TAB,
+                  'min-h-11',
+                  item.href === href ? SPINE_TAB_ACTIVE : SPINE_TAB_IDLE
+                )}
+              >
+                {item.title}
+              </Link>
+            ))}
+          </nav>
         ))}
-      </div>
-      {/* 没带 sourceId 时以前会一直停在骨架屏上——那是加载态，不是「等参数」态。 */}
+
       {!sourceId ? (
         <EmptyState
-          icon={<Compass className='h-7 w-7' />}
-          title='还没有选择书源'
-          description='从电子书馆挑一个书源，再进它的目录浏览。'
+          icon={<Compass className='h-6 w-6' />}
+          title='选择一个书源开始浏览'
+          description='在上方切换书源，或回到发现页查找。'
           action={
             <Link href='/books' className={LIBRARY_GHOST_BUTTON}>
-              回到电子书馆
+              回到发现页
             </Link>
           }
         />
-      ) : data || navigationItems.length > 0 || error ? (
-        <>
-          {navigationItems.length > 0 ? (
-            <div
-              ref={navScrollerRef}
-              className={CHIP_ROW}
-              onPointerDown={handleNavPointerDown}
-              onPointerMove={handleNavPointerMove}
-              onPointerUp={handleNavPointerUp}
-              onPointerCancel={handleNavPointerUp}
-              onPointerLeave={handleNavPointerLeave}
-              onWheel={handleNavWheel}
-            >
-              {navigationItems.map((item, index) => (
-                <Link
-                  key={`${item.href}-${index}`}
-                  ref={
-                    item.href === selectedHref ? activeNavItemRef : undefined
-                  }
-                  href={`/books/catalog?sourceId=${encodeURIComponent(
-                    sourceId
-                  )}&href=${encodeURIComponent(item.href)}`}
-                  draggable={false}
-                  onDragStart={(event) => event.preventDefault()}
-                  onClick={(event) => {
-                    if (suppressNavClickRef.current) {
-                      event.preventDefault();
-                      suppressNavClickRef.current = false;
-                      return;
-                    }
-                    setSelectedHref(item.href);
-                    showImmediateContentLoading();
-                  }}
-                  className={cn(
-                    SPINE_TAB,
-                    item.href === selectedHref
-                      ? SPINE_TAB_ACTIVE
-                      : SPINE_TAB_IDLE
-                  )}
-                >
-                  {item.title.trim()}
-                </Link>
-              ))}
-            </div>
-          ) : null}
-          {error ? (
-            <EmptyState
-              tone='error'
-              title='目录加载失败'
-              description={error}
-              action={
-                <button
-                  type='button'
-                  onClick={retryCatalog}
-                  className={LIBRARY_GHOST_BUTTON}
-                >
-                  <RefreshCw className='h-4 w-4' />
-                  重试
-                </button>
-              }
-            />
-          ) : loadingCatalog ? (
-            <LoadingMoreSkeleton />
-          ) : entries.length === 0 ? (
-            // 请求成功但一本都没有（空分类、分页越界、或是源自己出了问题）：
-            // 以前这里渲染的是空网格，整页只剩顶上两排标签，看着就是白屏。
-            <EmptyState
-              icon={<BookX className='h-7 w-7' />}
-              title='这个分类里没有书'
-              description='换一个分类看看，或重新加载一次。'
-              action={
-                <button
-                  type='button'
-                  onClick={retryCatalog}
-                  className={LIBRARY_GHOST_BUTTON}
-                >
-                  <RefreshCw className='h-4 w-4' />
-                  重新加载
-                </button>
-              }
-            />
-          ) : (
-            <MediaGrid>
-              {entries.map((item) => (
-                <MediaCard
-                  key={`${item.sourceId}-${item.id}-${
-                    item.detailHref || item.acquisitionLinks[0]?.href || ''
-                  }`}
-                  item={bookCardItem(item)}
-                  href={makeHref(sourceId, item)}
-                  onNavigate={() => cacheBookListItem(item)}
-                />
-              ))}
-            </MediaGrid>
-          )}
-          {loadingMore ? <LoadingMoreSkeleton /> : null}
-          {!loadingMore && nextHref ? (
-            <div ref={loaderRef} className='h-8 w-full' />
-          ) : null}
-        </>
       ) : (
-        <CatalogSkeleton />
+        <>
+          {error && (
+            <div
+              role='alert'
+              className='flex flex-wrap items-center justify-between gap-3 rounded-md border border-red-200 bg-red-50 px-4 py-4 text-sm text-red-800 dark:border-red-900 dark:bg-red-950/30 dark:text-red-200'
+            >
+              <p className='min-w-0 flex-1 basis-56 break-words leading-relaxed'>
+                {error}
+              </p>
+              <button
+                type='button'
+                onClick={() =>
+                  void loadCatalog(
+                    entries.length && nextHref ? nextHref : href,
+                    !!entries.length && !!nextHref
+                  )
+                }
+                className={cn(LIBRARY_GHOST_BUTTON, 'min-h-11')}
+              >
+                <RefreshCw className='h-4 w-4' />
+                重试
+              </button>
+            </div>
+          )}
+          {loading ? (
+            <MediaGridSkeleton count={6} />
+          ) : entries.length > 0 ? (
+            <>
+              <p className={cn('text-xs tabular-nums', LIBRARY_MUTED)}>
+                已加载 {entries.length} 本{nextHref ? ' · 还有后续页面' : ''}
+              </p>
+              <MediaGrid className='sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-6'>
+                {entries
+                  .slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE)
+                  .map((item) => (
+                    <MediaCard
+                      key={item.sourceId + '-' + item.id}
+                      item={bookCardItem(item)}
+                      href={buildBookDetailPath(item.sourceId, item.id)}
+                      onNavigate={() => cacheBookListItem(item)}
+                    />
+                  ))}
+              </MediaGrid>
+              <BooksPagination
+                page={currentPage}
+                total={entries.length}
+                pageSize={PAGE_SIZE}
+                onChange={setPage}
+              />
+            </>
+          ) : !error && data && !navigationItems.length ? (
+            <EmptyState
+              icon={<BookX className='h-6 w-6' />}
+              title='当前目录没有书籍'
+              description='可以切换分类，或搜索这个书源。'
+            />
+          ) : null}
+          {nextHref && currentPage === pages && (
+            <div ref={loader} className='flex justify-center py-4'>
+              <button
+                type='button'
+                disabled={loadingMore}
+                onClick={() => void loadCatalog(nextHref, true)}
+                className={cn(LIBRARY_GHOST_BUTTON, 'min-h-11')}
+              >
+                {loadingMore && (
+                  <Loader2 className='h-4 w-4 animate-spin motion-reduce:animate-none' />
+                )}
+                {loadingMore ? '正在加载后续页面' : '加载更多'}
+              </button>
+            </div>
+          )}
+        </>
       )}
     </div>
   );

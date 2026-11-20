@@ -1,109 +1,100 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-import { bookProvider } from '@/lib/book-provider';
+import { abortError } from '@/lib/book-search';
+import { bookProvider, BookSearchPlanChangedError } from '@/lib/book-provider';
 
 import { getAuthorizedBooksUsername } from '../../_utils';
 
 export const runtime = 'nodejs';
 
-function sse(data: unknown): string {
-  return `data: ${JSON.stringify(data)}\n\n`;
-}
-
 export async function GET(request: NextRequest) {
   const username = await getAuthorizedBooksUsername(request);
   if (username instanceof NextResponse) return username;
-
-  const { searchParams } = new URL(request.url);
-  const q = searchParams.get('q')?.trim();
-  const sourceId = searchParams.get('sourceId')?.trim() || undefined;
-
-  if (!q) {
+  const params = request.nextUrl.searchParams;
+  const q = params.get('q')?.trim();
+  if (!q)
     return NextResponse.json({ error: '缺少搜索关键词' }, { status: 400 });
+  let prepared;
+  try {
+    prepared = await bookProvider.prepareSearchBatch(params, request.signal);
+  } catch (error) {
+    return NextResponse.json(
+      {
+        error:
+          error instanceof BookSearchPlanChangedError
+            ? error.message
+            : '无法加载搜索书源，请稍后重试',
+      },
+      { status: error instanceof BookSearchPlanChangedError ? 409 : 503 }
+    );
   }
 
+  const batch = prepared;
   const encoder = new TextEncoder();
+  const abort = new AbortController();
   let closed = false;
-
+  let heartbeat: ReturnType<typeof setInterval> | undefined;
+  const onAbort = () => abort.abort(abortError());
+  request.signal.addEventListener('abort', onAbort, { once: true });
+  if (request.signal.aborted) onAbort();
+  const cleanup = () => {
+    if (heartbeat) clearInterval(heartbeat);
+    request.signal.removeEventListener('abort', onAbort);
+  };
   const stream = new ReadableStream<Uint8Array>({
     async start(controller) {
       const send = (payload: unknown) => {
-        if (closed) return;
+        if (closed || abort.signal.aborted) return;
         try {
-          controller.enqueue(encoder.encode(sse(payload)));
+          controller.enqueue(
+            encoder.encode('data: ' + JSON.stringify(payload) + '\n\n')
+          );
         } catch {
           closed = true;
+          onAbort();
         }
       };
-
+      heartbeat = setInterval(() => send({ type: 'heartbeat' }), 10000);
       try {
-        const sources = await bookProvider.getSearchSources(sourceId);
-        let completedSources = 0;
-        let totalResults = 0;
-        const failedSources: Array<{ sourceId: string; sourceName: string; error: string }> = [];
-
-        send({ type: 'start', totalSources: sources.length });
-
-        await Promise.all(
-          sources.map(async (source) => {
-            try {
-              const result = await bookProvider.searchBooksSource(q, source);
-              completedSources += 1;
-              totalResults += result.results.length;
-              send({
-                type: 'source_result',
-                sourceId: source.id,
-                sourceName: source.name,
-                results: result.results,
-                completedSources,
-                totalSources: sources.length,
-              });
-            } catch (error) {
-              const failure = {
-                sourceId: source.id,
-                sourceName: source.name,
-                error: error instanceof Error ? error.message : '未知错误',
-              };
-              completedSources += 1;
-              failedSources.push(failure);
-              send({
-                type: 'source_error',
-                ...failure,
-                completedSources,
-                totalSources: sources.length,
-              });
-            }
-          })
-        );
-
+        send({ type: 'start', ...batch.summary });
+        const result = await bookProvider.searchBatch(q, batch, {
+          signal: abort.signal,
+          forceRefresh: params.get('refresh') === '1',
+          onEvent: send,
+        });
         send({
           type: 'complete',
-          completedSources,
-          totalSources: sources.length,
-          totalResults,
-          failedSources,
+          ...batch.summary,
+          completedSources: result.completedSources,
+          failedSources: result.failedSources,
+          timedOutSources: result.timedOutSources,
         });
-      } catch (error) {
-        send({ type: 'error', error: error instanceof Error ? error.message : '搜索失败' });
+      } catch {
+        send({
+          type: 'error',
+          error: '本批搜索中断，已找到的结果已保留，请重试',
+        });
       } finally {
         closed = true;
+        cleanup();
         try {
           controller.close();
         } catch {
-          // ignore client disconnect races
+          /* The browser may already have disconnected. */
         }
       }
     },
     cancel() {
       closed = true;
+      onAbort();
+      cleanup();
     },
   });
-
   return new Response(stream, {
     headers: {
       'Content-Type': 'text/event-stream; charset=utf-8',
-      'Cache-Control': 'no-cache, no-transform',
-      Connection: 'keep-alive',
+      'Cache-Control': 'no-cache, no-store, no-transform',
+      'X-Accel-Buffering': 'no',
     },
   });
 }

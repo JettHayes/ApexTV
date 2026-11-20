@@ -81,7 +81,7 @@ const Sidebar = ({ onToggle }: { onToggle?: (collapsed: boolean) => void; active
         aria-label={label} aria-current={active ? 'page' : undefined} data-active={active}
         className='ptv-nav-link flex min-h-11 items-center gap-3 rounded-lg px-4 text-sm font-medium transition-colors'>
         <Icon className='h-5 w-5 shrink-0' aria-hidden='true' />
-        {!isCollapsed && <span className='ptv-nav-label truncate'>{label}</span>}
+        <span className='ptv-nav-label truncate'>{label}</span>
       </Link>
     );
   });
