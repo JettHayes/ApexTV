@@ -3,8 +3,9 @@
  * 基于 M3U8Download 项目改造为 TypeScript 版本
  */
 
-// @ts-expect-error - mux.js 没有类型定义
 import { readLocalSetting } from '@/lib/local-settings';
+
+// @ts-expect-error - mux.js 没有类型定义
 import * as muxjs from 'mux.js';
 
 import { AESDecryptor } from './aes-decryptor';
