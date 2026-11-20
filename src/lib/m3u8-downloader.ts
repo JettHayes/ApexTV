@@ -4,6 +4,7 @@
  */
 
 // @ts-expect-error - mux.js 没有类型定义
+import { readLocalSetting } from '@/lib/local-settings';
 import * as muxjs from 'mux.js';
 
 import { AESDecryptor } from './aes-decryptor';
@@ -417,7 +418,7 @@ export class M3U8Downloader {
     const maxRetries = 3;
     // 单个分片超时时间，默认 30 秒；可通过 localStorage.downloadSegmentTimeout 调整（单位：毫秒）
     const segmentTimeout = typeof window !== 'undefined'
-      ? Number(localStorage.getItem('downloadSegmentTimeout') || 30000)
+      ? readLocalSetting('downloadSegmentTimeout')
       : 30000;
 
     const cleanupRequest = (xhr: XMLHttpRequest) => {
@@ -572,7 +573,7 @@ export class M3U8Downloader {
 
     // 从localStorage读取单任务线程数设置，默认6个
     const threadsPerTask = typeof window !== 'undefined'
-      ? Number(localStorage.getItem('downloadThreadsPerTask') || 6)
+      ? readLocalSetting('downloadThreadsPerTask')
       : 6;
 
     // 并发下载片段

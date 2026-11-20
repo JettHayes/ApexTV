@@ -2,6 +2,7 @@
 
 'use client';
 
+import { readLocalSetting } from '@/lib/local-settings';
 import {
   BookMarked,
   BookOpen,
@@ -260,30 +261,9 @@ function HomeClient() {
   };
 
   const loadHomeLayoutSettings = () => {
-    if (typeof window === 'undefined') return;
-
-    const savedHomeModules = localStorage.getItem('homeModules');
-    if (savedHomeModules) {
-      try {
-        setHomeModules(JSON.parse(savedHomeModules));
-      } catch (error) {
-        console.error('解析首页模块配置失败:', error);
-      }
-    }
-
-    const savedHomeBannerEnabled = localStorage.getItem('homeBannerEnabled');
-    if (savedHomeBannerEnabled !== null) {
-      setHomeBannerEnabled(savedHomeBannerEnabled === 'true');
-    }
-
-    const savedHomeContinueWatchingEnabled = localStorage.getItem(
-      'homeContinueWatchingEnabled'
-    );
-    if (savedHomeContinueWatchingEnabled !== null) {
-      setHomeContinueWatchingEnabled(
-        savedHomeContinueWatchingEnabled === 'true'
-      );
-    }
+    setHomeModules(readLocalSetting('homeModules'));
+    setHomeBannerEnabled(readLocalSetting('homeBannerEnabled'));
+    setHomeContinueWatchingEnabled(readLocalSetting('homeContinueWatchingEnabled'));
   };
 
   // 加载首页模块配置
@@ -297,8 +277,13 @@ function HomeClient() {
       loadHomeLayoutSettings();
     };
 
+    const onStorage = (event: StorageEvent) => {
+      if (!event.key || event.key.startsWith('home')) loadHomeLayoutSettings();
+    };
     window.addEventListener('homeModulesUpdated', handleHomeModulesUpdated);
+    window.addEventListener('storage', onStorage);
     return () => {
+      window.removeEventListener('storage', onStorage);
       window.removeEventListener(
         'homeModulesUpdated',
         handleHomeModulesUpdated

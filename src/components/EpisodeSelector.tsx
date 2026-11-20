@@ -32,6 +32,7 @@ import DanmakuPanel from '@/components/DanmakuPanel';
 import EpisodeFilterSettings from '@/components/EpisodeFilterSettings';
 import EpisodeTitleCorrectDialog from '@/components/EpisodeTitleCorrectDialog';
 import ProxyImage from '@/components/ProxyImage';
+import { useLocalSetting } from '@/hooks/useLocalSetting';
 import { useLongPress } from '@/hooks/useLongPress';
 
 /** 选集按钮上显示的短标签（数字等）；全名仍保留在 originalTitle 供长按查看 */
@@ -577,31 +578,9 @@ const EpisodeSelector: React.FC<EpisodeSelectorProps> = ({
   const episodeMenuRef = useRef<HTMLDivElement>(null);
 
   // 读取本地"优选和测速"开关，默认开启
-  const [optimizationEnabled] = useState<boolean>(() => {
-    if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('enableOptimization');
-      if (saved !== null) {
-        try {
-          return JSON.parse(saved);
-        } catch {
-          /* ignore */
-        }
-      }
-    }
-    return true;
-  });
-
+  const optimizationEnabled = useLocalSetting('enableOptimization');
   // 读取测速超时设置，默认4秒
-  const [speedTestTimeout] = useState<number>(() => {
-    if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('speedTestTimeout');
-      if (saved !== null) {
-        return Number(saved);
-      }
-    }
-    return 4000;
-  });
-
+  const speedTestTimeout = useLocalSetting('speedTestTimeout');
   // 集数过滤逻辑
   const isEpisodeFiltered = useCallback(
     (episodeNumber: number): boolean => {

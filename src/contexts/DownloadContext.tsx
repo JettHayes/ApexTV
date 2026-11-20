@@ -4,6 +4,7 @@ import React, { createContext, useCallback, useContext, useState, useEffect } fr
 
 import { M3U8Downloader, M3U8DownloadTask } from '@/lib/m3u8-downloader';
 import Toast from '@/components/Toast';
+import { readLocalSetting } from '@/lib/local-settings';
 import { downloadDB } from '@/lib/download-db';
 import {
   buildIndexedDBVideoCacheKey,
@@ -48,7 +49,7 @@ export function DownloadProvider({ children }: { children: React.ReactNode }) {
   const startNextPendingTask = useCallback((currentDownloader: M3U8Downloader) => {
     // 从localStorage读取最大同时下载限制，默认6个
     const maxConcurrentDownloads = typeof window !== 'undefined'
-      ? Number(localStorage.getItem('maxConcurrentDownloads') || 6)
+      ? readLocalSetting('maxConcurrentDownloads')
       : 6;
 
     const allTasks = currentDownloader.getAllTasks();
@@ -338,7 +339,7 @@ export function DownloadProvider({ children }: { children: React.ReactNode }) {
     try {
       // 读取下载模式设置
       const downloadMode = typeof window !== 'undefined'
-        ? (localStorage.getItem('downloadMode') as 'browser' | 'filesystem' | 'indexeddb') || 'browser'
+        ? readLocalSetting('downloadMode')
         : 'browser';
 
       // 如果是 filesystem 模式，检查是否已经下载过
@@ -541,7 +542,7 @@ export function DownloadProvider({ children }: { children: React.ReactNode }) {
 
       // 从localStorage读取最大同时下载限制，默认6个
       const maxConcurrentDownloads = typeof window !== 'undefined'
-        ? Number(localStorage.getItem('maxConcurrentDownloads') || 6)
+        ? readLocalSetting('maxConcurrentDownloads')
         : 6;
 
       // 检查当前正在下载的任务数量（包括正在启动的）
@@ -581,7 +582,7 @@ export function DownloadProvider({ children }: { children: React.ReactNode }) {
   const startTask = useCallback((taskId: string) => {
     // 从localStorage读取最大同时下载限制，默认6个
     const maxConcurrentDownloads = typeof window !== 'undefined'
-      ? Number(localStorage.getItem('maxConcurrentDownloads') || 6)
+      ? readLocalSetting('maxConcurrentDownloads')
       : 6;
 
     const currentDownloadingCount = downloader.getAllTasks().filter(t => t.status === 'downloading').length;

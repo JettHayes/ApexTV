@@ -158,6 +158,7 @@ export default function BannerCarousel({
 
     const handleHomeModulesUpdated = () => {
       setBannerHeightScale(getSavedBannerHeightScale());
+      setEnableTrailers(localStorage.getItem('enableTrailers') === 'true');
     };
 
     window.addEventListener('homeModulesUpdated', handleHomeModulesUpdated);

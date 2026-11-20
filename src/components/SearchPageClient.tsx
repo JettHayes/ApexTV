@@ -47,6 +47,8 @@ import AcgSearch from '@/components/AcgSearch';
 import CapsuleSwitch from '@/components/CapsuleSwitch';
 import ContinueWatching from '@/components/ContinueWatching';
 import ImageViewer from '@/components/ImageViewer';
+import { useLocalSetting } from '@/hooks/useLocalSetting';
+import { LOCAL_SETTINGS_CHANGED, readLocalSetting } from '@/lib/local-settings';
 import PageLayout from '@/components/PageLayout';
 import PansouSearch, { CLOUD_TYPE_NAMES } from '@/components/PansouSearch';
 import ProxyImage from '@/components/ProxyImage';
@@ -141,7 +143,7 @@ export function SearchPageClient({ searchBase = '/search' }: { searchBase?: stri
   // 是否使用了缓存结果
   const [isFromCache, setIsFromCache] = useState(false);
   // 精确搜索开关
-  const [exactSearch, setExactSearch] = useState(true);
+  const exactSearch = useLocalSetting('exactSearch');
   const [advancedOpen, setAdvancedOpen] = useState(false);
   const [privateLibraryOnly, setPrivateLibraryOnly] = useState(false);
   const [privateLibraryOnlyReady, setPrivateLibraryOnlyReady] = useState(false);
@@ -294,19 +296,23 @@ export function SearchPageClient({ searchBase = '/search' }: { searchBase?: stri
   });
 
   // 获取默认聚合设置：只读取用户本地设置，默认为 true
-  const getDefaultAggregate = () => {
-    if (typeof window !== 'undefined') {
-      const userSetting = localStorage.getItem('defaultAggregateSearch');
-      if (userSetting !== null) {
-        return JSON.parse(userSetting);
-      }
-    }
-    return true; // 默认启用聚合
-  };
+  const getDefaultAggregate = () => readLocalSetting('defaultAggregateSearch');
 
   const [viewMode, setViewMode] = useState<'agg' | 'all'>(() => {
     return getDefaultAggregate() ? 'agg' : 'all';
   });
+  useEffect(() => {
+    const update = (event: Event) => {
+      const keys = (event as CustomEvent<{ keys?: string[] }>).detail?.keys;
+      const storageKey = (event as StorageEvent).key;
+      if ((!keys || keys.includes('defaultAggregateSearch')) && (!storageKey || storageKey === 'defaultAggregateSearch'))
+        setViewMode(readLocalSetting('defaultAggregateSearch') ? 'agg' : 'all');
+    };
+    window.addEventListener(LOCAL_SETTINGS_CHANGED, update);
+    window.addEventListener('storage', update);
+    return () => { window.removeEventListener(LOCAL_SETTINGS_CHANGED, update); window.removeEventListener('storage', update); };
+  }, []);
+
   const [resultDisplayMode, setResultDisplayMode] = useState<'card' | 'list'>(
     () => {
       if (typeof window !== 'undefined') {
@@ -1108,20 +1114,7 @@ export function SearchPageClient({ searchBase = '/search' }: { searchBase?: stri
 
     // 读取流式搜索设置
     if (typeof window !== 'undefined') {
-      const savedFluidSearch = localStorage.getItem('fluidSearch');
-      const defaultFluidSearch =
-        (window as any).RUNTIME_CONFIG?.FLUID_SEARCH !== false;
-      if (savedFluidSearch !== null) {
-        setUseFluidSearch(JSON.parse(savedFluidSearch));
-      } else if (defaultFluidSearch !== undefined) {
-        setUseFluidSearch(defaultFluidSearch);
-      }
-
-      // 读取精确搜索设置
-      const savedExactSearch = localStorage.getItem('exactSearch');
-      if (savedExactSearch !== null) {
-        setExactSearch(savedExactSearch === 'true');
-      }
+      setUseFluidSearch(readLocalSetting('fluidSearch'));
 
       const savedPrivateLibraryOnly = localStorage.getItem(
         'searchPrivateLibraryOnly'
@@ -1348,7 +1341,7 @@ export function SearchPageClient({ searchBase = '/search' }: { searchBase?: stri
       if (typeof window !== 'undefined') {
         const savedFluidSearch = localStorage.getItem('fluidSearch');
         if (savedFluidSearch !== null) {
-          currentFluidSearch = JSON.parse(savedFluidSearch);
+          currentFluidSearch = readLocalSetting('fluidSearch');
         } else {
           const defaultFluidSearch =
             (window as any).RUNTIME_CONFIG?.FLUID_SEARCH !== false;

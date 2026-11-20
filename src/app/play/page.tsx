@@ -106,6 +106,8 @@ import {
 import { getTMDBImageUrl } from '@/lib/tmdb.search';
 import { DanmakuFilterConfig, EpisodeFilterConfig, SearchResult } from '@/lib/types';
 import { base58Decode, getVideoResolutionFromM3u8, processImageUrl } from '@/lib/utils';
+import { useLocalSetting } from '@/hooks/useLocalSetting';
+import { LOCAL_SETTINGS_CHANGED, readLocalSetting, writeLocalSetting } from '@/lib/local-settings';
 import { useEnableAIComments } from '@/hooks/useEnableAIComments';
 import { useEnableComments } from '@/hooks/useEnableComments';
 import {
@@ -531,6 +533,24 @@ function PlayPageClient() {
     seekStepSecondsRef.current = seekStepSeconds;
   }, [seekStepSeconds]);
 
+  useEffect(() => {
+    const update = () => {
+      setQuickForwardSeconds(readLocalSetting('quickForwardSeconds'));
+      setSeekStepSeconds(readLocalSetting('seekStepSeconds'));
+      const strategy = readLocalSetting('bufferStrategy');
+      const video = artPlayerRef.current?.video as (HTMLVideoElement & { hls?: { config: Record<string, unknown> } }) | undefined;
+      const hls = video?.hls;
+      if (hls?.config) {
+        const limits = { low: [15, 15, 30], medium: [30, 30, 60], high: [60, 40, 120], ultra: [120, 60, 240] };
+        const [forward, back, megabytes] = limits[strategy as keyof typeof limits] ?? limits.medium;
+        Object.assign(hls.config, { maxBufferLength: forward, backBufferLength: back, maxBufferSize: megabytes * 1000 * 1000 });
+      }
+    };
+    window.addEventListener(LOCAL_SETTINGS_CHANGED, update);
+    window.addEventListener('storage', update);
+    return () => { window.removeEventListener(LOCAL_SETTINGS_CHANGED, update); window.removeEventListener('storage', update); };
+  }, []);
+
   // 跳过检查的时间间隔控制
   const lastSkipCheckRef = useRef(0);
 
@@ -705,13 +725,7 @@ function PlayPageClient() {
   );
 
   // 弹幕热力图完全禁用开关（默认不禁用，即启用热力图功能）
-  const [danmakuHeatmapDisabled, setDanmakuHeatmapDisabled] = useState<boolean>(() => {
-    if (typeof window !== 'undefined') {
-      const v = localStorage.getItem('danmaku_heatmap_disabled');
-      if (v !== null) return v === 'true';
-    }
-    return false; // 默认不禁用
-  });
+  const danmakuHeatmapDisabled = useLocalSetting('danmaku_heatmap_disabled');
   const danmakuHeatmapDisabledRef = useRef(danmakuHeatmapDisabled);
   useEffect(() => {
     danmakuHeatmapDisabledRef.current = danmakuHeatmapDisabled;
@@ -1234,7 +1248,7 @@ function PlayPageClient() {
           }
 
           // 应用弹幕数量限制
-          const maxCount = typeof window !== 'undefined' ? parseInt(localStorage.getItem('danmakuMaxCount') || '5000', 10) : 0;
+          const maxCount = typeof window !== 'undefined' ? readLocalSetting('danmakuMaxCount') : 0;
           let calculatedOriginalCount = 0;
           if (maxCount > 0 && danmakuData.length > maxCount) {
             const originalCount = danmakuData.length;
@@ -1571,6 +1585,8 @@ function PlayPageClient() {
     fetchDoubanRating();
   }, [videoDoubanId, isDirectPlay]);
 
+  const tmdbBackdropDisabled = useLocalSetting('tmdb_backdrop_disabled');
+
   // 获取TMDB背景图
   useEffect(() => {
     const fetchTMDBBackdrop = async () => {
@@ -1751,7 +1767,7 @@ function PlayPageClient() {
     };
 
     fetchTMDBBackdrop();
-  }, [videoTitle, videoDoubanId, isDirectPlay]);
+  }, [videoTitle, videoDoubanId, isDirectPlay, tmdbBackdropDisabled]);
 
   // 复用背景请求解析出的 tmdbId，拉取该剧集当前季的分集名称（懒加载，按需触发）
   const loadTmdbEpisodeNames = useCallback(
@@ -2301,32 +2317,8 @@ function PlayPageClient() {
     return true;
   };
 
-  const isPlaybackThumbnailDisabled = () => {
-    if (typeof window === 'undefined') {
-      return true;
-    }
-
-    const saved = localStorage.getItem('disablePlaybackThumbnail');
-    if (saved !== null) {
-      return saved === 'true';
-    }
-
-    return true;
-  };
-
-  const isDanmakuAutoLoadDisabled = () => {
-    if (typeof window === 'undefined') {
-      return false;
-    }
-
-    const saved = localStorage.getItem('disableAutoLoadDanmaku');
-    if (saved !== null) {
-      return saved === 'true';
-    }
-
-    return (window as any).RUNTIME_CONFIG?.DANMAKU_AUTO_LOAD_DEFAULT === false;
-  };
-
+  const isPlaybackThumbnailDisabled = () => readLocalSetting('disablePlaybackThumbnail');
+  const isDanmakuAutoLoadDisabled = () => readLocalSetting('disableAutoLoadDanmaku');
   // 用于记录是否需要在播放器 ready 后跳转到指定进度
   const resumeTimeRef = useRef<number | null>(null);
   // 切换鸿蒙 HLS 内核时，同时恢复切换前的播放/暂停状态。
@@ -2365,41 +2357,10 @@ function PlayPageClient() {
   }, []);
 
   // 优选和测速开关
-  const [optimizationEnabled] = useState<boolean>(() => {
-    if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('enableOptimization');
-      if (saved !== null) {
-        try {
-          return JSON.parse(saved);
-        } catch {
-          /* ignore */
-        }
-      }
-    }
-    return true;
-  });
-
-  const [preferStrategy] = useState<'fast' | 'full'>(() => {
-    if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('preferStrategy');
-      if (saved === 'fast' || saved === 'full') {
-        return saved;
-      }
-    }
-    return 'fast';
-  });
-
+  const optimizationEnabled = useLocalSetting('enableOptimization');
+  const preferStrategy = useLocalSetting('preferStrategy');
   // 优选偏好：综合判定(balanced) / 分辨率优先(resolution) / 网速优先(speed)
-  const [preferMode] = useState<'balanced' | 'resolution' | 'speed'>(() => {
-    if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('preferMode');
-      if (saved === 'balanced' || saved === 'resolution' || saved === 'speed') {
-        return saved;
-      }
-    }
-    return 'balanced';
-  });
-
+  const preferMode = useLocalSetting('preferMode');
   // 保存优选时的测速结果，避免EpisodeSelector重复测速
   const [precomputedVideoInfo, setPrecomputedVideoInfo] = useState<
     Map<string, { quality: string; loadSpeed: string; pingTime: number; bitrate: string }>
@@ -6513,7 +6474,7 @@ function PlayPageClient() {
       }
 
       // 应用弹幕数量限制
-      const maxCount = typeof window !== 'undefined' ? parseInt(localStorage.getItem('danmakuMaxCount') || '5000', 10) : 0;
+      const maxCount = typeof window !== 'undefined' ? readLocalSetting('danmakuMaxCount') : 0;
       let calculatedOriginalCount = 0;
       if (maxCount > 0 && danmakuData.length > maxCount) {
         const originalCount = danmakuData.length;
@@ -6738,7 +6699,7 @@ function PlayPageClient() {
       }
 
       // 应用弹幕数量限制
-      const maxCount = typeof window !== 'undefined' ? parseInt(localStorage.getItem('danmakuMaxCount') || '5000', 10) : 0;
+      const maxCount = typeof window !== 'undefined' ? readLocalSetting('danmakuMaxCount') : 0;
       if (maxCount > 0 && danmakuData.length > maxCount) {
         const originalCount = danmakuData.length;
         const step = danmakuData.length / maxCount;
@@ -8220,7 +8181,7 @@ function PlayPageClient() {
 
                   setQuickForwardSeconds(normalizedSeconds);
                   quickForwardSecondsRef.current = normalizedSeconds;
-                  localStorage.setItem(QUICK_FORWARD_STORAGE_KEY, String(normalizedSeconds));
+                  writeLocalSetting('quickForwardSeconds', normalizedSeconds);
                   if (artPlayerRef.current) {
                     artPlayerRef.current.notice.show = `快捷快进已设置为${formatQuickForwardDuration(normalizedSeconds)}`;
                   }
@@ -8299,7 +8260,7 @@ function PlayPageClient() {
 
                   setSeekStepSeconds(normalizedSeconds);
                   seekStepSecondsRef.current = normalizedSeconds;
-                  localStorage.setItem(SEEK_STEP_STORAGE_KEY, String(normalizedSeconds));
+                  writeLocalSetting('seekStepSeconds', normalizedSeconds);
                   if (artPlayerRef.current) {
                     artPlayerRef.current.notice.show = `快进/倒退时间已设为${formatQuickForwardDuration(normalizedSeconds)}`;
                   }
@@ -10238,7 +10199,7 @@ function PlayPageClient() {
 
           // 下集预缓冲逻辑
           const nextEpisodePreCacheEnabled = typeof window !== 'undefined'
-            ? localStorage.getItem('nextEpisodePreCache') === 'true'
+            ? readLocalSetting('nextEpisodePreCache')
             : false;
 
           if (nextEpisodePreCacheEnabled) {
@@ -10316,10 +10277,10 @@ function PlayPageClient() {
 
           // 下集弹幕预加载逻辑
           const nextEpisodeDanmakuPreloadEnabled = typeof window !== 'undefined'
-            ? localStorage.getItem('nextEpisodeDanmakuPreload') === 'true'
+            ? readLocalSetting('nextEpisodeDanmakuPreload')
             : false;
 
-          if (nextEpisodeDanmakuPreloadEnabled) {
+          if (nextEpisodeDanmakuPreloadEnabled && !isDanmakuAutoLoadDisabled()) {
             const currentTime = artPlayerRef.current?.currentTime || 0;
             const duration = artPlayerRef.current?.duration || 0;
             const progress = duration > 0 ? currentTime / duration : 0;
@@ -10673,7 +10634,7 @@ function PlayPageClient() {
     <PageLayout activePath='/play' hideNavigation={isWebFullscreen}>
       <div className='ptv-play-page'>
       {/* TMDB背景图 */}
-      {tmdbBackdrop && (
+      {!tmdbBackdropDisabled && tmdbBackdrop && (
         <div
           className='ptv-play-backdrop fixed inset-0 z-0'
           style={{

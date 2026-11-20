@@ -21,8 +21,7 @@ export const LOCAL_SETTINGS_KEYS: string[] = [
   'maxConcurrentDownloads',
   'downloadThreadsPerTask',
   'downloadSegmentTimeout',
-  'downloadMode',
-  'filesystemSavePath',
+  // 下载模式与目录权限属于当前设备，不跟随云端副本迁移。
   'fluidSearch',
   'tmdb_backdrop_disabled',
   'enableTrailers',
