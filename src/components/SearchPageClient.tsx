@@ -2082,7 +2082,7 @@ export function SearchPageClient({ searchBase = '/search' }: { searchBase?: stri
 
         {/* 搜索结果或搜索历史 */}
         <div
-          className={`max-w-[95%] mx-auto overflow-visible ${
+          className={`apex-search-results overflow-visible ${
             activeTab === 'video' && !showResults
               ? 'mt-2'
               : activeTab === 'pansou'
@@ -2281,7 +2281,7 @@ export function SearchPageClient({ searchBase = '/search' }: { searchBase?: stri
                   ) : (
                     (() => {
                       const gridClassName =
-                        'justify-start grid grid-cols-3 gap-x-2 gap-y-14 px-0 sm:grid-cols-[repeat(auto-fill,_minmax(11rem,_1fr))] sm:gap-x-8 sm:gap-y-20 sm:px-2';
+                        'apex-poster-grid';
 
                       const listClassName = 'space-y-4';
 

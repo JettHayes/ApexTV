@@ -86,6 +86,7 @@ export default function PersonalLibraryPage({ view }: { view: string }) {
     [notice, setNotice] = useState('');
   const [listName, setListName] = useState(''),
     [showListForm, setShowListForm] = useState(false);
+  const [listError, setListError] = useState('');
   const [confirm, setConfirm] = useState<{
     title: string;
     copy: string;
@@ -203,6 +204,7 @@ export default function PersonalLibraryPage({ view }: { view: string }) {
               onClick={() => {
                 setShowListForm((value) => !value);
                 setListName('');
+                setListError('');
               }}
             >
               <FolderPlus size={17} />
@@ -210,19 +212,6 @@ export default function PersonalLibraryPage({ view }: { view: string }) {
             </button>
           )}
         </header>
-        <nav className='my-tabs' aria-label='我的内容分类'>
-          {views.map(({ id, title, icon: Icon }) => (
-            <Link
-              key={id}
-              href={'/my/' + id}
-              prefetch={false}
-              aria-current={current.id === id ? 'page' : undefined}
-            >
-              <Icon size={17} />
-              <span>{title}</span>
-            </Link>
-          ))}
-        </nav>
         {current.id === 'favorites' && (
           <div className='my-collections'>
             <button aria-pressed={!list} onClick={() => setList('')}>
@@ -245,43 +234,6 @@ export default function PersonalLibraryPage({ view }: { view: string }) {
               </button>
             ))}
           </div>
-        )}
-        {showListForm && current.id === 'favorites' && (
-          <form
-            className='my-list-form'
-            onSubmit={(event) => {
-              event.preventDefault();
-              action(async () => {
-                await saveLibraryList(listName);
-                setShowListForm(false);
-                setListName('');
-              }, '片单已创建');
-            }}
-          >
-            <label htmlFor='my-list-name'>片单名称</label>
-            <input
-              id='my-list-name'
-              maxLength={40}
-              value={listName}
-              onChange={(event) => setListName(event.target.value)}
-              placeholder='例如：演唱会现场'
-              required
-            />
-            <button
-              className='my-button my-primary'
-              disabled={busy || !listName.trim()}
-            >
-              创建
-            </button>
-            <button
-              type='button'
-              className='my-icon-button'
-              aria-label='取消新建片单'
-              onClick={() => setShowListForm(false)}
-            >
-              <X size={18} />
-            </button>
-          </form>
         )}
         {activeList && current.id === 'favorites' && (
           <div className='my-active-list'>
@@ -632,6 +584,95 @@ export default function PersonalLibraryPage({ view }: { view: string }) {
       {editing && (
         <OrganizeVideoDialog video={editing} onClose={() => setEditing(null)} />
       )}
+      <Dialog
+        open={showListForm && current.id === 'favorites'}
+        onClose={() => {
+          if (!busy) setShowListForm(false);
+        }}
+        className='my-dialog'
+      >
+        <DialogBackdrop className='my-dialog-backdrop' />
+        <div className='my-dialog-position'>
+          <DialogPanel className='my-list-editor'>
+            <header>
+              <div>
+                <span className='my-list-editor-kicker'>
+                  <FolderPlus size={16} />
+                  我的片单
+                </span>
+                <DialogTitle>新建片单</DialogTitle>
+                <p>把想一起看的影片，收进同一份片单。</p>
+              </div>
+              <button
+                type='button'
+                className='my-icon-button'
+                aria-label='关闭新建片单'
+                disabled={busy}
+                onClick={() => setShowListForm(false)}
+              >
+                <X size={19} />
+              </button>
+            </header>
+            <form
+              onSubmit={async (event) => {
+                event.preventDefault();
+                if (busy || !listName.trim()) return;
+                setBusy(true);
+                setListError('');
+                try {
+                  await saveLibraryList(listName);
+                  setShowListForm(false);
+                  setListName('');
+                  setNotice('片单已创建');
+                } catch (error) {
+                  setListError(
+                    error instanceof Error ? error.message : '创建失败，请重试'
+                  );
+                } finally {
+                  setBusy(false);
+                }
+              }}
+            >
+              <label htmlFor='my-list-name'>片单名称</label>
+              <div className='my-list-name-field'>
+                <input
+                  id='my-list-name'
+                  autoFocus
+                  maxLength={40}
+                  value={listName}
+                  disabled={busy}
+                  onChange={(event) => setListName(event.target.value)}
+                  placeholder='例如：演唱会现场'
+                  required
+                />
+                <span aria-hidden='true'>{listName.length}/40</span>
+              </div>
+              {listError && (
+                <p className='my-list-editor-error' role='alert'>
+                  {listError}
+                </p>
+              )}
+              <footer>
+                <button
+                  type='button'
+                  className='my-button'
+                  disabled={busy}
+                  onClick={() => setShowListForm(false)}
+                >
+                  取消
+                </button>
+                <button
+                  type='submit'
+                  className='my-button my-primary'
+                  disabled={busy || !listName.trim()}
+                >
+                  {busy ? '正在创建…' : '创建片单'}
+                </button>
+              </footer>
+            </form>
+          </DialogPanel>
+        </div>
+      </Dialog>
       <Dialog
         open={Boolean(confirm)}
         onClose={() => {

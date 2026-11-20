@@ -22,6 +22,7 @@ import {
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { GripVertical, ImageOff, ListMusic, SlidersHorizontal, Trash2, X } from 'lucide-react';
+import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
@@ -34,6 +35,7 @@ import type { MusicQuality, MusicSource, Song } from '@/lib/music/types';
 import AddToPlaylistModal from '@/components/AddToPlaylistModal';
 import LyricsPiPWindow from '@/components/LyricsPiPWindow';
 import MusicEmpty from '@/components/music/MusicEmpty';
+import PageLayout from '@/components/PageLayout';
 import MusicSidebarDrawer from '@/components/music/MusicSidebarDrawer';
 import {
   MUSIC_ART_BROKEN,
@@ -2306,6 +2308,7 @@ export default function MusicClient({ children: _children }: { children?: React.
     // 底色和字色都不在这里兜底：`.music-theme` 的渐变底写在 app/music/music.css 里，
     // 那份进 SSR 样式表、首帧就在。别往这加 bg-* ——原来那个 bg-zinc-950 就是
     // "先黑一下再变回来"的来源（styled-jsx 要等 hydration 才插进 head）。
+    <PageLayout activePath="/music/rankings">
     <div className="music-theme min-h-screen">
       <>
       <style jsx global>{`
@@ -2513,8 +2516,7 @@ export default function MusicClient({ children: _children }: { children?: React.
       )}
       {/* Header */}
       <header
-        className="fixed top-0 left-0 right-0 z-40 bg-zinc-950/95 backdrop-blur-md border-b border-white/10 px-4 md:px-6"
-        style={{ paddingTop: 'var(--safe-top)' }}
+        className="apex-music-header"
       >
         <div className="w-full mx-auto flex items-center justify-between gap-3 md:gap-4 py-3">
           <div className="flex items-center justify-between md:justify-start md:gap-6 w-full md:w-auto">
@@ -2538,18 +2540,34 @@ export default function MusicClient({ children: _children }: { children?: React.
             </div>
           </div>
         </div>
+        <nav className="apex-media-tabs" aria-label="音乐导航">
+          {[
+            { href: '/music/rankings', label: '排行榜' },
+            { href: '/music/songlists', label: '推荐歌单' },
+            { href: '/music/search', label: '搜索' },
+            { href: '/music/my-playlists', label: '我的歌单' },
+          ].map((item) => (
+            <Link
+              key={item.href}
+              href={item.href}
+              aria-current={pathname?.startsWith(item.href) || (pathname === '/music' && item.href === '/music/rankings') ? 'page' : undefined}
+            >
+              {item.label}
+            </Link>
+          ))}
+        </nav>
       </header>
 
       {/* Main Content */}
-      <main className="pt-[calc(80px+var(--safe-top))] md:pt-[calc(76px+var(--safe-top))] pb-32 px-4 md:px-6">
+      <div className="apex-music-main">
         <div className="max-w-7xl mx-auto">
           {_children}
         </div>
-      </main>
+      </div>
 
       {/* Player */}
       {showPlayer && currentSong && (
-        <div className="fixed bottom-[calc(1rem+env(safe-area-inset-bottom))] left-1/2 -translate-x-1/2 w-[95%] max-w-3xl z-50">
+        <div className="apex-music-player fixed bottom-[calc(1rem+env(safe-area-inset-bottom))] left-1/2 -translate-x-1/2 w-[95%] max-w-3xl z-50">
           {showSpectrum && !showLyrics && (
             <div className="pointer-events-none px-4">
               <AudioSpectrumCanvas barsRef={spectrumBarsRef} compact />
@@ -3567,5 +3585,6 @@ export default function MusicClient({ children: _children }: { children?: React.
       )}
       </>
     </div>
+    </PageLayout>
   );
 }

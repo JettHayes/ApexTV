@@ -96,7 +96,7 @@ export default function ScrollableRow({
 
   return (
     <div
-      className='relative'
+      className='apex-media-rail relative'
       onMouseEnter={() => {
         setIsHovered(true);
         // 当鼠标进入时重新检查一次

@@ -629,7 +629,7 @@ export default function PrivateLibraryPage() {
   return (
     <PageLayout activePath='/private-library'>
       <div className='ptv-library-page'>
-        <div className='mb-6 flex justify-between items-start'>
+        <div className='apex-page-heading apex-heading-row'>
           <div>
             <h1 className='text-2xl font-bold text-gray-900 dark:text-gray-100'>
               私人影库
@@ -641,8 +641,7 @@ export default function PrivateLibraryPage() {
           {mounted && (
             <button
               onClick={() => router.push('/movie-request')}
-              className='flex items-center gap-2 px-3 py-2 text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors'
-              style={{ marginTop: '10px' }}
+              className='apex-secondary-button'
             >
               <Film size={20} />
               <span>求片</span>

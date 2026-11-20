@@ -16,8 +16,7 @@ import {
   SPINE_TAB_ACTIVE,
   SPINE_TAB_IDLE,
 } from '@/components/media/library';
-import { ThemeToggle } from '@/components/ThemeToggle';
-import { UserMenu } from '@/components/UserMenu';
+import PageLayout from '@/components/PageLayout';
 
 export interface MediaShellTab {
   href: string;
@@ -29,7 +28,7 @@ export interface MediaShellTab {
  * 漫画与小说共用的页面外壳（顶栏 + 二级 tab + 移动端底栏）。
  *
  * 两套功能仍然各有自己的外壳实例与作用域，这里只是把重复的 200 余行收敛成一份。
- * 外壳走「暖纸书库」语言：实心纸面顶栏（不再用玻璃模糊）+ 赭石强调。阅读页与
+ * 书库页复用全站主导航与内容边距，阅读页保留独立顶栏和阅读操作。阅读页与
  * 书库页共用同一套外壳，区别只剩两处——阅读页把二级 tab 换成阅读器动作按钮，
  * 内容区用各功能自己的 reader.mainClassName。
  */
@@ -58,14 +57,36 @@ export default function MediaShell({
   const isReader = Boolean(reader);
   const isActive = (href: string) => pathname === href;
 
-  return (
-    <div className={cn('ptv-library min-h-screen', LIBRARY_PAGE, LIBRARY_TEXT)}>
+  const shell = (
+    <div
+      className={cn(
+        isReader ? 'ptv-library min-h-screen' : 'ptv-library apex-media-shell',
+        LIBRARY_PAGE,
+        LIBRARY_TEXT
+      )}
+    >
       <header
-        className='fixed inset-x-0 top-0 z-40 border-b border-library-edge bg-library-paper/95 backdrop-blur-none dark:border-library-night-edge dark:bg-library-night/95'
-        style={{ paddingTop: 'var(--safe-top)' }}
+        className={
+          isReader
+            ? 'fixed inset-x-0 top-0 z-40 border-b border-library-edge bg-library-paper/95 dark:border-library-night-edge dark:bg-library-night/95'
+            : 'apex-media-header'
+        }
+        style={isReader ? { paddingTop: 'var(--safe-top)' } : undefined}
       >
-        <div className='mx-auto flex h-14 max-w-7xl items-center gap-3 px-3 sm:h-16 sm:px-6'>
-          <div className='flex min-w-0 flex-1 items-center gap-2'>
+        <div
+          className={
+            isReader
+              ? 'mx-auto flex h-14 max-w-7xl items-center gap-3 px-3 sm:h-16 sm:px-6'
+              : 'apex-media-header-inner'
+          }
+        >
+          <div
+            className={
+              isReader
+                ? 'flex min-w-0 flex-1 items-center gap-2'
+                : 'apex-media-title'
+            }
+          >
             {backHref ? (
               <Link
                 href={backHref}
@@ -74,7 +95,7 @@ export default function MediaShell({
               >
                 <ChevronLeft className='h-5 w-5' />
               </Link>
-            ) : (
+            ) : isReader ? (
               <Link
                 href='/'
                 className={cn(
@@ -86,7 +107,7 @@ export default function MediaShell({
               >
                 {siteName}
               </Link>
-            )}
+            ) : null}
             <div className='min-w-0'>
               <div
                 className={cn(
@@ -111,7 +132,7 @@ export default function MediaShell({
             </div>
           ) : (
             <>
-              <nav className='ml-auto hidden items-center gap-1 lg:flex'>
+              <nav className='apex-media-tabs' aria-label='阅读导航'>
                 {tabs.map((tab) => {
                   const Icon = tab.icon;
                   const active = isActive(tab.href);
@@ -132,65 +153,27 @@ export default function MediaShell({
                   );
                 })}
               </nav>
-              <div className='ml-auto hidden shrink-0 items-center gap-2 md:flex lg:ml-0'>
-                <ThemeToggle />
-                <UserMenu />
-              </div>
             </>
           )}
         </div>
       </header>
 
-      <main
+      <div
+        role={isReader ? 'main' : undefined}
         className={cn(
-          'mx-auto max-w-7xl',
           reader
-            ? reader.mainClassName
-            : 'px-3 pb-[calc(5rem+env(safe-area-inset-bottom))] pt-[calc(5rem+var(--safe-top))] sm:px-6 sm:pt-[calc(6rem+var(--safe-top))] lg:pb-10'
+            ? cn('mx-auto max-w-7xl', reader.mainClassName)
+            : 'apex-media-main'
         )}
       >
         {children}
-      </main>
-
-      {!isReader && (
-        <nav
-          className='fixed inset-x-0 bottom-0 z-40 border-t border-library-edge bg-library-paper/95 backdrop-blur-none dark:border-library-night-edge dark:bg-library-night/95 lg:hidden'
-          style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
-        >
-          <div className='mx-auto grid max-w-3xl grid-cols-4'>
-            {tabs.map((tab) => {
-              const Icon = tab.icon;
-              const active = isActive(tab.href);
-              return (
-                <Link
-                  key={tab.href}
-                  href={tab.href}
-                  aria-current={active ? 'page' : undefined}
-                  className='flex min-h-16 flex-col items-center justify-center gap-1 py-2 text-xs transition-colors duration-200 hover:bg-library-ochre-tint/60 dark:hover:bg-library-night-ochre-tint/60'
-                >
-                  <Icon
-                    className={cn(
-                      'h-5 w-5',
-                      active
-                        ? 'text-library-ochre dark:text-library-night-ochre'
-                        : 'text-library-muted dark:text-library-night-muted'
-                    )}
-                  />
-                  <span
-                    className={
-                      active
-                        ? 'font-medium text-library-ochre dark:text-library-night-ochre'
-                        : 'text-library-muted dark:text-library-night-muted'
-                    }
-                  >
-                    {tab.label}
-                  </span>
-                </Link>
-              );
-            })}
-          </div>
-        </nav>
-      )}
+      </div>
     </div>
+  );
+
+  return isReader ? (
+    shell
+  ) : (
+    <PageLayout activePath={tabs[0]?.href}>{shell}</PageLayout>
   );
 }

@@ -137,8 +137,8 @@ export default function AdvancedRecommendationPage() {
 
   return (
     <PageLayout activePath='/advanced-recommendation'>
-      <div className='px-4 sm:px-10 py-4 sm:py-8 mb-10'>
-        <div className='mb-6'>
+      <div className='apex-page apex-recommendation-page'>
+        <div className='apex-page-heading'>
           <h1 className='text-2xl font-bold text-gray-800 dark:text-gray-200 flex items-center gap-2'>
             <Blend className='w-6 h-6 text-green-500' />
             高级推荐
@@ -148,7 +148,7 @@ export default function AdvancedRecommendationPage() {
           </p>
         </div>
 
-        <div className='max-w-6xl mx-auto space-y-6'>
+        <div className='space-y-6'>
           <div>
             <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3'>
               选择脚本源

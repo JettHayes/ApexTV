@@ -10,14 +10,5 @@ export default function MediaGrid({
   children: React.ReactNode;
   className?: string;
 }) {
-  return (
-    <div
-      className={cn(
-        'grid grid-cols-2 gap-4 md:grid-cols-4 xl:grid-cols-6',
-        className
-      )}
-    >
-      {children}
-    </div>
-  );
+  return <div className={cn('apex-reading-grid', className)}>{children}</div>;
 }

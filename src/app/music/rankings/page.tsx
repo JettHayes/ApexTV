@@ -46,11 +46,7 @@ export default function MusicRankingsPage() {
           setPlaylists((data.data?.list || []).map((item: any) => ({
             id: item.id,
             name: item.name,
-            // 榜单接口不给图：上游 /leaderboard/boards 回的每一项只有 id/name/bangid，
-            // 五个音源、全部榜单都没有 img 字段（2026-09 实测）。所以这里**不接 cover**
-            // ——SleeveCard 也没有这个 prop。热榜卡按定义就是一张没印画的套子，
-            // 卡面由名次和名字构成，不是"缺了张图"。真要图只能拿榜单里第一首歌的
-            // 专辑封面顶（/leaderboard/list 的每首歌都带 img），那得先加请求和缓存。
+            cover: item.cover || item.pic || item.img,
             source: normalizeSource(item.source || data.data?.source || source),
             updateFrequency: item.updateFrequency || item.description || '',
           })));
@@ -91,6 +87,7 @@ export default function MusicRankingsPage() {
               key={playlist.id}
               rank={index + 1}
               name={playlist.name}
+              cover={playlist.cover}
               top={
                 musicSources.find((item) => item.key === playlist.source)?.label ||
                 currentSourceLabel

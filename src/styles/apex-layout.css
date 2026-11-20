@@ -1,0 +1,157 @@
+/* ApexTV 共用页面骨架；阅读画布和播放器保留各自的操作布局。 */
+.apex-page {
+  width: 100%;
+  max-width: var(--ptv-max);
+  margin-inline: auto;
+  padding: var(--ptv-page-top) var(--ptv-gutter) 48px;
+  min-width: 0;
+}
+.apex-page-heading { margin-bottom: 28px; }
+.apex-page-heading h1,
+.my-heading h1 {
+  font-size: var(--ptv-title-size);
+  line-height: 1.3;
+  font-weight: 650;
+  letter-spacing: -.035em;
+  color: var(--ptv-text);
+}
+.apex-page-heading p { max-width: 64ch; margin-top: 8px; font-size: 14px; line-height: 1.7; color: var(--ptv-muted); }
+.apex-heading-row { display: flex; align-items: center; justify-content: space-between; gap: 20px; }
+.apex-heading-row > div { min-width: 0; }
+.apex-secondary-button {
+  display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; gap: 8px;
+  min-height: 44px; padding: 9px 16px; border: 1px solid var(--ptv-line); border-radius: 9px;
+  background: var(--ptv-panel); color: var(--ptv-text); font-size: 13px;
+  transition: border-color 160ms, background-color 160ms;
+}
+.apex-catalog-intro { display: grid; gap: 0; margin-bottom: 28px; }
+.apex-filter-panel {
+  padding: 18px 20px; border: 1px solid var(--ptv-line); border-radius: 12px;
+  background: var(--ptv-panel);
+}
+.apex-results { width: 100%; margin-top: 28px; overflow: visible; }
+.apex-poster-grid {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 36px 20px; min-width: 0; padding: 0;
+}
+.apex-poster-grid > * { min-width: 0; }
+.apex-search-results { width: 100%; }
+.ptv-search-page .ptv-search-form { width: min(100%, 800px); }
+.ptv-search-page .ptv-search-form input { min-height: 52px; border-radius: 12px; font-size: 16px; box-shadow: none; }
+.ptv-library-tools {
+  padding: 16px 0 20px; margin-bottom: 16px; border-bottom: 1px solid var(--ptv-line);
+}
+.ptv-library-status { font-size: 12px; font-variant-numeric: tabular-nums; }
+.ptv-home-content { padding-bottom: 40px; }
+.ptv-home-content > div > section { margin-block: var(--ptv-section-gap); }
+.apex-destination-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 12px; }
+.apex-more-page section { margin-top: 32px; }
+.apex-more-page section > h2 { font-size: 15px; color: var(--ptv-muted); }
+.apex-more-page .ptv-more-card { min-height: 76px; border-color: var(--ptv-line); }
+.apex-more-page .ptv-more-card > svg:first-child { color: var(--ptv-accent); }
+.apex-live-content > div:first-child,
+.apex-play-content > div.py-1 { min-height: 44px; margin-bottom: 4px; }
+.apex-live-content h1 { font-size: clamp(18px, 1.6vw, 22px); line-height: 1.4; }
+.apex-play-content h1 { line-height: 1.4; }
+.apex-room-page > .py-1 h1 { font-size: var(--ptv-title-size); }
+.apex-page-utilities { right: var(--ptv-gutter); }
+.ptv-page[data-page='library'] .ptv-wallpaper { opacity: .08; }
+
+/* 模块页共享主导航，局部导航只用于切换音乐或阅读功能。 */
+.apex-media-shell { background: transparent; min-width: 0; min-height: 100dvh; }
+.apex-media-header {
+  padding: var(--ptv-page-top) var(--ptv-gutter) 0;
+  max-width: var(--ptv-max); margin-inline: auto;
+}
+.apex-media-header-inner { display: flex; flex-wrap: wrap; align-items: center; gap: 20px; }
+.apex-media-title { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.apex-media-title > div { min-width: 0; }
+.apex-media-title > div > div:first-child {
+  font-family: inherit; font-size: var(--ptv-title-size); font-weight: 650; line-height: 1.3; letter-spacing: -.035em;
+}
+.apex-media-title > div > div + div { margin-top: 8px; font-size: 13px; }
+.apex-media-tabs {
+  display: flex; gap: 4px; width: 100%; min-width: 0; overflow-x: auto;
+  padding-block: 4px 12px; border-bottom: 1px solid var(--ptv-line); scrollbar-width: thin;
+}
+.apex-media-tabs > a { display: inline-flex; align-items: center; flex-shrink: 0; gap: 8px; min-height: 44px; padding: 10px 16px; border-radius: 8px; font-size: 13px; }
+.apex-media-tabs > a[aria-current='page'] { background: var(--ptv-selected); color: var(--ptv-accent); }
+.apex-media-main { width: 100%; max-width: var(--ptv-max); min-width: 0; margin-inline: auto; padding: 24px var(--ptv-gutter) 48px; }
+.apex-media-main > * { min-width: 0; }
+.apex-media-main .font-book { font-family: inherit; }
+.apex-media-main :is(h1,h2,h3) { letter-spacing: -.025em; }
+.apex-media-main h1 { font-size: var(--ptv-title-size); line-height: 1.35; }
+.apex-media-main :is(input:not([type='checkbox']):not([type='range']),select) { min-height: 44px; }
+.apex-media-main :is(a,button):is(.rounded-md,.rounded-lg) { border-radius: 9px; }
+.apex-media-main :is(a,button):focus-visible { outline: 2px solid var(--ptv-accent); outline-offset: 3px; }
+
+/* 音乐页保留唱片封套与播放动效，底色、导航和工具栏回到共用体系。 */
+.ptv-page .music-theme { background: transparent; }
+.apex-music-header { max-width: var(--ptv-max); margin-inline: auto; padding: var(--ptv-page-top) var(--ptv-gutter) 0; }
+.apex-music-header > div { padding: 0 0 16px; border-bottom: 1px solid var(--ptv-line); }
+.apex-music-header span.font-bold { font-size: var(--ptv-title-size); font-weight: 650; letter-spacing: -.035em; }
+.apex-music-main { max-width: var(--ptv-max); margin-inline: auto; padding: 24px var(--ptv-gutter) calc(140px + env(safe-area-inset-bottom)); }
+.apex-music-main > div { max-width: none; min-width: 0; }
+.apex-music-main :is(input:not([type='range']),select) { min-height: 44px; }
+
+
+#nprogress .bar, .dark #nprogress .bar { background: var(--ptv-accent); box-shadow: none; }
+#nprogress .peg, .dark #nprogress .peg { box-shadow: 0 0 8px var(--ptv-accent); }
+.apex-segmented { border: 1px solid var(--ptv-line); border-radius: 11px; background: var(--ptv-soft); }
+.apex-segmented .apex-segment-indicator { border-radius: 7px; background: var(--ptv-panel); box-shadow: 0 1px 3px rgb(0 0 0 / .05); }
+.apex-segmented button { min-height: 40px; border-radius: 7px; font-size: 13px; }
+.apex-segmented button[aria-pressed='true'] { color: var(--ptv-accent); }
+.apex-reading-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 28px 20px; }
+.ptv-page .ptv-media-grid { grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 36px 20px; }
+.ptv-home-content .apex-media-rail > div:first-child { padding-inline: 4px; margin-inline: -4px; }
+.apex-rail-item { flex-shrink: 0; width: clamp(132px, 15vw, 180px); min-width: clamp(132px, 15vw, 180px); }
+.ptv-home-tools :is(button,a) { color: var(--ptv-muted); }
+.ptv-home-content h2 { font-size: clamp(19px, 1.6vw, 23px); font-weight: 650; letter-spacing: -.025em; }
+.ptv-home-content section > div:first-child > a { min-height: 44px; align-items: center; }
+.ptv-wallpaper:is([data-page='music'], [data-page='reading']) { opacity: .06; }
+
+/* 动画只作用于局部内容，避免外壳产生 transform 层叠上下文影响浮层和视频。 */
+.apex-catalog-intro, .apex-page-heading, .apex-media-header-inner { animation: apex-content-enter 240ms var(--ptv-ease) backwards; }
+@keyframes apex-content-enter { from { opacity: 0; translate: 0 6px; } to { opacity: 1; translate: 0 0; } }
+@media (hover: hover) and (pointer: fine) {
+  .apex-secondary-button:hover { border-color: var(--ptv-accent); background: var(--ptv-soft); }
+  .apex-media-tabs > a:not([aria-current='page']):hover { background: var(--ptv-soft); }
+}
+@media (min-width: 768px) {
+  html[data-moontvplus] { --ptv-page-top: 64px; }
+  .ptv-page .ptv-search-page { padding-top: var(--ptv-page-top); }
+  .ptv-page :is(.ptv-library-page,.ptv-more,.ptv-more-page) { padding-top: var(--ptv-page-top); }
+  .ptv-page .ptv-library-page > div:first-child { padding-right: 0; }
+  .ptv-page .ptv-live-page { max-width: var(--ptv-max); padding-top: var(--ptv-page-top); }
+  .apex-music-player {
+    left: calc(50% + 128px); width: min(768px, calc(100% - 256px - 2 * var(--ptv-gutter)));
+  }
+  html[data-sidebar-collapsed] .apex-music-player {
+    left: calc(50% + var(--ptv-sidebar-collapsed-width) / 2);
+    width: min(768px, calc(100% - var(--ptv-sidebar-collapsed-width) - 2 * var(--ptv-gutter)));
+  }
+}
+@media (max-width: 767px) {
+  html[data-moontvplus] { --ptv-page-top: 24px; --ptv-gutter: 16px; }
+  .apex-segmented button { min-height: 44px; }
+  .apex-reading-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px 14px; }
+  .ptv-page .ptv-media-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 28px 14px; }
+  .apex-poster-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 28px 12px; }
+  .apex-page-heading { margin-bottom: 22px; }
+  .apex-heading-row { align-items: flex-start; gap: 12px; }
+  .apex-filter-panel { padding: 14px 12px; }
+  .apex-media-header-inner { gap: 18px; }
+  .apex-media-tabs > a { padding-inline: 12px; }
+  .apex-media-main { padding-top: 20px; }
+  .apex-music-player { bottom: calc(4.5rem + env(safe-area-inset-bottom)); }
+  .apex-music-main { padding-bottom: calc(210px + env(safe-area-inset-bottom)); }
+  .apex-media-main :is(input:not([type='checkbox']):not([type='range']),select),
+  .my-filter select, .my-search input { font-size: 16px; }
+  .apex-live-content .ptv-room-info { gap: 12px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .apex-catalog-intro, .apex-page-heading, .apex-media-header-inner { animation: none; }
+}
+
+@media (max-width: 479px) { .apex-poster-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 28px 14px; } }
+@media (min-width: 480px) and (max-width: 767px) { .ptv-page .ptv-media-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }

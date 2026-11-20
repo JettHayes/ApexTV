@@ -23,7 +23,7 @@ const PageLayout = ({ children, activePath = '/', hideNavigation = false }: Page
   const pathname = usePathname();
   const [backgroundImage, setBackgroundImage] = useState('');
   const shouldShowSharedBackground = !hideNavigation && activePath !== '/play';
-  const page = pathname === '/' ? 'home' : pathname.startsWith('/search') ? 'search' : pathname.startsWith('/private-library') ? 'library' : pathname.startsWith('/play') ? 'play' : pathname.startsWith('/live') || pathname.startsWith('/web-live') ? 'live' : pathname.startsWith('/admin') ? 'admin' : 'other';
+  const page = pathname === '/' ? 'home' : pathname.startsWith('/search') ? 'search' : pathname.startsWith('/music') ? 'music' : pathname.startsWith('/books') || pathname.startsWith('/manga') ? 'reading' : pathname.startsWith('/private-library') || pathname.startsWith('/my/') ? 'library' : pathname.startsWith('/play') ? 'play' : pathname.startsWith('/live') || pathname.startsWith('/web-live') ? 'live' : pathname.startsWith('/admin') ? 'admin' : 'other';
   const showBackButton = ['/play', '/live', '/web-live'].some((path) => pathname === path || pathname.startsWith(path + '/'));
 
   useEffect(() => {
@@ -31,9 +31,10 @@ const PageLayout = ({ children, activePath = '/', hideNavigation = false }: Page
   }, [pathname]);
 
   useEffect(() => {
+    if (['/music', '/books', '/manga'].some((path) => pathname === path || pathname.startsWith(path + '/'))) return;
     router.prefetch('/search');
     router.prefetch('/play');
-  }, [router]);
+  }, [router, pathname]);
 
   useEffect(() => {
     if (typeof window === 'undefined' || !shouldShowSharedBackground) {
@@ -107,7 +108,7 @@ const PageLayout = ({ children, activePath = '/', hideNavigation = false }: Page
 
             {/* 桌面端顶部按钮 */}
             {!hideNavigation && (
-              <div className='absolute top-2 right-4 z-20 hidden md:flex items-center gap-2'>
+              <div className='ptv-page-utilities absolute top-2 right-4 z-20 hidden md:flex items-center gap-2'>
                 <ThemeToggle />
                 <UserMenu />
               </div>

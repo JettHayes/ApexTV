@@ -2586,7 +2586,7 @@ function LivePageClient() {
 
   return (
     <PageLayout activePath='/live'>
-      <div className='ptv-live-page flex flex-col gap-3'>
+      <div className='ptv-live-page apex-live-content flex flex-col gap-4'>
         <LiveTabs active='live' />
         {/* 第一行：页面标题 */}
         <div className='py-1'>

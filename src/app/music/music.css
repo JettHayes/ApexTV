@@ -15,31 +15,17 @@
  */
 
 :root {
-  --music-bg: #edf2f1;
-  --music-bg-strong: rgba(255, 255, 255, 0.96);
-  --music-surface: rgba(244, 247, 246, 0.96);
-  --music-surface-soft: rgba(220, 231, 229, 0.96);
-  --music-overlay: rgba(15, 23, 42, 0.45);
-  --music-glass: rgba(15, 23, 42, 0.06);
-  --music-glass-strong: rgba(15, 23, 42, 0.1);
-  --music-border: rgba(83, 103, 107, 0.28);
-  --music-text: #192d30;
-  --music-text-soft: #344f51;
-  --music-text-muted: #53676b;
-}
-
-.dark {
-  --music-bg: #091214;
-  --music-bg-strong: rgba(9, 18, 20, 0.95);
-  --music-surface: rgba(16, 32, 35, 0.96);
-  --music-surface-soft: rgba(27, 48, 50, 0.96);
-  --music-overlay: rgba(0, 0, 0, 0.72);
-  --music-glass: rgba(255, 255, 255, 0.05);
-  --music-glass-strong: rgba(255, 255, 255, 0.1);
-  --music-border: rgba(255, 255, 255, 0.1);
-  --music-text: #edf4f2;
-  --music-text-soft: #c3d4d1;
-  --music-text-muted: #a2b5b5;
+  --music-bg: var(--ptv-page);
+  --music-bg-strong: var(--ptv-panel);
+  --music-surface: var(--ptv-surface);
+  --music-surface-soft: var(--ptv-soft);
+  --music-overlay: rgba(9, 18, 20, .6);
+  --music-glass: color-mix(in srgb, var(--ptv-text) 5%, transparent);
+  --music-glass-strong: color-mix(in srgb, var(--ptv-text) 10%, transparent);
+  --music-border: var(--ptv-line);
+  --music-text: var(--ptv-text);
+  --music-text-soft: var(--ptv-muted);
+  --music-text-muted: var(--ptv-muted);
 }
 
 .music-theme {
@@ -143,3 +129,8 @@
 @media (prefers-reduced-motion: reduce) {
   .music-drawer-in { animation-duration: 0.01ms !important; }
 }
+
+/* 封面上的文字保持亮色，不随页面主题变成深色。 */
+.apex-sleeve-art { color: #f5faf8; }
+.apex-sleeve-art .apex-sleeve-rank { margin-left: 0; align-self: flex-start; color: #f5faf8; font-size: 22px; }
+.apex-sleeve-shade { background: linear-gradient(180deg, rgb(5 15 17 / .45), rgb(5 15 17 / .1) 35%, rgb(5 15 17 / .88)); }

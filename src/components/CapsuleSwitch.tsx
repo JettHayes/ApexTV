@@ -184,7 +184,7 @@ const CapsuleSwitch: React.FC<CapsuleSwitchProps> = ({
   return (
     <div
       ref={containerRef}
-      className={`relative inline-flex bg-gray-300/80 rounded-full p-1 dark:bg-gray-700 max-w-full ${
+      className={`apex-segmented relative inline-flex max-w-full p-1 ${
         className || ''
       }`}
     >
@@ -200,7 +200,7 @@ const CapsuleSwitch: React.FC<CapsuleSwitchProps> = ({
         {/* 滑动的白色背景指示器 */}
         {indicatorStyle.width > 0 && (
           <div
-            className='absolute left-0 top-0 bottom-0 bg-white dark:bg-gray-500 rounded-full shadow-sm transition-[transform,width] duration-[260ms] ease-[cubic-bezier(.16,1,.3,1)] pointer-events-none'
+            className='apex-segment-indicator absolute left-0 top-0 bottom-0 transition-[transform,width] duration-[260ms] ease-[cubic-bezier(.16,1,.3,1)] pointer-events-none'
             style={{
               transform: `translateX(${indicatorStyle.left}px)`,
               width: `${indicatorStyle.width}px`,
@@ -213,6 +213,8 @@ const CapsuleSwitch: React.FC<CapsuleSwitchProps> = ({
           return (
             <button
               key={opt.value}
+              type='button'
+              aria-pressed={isActive}
               ref={(el) => {
                 buttonRefs.current[index] = el;
               }}

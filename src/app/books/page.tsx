@@ -148,7 +148,7 @@ export default function BooksHomePage() {
                 LIBRARY_SERIF
               )}
             >
-              电子书馆
+              从这里开始阅读
             </h1>
             <p className={cn('mt-1.5 text-sm', LIBRARY_MUTED)}>
               选择一个书源开始浏览，或直接搜索书名与作者。

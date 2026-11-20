@@ -6,6 +6,7 @@ import { cookies } from 'next/headers';
 
 import './globals.css';
 import '../styles/petronas.css';
+import '../styles/apex-layout.css';
 
 import { parseAuthInfo } from '@/lib/auth';
 import { getConfig } from '@/lib/config';

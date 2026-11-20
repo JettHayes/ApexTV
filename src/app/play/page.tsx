@@ -2,8 +2,7 @@
 
 'use client';
 
-import { ListPlus, AlertCircle, ArrowLeft, Cloud, FileText, Heart, Keyboard, Link2, Loader2, Play, RefreshCw, Router, Search, Sparkles, Star, Users, X } from 'lucide-react';
-import dynamic from 'next/dynamic';
+import { AlertCircle, ArrowLeft, Cloud, FileText, Heart, Keyboard, Link2, Loader2, Play, RefreshCw, Router, Search, Sparkles, Star, Users, X } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import {
   Suspense,
@@ -13,6 +12,8 @@ import {
   useRef,
   useState,
 } from 'react';
+
+import PlayerLibraryActions from '@/components/PlayerLibraryActions';
 
 import { isAnimeCategoryText } from '@/lib/anime-keyword-expr';
 import { createAnime4KRenderer } from '@/lib/anime4k';
@@ -358,7 +359,6 @@ function PlayPageClient() {
   );
 
   // 收藏状态
-  const [showOrganizeVideo, setShowOrganizeVideo] = useState(false);
   const [favorited, setFavorited] = useState(false);
 
   // 网盘搜索弹窗状态
@@ -10785,7 +10785,7 @@ function PlayPageClient() {
         </div>
       )}
 
-      <div className='relative z-10 flex flex-col gap-3 py-4 px-5 lg:px-[3rem] 2xl:px-20'>
+      <div className='apex-page apex-play-content relative z-10 flex flex-col gap-3'>
         {/* 第一行：影片标题 */}
         <div className='py-1'>
           <h1 className='text-xl font-semibold flex items-center gap-2 flex-wrap text-[color:var(--ptv-text)]'>
@@ -11041,6 +11041,11 @@ function PlayPageClient() {
 
               </div>
 
+              {currentSource && currentId && detail && <PlayerLibraryActions key={currentSource + '+' + currentId} video={{
+                source: currentSource, id: currentId, title: videoTitle || detail.title,
+                cover: detail.poster || '', year: detail.year || '', source_name: detail.source_name || '',
+                total_episodes: detail.episodes.length || 1, search_title: searchTitle,
+              }} />}
               {/* 第三方应用打开按钮 - 观影室同步状态下隐藏 */}
               {videoUrl && !playSync.isInRoom && (
                 <div className='ptv-player-tools mt-3 px-2 lg:flex-shrink-0'>
@@ -11638,13 +11643,6 @@ function PlayPageClient() {
                     >
                       <FavoriteIcon filled={favorited} />
                     </button>
-                    {currentSource && currentId && detail && <button type='button' className='my-icon-button'
-                      aria-label='整理影片 / 稍后观看' title='整理影片 / 稍后观看' onClick={() => setShowOrganizeVideo(true)}
-                    ><ListPlus size={22} /></button>}
-                    {showOrganizeVideo && currentSource && currentId && detail && <OrganizeVideoDialog video={{
-                      source: currentSource, id: currentId, title: videoTitle, cover: detail.poster || '', year: detail.year || '',
-                      source_name: detail.source_name || '', total_episodes: detail.episodes.length || 1, search_title: searchTitle,
-                    }} onClose={() => setShowOrganizeVideo(false)} />}
                     {/* 网盘搜索按钮 */}
                     {netdiskSearchEnabled && (
                       <button
@@ -12243,8 +12241,6 @@ const applyCorrectionsToSources = (sources: SearchResult[]): SearchResult[] => {
 };
 
 // FavoriteIcon 组件
-const OrganizeVideoDialog = dynamic(() => import('@/components/OrganizeVideoDialog'), { ssr: false });
-
 const FavoriteIcon = ({ filled }: { filled: boolean }) => {
   if (filled) {
     return (

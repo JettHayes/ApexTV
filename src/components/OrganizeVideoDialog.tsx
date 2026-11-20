@@ -25,9 +25,11 @@ import './PersonalLibrary.css';
 export default function OrganizeVideoDialog({
   video,
   onClose,
+  mode = 'organize',
 }: {
   video: LibraryVideo;
   onClose: () => void;
+  mode?: 'organize' | 'lists';
 }) {
   const [library, setLibrary] = useState<PersonalLibrary>({
     entries: {},
@@ -109,7 +111,9 @@ export default function OrganizeVideoDialog({
         <DialogPanel className='my-organizer'>
           <header>
             <div>
-              <DialogTitle>整理影片</DialogTitle>
+              <DialogTitle>
+                {mode === 'lists' ? '加入片单' : '整理影片'}
+              </DialogTitle>
               <p>{video.title}</p>
             </div>
             <button
@@ -123,24 +127,26 @@ export default function OrganizeVideoDialog({
           </header>
           <div className='my-organizer-body'>
             {!ready && !error && <p role='status'>正在读取整理信息…</p>}
-            <fieldset disabled={!ready || busy}>
-              <legend>观看计划</legend>
-              <div className='my-state-options'>
-                {Object.entries(WATCH_STATES).map(([value, label]) => (
-                  <button
-                    type='button'
-                    key={value}
-                    aria-pressed={status === value}
-                    onClick={() =>
-                      setStatus(status === value ? '' : (value as WatchState))
-                    }
-                  >
-                    <span>{label}</span>
-                    {status === value && <Check size={16} />}
-                  </button>
-                ))}
-              </div>
-            </fieldset>
+            {mode !== 'lists' && (
+              <fieldset disabled={!ready || busy}>
+                <legend>观看计划</legend>
+                <div className='my-state-options'>
+                  {Object.entries(WATCH_STATES).map(([value, label]) => (
+                    <button
+                      type='button'
+                      key={value}
+                      aria-pressed={status === value}
+                      onClick={() =>
+                        setStatus(status === value ? '' : (value as WatchState))
+                      }
+                    >
+                      <span>{label}</span>
+                      {status === value && <Check size={16} />}
+                    </button>
+                  ))}
+                </div>
+              </fieldset>
+            )}
             <fieldset disabled={!ready || busy}>
               <legend>
                 加入片单 <span>可选多个</span>

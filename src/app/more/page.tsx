@@ -18,13 +18,12 @@ export default function MorePage() {
   ];
   return (
     <PageLayout activePath='/more'>
-      <div className='ptv-more mx-auto max-w-5xl px-5 py-10 sm:px-8'>
-        <p className='text-sm font-medium tracking-widest opacity-60'>DISCOVER</p>
-        <h1 className='mt-2 text-3xl font-bold'>更多</h1>
+      <div className='ptv-more apex-more-page'>
+        <div className='apex-page-heading'><h1>更多</h1><p>音乐、阅读与更多观看方式</p></div>
         {sections.filter((section) => section.items.length > 0).map(({ title, items }) => (
           <section key={title} className='mt-8' aria-label={title}>
             <h2 className='mb-3 text-lg font-semibold'>{title}</h2>
-            <div className='grid gap-3 sm:grid-cols-2'>
+            <div className='apex-destination-grid'>
               {items.map(({ icon: Icon, label, href }) => (
                 <Link key={href} href={href} prefetch={false} className='ptv-more-card flex min-h-16 items-center gap-4 rounded-xl border p-4'>
                   <Icon className='h-5 w-5' aria-hidden='true' />

@@ -108,7 +108,7 @@ export const MUSIC_BAR =
 
 /** 页面主标题。窄体 + 大写字距，像唱片内套上印的那行。 */
 export const MUSIC_BAR_TITLE =
-  'font-music-display text-[calc(26*var(--music-px))] font-semibold uppercase tracking-[0.04em] text-music-ink dark:text-music-night-ink';
+  'text-[length:var(--ptv-title-size)] font-semibold tracking-[-0.035em] text-music-ink dark:text-music-night-ink';
 
 /** 标题下那行等宽小字（"侧 A · 网易云"这种）。 */
 export const MUSIC_BAR_SUB = MUSIC_LABEL;
@@ -122,19 +122,19 @@ export const MUSIC_BAR_SUB = MUSIC_LABEL;
  * text-white，否则会被管理端主题层染掉。
  */
 export const MUSIC_BUTTON = cn(
-  'inline-flex min-h-11 items-center gap-2 rounded-[3px] bg-music-theme px-3.5 py-2 font-music-mono text-[calc(11*var(--music-px))] font-semibold uppercase tracking-[0.1em] text-music-chip transition-colors duration-200 hover:bg-music-theme-hover disabled:cursor-not-allowed disabled:opacity-40 dark:bg-music-night-theme dark:text-[#062421] dark:hover:bg-music-night-theme-hover',
+  'inline-flex min-h-11 items-center gap-2 rounded-lg bg-music-theme px-4 py-2.5 text-sm font-semibold text-music-chip transition-colors duration-200 hover:bg-music-theme-hover disabled:cursor-not-allowed disabled:opacity-40 dark:bg-music-night-theme dark:text-[#062421] dark:hover:bg-music-night-theme-hover',
   MUSIC_FOCUS
 );
 
 /** 描边按钮：次要动作（删除歌单、上一页）。 */
 export const MUSIC_GHOST_BUTTON = cn(
-  'inline-flex min-h-11 items-center gap-2 rounded-[3px] border border-music-edge bg-music-card px-3.5 py-2 font-music-mono text-[calc(11*var(--music-px))] font-semibold uppercase tracking-[0.1em] text-music-ink transition-colors duration-200 hover:border-music-ink-soft hover:text-music-ink-soft disabled:cursor-not-allowed disabled:opacity-40 dark:border-music-night-edge dark:bg-music-night-card dark:text-music-night-ink dark:hover:border-music-night-ink-soft dark:hover:text-music-night-ink-soft',
+  'inline-flex min-h-11 items-center gap-2 rounded-lg border border-music-edge bg-music-card px-4 py-2.5 text-sm font-semibold text-music-ink transition-colors duration-200 hover:border-music-ink-soft hover:text-music-ink-soft disabled:cursor-not-allowed disabled:opacity-40 dark:border-music-night-edge dark:bg-music-night-card dark:text-music-night-ink dark:hover:border-music-night-ink-soft dark:hover:text-music-night-ink-soft',
   MUSIC_FOCUS
 );
 
 /** 危险动作（删除）：只在 hover 时泛红，平时和 ghost 一样安静。 */
 export const MUSIC_DANGER_BUTTON = cn(
-  'inline-flex items-center gap-2 rounded-[3px] border border-music-edge bg-music-card px-3.5 py-2 font-music-mono text-[calc(11*var(--music-px))] font-semibold uppercase tracking-[0.1em] text-music-muted transition-colors duration-200 hover:border-red-400 hover:text-red-600 disabled:cursor-not-allowed disabled:opacity-40 dark:border-music-night-edge dark:bg-music-night-card dark:text-music-night-muted dark:hover:border-red-500/60 dark:hover:text-red-400',
+  'inline-flex items-center gap-2 rounded-lg border border-music-edge bg-music-card px-4 py-2.5 text-sm font-semibold text-music-muted transition-colors duration-200 hover:border-red-400 hover:text-red-600 disabled:cursor-not-allowed disabled:opacity-40 dark:border-music-night-edge dark:bg-music-night-card dark:text-music-night-muted dark:hover:border-red-500/60 dark:hover:text-red-400',
   MUSIC_FOCUS
 );
 
@@ -287,17 +287,7 @@ export const MUSIC_SLEEVE_DISC = cn(
 export const MUSIC_SLEEVE_DISC_LABEL =
   'absolute inset-[34%] rounded-full border border-white/20 bg-music-night-card bg-[radial-gradient(circle,#f6ece1_0_26%,transparent_27%)]';
 
-/**
- * 套面。
- *
- * **热榜卡按定义就没有封面**——上游 /leaderboard/boards 回的每一项只有
- * id/name/bangid，五个音源 171 个榜单一个 img 都没有，不是"这次没有图"，是它
- * 永远不会有。所以别把套面当成"一个等着换图的框"：它是一张本来就没印画的套子，
- * 卡面就是版面本身（见 MUSIC_FACE_CAT 那段）。
- *
- * 底色用 music-art 而不是 music-card-2：卡纸得比套子本身深一档，上面印的字才
- * 站得住。不能再浅下去。
- */
+/** 唱片套面：默认编号排版，有封面时作为图片与文字的共同容器。 */
 export const MUSIC_FACE = cn(
   'absolute inset-0 z-10 flex flex-col justify-between overflow-hidden rounded-[2px] p-2.5',
   'bg-music-art dark:bg-music-night-art',
@@ -321,29 +311,7 @@ export const MUSIC_FACE_TOP =
  */
 export const MUSIC_FACE_BOTTOM = 'relative z-[2] mt-2 flex flex-col gap-1.5';
 
-/**
- * 名次——这张套面的"目录号"，整张卡的主角。
- *
- * 没有画的套子靠什么认出来？靠印在上面的编号（真实唱片套的脊和角上都是这个）。
- * 热榜卡手上真正有的只有名次和名字，于是把名次放大到 44px 当版面：
- *
- * - **格子会呼吸**：十个榜单十个数，一眼分得清，还自带"编号陈列"的节奏。
- * - **不撒谎**：名次本来就是这张卡上的字，只是从 26px 抬到 44px，不是新编的图形。
- *   之前那版在空位里放月亮、放音符，都是拿一个假图片去填真图片的位置。
- * - **死字号也不怕**：两位数永远放得下，长榜名仍在下沿两行里收着。
- *
- * 下面那道短横把"编号"和名字分成两段，像印刷件上编号底下那条线。
- * 走方向的强调色（日间焦糖 #b45309 / 夜间炽橘 #fb923c）而**不是**主题色：
- * 它是版面记号，不是可点的东西——换了站内主题，套面不该整体变色。
- *
- * 两条位移上的规矩：
- * - **落在 30% 处，不贴左**：`ml-[30%]`。套面上沿的 "Side A" 和下沿的榜名都齐左，
- *   目录号再齐左，整个左缘就堆成一条——而右半边整片空着。往右让出三成，编号占中间，
- *   左边留白给那两行小字，右边留白给探出去的唱片，版面才对得上。
- * - **字号走 display 曲线**（44px → 宽屏 74.8px，见 MUSIC_TYPE_SCALE）：它是这张卡
- *   唯一的"画"，普通字长三成时它得长七成。底下那道短横跟着一起长，短横和编号的比例
- *   才恒定。
- */
+/** 缺图榜单以编号作为主视觉，有封面时编号缩为角标。 */
 export const MUSIC_FACE_CAT = cn(
   'relative z-[2] ml-[30%] self-start font-music-mono text-[calc(44*var(--music-px-display))] font-semibold leading-none tracking-[-0.045em] text-music-accent [font-variant-numeric:tabular-nums] dark:text-music-night-accent',
   'after:mt-[7px] after:block after:h-px after:w-[calc(24*var(--music-px-display))] after:bg-current after:opacity-35 after:content-[""]'
@@ -441,7 +409,10 @@ export const MUSIC_SINGER_NAME =
 export const MUSIC_SINGER_ALIAS =
   'truncate font-music-body text-[calc(11*var(--music-px))] text-music-muted dark:text-music-night-muted';
 
-export const MUSIC_SINGER_META = cn(MUSIC_LABEL, 'mt-1 block text-[calc(9*var(--music-px))]');
+export const MUSIC_SINGER_META = cn(
+  MUSIC_LABEL,
+  'mt-1 block text-[calc(9*var(--music-px))]'
+);
 
 /* ------------------------------------------------------------------ *
  * 歌曲行
@@ -594,7 +565,10 @@ export const MUSIC_DRAWER_BRAND =
 export const MUSIC_DRAWER_TITLE =
   'font-music-display text-[calc(17*var(--music-px))] font-semibold uppercase tracking-[0.06em] text-music-ink dark:text-music-night-ink';
 
-export const MUSIC_DRAWER_SUB = cn(MUSIC_LABEL, 'text-[calc(9*var(--music-px))]');
+export const MUSIC_DRAWER_SUB = cn(
+  MUSIC_LABEL,
+  'text-[calc(9*var(--music-px))]'
+);
 
 export const MUSIC_DRAWER_ITEM = cn(
   'group flex w-full cursor-pointer items-center gap-3.5 rounded-[2px] px-3 py-3 text-left transition-colors duration-200',
@@ -608,7 +582,8 @@ export const MUSIC_DRAWER_ITEM_ACTIVE =
 export const MUSIC_DRAWER_ITEM_IDLE =
   'text-music-muted hover:bg-music-card-2 hover:text-music-ink dark:text-music-night-muted dark:hover:bg-music-night-card-2 dark:hover:text-music-night-ink';
 
-export const MUSIC_DRAWER_LABEL = 'font-music-body text-[calc(13*var(--music-px))] font-medium';
+export const MUSIC_DRAWER_LABEL =
+  'font-music-body text-[calc(13*var(--music-px))] font-medium';
 
 /** 选中项左缘那道竖线，用 after 伪元素画，免得行内再塞一个盒子。 */
 export const MUSIC_DRAWER_MARK =
@@ -626,7 +601,11 @@ export const MUSIC_DRAWER_MARK =
 export const MUSIC_PICK_FRAME =
   'relative block h-11 w-11 shrink-0 overflow-hidden rounded-[2px] bg-music-art dark:bg-music-night-art';
 
-export const MUSIC_PICK_DESC = cn(MUSIC_DRAWER_LABEL, 'truncate text-[calc(11*var(--music-px))]', MUSIC_MUTED);
+export const MUSIC_PICK_DESC = cn(
+  MUSIC_DRAWER_LABEL,
+  'truncate text-[calc(11*var(--music-px))]',
+  MUSIC_MUTED
+);
 
 /* ------------------------------------------------------------------ *
  * 骨架 / 空态 / 分页

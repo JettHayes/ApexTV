@@ -780,11 +780,11 @@ function DoubanPageClient() {
 
   return (
     <PageLayout activePath={getActivePath()}>
-      <div className='px-4 sm:px-10 py-4 sm:py-8 overflow-visible'>
+      <div className='apex-page apex-catalog-page'>
         {/* 页面标题和选择器 */}
-        <div className='mb-6 sm:mb-8 space-y-4 sm:space-y-6'>
+        <div className='apex-catalog-intro'>
           {/* 页面标题 */}
-          <div>
+          <div className='apex-page-heading'>
             <h1 className='text-2xl sm:text-3xl font-bold text-gray-800 mb-1 sm:mb-2 dark:text-gray-200'>
               {getPageTitle()}
             </h1>
@@ -795,7 +795,7 @@ function DoubanPageClient() {
 
           {/* 选择器组件 */}
           {type !== 'custom' ? (
-            <div className='bg-white/60 dark:bg-gray-800/40 rounded-2xl p-4 sm:p-6 border border-gray-200/30 dark:border-gray-700/30 backdrop-blur-sm'>
+            <div className='apex-filter-panel'>
               <DoubanSelector
                 type={type as 'movie' | 'tv' | 'show' | 'anime'}
                 primarySelection={primarySelection}
@@ -809,7 +809,7 @@ function DoubanPageClient() {
               />
             </div>
           ) : (
-            <div className='bg-white/60 dark:bg-gray-800/40 rounded-2xl p-4 sm:p-6 border border-gray-200/30 dark:border-gray-700/30 backdrop-blur-sm'>
+            <div className='apex-filter-panel'>
               <DoubanCustomSelector
                 customCategories={customCategories}
                 primarySelection={primarySelection}
@@ -822,7 +822,7 @@ function DoubanPageClient() {
         </div>
 
         {/* 内容展示区域 */}
-        <div ref={contentRef} className='max-w-[95%] mx-auto mt-8 overflow-visible'>
+        <div ref={contentRef} className='apex-results'>
           {/* 时刻表视图（每日放送） */}
           {isScheduleView ? (
             <BangumiScheduleTimeline weekday={selectedWeekday} />
@@ -830,7 +830,7 @@ function DoubanPageClient() {
             /* 内容网格：筛选条件或骨架/内容阶段变化时重挂载，仅内容阶段淡入（追加分页不触发） */
             <div
               key={`douban-grid-${type}-${primarySelection}-${secondarySelection}-${JSON.stringify(multiLevelValues)}-${loading || !selectorsReady ? 'skeleton' : 'data'}`}
-              className={`justify-start grid grid-cols-3 gap-x-2 gap-y-12 px-0 sm:px-2 sm:grid-cols-[repeat(auto-fill,minmax(160px,1fr))] sm:gap-x-8 sm:gap-y-20 ${
+              className={`apex-poster-grid ${
                 loading || !selectorsReady ? '' : 'ptv-fade-in'
               }`}
             >

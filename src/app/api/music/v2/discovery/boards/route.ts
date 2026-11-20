@@ -5,6 +5,8 @@ import { badRequest, internalError } from '@/lib/music-v2-api';
 
 export const runtime = 'nodejs';
 
+type Board = { id?: string; bangid?: string; name: string; img?: string; cover?: string; pic?: string; coverImgUrl?: string };
+
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
@@ -16,7 +18,7 @@ export async function GET(request: NextRequest) {
     );
 
     let actualSource = source as typeof source;
-    let list: Array<{ id?: string; bangid?: string; name: string; img?: string }> = [];
+    let list: Board[] = [];
     const errors: string[] = [];
 
     for (const candidate of fallbackSources) {
@@ -25,7 +27,7 @@ export async function GET(request: NextRequest) {
           `/api/music/leaderboard/boards?source=${candidate}`,
           'none'
         );
-        const candidateList = unwrapLxArray<{ id?: string; bangid?: string; name: string; img?: string }>(candidatePayload);
+        const candidateList = unwrapLxArray<Board>(candidatePayload);
         if (Array.isArray(candidateList) && candidateList.length > 0) {
           actualSource = candidate as typeof source;
           list = candidateList;
@@ -44,7 +46,7 @@ export async function GET(request: NextRequest) {
         list: list.map(item => ({
           id: item.bangid || item.id || '',
           name: item.name,
-          cover: item.img,
+          cover: item.img || item.cover || item.pic || item.coverImgUrl,
           source: actualSource,
         })),
         source: actualSource,

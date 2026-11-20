@@ -60,10 +60,10 @@ function SongRow({
   /** 行尾追加的动作（"我的歌单"里的移除）。渲染在同一格里，不改列数。 */
   extraActions?: React.ReactNode;
 }) {
-  const [coverFailed, setCoverFailed] = useState(false);
+  const [failedCover, setFailedCover] = useState<string | null>(null);
 
   const playing = nowPlaying !== null && nowPlaying === songKey(song);
-  const cover = song.pic && !coverFailed ? song.pic : '';
+  const cover = song.pic && song.pic !== failedCover ? song.pic : '';
   const duration = formatDuration(song);
   const label = sourceLabel(song.platform);
 
@@ -90,12 +90,11 @@ function SongRow({
             alt=''
             loading='lazy'
             referrerPolicy='no-referrer'
-            onError={() => setCoverFailed(true)}
+            onError={() => setFailedCover(cover)}
             className='h-full w-full object-cover'
           />
         ) : (
-          // 歌曲的封面和歌单一样是实打实给的，走到这儿只有一个原因：图挂了。
-          // 所以是一个破图记号，不是"这个位置该有张图"的留白（那是热榜套面的事）。
+          // 缺少封面或图片加载失败时保留歌曲信息和播放操作。
           <span className={MUSIC_ART_BROKEN}>
             <ImageOff className='h-3.5 w-3.5' strokeWidth={1.6} />
           </span>

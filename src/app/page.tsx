@@ -578,7 +578,7 @@ function HomeClient() {
                 ? Array.from({ length: 8 }).map((_, index) => (
                     <div
                       key={index}
-                      className='min-w-[96px] w-24 sm:min-w-[180px] sm:w-44'
+                      className='apex-rail-item'
                     >
                       <div className='aspect-[2/3] bg-gray-200 dark:bg-gray-700 rounded-lg animate-pulse mb-2' />
                       <div className='h-4 bg-gray-200 dark:bg-gray-700 rounded animate-pulse w-3/4' />
@@ -587,7 +587,7 @@ function HomeClient() {
                 : hotMovies.map((movie, index) => (
                     <div
                       key={movie.id}
-                      className='ptv-fade-in min-w-[96px] w-24 sm:min-w-[180px] sm:w-44'
+                      className='ptv-fade-in apex-rail-item'
                       style={staggerIn(index)}
                     >
                       <VideoCard
@@ -627,7 +627,7 @@ function HomeClient() {
                 ? Array.from({ length: 8 }).map((_, index) => (
                     <div
                       key={index}
-                      className='min-w-[96px] w-24 sm:min-w-[180px] sm:w-44'
+                      className='apex-rail-item'
                     >
                       <div className='aspect-[2/3] bg-gray-200 dark:bg-gray-700 rounded-lg animate-pulse mb-2' />
                       <div className='h-4 bg-gray-200 dark:bg-gray-700 rounded animate-pulse w-3/4' />
@@ -636,7 +636,7 @@ function HomeClient() {
                 : hotDuanju.map((duanju, index) => (
                     <div
                       key={duanju.id + duanju.source}
-                      className='ptv-fade-in min-w-[96px] w-24 sm:min-w-[180px] sm:w-44'
+                      className='ptv-fade-in apex-rail-item'
                       style={staggerIn(index)}
                     >
                       <VideoCard
@@ -683,7 +683,7 @@ function HomeClient() {
                 ? Array.from({ length: 8 }).map((_, index) => (
                     <div
                       key={index}
-                      className='min-w-[96px] w-24 sm:min-w-[180px] sm:w-44'
+                      className='apex-rail-item'
                     >
                       <div className='relative aspect-[2/3] w-full overflow-hidden rounded-lg bg-gray-200 animate-pulse dark:bg-gray-800'>
                         <div className='absolute inset-0 bg-gray-300 dark:bg-gray-700'></div>
@@ -711,7 +711,7 @@ function HomeClient() {
                     return todayAnimes.map((anime, index) => (
                       <div
                         key={`${anime.id}-${index}`}
-                        className='ptv-fade-in min-w-[96px] w-24 sm:min-w-[180px] sm:w-44'
+                        className='ptv-fade-in apex-rail-item'
                         style={staggerIn(index)}
                       >
                         <VideoCard
@@ -757,7 +757,7 @@ function HomeClient() {
                 ? Array.from({ length: 8 }).map((_, index) => (
                     <div
                       key={index}
-                      className='min-w-[96px] w-24 sm:min-w-[180px] sm:w-44'
+                      className='apex-rail-item'
                     >
                       <div className='aspect-[2/3] bg-gray-200 dark:bg-gray-700 rounded-lg animate-pulse mb-2' />
                       <div className='h-4 bg-gray-200 dark:bg-gray-700 rounded animate-pulse w-3/4' />
@@ -766,7 +766,7 @@ function HomeClient() {
                 : hotTvShows.map((tvShow, index) => (
                     <div
                       key={tvShow.id}
-                      className='ptv-fade-in min-w-[96px] w-24 sm:min-w-[180px] sm:w-44'
+                      className='ptv-fade-in apex-rail-item'
                       style={staggerIn(index)}
                     >
                       <VideoCard
@@ -805,7 +805,7 @@ function HomeClient() {
                 ? Array.from({ length: 8 }).map((_, index) => (
                     <div
                       key={index}
-                      className='min-w-[96px] w-24 sm:min-w-[180px] sm:w-44'
+                      className='apex-rail-item'
                     >
                       <div className='aspect-[2/3] bg-gray-200 dark:bg-gray-700 rounded-lg animate-pulse mb-2' />
                       <div className='h-4 bg-gray-200 dark:bg-gray-700 rounded animate-pulse w-3/4' />
@@ -814,7 +814,7 @@ function HomeClient() {
                 : hotVarietyShows.map((varietyShow, index) => (
                     <div
                       key={varietyShow.id}
-                      className='ptv-fade-in min-w-[96px] w-24 sm:min-w-[180px] sm:w-44'
+                      className='ptv-fade-in apex-rail-item'
                       style={staggerIn(index)}
                     >
                       <VideoCard
@@ -848,7 +848,7 @@ function HomeClient() {
               {upcomingContent.map((item) => (
                 <div
                   key={`${item.media_type}-${item.id}`}
-                  className='min-w-[96px] w-24 sm:min-w-[180px] sm:w-44'
+                  className='apex-rail-item'
                 >
                   <VideoCard
                     title={item.title}
@@ -886,7 +886,7 @@ function HomeClient() {
         </div>
       )}
 
-      <div className='ptv-home-content px-2 sm:px-10 pb-4 sm:pb-8 overflow-visible'>
+      <div className='ptv-home-content overflow-visible'>
         <div className='w-full mx-auto'>
           {/* 首页内容 */}
           <>

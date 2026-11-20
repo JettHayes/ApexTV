@@ -1,25 +1,40 @@
 html[data-moontvplus] {
-  --ptv-accent: #006f68;
-  --ptv-action: #006f68;
-  --ptv-action-hover: #005b55;
-  --ptv-action-ink: #ffffff;
+  --apex-accent-rgb: 0 111 104;
+  --ptv-accent: rgb(var(--apex-accent-rgb));
+  --apex-action-rgb: 0 111 104;
+  --ptv-action: rgb(var(--apex-action-rgb));
+  --apex-action-hover-rgb: 0 91 85;
+  --ptv-action-hover: rgb(var(--apex-action-hover-rgb));
+  --apex-action-ink-rgb: 255 255 255;
+  --ptv-action-ink: rgb(var(--apex-action-ink-rgb));
   --ptv-info: #0e61ac;
-  --ptv-text: #1c2b30;
-  --ptv-muted: #53646b;
-  --ptv-page: #f4f3ee;
-  --ptv-panel: #fffcf5;
-  --ptv-surface: #fffcf5;
-  --ptv-soft: #e9eeea;
-  --ptv-line: #d4dcd7;
+  --apex-text-rgb: 28 43 48;
+  --ptv-text: rgb(var(--apex-text-rgb));
+  --apex-muted-rgb: 83 100 107;
+  --ptv-muted: rgb(var(--apex-muted-rgb));
+  --apex-page-rgb: 244 243 238;
+  --ptv-page: rgb(var(--apex-page-rgb));
+  --apex-panel-rgb: 255 252 245;
+  --ptv-panel: rgb(var(--apex-panel-rgb));
+  --apex-surface-rgb: 255 252 245;
+  --ptv-surface: rgb(var(--apex-surface-rgb));
+  --apex-soft-rgb: 233 238 234;
+  --ptv-soft: rgb(var(--apex-soft-rgb));
+  --apex-line-rgb: 212 220 215;
+  --ptv-line: rgb(var(--apex-line-rgb));
   --ptv-field-line: #778984;
-  --ptv-selected: #ddeee8;
+  --apex-selected-rgb: 221 238 232;
+  --ptv-selected: rgb(var(--apex-selected-rgb));
   --ptv-error: #b42318;
   --ptv-success: #167044;
   --ptv-shadow: 0 12px 32px rgba(10, 34, 36, .08);
   --skeleton-color: var(--ptv-soft);
   --skeleton-highlight: var(--ptv-panel);
   --ptv-gutter: clamp(16px, 2.6vw, 40px);
-  --ptv-max: 1360px;
+  --ptv-max: 1760px;
+  --ptv-page-top: 28px;
+  --ptv-section-gap: clamp(28px, 3vw, 44px);
+  --ptv-title-size: clamp(24px, 2.1vw, 32px);
   --ptv-sidebar-collapsed-width: 64px;
   --ptv-ease: cubic-bezier(.16, 1, .3, 1);
   --theme-primary: var(--ptv-accent);
@@ -33,20 +48,32 @@ html[data-moontvplus] {
 }
 
 html[data-moontvplus].dark {
-  --ptv-accent: #53c7b9;
-  --ptv-action: #53c7b9;
-  --ptv-action-hover: #8ae0d2;
-  --ptv-action-ink: #082d29;
+  --apex-accent-rgb: 83 199 185;
+  --ptv-accent: rgb(var(--apex-accent-rgb));
+  --apex-action-rgb: 83 199 185;
+  --ptv-action: rgb(var(--apex-action-rgb));
+  --apex-action-hover-rgb: 138 224 210;
+  --ptv-action-hover: rgb(var(--apex-action-hover-rgb));
+  --apex-action-ink-rgb: 8 45 41;
+  --ptv-action-ink: rgb(var(--apex-action-ink-rgb));
   --ptv-info: #83b8e7;
-  --ptv-text: #e8eeeb;
-  --ptv-muted: #a5b7ba;
-  --ptv-page: #0d161a;
-  --ptv-panel: #162329;
-  --ptv-surface: #1d2d33;
-  --ptv-soft: #24363c;
-  --ptv-line: #2b3b40;
+  --apex-text-rgb: 232 238 235;
+  --ptv-text: rgb(var(--apex-text-rgb));
+  --apex-muted-rgb: 165 183 186;
+  --ptv-muted: rgb(var(--apex-muted-rgb));
+  --apex-page-rgb: 13 22 26;
+  --ptv-page: rgb(var(--apex-page-rgb));
+  --apex-panel-rgb: 22 35 41;
+  --ptv-panel: rgb(var(--apex-panel-rgb));
+  --apex-surface-rgb: 29 45 51;
+  --ptv-surface: rgb(var(--apex-surface-rgb));
+  --apex-soft-rgb: 36 54 60;
+  --ptv-soft: rgb(var(--apex-soft-rgb));
+  --apex-line-rgb: 43 59 64;
+  --ptv-line: rgb(var(--apex-line-rgb));
   --ptv-field-line: #71868c;
-  --ptv-selected: #203f3d;
+  --apex-selected-rgb: 32 63 61;
+  --ptv-selected: rgb(var(--apex-selected-rgb));
   --ptv-error: #fda29b;
   --ptv-success: #86d9a6;
   --ptv-shadow: 0 12px 32px rgba(0, 0, 0, .22);
@@ -523,7 +550,8 @@ html[data-moontvplus].dark .ptv-login-error { color: #fda29b; background: rgba(2
 @media (max-width: 639px) { .ptv-sheet-in { animation: ptv-sheet 260ms var(--ptv-ease) backwards; } }
 
 @media (hover: hover) and (pointer: fine) {
-  .ptv-nav-link:hover, .ptv-more-link:hover, .ptv-more-card:hover { background: var(--ptv-selected); color: var(--ptv-accent); }
+  .ptv-nav-link:not([aria-current='page']):not([data-active='true']):hover { background: var(--ptv-soft); color: var(--ptv-text); }
+  .ptv-more-link:hover, .ptv-more-card:hover { background: var(--ptv-selected); color: var(--ptv-accent); }
   .ptv-video-card:hover { transform: translateY(-3px) scale(1.02); }
   .ptv-video-card-menu:hover { background: var(--ptv-selected); color: var(--ptv-accent); }
   .ptv-search-submit:hover, .ptv-hero-play:hover { background: var(--ptv-action-hover) !important; }

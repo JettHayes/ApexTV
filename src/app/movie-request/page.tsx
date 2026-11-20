@@ -205,8 +205,8 @@ export default function MovieRequestPage() {
 
   return (
     <PageLayout activePath='/movie-request'>
-      <div className='container mx-auto px-4 py-6'>
-        <div className='mb-6'>
+      <div className='apex-page apex-request-page'>
+        <div className='apex-page-heading'>
           <h1 className='text-2xl font-bold text-gray-900 dark:text-gray-100'>
             求片
           </h1>

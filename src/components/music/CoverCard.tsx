@@ -15,14 +15,7 @@ import {
   MUSIC_COVER_NAME,
 } from './tokens';
 
-/**
- * 歌单 / 专辑卡：一张真封面 + 下面两行字。和热榜的唱片套是**两种卡**，
- * 因为这两种数据本来就不一样——歌单接口实打实给图，榜单接口一张都没有。
- *
- * 这里唯一的意外是**图挂了**（404、防盗链、上游图床抽了），落到一个破图记号上。
- * 它跟热榜卡面必须一眼分得开：热榜面是一张有版面的套子（大号编号 + 名字），
- * 这里是一块空卡纸加一个破图标记。别把两者的兜底合成一个"没有图"的样子。
- */
+/** 歌单与专辑使用接口封面，缺图与加载失败分别给出提示。 */
 export default function CoverCard({
   name,
   cover,
@@ -38,8 +31,8 @@ export default function CoverCard({
   sub?: React.ReactNode;
   onOpen: () => void;
 }) {
-  const [failed, setFailed] = useState(false);
-  const src = cover && !failed ? cover : '';
+  const [failedCover, setFailedCover] = useState<string | null>(null);
+  const src = cover && cover !== failedCover ? cover : '';
 
   return (
     <button type='button' onClick={onOpen} className={MUSIC_COVER}>
@@ -50,13 +43,15 @@ export default function CoverCard({
             alt=''
             loading='lazy'
             referrerPolicy='no-referrer'
-            onError={() => setFailed(true)}
+            onError={() => setFailedCover(src)}
             className='h-full w-full object-cover'
           />
         ) : (
           <span className={MUSIC_ART_BROKEN}>
             <ImageOff className='h-6 w-6' strokeWidth={1.4} />
-            <span className={MUSIC_ART_BROKEN_LABEL}>图挂了</span>
+            <span className={MUSIC_ART_BROKEN_LABEL}>
+              {cover ? '封面加载失败' : '暂无封面'}
+            </span>
           </span>
         )}
       </span>

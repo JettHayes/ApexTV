@@ -366,7 +366,7 @@ function WatchRoomPageContent() {
 
   return (
     <PageLayout activePath="/watch-room">
-      <div className="flex flex-col gap-4 py-4 px-5 lg:px-[3rem] 2xl:px-20">
+      <div className="apex-page apex-room-page flex flex-col gap-6">
         {/* 房员等待提示 */}
         {currentRoom && !isOwner && (
           <div className="mb-4 bg-gradient-to-r from-blue-500 to-purple-600 rounded-xl p-6 shadow-lg">

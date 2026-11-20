@@ -44,6 +44,7 @@ export function useNavigationItems(searchHref = '/search') {
 
 export function navigationActive(pathname: string, query: string, href: string) {
   const [path, params] = href.split('?');
+  if (path === '/music/rankings' && (pathname === '/music' || pathname.startsWith('/music/'))) return true;
   if (params) return pathname === path && new URLSearchParams(query).get('type') === new URLSearchParams(params).get('type');
   return path === '/' ? pathname === '/' : pathname === path || pathname.startsWith(path + '/');
 }

@@ -384,7 +384,7 @@ export default function WebLivePage() {
 
   return (
     <PageLayout activePath='/web-live'>
-      <div className='ptv-live-page flex flex-col gap-3'>
+      <div className='ptv-live-page apex-live-content flex flex-col gap-4'>
         <LiveTabs active='web-live' />
         <div className='py-1'>
           <h1 className='text-xl font-semibold text-gray-900 dark:text-gray-100 flex items-center gap-2 max-w-[80%]'>
