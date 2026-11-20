@@ -14,6 +14,7 @@ import {
   Youtube,
 } from 'lucide-react';
 import Image from 'next/image';
+import dynamic from 'next/dynamic';
 import { useRouter } from 'next/navigation';
 import React, {
   forwardRef,
@@ -60,6 +61,8 @@ import ImageViewer from '@/components/ImageViewer';
 import MobileActionSheet from '@/components/MobileActionSheet';
 import TrailerPickerDialog from '@/components/TrailerPickerDialog';
 import { useWatchRoomContextSafe } from '@/components/WatchRoomProvider';
+
+const OrganizeVideoDialog = dynamic(() => import('./OrganizeVideoDialog'), { ssr: false });
 
 export interface VideoCardProps {
   id?: string;
@@ -156,6 +159,7 @@ const VideoCard = forwardRef<VideoCardHandle, VideoCardProps>(
     const watchRoomContext = useWatchRoomContextSafe();
     // 观影室状态下短剧不走竖屏沉浸播放页（/duanju/play 不支持房间同步）
     const isInWatchRoom = Boolean(watchRoomContext?.currentRoom);
+    const [showOrganizeVideo, setShowOrganizeVideo] = useState(false);
     const [showAnimeSubscribe, setShowAnimeSubscribe] = useState(false);
     const [animeSubscribeToast, setAnimeSubscribeToast] = useState('');
     const isAdminUser = useMemo(() => {
@@ -943,6 +947,11 @@ const VideoCard = forwardRef<VideoCardHandle, VideoCardProps>(
           },
           color: 'default' as const,
         });
+      }
+
+      if (actualTitle && origin !== 'live') {
+        actions.push({ id: 'organize-video', label: '整理影片 / 稍后观看', icon: <ListPlus size={20} />,
+          onClick: () => { setShowMobileActions(false); window.setTimeout(() => setShowOrganizeVideo(true), 220); }, color: 'default' as const });
       }
 
       // 添加追番订阅（仅管理员 + 判定为动漫）
@@ -2187,6 +2196,11 @@ const VideoCard = forwardRef<VideoCardHandle, VideoCardProps>(
           </button>
         </div>
 
+        {showOrganizeVideo && <OrganizeVideoDialog video={{
+          source: actualSource || 'discovery', id: actualId || from + ':' + (actualDoubanId || tmdb_id || actualTitle + actualYear),
+          title: actualTitle, cover: actualPoster, year: actualYear || '', source_name: source_name || '',
+          total_episodes: actualEpisodes || 1, search_title: query, origin, is_anime: resolvedIsAnime, is_duanju: isDuanju,
+        }} onClose={() => setShowOrganizeVideo(false)} />}
         {/* 操作菜单 - 支持右键和长按触发 */}
         <MobileActionSheet
           isOpen={showMobileActions}

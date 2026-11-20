@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 'use client';
 
-import { Blend, BookOpen, Cat, Clover, Container, Film, Globe, Home, Library, Music2, Search, Star, Tv, TvMinimalPlay, Users } from 'lucide-react';
+import { Bookmark, History, Heart, Blend, BookOpen, Cat, Clover, Container, Film, Globe, Home, Library, Music2, Search, Star, Tv, TvMinimalPlay, Users } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
 import { useWatchRoomContextSafe } from './WatchRoomProvider';
@@ -30,11 +30,16 @@ export function useNavigationItems(searchHref = '/search') {
     { icon: Clover, label: '综艺', href: '/douban?type=show' },
     ...(config.CUSTOM_CATEGORIES?.length ? [{ icon: Star, label: '自定义', href: '/douban?type=custom' }] : []),
   ];
+  const personal = [
+    { icon: Heart, label: '我的收藏', href: '/my/favorites' },
+    { icon: History, label: '最近观看', href: '/my/history' },
+    { icon: Bookmark, label: '稍后观看', href: '/my/watch-later' },
+  ];
   const other = [
     ...(config.ADVANCED_RECOMMENDATION_ENABLED ? [{ icon: Blend, label: '高级推荐', href: '/advanced-recommendation' }] : []),
     ...(watchRoom?.isEnabled ? [{ icon: Users, label: '观影室', href: '/watch-room' }] : []),
   ];
-  return { primary, categories, other, config };
+  return { primary, categories, personal, other, config };
 }
 
 export function navigationActive(pathname: string, query: string, href: string) {

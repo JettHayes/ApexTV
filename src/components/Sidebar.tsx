@@ -8,6 +8,7 @@ import { createContext, useCallback, useContext, useLayoutEffect, useState } fro
 import { SPECIAL_SOURCE_PATH } from '@/lib/special-source.client';
 
 import BrandLogo from './BrandLogo';
+import SidebarResume from './SidebarResume';
 import { navigationActive, useNavigationItems } from './NavigationItems';
 
 interface SidebarContextType {
@@ -27,7 +28,7 @@ const Sidebar = ({ onToggle }: { onToggle?: (collapsed: boolean) => void; active
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const isUnderPath = pathname === SPECIAL_SOURCE_PATH || pathname.startsWith(SPECIAL_SOURCE_PATH + '/');
-  const { primary, categories, other } = useNavigationItems(isUnderPath ? SPECIAL_SOURCE_PATH : '/search');
+  const { primary, categories, personal, other } = useNavigationItems(isUnderPath ? SPECIAL_SOURCE_PATH : '/search');
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [hasSavedChoice, setHasSavedChoice] = useState(false);
   const [animate, setAnimate] = useState(false);
@@ -98,7 +99,7 @@ const Sidebar = ({ onToggle }: { onToggle?: (collapsed: boolean) => void; active
                 <Menu className='h-5 w-5' />
               </button>
             </div>
-            <nav aria-label='主导航' className='flex-1 overflow-y-auto px-2 pb-4'>
+            <nav aria-label='主导航' className='flex-1 min-h-0 overflow-y-auto px-2 pb-4'>
               <div className='space-y-1'>{renderItems(primary)}</div>
               <div className='ptv-nav-group'>
                 <div className='ptv-nav-group-title' aria-hidden={isCollapsed}>
@@ -106,9 +107,14 @@ const Sidebar = ({ onToggle }: { onToggle?: (collapsed: boolean) => void; active
                 </div>
                 <div className='space-y-1'>{renderItems(categories)}</div>
               </div>
+              <div className='ptv-nav-group'>
+                {!isCollapsed && <p className='px-4 pb-2 text-xs font-medium opacity-60'>我的</p>}
+                <div className='space-y-1'>{renderItems(personal)}</div>
+              </div>
               {other.length > 0 && <div className='ptv-nav-group space-y-1'>{renderItems(other)}</div>}
               {hasSavedChoice && !isCollapsed && <button type='button' onClick={resetChoice} className='mt-6 px-4 py-2 text-xs opacity-60 hover:opacity-100'>恢复默认导航宽度</button>}
             </nav>
+            {!isCollapsed && !isUnderPath && <SidebarResume key={pathname} />}
           </div>
         </aside>
         <div className='sidebar-offset' />

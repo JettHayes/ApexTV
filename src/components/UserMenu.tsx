@@ -31,7 +31,6 @@ import { getAuthInfoFromBrowserCookie } from '@/lib/auth';
 import { DeviceManagementPanel } from './DeviceManagementPanel';
 import { DownloadManagementPanel } from './DownloadManagementPanel';
 import { EmailSettingsPanel } from './EmailSettingsPanel';
-import { FavoritesPanel } from './FavoritesPanel';
 import { NotificationPanel } from './NotificationPanel';
 import { OfflineDownloadPanel } from './OfflineDownloadPanel';
 import { PersonalCenterPanel } from './PersonalCenterPanel';
@@ -54,7 +53,6 @@ export const UserMenu: React.FC = () => {
   const [isOfflineDownloadPanelOpen, setIsOfflineDownloadPanelOpen] =
     useState(false);
   const [isNotificationPanelOpen, setIsNotificationPanelOpen] = useState(false);
-  const [isFavoritesPanelOpen, setIsFavoritesPanelOpen] = useState(false);
   const [isEmailSettingsOpen, setIsEmailSettingsOpen] = useState(false);
   const [isDeviceManagementOpen, setIsDeviceManagementOpen] = useState(false);
   const [isEcoAppsOpen, setIsEcoAppsOpen] = useState(false);
@@ -1123,7 +1121,7 @@ export const UserMenu: React.FC = () => {
           <button
             onClick={() => {
               setIsOpen(false);
-              setIsFavoritesPanelOpen(true);
+              router.push('/my/favorites');
             }}
             className='w-full px-3 py-2 text-left flex items-center gap-2.5 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors text-sm relative'
           >
@@ -2003,17 +2001,6 @@ export const UserMenu: React.FC = () => {
               setIsNotificationPanelOpen(false);
               // 不需要在这里刷新，NotificationPanel 内部会触发事件
             }}
-          />,
-          document.body
-        )}
-
-      {/* 使用 Portal 将收藏面板渲染到 document.body */}
-      {isFavoritesPanelOpen &&
-        mounted &&
-        createPortal(
-          <FavoritesPanel
-            isOpen={isFavoritesPanelOpen}
-            onClose={() => setIsFavoritesPanelOpen(false)}
           />,
           document.body
         )}

@@ -2,7 +2,8 @@
 
 'use client';
 
-import { AlertCircle, ArrowLeft, Cloud, FileText, Heart, Keyboard, Link2, Loader2, Play, RefreshCw, Router, Search, Sparkles, Star, Users, X } from 'lucide-react';
+import { ListPlus, AlertCircle, ArrowLeft, Cloud, FileText, Heart, Keyboard, Link2, Loader2, Play, RefreshCw, Router, Search, Sparkles, Star, Users, X } from 'lucide-react';
+import dynamic from 'next/dynamic';
 import { useRouter, useSearchParams } from 'next/navigation';
 import {
   Suspense,
@@ -357,6 +358,7 @@ function PlayPageClient() {
   );
 
   // 收藏状态
+  const [showOrganizeVideo, setShowOrganizeVideo] = useState(false);
   const [favorited, setFavorited] = useState(false);
 
   // 网盘搜索弹窗状态
@@ -11636,6 +11638,13 @@ function PlayPageClient() {
                     >
                       <FavoriteIcon filled={favorited} />
                     </button>
+                    {currentSource && currentId && detail && <button type='button' className='my-icon-button'
+                      aria-label='整理影片 / 稍后观看' title='整理影片 / 稍后观看' onClick={() => setShowOrganizeVideo(true)}
+                    ><ListPlus size={22} /></button>}
+                    {showOrganizeVideo && currentSource && currentId && detail && <OrganizeVideoDialog video={{
+                      source: currentSource, id: currentId, title: videoTitle, cover: detail.poster || '', year: detail.year || '',
+                      source_name: detail.source_name || '', total_episodes: detail.episodes.length || 1, search_title: searchTitle,
+                    }} onClose={() => setShowOrganizeVideo(false)} />}
                     {/* 网盘搜索按钮 */}
                     {netdiskSearchEnabled && (
                       <button
@@ -12234,6 +12243,8 @@ const applyCorrectionsToSources = (sources: SearchResult[]): SearchResult[] => {
 };
 
 // FavoriteIcon 组件
+const OrganizeVideoDialog = dynamic(() => import('@/components/OrganizeVideoDialog'), { ssr: false });
+
 const FavoriteIcon = ({ filled }: { filled: boolean }) => {
   if (filled) {
     return (

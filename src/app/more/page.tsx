@@ -7,10 +7,11 @@ import { useNavigationItems } from '@/components/NavigationItems';
 import PageLayout from '@/components/PageLayout';
 
 export default function MorePage() {
-  const { primary, categories, other } = useNavigationItems();
+  const { primary, categories, personal, other } = useNavigationItems();
   const reading = primary.filter((item) => ['/music/rankings', '/books', '/manga'].includes(item.href));
   const features = [...primary.filter((item) => ['/live', '/web-live'].includes(item.href)), ...other];
   const sections = [
+    { title: '我的', items: personal },
     { title: '音乐与阅读', items: reading },
     { title: '直播与更多', items: features },
     { title: '影视分类', items: categories },

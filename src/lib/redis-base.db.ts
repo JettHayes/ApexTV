@@ -65,6 +65,7 @@ export abstract class BaseRedisStorage implements IStorage {
       hGet: (key: string, field: string) => this.adapter.hGet(key, field),
       hget: (key: string, field: string) => this.adapter.hGet(key, field),
       hGetAll: (key: string) => this.adapter.hGetAll(key),
+      hDel: (key: string, field: string) => this.adapter.hDel(key, field),
       hgetall: (key: string) => this.adapter.hGetAll(key),
       zAdd: (key: string, member: { score: number; value: string }) =>
         this.adapter.zAdd(key, member),

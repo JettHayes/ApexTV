@@ -16,7 +16,7 @@
 .ls-nav button { display: flex; flex: none; align-items: center; gap: 9px; min-height: 44px; padding: 10px 13px; border: 0; border-radius: 8px; background: transparent; color: var(--ptv-muted); white-space: nowrap; font-size: 13px; font-weight: 550; }
 .ls-nav button[aria-current] { color: var(--ptv-accent); background: var(--ptv-selected); font-weight: 650; }
 .ls-nav .ls-reset { font-size: 12px; }
-.ls-reset-mobile { display: none; }
+.ls-footer .ls-reset-mobile { display: none; }
 .ls-content { flex: 1; min-width: 0; min-height: 0; overflow-y: auto; overscroll-behavior: contain; padding: 24px clamp(18px, 3vw, 32px) 32px; scrollbar-width: thin; scroll-padding-block: 20px; }
 .ls-content-heading { margin-bottom: 28px; }
 .ls-content-heading h2 { margin: 0; color: var(--ptv-text); font-size: 21px; font-weight: 650; letter-spacing: -.025em; }
@@ -111,7 +111,7 @@
   .ls-nav { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 2px; padding: 8px 12px; overflow: visible; }
   .ls-nav button { flex-direction: column; gap: 6px; padding: 8px 1px; white-space: normal; font-size: 11px; }
   .ls-nav .ls-reset { display: none; }
-  .ls-reset-mobile { display: inline-flex; order: 2; margin-left: auto; }
+  .ls-footer .ls-reset-mobile { display: inline-flex; order: 2; margin-left: auto; }
 }
 @media (max-width: 479px) {
   .ls-position { padding: 0; }
