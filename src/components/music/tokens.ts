@@ -159,27 +159,27 @@ export const MUSIC_ICON_BUTTON_DANGER = cn(
  * 身份和状态不共用同一个通道：方块不随选中变色，底下菜单里才用主题色标状态。
  */
 export const MUSIC_SWITCH = cn(
-  'inline-flex min-h-11 cursor-pointer items-center gap-0 border border-music-edge bg-music-card font-music-mono text-[calc(11*var(--music-px))] leading-none text-music-ink transition-colors duration-150 hover:border-music-ink-soft dark:border-music-night-edge dark:bg-music-night-card dark:text-music-night-ink dark:hover:border-music-night-ink-soft',
+  'inline-flex min-h-11 cursor-pointer items-center gap-0 rounded-[10px] border border-music-edge bg-music-card text-[13px] leading-none text-music-ink transition-colors duration-150 hover:border-music-ink-soft dark:border-music-night-edge dark:bg-music-night-card dark:text-music-night-ink dark:hover:border-music-night-ink-soft',
   MUSIC_FOCUS
 );
 
 /** 触发器左侧字段名（"音源"/"类型"）。 */
 export const MUSIC_SWITCH_KEY =
-  'border-r border-music-edge px-2 py-[7px] tracking-[0.12em] text-music-muted dark:border-music-night-edge dark:text-music-night-muted';
+  'border-r border-music-edge px-3 py-2 text-music-muted dark:border-music-night-edge dark:text-music-night-muted';
 
 /** 触发器右侧当前取值。 */
 export const MUSIC_SWITCH_VALUE =
-  'inline-flex items-center gap-1.5 px-2 py-[7px] font-semibold';
+  'inline-flex items-center gap-2 px-3 py-2 font-semibold';
 
 /** 触发器尾部的下拉箭头。 */
 export const MUSIC_SWITCH_CARET = 'h-3 w-3 shrink-0 opacity-45';
 
 /** 菜单与菜单项。z-[60] 是为了压过固定播放器（z-50）。 */
 export const MUSIC_MENU =
-  'absolute right-0 top-[calc(100%+6px)] z-[60] grid w-[168px] gap-0.5 rounded-[4px] border border-music-edge bg-music-paper p-1 shadow-[0_14px_32px_-14px_rgba(0,0,0,0.55)] dark:border-music-night-edge dark:bg-music-night-card';
+  'absolute right-0 top-[calc(100%+6px)] z-[60] grid w-[200px] gap-1 rounded-[10px] border border-music-edge bg-music-paper p-1 shadow-[0_14px_32px_-14px_rgba(0,0,0,0.55)] dark:border-music-night-edge dark:bg-music-night-card';
 
 export const MUSIC_MENU_ITEM = cn(
-  'flex min-h-11 w-full cursor-pointer items-center gap-2.5 rounded-[3px] px-2 py-1.5 text-left font-music-mono text-[calc(11*var(--music-px))] text-music-ink transition-colors duration-150',
+  'flex min-h-11 w-full cursor-pointer items-center gap-2.5 rounded-[7px] px-3 py-2 text-left text-[13px] text-music-ink transition-colors duration-150',
   MUSIC_FOCUS
 );
 
@@ -211,10 +211,10 @@ export const MUSIC_MONOGRAM =
  * ------------------------------------------------------------------ */
 
 export const MUSIC_SEG =
-  'inline-flex items-center gap-0.5 border border-music-edge bg-music-card p-0.5 dark:border-music-night-edge dark:bg-music-night-card';
+  'inline-flex items-center gap-1 rounded-[10px] border border-music-edge bg-music-card p-1 dark:border-music-night-edge dark:bg-music-night-card';
 
 export const MUSIC_SEG_ITEM = cn(
-  'shrink-0 cursor-pointer rounded-[2px] px-2.5 py-1.5 font-music-mono text-[calc(11*var(--music-px))] leading-none text-music-muted transition-colors duration-150 dark:text-music-night-muted',
+  'shrink-0 min-h-10 cursor-pointer rounded-[7px] px-3 py-2 text-[13px] leading-none text-music-muted transition-colors duration-150 dark:text-music-night-muted',
   MUSIC_FOCUS
 );
 

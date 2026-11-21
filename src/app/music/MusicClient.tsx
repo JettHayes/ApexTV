@@ -22,8 +22,7 @@ import {
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { GripVertical, ImageOff, ListMusic, SlidersHorizontal, Trash2, X } from 'lucide-react';
-import Link from 'next/link';
-import { usePathname, useRouter } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 
@@ -36,7 +35,6 @@ import AddToPlaylistModal from '@/components/AddToPlaylistModal';
 import LyricsPiPWindow from '@/components/LyricsPiPWindow';
 import MusicEmpty from '@/components/music/MusicEmpty';
 import PageLayout from '@/components/PageLayout';
-import MusicSidebarDrawer from '@/components/music/MusicSidebarDrawer';
 import {
   MUSIC_ART_BROKEN,
   MUSIC_COUNT,
@@ -413,7 +411,6 @@ declare global {
 
 export default function MusicClient({ children: _children }: { children?: React.ReactNode }) {
   const router = useRouter();
-  const pathname = usePathname();
   const watchRoom = useWatchRoomContextSafe();
   const [currentSource, setCurrentSource] = useState<MusicSource>('wy');
   const [currentSong, setCurrentSong] = useState<Song | null>(null);
@@ -463,7 +460,6 @@ export default function MusicClient({ children: _children }: { children?: React.
   const [sleepTimerRemaining, setSleepTimerRemaining] = useState(0); // 睡眠定时剩余秒数
   const [customSleepHours, setCustomSleepHours] = useState(0); // 自定义睡眠定时小时
   const [customSleepMinutes, setCustomSleepMinutes] = useState(30); // 自定义睡眠定时分钟
-  const [showSidebarDrawer, setShowSidebarDrawer] = useState(false); // 左侧抽屉菜单
   const [showVolumeSlider, setShowVolumeSlider] = useState(false); // 音量滑块显示状态
   const [pendingSongToPlay, setPendingSongToPlay] = useState<{ platform: string; id: string } | null>(null); // 待播放的歌曲信息
   const [resolvingCount, setResolvingCount] = useState(0); // 当前解析中的歌曲数量
@@ -2514,50 +2510,6 @@ export default function MusicClient({ children: _children }: { children?: React.
           </div>
         </div>
       )}
-      {/* Header */}
-      <header
-        className="apex-music-header"
-      >
-        <div className="w-full mx-auto flex items-center justify-between gap-3 md:gap-4 py-3">
-          <div className="flex items-center justify-between md:justify-start md:gap-6 w-full md:w-auto">
-            <div className="flex items-center gap-3">
-              <button
-                onClick={() => setShowSidebarDrawer(true)}
-                className="flex h-11 w-11 items-center justify-center text-music-ink dark:text-music-night-ink transition-colors hover:text-music-theme dark:hover:text-music-night-theme"
-                title="打开菜单"
-                aria-label="打开音乐菜单"
-              >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h16" />
-                </svg>
-              </button>
-              <div className="flex items-center justify-center text-music-theme dark:text-music-night-theme">
-                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                  <path d="M18 3a1 1 0 00-1.196-.98l-10 2A1 1 0 006 5v9.114A4.369 4.369 0 005 14c-1.657 0-3 .895-3 2s1.343 2 3 2 3-.895 3-2V7.82l8-1.6v5.894A4.37 4.37 0 0015 12c-1.657 0-3 .895-3 2s1.343 2 3 2 3-.895 3-2V3z" />
-                </svg>
-              </div>
-              <span className="font-bold text-lg text-white">音乐</span>
-            </div>
-          </div>
-        </div>
-        <nav className="apex-media-tabs" aria-label="音乐导航">
-          {[
-            { href: '/music/rankings', label: '排行榜' },
-            { href: '/music/songlists', label: '推荐歌单' },
-            { href: '/music/search', label: '搜索' },
-            { href: '/music/my-playlists', label: '我的歌单' },
-          ].map((item) => (
-            <Link
-              key={item.href}
-              href={item.href}
-              aria-current={pathname?.startsWith(item.href) || (pathname === '/music' && item.href === '/music/rankings') ? 'page' : undefined}
-            >
-              {item.label}
-            </Link>
-          ))}
-        </nav>
-      </header>
-
       {/* Main Content */}
       <div className="apex-music-main">
         <div className="max-w-7xl mx-auto">
@@ -3463,13 +3415,6 @@ export default function MusicClient({ children: _children }: { children?: React.
       )}
 
 
-      <MusicSidebarDrawer
-        currentSource={currentSource}
-        isOpen={showSidebarDrawer}
-        pathname={pathname}
-        onClose={() => setShowSidebarDrawer(false)}
-        onNavigate={(href) => router.push(href)}
-      />
 
       {/* Add to Playlist Modal */}
       <AddToPlaylistModal

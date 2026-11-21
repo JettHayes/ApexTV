@@ -2,10 +2,22 @@ import { NextRequest, NextResponse } from 'next/server';
 
 import { isMusicSource, lxGetJson, unwrapLxArray } from '@/lib/music-v2';
 import { badRequest, internalError } from '@/lib/music-v2-api';
+import {
+  getNativeBoardCovers,
+  normalizeBoardCover,
+} from '@/lib/music/board-covers.server';
 
 export const runtime = 'nodejs';
 
-type Board = { id?: string; bangid?: string; name: string; img?: string; cover?: string; pic?: string; coverImgUrl?: string };
+type Board = {
+  id?: string;
+  bangid?: string;
+  name: string;
+  img?: string;
+  cover?: string;
+  pic?: string;
+  coverImgUrl?: string;
+};
 
 export async function GET(request: NextRequest) {
   try {
@@ -40,13 +52,27 @@ export async function GET(request: NextRequest) {
       }
     }
 
+    const covers = list.some(
+      (item) => !(item.img || item.cover || item.pic || item.coverImgUrl)
+    )
+      ? await getNativeBoardCovers(
+          actualSource as Parameters<typeof getNativeBoardCovers>[0]
+        )
+      : new Map<string, string>();
+
     return NextResponse.json({
       success: true,
       data: {
-        list: list.map(item => ({
+        list: list.map((item) => ({
           id: item.bangid || item.id || '',
           name: item.name,
-          cover: item.img || item.cover || item.pic || item.coverImgUrl,
+          cover: normalizeBoardCover(
+            item.img ||
+              item.cover ||
+              item.pic ||
+              item.coverImgUrl ||
+              covers.get(String(item.bangid || item.id))
+          ),
           source: actualSource,
         })),
         source: actualSource,

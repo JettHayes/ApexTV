@@ -5,7 +5,9 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 
 import { useWebLiveSync } from '@/hooks/useWebLiveSync';
-import { getWebLiveRoomUrl, type WebLivePlayback, type WebLiveRoomInfo, type WebLiveSource, type WebLiveVariant, webLivePlatformName } from '@/lib/web-live';
+import { useYouTubeLiveRefresh } from '@/hooks/useYouTubeLiveRefresh';
+import { useWebLiveRecovery } from '@/hooks/useWebLiveRecovery';
+import { getWebLiveRoomUrl, webLiveSourceLabel, type WebLivePlayback, type WebLiveRoomInfo, type WebLiveSource, type WebLiveVariant, webLivePlatformName } from '@/lib/web-live';
 import { chooseVariant, qualityName, qualityOptions, resolveVariant, type WebLivePreference } from '@/lib/web-live-variants';
 
 import LiveTabs from '@/components/LiveTabs';
@@ -17,6 +19,7 @@ import PageLayout from '@/components/PageLayout';
 import WebLiveRoomDetails, { WebLiveAvatar } from '@/components/WebLiveRoomInfo';
 import WebLivePlayer from '@/components/WebLivePlayer';
 import WebLivePlatformIcon from '@/components/WebLivePlatformIcon';
+import TwitchLivePlayer from '@/components/TwitchLivePlayer';
 
 
 /* 初始化加载动画（后台「个性化配置 → 初始化加载样式」可切换旧版/方格/魔法阵）。
@@ -58,17 +61,51 @@ export default function WebLivePage() {
   const [selectionNotice, setSelectionNotice] = useState('');
   const [showAdvancedPlayback, setShowAdvancedPlayback] = useState(false);
   const preferenceRef = useRef<WebLivePreference | null>(null);
-  const retryCountRef = useRef(0);
+
   const originalVideoUrl = playback?.originalUrl || '';
   const [streamInfo, setStreamInfo] = useState<WebLiveRoomInfo | null>(null);
   const [activeTab, setActiveTab] = useState<'rooms' | 'platforms'>('rooms');
   const [isChannelListCollapsed, setIsChannelListCollapsed] = useState(false);
   const [isVideoLoading, setIsVideoLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [canAutoRetry, setCanAutoRetry] = useState(false);
+  const [errorCode, setErrorCode] = useState('');
   const [selectedPlatform, setSelectedPlatform] = useState<string | null>(null);
   const [isWebLiveEnabled, setIsWebLiveEnabled] = useState<boolean | null>(null);
   const hasAutoLoadedRef = useRef(false); // 防止重复自动加载
   const streamRequestRef = useRef<AbortController | null>(null);
+
+  useYouTubeLiveRefresh(currentSource, isVideoLoading, (result) => {
+    setPlayback(previous => previous?.embedUrl === result.embedUrl && previous?.liveStatus === result.liveStatus ? previous : result);
+    setStreamInfo(result);
+    setErrorMessage(null);
+    setCanAutoRetry(false);
+    setErrorCode('');
+  });
+
+  const resetRecovery = useWebLiveRecovery({
+    source: currentSource,
+    phase: errorMessage ? canAutoRetry ? 'retry' : 'idle' : playback?.liveStatus === 'offline' ? 'waiting' : 'idle',
+    paused: isVideoLoading,
+    onReady: () => currentSource ? handleSourceClick(currentSource, true) : undefined,
+    onOffline: (result) => {
+      setPlayback(result);
+      setStreamInfo(previous => ({ ...previous, ...result, avatar: result.avatar || previous?.avatar, cover: result.cover || previous?.cover }));
+      setErrorMessage(null);
+      setCanAutoRetry(false);
+      setErrorCode('');
+    },
+    onError: (message, retryable, code) => {
+      setPlayback(null);
+      setErrorMessage(message);
+      setCanAutoRetry(retryable);
+      setErrorCode(code || 'NETWORK_ERROR');
+    },
+    onExhausted: () => {
+      setCanAutoRetry(false);
+      setErrorMessage('多次重连仍未成功，请检查自定义地址；临时签名地址可能已过期，需要更新。');
+    },
+  });
 
   // 观影室同步功能
   const webLiveSync = useWebLiveSync({
@@ -167,7 +204,7 @@ export default function WebLivePage() {
 
   const handleSourceClick = async (source: WebLiveSource, automatic = false) => {
     if (!automatic) {
-      retryCountRef.current = 0;
+      resetRecovery();
       if (source.key !== currentSource?.key) preferenceRef.current = null;
     }
     streamRequestRef.current?.abort();
@@ -177,6 +214,8 @@ export default function WebLivePage() {
     setCurrentSource(source);
     setIsVideoLoading(true);
     setErrorMessage(null);
+    setCanAutoRetry(false);
+    setErrorCode('');
     if (!automatic) setStreamInfo(null);
 
     const params = new URLSearchParams(searchParams.toString());
@@ -194,7 +233,7 @@ export default function WebLivePage() {
           if (controller.signal.aborted) return;
           setSources(updatedSources);
           const updated = updatedSources.find((item) => item.key === source.key && !item.disabled);
-          if (!updated) throw new Error('直播源已不存在或已停用，请选择其他房间');
+          if (!updated) throw Object.assign(new Error('直播源已不存在或已停用，请选择其他房间'), { retryable: false, code: 'SOURCE_MISSING' });
           setCurrentSource(updated);
           query.set('platform', updated.platform);
           query.set('roomId', updated.roomId);
@@ -203,7 +242,10 @@ export default function WebLivePage() {
       }
       const data = await response.json();
       if (controller.signal.aborted) return;
-      if (!response.ok) throw new Error(data.error || '获取直播流失败');
+      if (!response.ok) throw Object.assign(new Error(data.error || '获取直播流失败'), {
+        retryable: data.retryable ?? response.status >= 500,
+        code: data.code || 'NETWORK_ERROR',
+      });
       const result = data as WebLivePlayback;
       setPlayback(result);
       setStreamInfo(result);
@@ -215,19 +257,39 @@ export default function WebLivePage() {
         ? '原画质或线路暂不可用，已切换到当前可用选项。' : '');
       if (preferred) preferenceRef.current = { quality: qualityName(preferred), cdn: preferred.cdn, type: preferred.type };
     } catch (error) {
-      if (!controller.signal.aborted) setErrorMessage(error instanceof Error ? error.message : '获取直播流失败');
+      if (!controller.signal.aborted) {
+        const failure = error as Error & { retryable?: boolean; code?: string };
+        setErrorMessage(failure instanceof Error ? failure.message : '获取直播流失败');
+        setCanAutoRetry(failure.retryable !== false);
+        setErrorCode(failure.code || 'NETWORK_ERROR');
+      }
     } finally {
       if (!controller.signal.aborted) setIsVideoLoading(false);
     }
   };
 
-  const handlePlaybackFailure = (message: string, retryable: boolean) => {
-    if (retryable && currentSource && retryCountRef.current < 2) {
-      retryCountRef.current += 1;
-      void handleSourceClick(currentSource, true);
-    } else {
-      setErrorMessage(message);
-    }
+  const handlePlaybackFailure = (message: string, retryable: boolean, code = 'NETWORK_ERROR') => {
+    const customExpired = currentSource?.platform === 'custom' && code === 'HTTP_EXPIRED';
+    const customEnded = currentSource?.platform === 'custom' && code === 'PLAYBACK_ENDED';
+    setPlayback(null);
+    setErrorMessage(customExpired ? '自定义播放地址已失效或访问被拒绝，请更新源地址；系统无法替外部源续签。' : customEnded ? '自定义直播源已结束，请检查是否为回放地址或需要更新的临时地址。' : message);
+    setCanAutoRetry(retryable && !customExpired && !customEnded);
+    setErrorCode(customExpired ? 'CUSTOM_URL_EXPIRED' : code);
+  };
+
+  const handlePlaying = () => {
+    resetRecovery();
+    setCanAutoRetry(false);
+    setErrorMessage(null);
+    setErrorCode('');
+    setStreamInfo(previous => ({ ...previous, liveStatus: 'live' }));
+  };
+
+  const handleTwitchStatus = (status: 'live' | 'offline' | 'unknown') => {
+    setStreamInfo(previous => ({ ...previous, liveStatus: status }));
+    setPlayback(previous => previous ? { ...previous, liveStatus: status } : previous);
+    setErrorMessage(null);
+    setCanAutoRetry(false);
   };
 
   const getRoomUrl = (source: WebLiveSource) => getWebLiveRoomUrl(source.platform, source.roomId);
@@ -240,7 +302,7 @@ export default function WebLivePage() {
   const protocolTypes = Array.from(new Set(protocols.map((item) => item.type)));
   const selectVariant = (item: WebLiveVariant | undefined, notice = '') => {
     if (!item) return;
-    retryCountRef.current = 0;
+    resetRecovery();
     setErrorMessage(null);
     setSelectionNotice(notice);
     preferenceRef.current = { quality: qualityName(item), cdn: item.cdn, type: item.type };
@@ -422,12 +484,23 @@ export default function WebLivePage() {
             <div className='ptv-player-stage'>
               <div className='ptv-player-canvas relative w-full aspect-video' style={currentSource?.platform === 'twitch' ? { minHeight: 300 } : undefined}>
                 <div className='bg-black w-full h-full rounded-xl overflow-hidden shadow-lg border border-white/0 dark:border-white/30'>
-                  {playback?.kind === 'embed' && playback.embedUrl ? (
-                    <iframe key={currentSource?.key} src={playback.embedUrl} title={streamInfo?.title || currentSource?.name || '直播'} className='h-full w-full border-0' style={currentSource?.platform === 'twitch' ? { minHeight: 300 } : undefined} referrerPolicy='strict-origin-when-cross-origin' allow='autoplay; encrypted-media; fullscreen; picture-in-picture' allowFullScreen />
-                  ) : playback?.kind === 'stream' && (
-                    <WebLivePlayer url={variant?.url || playback.url} type={variant?.type || playback.type || 'hls'} onFailure={handlePlaybackFailure} />
+                  {currentSource?.platform === 'twitch' && playback?.embedUrl ? (
+                    <TwitchLivePlayer channel={currentSource.roomId} embedUrl={playback.embedUrl} title={streamInfo?.title || currentSource.name} onStatus={handleTwitchStatus} />
+                  ) : playback?.kind === 'embed' && playback.embedUrl ? (
+                    <iframe key={currentSource?.key + ':' + playback.embedUrl} src={playback.embedUrl} title={streamInfo?.title || currentSource?.name || '直播'} className='h-full w-full border-0' style={currentSource?.platform === 'twitch' ? { minHeight: 300 } : undefined} referrerPolicy='strict-origin-when-cross-origin' allow='autoplay; encrypted-media; fullscreen; picture-in-picture' allowFullScreen />
+                  ) : playback?.kind === 'stream' && playback.url && playback.liveStatus !== 'offline' && (
+                    <WebLivePlayer url={variant?.url || playback.url} type={variant?.type || playback.type || 'hls'} onFailure={handlePlaybackFailure} onPlaying={handlePlaying} />
                   )}
                 </div>
+
+                {playback?.liveStatus === 'offline' && !isVideoLoading && !errorMessage && (
+                  <div className='ptv-live-offline absolute inset-0 flex flex-col items-center justify-center gap-4 px-6 text-center'>
+                    <Radio className='h-8 w-8' aria-hidden />
+                    <h3>直播间当前未开播</h3>
+                    <p>开播后会自动连接，无需重新添加直播地址。</p>
+                    <button type='button' onClick={() => currentSource && handleSourceClick(currentSource)}>立即检查</button>
+                  </div>
+                )}
 
                 {errorMessage && (
                   <div className='absolute inset-0 bg-black/90 backdrop-blur-sm rounded-xl overflow-hidden shadow-lg border border-white/0 dark:border-white/30 flex items-center justify-center z-[600] transition-all duration-300'>
@@ -451,11 +524,12 @@ export default function WebLivePage() {
                         />
                       </div>
                       <div className='space-y-2 lg:space-y-4'>
-                        <h3 className='text-xl font-semibold text-white'>获取直播流失败</h3>
+                        <h3 className='text-xl font-semibold text-white'>{errorCode === 'PLATFORM_RESTRICTED' ? '平台限制了当前访问' : errorCode === 'CUSTOM_URL_EXPIRED' ? '播放地址需要更新' : '暂时无法连接直播'}</h3>
                         <div className='mtv-err-box bg-orange-500/20 border border-orange-500/30 rounded-lg p-4'>
                           <p className='text-orange-300 font-medium'>{errorMessage}</p>
                         </div>
-                        <button type='button' onClick={() => currentSource && handleSourceClick(currentSource)} className='rounded-lg bg-green-600 px-4 py-2 text-white'>重试</button>
+                        {canAutoRetry && <p className='text-xs text-gray-300'>稍后会自动重试，也可以立即检查。</p>}
+                        <button type='button' onClick={() => currentSource && handleSourceClick(currentSource)} className='rounded-lg bg-green-600 px-4 py-2 text-white'>立即检查</button>
                       </div>
                     </div>
                   </div>
@@ -493,7 +567,7 @@ export default function WebLivePage() {
               {currentSource && (
                 <WebLiveRoomDetails source={currentSource} info={streamInfo} loading={isVideoLoading} error={!!errorMessage} />
               )}
-              {playback?.kind === 'stream' && (
+              {playback?.kind === 'stream' && playback.url && playback.liveStatus !== 'offline' && (
                 <section className='ptv-live-settings' aria-label='直播画质与线路'>
                   {variant && (
                     <div className='ptv-live-controls'>
@@ -784,7 +858,7 @@ export default function WebLivePage() {
                               <WebLiveAvatar avatar={isActive ? streamInfo?.avatar || source.avatar : source.avatar} cover={isActive ? streamInfo?.cover || source.cover : source.cover} />
                               <div className='flex-1 min-w-0'>
                                 <div className='text-sm font-medium text-gray-900 dark:text-gray-100 truncate'>{source.name}</div>
-                                <div className='text-xs text-gray-500 dark:text-gray-400 mt-1'>{source.platform === 'custom' ? '自定义直播源' : `房间ID: ${source.roomId}`}</div>
+                                <div className='text-xs text-gray-500 dark:text-gray-400 mt-1'>{webLiveSourceLabel(source)}</div>
                               </div>
                             </div>
                           </button>

@@ -88,6 +88,8 @@ export default function MusicRankingsPage() {
               rank={index + 1}
               name={playlist.name}
               cover={playlist.cover}
+              source={playlist.source || currentSource}
+              boardId={playlist.id}
               top={
                 musicSources.find((item) => item.key === playlist.source)?.label ||
                 currentSourceLabel

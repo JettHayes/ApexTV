@@ -46,9 +46,9 @@ export const WEB_LIVE_PLATFORMS = [
   { enabled: true, value: 'bilibili', label: '哔哩哔哩', kind: 'stream', inputLabel: '直播间链接或房间号', placeholder: 'https://live.bilibili.com/房间号', help: '粘贴 B 站直播间链接，或填写数字房间号；不支持个人空间和视频链接。' },
   { enabled: true, value: 'douyin', label: '抖音', kind: 'stream', inputLabel: '网页直播间链接或房间号', placeholder: 'https://live.douyin.com/房间号', help: '填写网页直播间链接或其中的数字房间号；分享短链接请先在浏览器打开，复制直播间地址。' },
   { enabled: true, value: 'douyu', label: '斗鱼', kind: 'stream', inputLabel: '直播间链接或房间号', placeholder: 'https://www.douyu.com/房间号', help: '粘贴斗鱼直播间链接，或填写数字房间号。' },
-  { enabled: true, value: 'youtube', label: 'YouTube Live', kind: 'embed', inputLabel: '直播视频链接、视频 ID 或频道链接', placeholder: 'https://www.youtube.com/@频道handle/live', help: '支持直播视频链接、视频 ID、@频道handle 或频道链接；@handle 不是频道显示名称。使用官方播放器，受嵌入权限及网络影响。' },
+  { enabled: true, value: 'youtube', label: 'YouTube Live', kind: 'embed', inputLabel: '频道链接、@handle 或直播视频链接', placeholder: 'https://www.youtube.com/@频道handle/live', help: '推荐频道链接或 @handle；保存时会统一转换成固定频道；直播视频链接用于识别作者，下播后等待下一场，不播放历史回放。使用官方播放器，受嵌入权限及网络影响。' },
   { enabled: true, value: 'twitch', label: 'Twitch', kind: 'embed', inputLabel: '频道链接或频道名', placeholder: 'https://www.twitch.tv/频道名', help: '填写频道链接或频道名；不支持视频、目录或设置页面链接。使用官方播放器。' },
-  { enabled: true, value: 'custom', label: '自定义直播地址', kind: 'stream', inputLabel: '直播流网址', placeholder: 'https://example.com/live/index.m3u8', help: '填写自己持有或获授权的公网 HLS / FLV 地址，无后缀地址请指定格式。' },
+  { enabled: true, value: 'custom', label: '自定义直播地址', kind: 'stream', inputLabel: '直播流网址', placeholder: 'https://example.com/live/index.m3u8', help: '填写自己持有或获授权的公网 HLS / FLV 地址，无后缀地址请指定格式；临时签名地址过期后需手动更新。' },
 ] as const;
 
 export function isWebLivePlatformEnabled(platform: string): boolean {
@@ -110,6 +110,17 @@ export function normalizeWebLiveRoomId(platform: string, value: string): string 
   if (platform === 'twitch' && new Set(['videos', 'video', 'directory', 'settings', 'search', 'downloads', 'subscriptions', 'inventory', 'jobs', 'p', 'turbo', 'wallet', 'login', 'signup']).has(id.toLowerCase())) throw new Error('请填写 Twitch 频道名或频道链接');
   if (!patterns[platform].test(id)) throw new Error(`请检查${webLivePlatformName(platform)}的房间号或链接格式`);
   return platform === 'twitch' ? id.toLowerCase() : id;
+}
+
+export function webLiveSourceLabel(source: Pick<WebLiveSource, 'platform' | 'roomId'>): string {
+  if (source.platform === 'custom') return '自定义直播源';
+  if (source.platform === 'youtube') {
+    if (source.roomId.startsWith('channel:')) return '频道 ' + source.roomId.slice(8);
+    if (source.roomId.startsWith('@')) return '频道 ' + source.roomId;
+    return '视频入口 ' + source.roomId;
+  }
+  if (source.platform === 'twitch') return '频道 ' + source.roomId;
+  return '房间 ' + source.roomId;
 }
 
 export function getWebLiveRoomUrl(platform: string, roomId: string): string {

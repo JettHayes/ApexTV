@@ -3,7 +3,7 @@
 import { Radio } from 'lucide-react';
 import { useState } from 'react';
 
-import { type WebLiveRoomInfo, webLiveImageUrl, webLivePlatformName } from '@/lib/web-live';
+import { type WebLiveRoomInfo, webLiveImageUrl, webLivePlatformName, webLiveSourceLabel } from '@/lib/web-live';
 
 export function WebLiveAvatar({ avatar, cover }: Pick<WebLiveRoomInfo, 'avatar' | 'cover'>) {
   const [failedUrls, setFailedUrls] = useState<string[]>([]);
@@ -41,7 +41,7 @@ export default function WebLiveRoomDetails({ source, info, loading, error }: {
           <span className='ptv-room-platform'>{webLivePlatformName(source.platform)}</span>
           {info?.category && <span>{info.category}</span>}
           {info?.anchorId && <span>主播 ID: {info.anchorId}</span>}
-          <span className='ptv-room-id'>{source.platform === 'custom' ? '自定义直播源' : `房间 ${info?.roomId || source.roomId}`}</span>
+          <span className='ptv-room-id'>{source.platform === 'youtube' && info?.liveStatus === 'live' && info?.roomId ? '当前直播 ' + info.roomId : webLiveSourceLabel({ ...source, roomId: info?.roomId || source.roomId })}</span>
         </div>
       </div>
     </section>

@@ -1702,7 +1702,7 @@ export function SearchPageClient({ searchBase = '/search' }: { searchBase?: stri
       : '网盘类型';
 
     return (
-      <div className='ptv-content-in mx-auto mt-4 flex max-w-2xl justify-end overflow-visible'>
+      <div className='ptv-content-in apex-search-options mt-4 flex justify-end overflow-visible'>
         <button
           ref={pansouCloudFilterButtonRef}
           type='button'
@@ -1799,9 +1799,9 @@ export function SearchPageClient({ searchBase = '/search' }: { searchBase?: stri
 
   return (
     <PageLayout activePath={searchBase}>
-      <div className='ptv-search-page overflow-visible mb-10'>
+      <div className='ptv-search-page overflow-visible mb-10' data-search-state={showResults ? 'results' : 'idle'}>
         {/* 搜索框 */}
-        <div className='mb-0'>
+        <div className='apex-search-controls'>
           <form onSubmit={handleSearch} role='search' aria-label='搜索影片' className='ptv-search-form mx-auto'>
             <div className='relative'>
               <Search className='absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400 dark:text-gray-500' />
@@ -1927,7 +1927,7 @@ export function SearchPageClient({ searchBase = '/search' }: { searchBase?: stri
           )}
 
           {activeTab === 'video' && !showResults && (
-            <div className='ptv-content-in mx-auto mt-4 flex max-w-2xl justify-end'>
+            <div className='ptv-content-in apex-search-options mt-4 flex justify-end'>
               <div className='relative'>
                 <button
                   ref={(el) => {

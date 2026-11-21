@@ -36,7 +36,14 @@
 }
 .apex-poster-grid > * { min-width: 0; }
 .apex-search-results { width: 100%; }
-.ptv-search-page .ptv-search-form { width: min(100%, 800px); }
+.ptv-search-page { --apex-search-width: 800px; }
+.apex-search-controls,
+.ptv-search-page[data-search-state='idle'] .apex-search-results {
+  width: 100%; max-width: var(--apex-search-width); margin-inline: auto;
+}
+.apex-search-options { width: 100%; min-width: 0; }
+.ptv-search-page .ptv-search-form { width: 100%; max-width: none; align-items: stretch; }
+.ptv-search-page .ptv-search-submit { min-height: 52px; }
 .ptv-search-page .ptv-search-form input { min-height: 52px; border-radius: 12px; font-size: 16px; box-shadow: none; }
 .ptv-library-tools {
   padding: 16px 0 20px; margin-bottom: 16px; border-bottom: 1px solid var(--ptv-line);
@@ -87,10 +94,7 @@
 
 /* 音乐页保留唱片封套与播放动效，底色、导航和工具栏回到共用体系。 */
 .ptv-page .music-theme { background: transparent; }
-.apex-music-header { max-width: var(--ptv-max); margin-inline: auto; padding: var(--ptv-page-top) var(--ptv-gutter) 0; }
-.apex-music-header > div { padding: 0 0 16px; border-bottom: 1px solid var(--ptv-line); }
-.apex-music-header span.font-bold { font-size: var(--ptv-title-size); font-weight: 650; letter-spacing: -.035em; }
-.apex-music-main { max-width: var(--ptv-max); margin-inline: auto; padding: 24px var(--ptv-gutter) calc(140px + env(safe-area-inset-bottom)); }
+.apex-music-main { max-width: var(--ptv-max); margin-inline: auto; padding: var(--ptv-page-top) var(--ptv-gutter) calc(140px + env(safe-area-inset-bottom)); }
 .apex-music-main > div { max-width: none; min-width: 0; }
 .apex-music-main :is(input:not([type='range']),select) { min-height: 44px; }
 
@@ -109,6 +113,28 @@
 .ptv-home-content h2 { font-size: clamp(19px, 1.6vw, 23px); font-weight: 650; letter-spacing: -.025em; }
 .ptv-home-content section > div:first-child > a { min-height: 44px; align-items: center; }
 .ptv-wallpaper:is([data-page='music'], [data-page='reading']) { opacity: .06; }
+
+
+.apex-music-toolbar { display: flex; align-items: center; flex-wrap: wrap; gap: 16px 24px; margin-bottom: 28px; padding-bottom: 22px; border-bottom: 1px solid var(--ptv-line); }
+.apex-music-heading { min-width: 0; flex: 1 1 180px; }
+.apex-music-heading h1 { max-width: 30ch; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: clamp(22px, 2vw, 30px); }
+.apex-music-heading p { margin-top: 7px; font-family: inherit; font-size: 12px; letter-spacing: 0; text-transform: none; }
+.apex-music-navigation { display: flex; flex-shrink: 0; align-items: center; gap: 4px; padding: 4px; border: 1px solid var(--ptv-line); border-radius: 11px; background: var(--ptv-panel); }
+.apex-music-navigation a { display: flex; align-items: center; justify-content: center; min-height: 40px; padding: 8px 14px; border-radius: 7px; white-space: nowrap; color: var(--ptv-muted); font-size: 13px; transition: background-color 160ms, color 160ms; }
+.apex-music-navigation a[aria-current='page'] { background: var(--ptv-selected); color: var(--ptv-accent); font-weight: 600; }
+.apex-music-actions { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; max-width: 100%; }
+.apex-music-empty { min-height: min(48vh, 400px); padding: 40px 20px; border: 1px dashed var(--ptv-line); border-radius: 14px; background: color-mix(in srgb, var(--ptv-panel) 82%, transparent); }
+.apex-playlist-workspace { align-items: start; }
+@media (max-width: 1199px) {
+ .apex-music-navigation { order: 3; width: 100%; overflow-x: auto; }
+ .apex-music-navigation a { flex: 1; }
+ .apex-music-toolbar { gap: 18px 12px; }
+}
+@media (max-width: 479px) {
+ .apex-music-navigation { gap: 2px; padding: 3px; }
+ .apex-music-navigation a { min-height: 44px; padding-inline: 10px; font-size: 12px; }
+}
+@media (hover: hover) and (pointer: fine) { .apex-music-navigation a:not([aria-current='page']):hover { background: var(--ptv-soft); color: var(--ptv-text); } }
 
 /* 动画只作用于局部内容，避免外壳产生 transform 层叠上下文影响浮层和视频。 */
 .apex-catalog-intro, .apex-page-heading, .apex-media-header-inner { animation: apex-content-enter 240ms var(--ptv-ease) backwards; }
@@ -155,3 +181,12 @@
 
 @media (max-width: 479px) { .apex-poster-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 28px 14px; } }
 @media (min-width: 480px) and (max-width: 767px) { .ptv-page .ptv-media-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+
+.ptv-live-offline { background: #0c171b; color: #e8eeeb; }
+.ptv-live-offline > svg { color: #8badad; }
+.ptv-live-offline h3 { font-size: clamp(18px, 2vw, 24px); font-weight: 600; }
+.ptv-live-offline p { max-width: 36ch; color: #a5b7ba; font-size: 14px; line-height: 1.7; }
+.ptv-live-offline button { min-height: 44px; padding: 9px 18px; border: 1px solid #587276; border-radius: 9px; color: #e8eeeb; background: #1d2d33; }
+.ptv-live-offline button:hover { background: #284148; }
+
+.ptv-twitch-play { min-height: 44px; background: #e8eeeb; color: #0c171b; border: 1px solid #d4dcd7; }
