@@ -58,7 +58,7 @@ export default function MangaShelfPage() {
   };
 
   return (
-    <section className='space-y-4'>
+    <section className='f1-reading-collection space-y-4'>
       <div className={cn('flex items-center gap-2 text-sm', LIBRARY_MUTED)}>
         <BookOpen className={cn('h-4 w-4', LIBRARY_ACCENT_ICON)} />共{' '}
         {shelfList.length} 本漫画

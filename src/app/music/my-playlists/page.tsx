@@ -210,10 +210,10 @@ export default function MusicMyPlaylistsPage() {
           }
         />
       ) : (
-        <div className='apex-playlist-workspace grid grid-cols-1 gap-6 md:grid-cols-3'>
+        <div className='apex-playlist-workspace f1-playlist-library grid grid-cols-1 gap-6 md:grid-cols-3'>
           <div
             className={cn(
-              'md:col-span-1',
+              'f1-playlist-directory md:col-span-1',
               selectedUserPlaylist && 'hidden md:block'
             )}
           >
@@ -266,7 +266,7 @@ export default function MusicMyPlaylistsPage() {
 
           <div
             className={cn(
-              'md:col-span-2',
+              'f1-playlist-tracks md:col-span-2',
               !selectedUserPlaylist && 'hidden md:block'
             )}
           >

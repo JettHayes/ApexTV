@@ -292,13 +292,13 @@ export default function BookDetailPage() {
     : chapters.slice(0, CHAPTER_PREVIEW_LIMIT);
 
   return (
-    <div className='space-y-6'>
+    <div className='f1-reading-detail space-y-6'>
       <section
-        className={cn('grid gap-6 md:grid-cols-[220px_1fr]', PANEL_CLASS)}
+        className={cn('f1-reading-detail-hero grid gap-6 md:grid-cols-[220px_1fr]', PANEL_CLASS)}
       >
         <div
           className={cn(
-            'relative mx-auto aspect-[3/4] w-36 overflow-hidden rounded-md bg-library-ochre-tint dark:bg-library-night-ochre-tint sm:w-44 md:w-full',
+            'f1-reading-detail-cover relative mx-auto aspect-[3/4] w-36 overflow-hidden rounded-md bg-library-ochre-tint dark:bg-library-night-ochre-tint sm:w-44 md:w-full',
             BOOK_COVER_LIFT
           )}
         >
@@ -325,7 +325,7 @@ export default function BookDetailPage() {
             </div>
           )}
         </div>
-        <div className='flex min-w-0 flex-col justify-between gap-5'>
+        <div className='f1-reading-detail-copy flex min-w-0 flex-col justify-between gap-5'>
           <div>
             <span
               title={detail.sourceName}
@@ -366,7 +366,7 @@ export default function BookDetailPage() {
               ))}
             </div>
           </div>
-          <div className='flex flex-wrap gap-3'>
+          <div className='f1-reading-detail-actions flex flex-wrap gap-3'>
             {readable &&
             (readableFormat !== 'chapters' ||
               (!chaptersLoading && !chaptersError && chapters.length > 0)) ? (
@@ -425,7 +425,7 @@ export default function BookDetailPage() {
         </div>
       </section>
 
-      <section className={PANEL_CLASS}>
+      <section className={cn(PANEL_CLASS, 'f1-book-formats')}>
         {detail.readingUnavailableReason && (
           <p
             role='status'
@@ -519,7 +519,7 @@ export default function BookDetailPage() {
       </section>
 
       {readableFormat === 'chapters' ? (
-        <section className={PANEL_CLASS}>
+        <section className={cn(PANEL_CLASS, 'f1-reading-chapters')}>
           <div className='flex items-center justify-between gap-3'>
             <h2
               className={cn(

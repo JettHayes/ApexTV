@@ -1316,7 +1316,7 @@ function ChapterReader({ manifest }: { manifest: BookReadManifest }) {
 
   return (
     <div
-      className='relative book-reader-height overflow-hidden'
+      className='f1-book-reader f1-book-reader--chapters relative book-reader-height overflow-hidden'
       style={{ backgroundColor: palette.panelBg, color: palette.bodyColor }}
     >
       {tocOpen && typeof document !== 'undefined'
@@ -1368,7 +1368,7 @@ function ChapterReader({ manifest }: { manifest: BookReadManifest }) {
                 role='dialog'
                 aria-modal='true'
                 aria-label='阅读设置'
-                className={cn(READER_SHEET, 'ptv-modal-in max-h-[90vh] w-full max-w-sm overflow-y-auto overscroll-contain p-5 supports-[height:100dvh]:max-h-[calc(100dvh-2rem)]')}
+                className={cn(READER_SHEET, 'f1-reader-settings ptv-modal-in max-h-[90vh] w-full max-w-sm overflow-y-auto overscroll-contain p-5 supports-[height:100dvh]:max-h-[calc(100dvh-2rem)]')}
                 onClick={(event) => event.stopPropagation()}
               >
                 <div className='mb-4'>
@@ -1520,7 +1520,7 @@ function ChapterReader({ manifest }: { manifest: BookReadManifest }) {
         }}
       >
         <article
-          className='mx-auto max-w-3xl text-library-ink dark:text-library-night-ink'
+          className='f1-book-prose mx-auto max-w-3xl text-library-ink dark:text-library-night-ink'
           style={{
             fontSize: `${settings.fontSize}%`,
             lineHeight: settings.lineHeight,
@@ -3522,7 +3522,7 @@ export default function BookReadPage() {
   }
 
   return (
-    <div className={cn('flex book-reader-height flex-col', LIBRARY_PAGE)}>
+    <div className={cn('f1-book-reader f1-book-reader--epub flex book-reader-height flex-col', LIBRARY_PAGE)}>
       {restoredMessage ? (
         <div className='absolute left-1/2 top-[4.5rem] z-30 -translate-x-1/2 rounded-full bg-library-ochre px-4 py-2 text-xs text-white shadow-lg dark:bg-library-night-ochre dark:text-library-night'>
           {restoredMessage}

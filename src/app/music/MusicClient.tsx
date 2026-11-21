@@ -2305,7 +2305,7 @@ export default function MusicClient({ children: _children }: { children?: React.
     // 那份进 SSR 样式表、首帧就在。别往这加 bg-* ——原来那个 bg-zinc-950 就是
     // "先黑一下再变回来"的来源（styled-jsx 要等 hydration 才插进 head）。
     <PageLayout activePath="/music/rankings">
-    <div className="music-theme min-h-screen">
+    <div className="music-theme f1-music-root min-h-screen">
       <>
       <style jsx global>{`
         @keyframes vinyl-spin {
@@ -2519,14 +2519,14 @@ export default function MusicClient({ children: _children }: { children?: React.
 
       {/* Player */}
       {showPlayer && currentSong && (
-        <div className="apex-music-player fixed bottom-[calc(1rem+env(safe-area-inset-bottom))] left-1/2 -translate-x-1/2 w-[95%] max-w-3xl z-50">
+        <div className="apex-music-player f1-music-dock fixed bottom-[calc(1rem+env(safe-area-inset-bottom))] left-1/2 -translate-x-1/2 w-[95%] max-w-3xl z-50" aria-label="正在播放的音乐">
           {showSpectrum && !showLyrics && (
             <div className="pointer-events-none px-4">
               <AudioSpectrumCanvas barsRef={spectrumBarsRef} compact />
             </div>
           )}
 
-          <div className="relative bg-zinc-900/95 backdrop-blur-md rounded-xl p-4 pt-5 border border-white/10 shadow-2xl">
+          <div className="f1-music-dock-surface relative bg-zinc-900/95 backdrop-blur-md rounded-xl p-4 pt-5 border border-white/10 shadow-2xl">
             {/* Progress Bar */}
             <div className="absolute left-0 right-0 top-0 h-1 bg-white/10 rounded-t-xl">
               <div
@@ -2684,7 +2684,7 @@ export default function MusicClient({ children: _children }: { children?: React.
       {/* Lyrics Modal */}
       {showLyrics && currentSong && (
         <div
-          className="ptv-fade-in fixed inset-0 bg-black/90 backdrop-blur-sm z-[100] flex items-center justify-center p-4"
+          className="f1-listening-scrim ptv-fade-in fixed inset-0 bg-black/90 backdrop-blur-sm z-[100] flex items-center justify-center p-4"
           onClick={(e) => {
             // 点击背景关闭音量条
             if (e.target === e.currentTarget) {
@@ -2693,7 +2693,7 @@ export default function MusicClient({ children: _children }: { children?: React.
           }}
         >
           <div
-            className="relative w-full max-w-6xl h-[90vh] supports-[height:100dvh]:h-[90dvh] bg-zinc-900/95 rounded-2xl overflow-hidden border border-white/10 shadow-2xl flex flex-col"
+            className="f1-listening-room relative w-full max-w-6xl h-[90vh] supports-[height:100dvh]:h-[90dvh] bg-zinc-900/95 rounded-2xl overflow-hidden border border-white/10 shadow-2xl flex flex-col"
             onClick={() => setShowVolumeSlider(false)}
           >
             <button
@@ -2705,9 +2705,9 @@ export default function MusicClient({ children: _children }: { children?: React.
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
               </svg>
             </button>
-            <div className="flex flex-1 min-h-0 flex-col md:flex-row">
+            <div className="f1-listening-stage flex flex-1 min-h-0 flex-col md:flex-row">
               {/* Cover / Meta */}
-              <div className="relative h-32 md:h-auto md:w-[380px] lg:w-[430px] xl:w-[480px] bg-gradient-to-b from-zinc-800 to-zinc-900 shrink-0 overflow-hidden">
+              <div className="f1-listening-art relative h-32 md:h-auto md:w-[380px] lg:w-[430px] xl:w-[480px] bg-gradient-to-b from-zinc-800 to-zinc-900 shrink-0 overflow-hidden">
                 {currentSong.pic && (
                   <div className="absolute inset-0">
                     <img
@@ -2768,7 +2768,7 @@ export default function MusicClient({ children: _children }: { children?: React.
               )}
 
               {/* Lyrics Content */}
-              <div ref={lyricsContainerRef} className={`${mobileLyricsView === 'vinyl' ? 'hidden md:block' : 'block'} flex-1 overflow-y-auto p-4 md:p-6 lg:p-8`}>
+              <div ref={lyricsContainerRef} className={`f1-listening-lyrics ${mobileLyricsView === 'vinyl' ? 'hidden md:block' : 'block'} flex-1 overflow-y-auto p-4 md:p-6 lg:p-8`}>
                 {lyrics.length > 0 ? (
                   <div className="space-y-4 md:space-y-5">
                     {lyrics.map((line, index) => (
@@ -2810,7 +2810,7 @@ export default function MusicClient({ children: _children }: { children?: React.
             </div>
 
             {/* Mini Player Controls */}
-            <div className="music-player-controls max-h-[45vh] overflow-y-auto border-t border-white/5 p-3 md:p-4 shrink-0">
+            <div className="music-player-controls f1-listening-controls max-h-[45vh] overflow-y-auto border-t border-white/5 p-3 md:p-4 shrink-0">
               {/* 上排：播放控制按钮 */}
               <div className="relative flex items-center justify-center gap-4 md:gap-6 mb-2 md:mb-3">
                 <button onClick={playPrev} aria-label="上一首" className="text-music-muted dark:text-music-night-muted hover:text-music-ink dark:hover:text-music-night-ink transition-colors">
@@ -3048,7 +3048,7 @@ export default function MusicClient({ children: _children }: { children?: React.
       {/* Playlist Modal */}
       {showPlaylist && (
         <div className="ptv-scrim-in fixed inset-0 bg-black/90 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
-          <div className={cn('ptv-sheet-in', MUSIC_QUEUE_SHELL)}>
+          <div className={cn('ptv-sheet-in f1-music-queue', MUSIC_QUEUE_SHELL)}>
             <div className={MUSIC_QUEUE_HEAD}>
               <div className="flex items-center gap-2.5">
                 <h2 className={MUSIC_QUEUE_TITLE}>播放列表</h2>

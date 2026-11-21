@@ -33,13 +33,13 @@ export default function MusicPage({
   const pathname = usePathname();
 
   return (
-    <div className={cn(MUSIC_PAGE_BODY, MUSIC_TEXT)}>
-      <header className='apex-music-toolbar'>
+    <section className={cn('f1-music-workspace', MUSIC_PAGE_BODY, MUSIC_TEXT)} data-music-view={pathname?.split('/')[2] || 'rankings'}>
+      <header className='apex-music-toolbar f1-music-toolbar'>
         <div className='apex-music-heading'>
           <h1 className={MUSIC_BAR_TITLE}>{title}</h1>
           {subtitle ? <p className={MUSIC_BAR_SUB}>{subtitle}</p> : null}
         </div>
-        <nav className='apex-music-navigation' aria-label='音乐导航'>
+        <nav className='apex-music-navigation f1-music-navigation' aria-label='音乐导航'>
           {destinations.map((item) => (
             <Link
               key={item.href}
@@ -57,7 +57,7 @@ export default function MusicPage({
         </nav>
         {actions ? <div className='apex-music-actions'>{actions}</div> : null}
       </header>
-      {children}
-    </div>
+      <div className='f1-music-content'>{children}</div>
+    </section>
   );
 }

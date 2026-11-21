@@ -109,6 +109,7 @@ export default function MangaLayout({
   );
 
   return (
+    <div className='f1-reading-shell f1-comic-shell' data-reader={isReadingPage ? 'manga' : undefined}>
     <MediaShell
       siteName={siteName}
       title={meta.title}
@@ -123,5 +124,6 @@ export default function MangaLayout({
     >
       {children}
     </MediaShell>
+    </div>
   );
 }

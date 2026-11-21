@@ -188,6 +188,7 @@ export default function BooksLayout({
   );
 
   return (
+    <div className='f1-reading-shell' data-reader={isRead ? 'book' : undefined}>
     <MediaShell
       siteName={siteName}
       title={meta.title}
@@ -202,5 +203,6 @@ export default function BooksLayout({
     >
       {children}
     </MediaShell>
+    </div>
   );
 }

@@ -200,7 +200,7 @@ export default function BookHistoryPage() {
   };
 
   return (
-    <section className='space-y-4'>
+    <section className='f1-reading-collection f1-reading-history space-y-4'>
       <div className='flex items-center justify-between gap-3'>
         <div className={cn('flex items-center gap-2 text-sm', LIBRARY_MUTED)}>
           <Clock3 className={cn('h-4 w-4', LIBRARY_ACCENT_ICON)} />共{' '}

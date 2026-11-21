@@ -881,14 +881,14 @@ export default function MangaReadPage() {
   };
 
   return (
-    <div className='mx-auto max-w-6xl'>
+    <div className='f1-comic-reader mx-auto max-w-6xl' data-read-mode={readMode}>
       {settingsOpen && (
         <div
           className='ptv-scrim-in fixed inset-0 z-40 flex items-center justify-center bg-black/40 px-4'
           onClick={() => setSettingsOpen(false)}
         >
           <div
-            className={cn(READER_SHEET, 'ptv-modal-in w-full max-w-sm p-5')}
+            className={cn(READER_SHEET, 'f1-reader-settings ptv-modal-in w-full max-w-sm p-5')}
             onClick={(e) => e.stopPropagation()}
           >
             <div className='mb-4'>

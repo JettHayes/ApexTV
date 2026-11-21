@@ -249,7 +249,7 @@ export default function MusicSongListsPage() {
         />
       }
     >
-      <div className='mb-5 flex flex-wrap items-center justify-between gap-3'>
+      <div className='f1-music-filterbar mb-5 flex flex-wrap items-center justify-between gap-3'>
         {/* 两个选项：摊开比收进下拉少一次点击，也不用记"现在选的是哪个"。 */}
         <div className={MUSIC_SEG} role='group' aria-label='排序'>
           {sortOptions.map((item) => (
@@ -368,7 +368,7 @@ export default function MusicSongListsPage() {
       {loadingList ? (
         <MusicCardGridSkeleton count={10} />
       ) : songLists.length > 0 ? (
-        <div className={MUSIC_COVER_GRID}>
+        <div className={`${MUSIC_COVER_GRID} f1-album-grid`}>
           {songLists.map((item) => (
             <CoverCard
               key={item.id}

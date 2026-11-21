@@ -502,10 +502,9 @@ export default function MangaSearchPage() {
   };
 
   return (
-    <div className='space-y-6'>
-      {/* 搜索框做成纸面书案的样式：一个实心纸面板托着输入、来源与搜索键。 */}
+    <div className='f1-reading-search f1-comic-search space-y-6'>
       <form
-        className={cn(LIBRARY_PANEL, 'mx-auto max-w-4xl p-3 sm:p-4')}
+        className={cn(LIBRARY_PANEL, 'f1-reading-search-panel p-4 sm:p-6')}
         onSubmit={handleSearch}
       >
         <div className='flex flex-col gap-3 lg:flex-row'>

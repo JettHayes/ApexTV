@@ -512,7 +512,7 @@ export default function MusicSearchPage() {
           event.preventDefault();
           submit();
         }}
-        className={cn(MUSIC_FIELD, 'mb-6')}
+        className={cn(MUSIC_FIELD, 'f1-music-search-form mb-6')}
       >
         <Search
           className='h-4 w-4 shrink-0 text-music-muted dark:text-music-night-muted'
@@ -525,6 +525,7 @@ export default function MusicSearchPage() {
           placeholder='搜索歌曲、歌手或专辑…'
           aria-label='搜索'
         />
+        <button type='submit' className='f1-music-search-submit'>搜索</button>
       </form>
 
       {loading ? (

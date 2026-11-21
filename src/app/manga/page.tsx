@@ -284,7 +284,7 @@ export default function MangaRecommendPage() {
   const recentRecords = readRecords.slice(1, 13);
 
   return (
-    <div className='space-y-8'>
+    <div className='f1-reading-discover f1-comic-discover space-y-8'>
       {currentRecord ? (
         <ContinueReadingCard
           title={currentRecord.title}
@@ -316,7 +316,7 @@ export default function MangaRecommendPage() {
       ) : null}
 
       {sources.length > 0 ? (
-        <section className='space-y-3'>
+        <section className='f1-comic-browser space-y-3'>
           <div className='flex flex-nowrap gap-1 overflow-x-auto border-b border-library-edge [scrollbar-width:none] [&::-webkit-scrollbar]:hidden dark:border-library-night-edge'>
             {sources.map((source) => (
               <button
@@ -355,7 +355,7 @@ export default function MangaRecommendPage() {
         </section>
       ) : null}
 
-      <section className='space-y-4'>
+      <section className='f1-comic-catalog space-y-4'>
         <MediaSectionHeader title='书库' subtitle={`按 ${badge} 排序`} />
 
         {error ? (

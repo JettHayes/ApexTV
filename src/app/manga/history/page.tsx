@@ -102,7 +102,7 @@ export default function MangaHistoryPage() {
   };
 
   return (
-    <section className='space-y-4'>
+    <section className='f1-reading-collection f1-reading-history space-y-4'>
       <div className={cn('flex items-center gap-2 text-sm', LIBRARY_MUTED)}>
         <History className={cn('h-4 w-4', LIBRARY_ACCENT_ICON)} /> 共{' '}
         {historyList.length} 条阅读记录

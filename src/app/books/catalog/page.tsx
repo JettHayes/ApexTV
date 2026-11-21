@@ -283,8 +283,8 @@ export default function BooksCatalogPage() {
   };
 
   return (
-    <div className='space-y-6'>
-      <section className='border-b border-library-edge pb-5 dark:border-library-night-edge'>
+    <div className='f1-reading-catalog space-y-6'>
+      <section className='f1-catalog-tools border-b border-library-edge pb-5 dark:border-library-night-edge'>
         <div className='flex flex-wrap items-start justify-between gap-3'>
           <div className='min-w-0'>
             <p className={cn('text-xs', LIBRARY_MUTED)}>浏览目录</p>

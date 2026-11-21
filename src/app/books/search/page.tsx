@@ -367,10 +367,10 @@ export default function BooksSearchPage() {
     : '搜索完成';
 
   return (
-    <div className='space-y-7 sm:space-y-9'>
+    <div className='f1-reading-search space-y-7 sm:space-y-9'>
       <section
         aria-labelledby='book-search-heading'
-        className='border-b border-library-edge pb-6 dark:border-library-night-edge sm:pb-8'
+        className='f1-reading-search-panel border-b border-library-edge pb-6 dark:border-library-night-edge sm:pb-8'
       >
         <p
           className={cn(
@@ -621,7 +621,7 @@ export default function BooksSearchPage() {
       {view.status !== 'idle' && (
         <section
           aria-label='搜索进度'
-          className={cn(LIBRARY_PANEL, 'overflow-hidden')}
+          className={cn(LIBRARY_PANEL, 'f1-reading-progress overflow-hidden')}
         >
           <div className='flex flex-wrap items-center justify-between gap-3 px-4 py-4 sm:px-5'>
             <div className='flex min-w-0 items-center gap-2.5'>

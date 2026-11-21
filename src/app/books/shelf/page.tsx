@@ -58,7 +58,7 @@ export default function BookShelfPage() {
   const currentPage = Math.min(page, Math.max(1, Math.ceil(filtered.length / 48)));
 
   return (
-    <section className='space-y-4'>
+    <section className='f1-reading-collection space-y-4'>
       <div className={cn('flex flex-wrap items-center gap-x-2 gap-y-1 text-sm', LIBRARY_MUTED)}>
         <BookmarkCheck className={cn('h-4 w-4', LIBRARY_ACCENT_ICON)} />共{' '}
         {items.length} 本电子书

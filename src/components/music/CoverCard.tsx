@@ -1,6 +1,6 @@
 'use client';
 
-import { ImageOff } from 'lucide-react';
+import { ImageOff, Play } from 'lucide-react';
 import { useState } from 'react';
 
 import { cn } from '@/lib/cn';
@@ -35,8 +35,8 @@ export default function CoverCard({
   const src = cover && cover !== failedCover ? cover : '';
 
   return (
-    <button type='button' onClick={onOpen} className={MUSIC_COVER}>
-      <span className={MUSIC_COVER_FRAME}>
+    <button type='button' onClick={onOpen} className={cn(MUSIC_COVER, 'f1-album-card')}>
+      <span className={cn(MUSIC_COVER_FRAME, 'f1-album-art')}>
         {src ? (
           <img
             src={src}
@@ -54,9 +54,10 @@ export default function CoverCard({
             </span>
           </span>
         )}
+        <span className='f1-album-play' aria-hidden><Play size={22} fill='currentColor' /></span>
       </span>
-      <span className={cn(MUSIC_COVER_BODY, 'block')}>
-        <span className={cn(MUSIC_COVER_NAME, 'block')}>{name}</span>
+      <span className={cn(MUSIC_COVER_BODY, 'f1-album-caption block')}>
+        <span className={cn(MUSIC_COVER_NAME, 'f1-album-title block')}>{name}</span>
         {sub || meta ? (
           <span className={MUSIC_COVER_META}>
             <span className='truncate'>{sub}</span>

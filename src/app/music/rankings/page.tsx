@@ -68,7 +68,7 @@ export default function MusicRankingsPage() {
   return (
     <MusicPage
       title='热歌榜单'
-      subtitle={`Side A · ${currentSourceLabel}`}
+      subtitle={`${currentSourceLabel} · 发现正在热播的声音`}
       actions={
         <MusicSwitch
           field='音源'
@@ -81,7 +81,7 @@ export default function MusicRankingsPage() {
       {loading ? (
         <MusicSleeveGridSkeleton count={10} />
       ) : playlists.length > 0 ? (
-        <div className={MUSIC_SLEEVE_GRID}>
+        <div className={`${MUSIC_SLEEVE_GRID} f1-album-grid`}>
           {playlists.map((playlist, index) => (
             <SleeveCard
               key={playlist.id}

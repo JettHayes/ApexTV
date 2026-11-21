@@ -121,7 +121,7 @@ export default function BooksHomePage() {
   const currentPage = Math.min(page, Math.max(1, Math.ceil(filteredSources.length / 24)));
 
   return (
-    <div className='space-y-8'>
+    <div className='f1-reading-discover space-y-8'>
       {currentRecord ? (
         <ContinueReadingCard
           title={currentRecord.title}
@@ -138,7 +138,7 @@ export default function BooksHomePage() {
         <section
           className={cn(
             LIBRARY_PANEL,
-            'flex flex-wrap items-center justify-between gap-4 p-5 sm:p-6'
+            'f1-reading-welcome flex flex-wrap items-center justify-between gap-4 p-5 sm:p-6'
           )}
         >
           <div className='min-w-0'>
@@ -186,7 +186,7 @@ export default function BooksHomePage() {
         </MediaRail>
       ) : null}
 
-      <section className='space-y-4'>
+      <section className='f1-source-workspace space-y-4'>
         <MediaSectionHeader
           title='书源'
           subtitle={
@@ -221,9 +221,9 @@ export default function BooksHomePage() {
           </label>
         </div>}
 
-        <div className='grid gap-4 md:grid-cols-2 xl:grid-cols-3'>
+        <div className='f1-source-grid grid gap-4 md:grid-cols-2 xl:grid-cols-3'>
           {filteredSources.slice((currentPage - 1) * 24, currentPage * 24).map((source) => (
-            <article key={source.id} className={cn(LIBRARY_PANEL, 'p-5')}>
+            <article key={source.id} className={cn(LIBRARY_PANEL, 'f1-source-card p-5')}>
               <div className='min-w-0'>
                 <div
                   className={cn(

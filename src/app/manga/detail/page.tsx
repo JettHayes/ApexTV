@@ -54,8 +54,8 @@ const META_PILL =
 
 function MangaDetailSkeleton() {
   return (
-    <div className='space-y-6'>
-      <div className={cn('grid gap-6 md:grid-cols-[260px_1fr]', PANEL_CLASS)}>
+    <div className='f1-reading-detail f1-comic-detail space-y-6'>
+      <div className={cn('f1-reading-detail-hero grid gap-6 md:grid-cols-[260px_1fr]', PANEL_CLASS)}>
         <div className={cn('aspect-[3/4]', LIBRARY_SKELETON)} />
         <div className='space-y-4'>
           <div className={cn('h-8 w-2/3', LIBRARY_SKELETON)} />
@@ -269,7 +269,7 @@ export default function MangaDetailPage() {
         {/* 封面立起来：外层投影 + 覆盖层书脊，和书墙上的卡片同一套。 */}
         <div
           className={cn(
-            'relative aspect-[3/4] overflow-hidden rounded-md bg-library-ochre-tint dark:bg-library-night-ochre-tint',
+            'f1-reading-detail-cover relative aspect-[3/4] overflow-hidden rounded-md bg-library-ochre-tint dark:bg-library-night-ochre-tint',
             BOOK_COVER_LIFT
           )}
         >
@@ -294,7 +294,7 @@ export default function MangaDetailPage() {
             </div>
           )}
         </div>
-        <div className='space-y-4'>
+        <div className='f1-reading-detail-copy space-y-4'>
           <div>
             <h1
               className={cn(
@@ -324,7 +324,7 @@ export default function MangaDetailPage() {
               {detail.description}
             </p>
           )}
-          <div className='flex flex-wrap gap-3'>
+          <div className='f1-reading-detail-actions flex flex-wrap gap-3'>
             {chapters[0] && (
               <Link href={chapterHref(chapters[0])} className={LIBRARY_BUTTON}>
                 <BookOpen className='h-4 w-4' />
@@ -364,7 +364,7 @@ export default function MangaDetailPage() {
         </div>
       </div>
 
-      <div className={PANEL_CLASS}>
+      <div className={cn(PANEL_CLASS, 'f1-reading-chapters')}>
         <div className='mb-4 flex items-center justify-between gap-3'>
           <h2
             className={cn('text-lg font-semibold', LIBRARY_TEXT, LIBRARY_SERIF)}
@@ -390,7 +390,7 @@ export default function MangaDetailPage() {
             已更新 {unreadChapterCount} 话，最新章节：{latestChapter.name}
           </div>
         )}
-        <div className='grid gap-2'>
+        <div className='f1-chapter-grid grid gap-2'>
           {chapters.map((chapter) => {
             const active = currentRecord?.chapterId === chapter.id;
             const isNewChapter = newChapterIds.has(chapter.id);
