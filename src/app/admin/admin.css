@@ -2,13 +2,13 @@
 
 .apex-admin-page {
   width: 100%;
-  padding: 24px var(--ptv-gutter) 48px;
+  padding: clamp(24px, 3vw, 42px) var(--ptv-gutter) 56px;
   color: var(--ptv-text);
 }
 
 .apex-admin-container {
   width: 100%;
-  max-width: 1600px;
+  max-width: var(--ptv-max);
   margin-inline: auto;
   container: admin / inline-size;
 }
@@ -19,53 +19,66 @@
   align-items: center;
   justify-content: space-between;
   gap: 16px;
-  margin-bottom: 24px;
+  margin-bottom: 26px;
+  padding-bottom: 24px;
+  border-bottom: 1px solid var(--ptv-line);
 }
 
+.apex-admin-heading { min-width: 0; }
+.apex-admin-eyebrow { display: flex; align-items: center; gap: 7px; margin-bottom: 10px; color: var(--ptv-accent); font-size: 12px; font-weight: 600; letter-spacing: .06em; }
+.apex-admin-eyebrow::before { content: ''; width: 18px; height: 3px; background: var(--ptv-accent); transform: skewX(-24deg); }
 .apex-admin-title {
   color: var(--ptv-text);
-  font-size: clamp(22px, 2vw, 28px);
+  font-size: clamp(25px, 2.2vw, 34px);
   font-weight: 650;
-  letter-spacing: -.025em;
+  line-height: 1.25;
+  letter-spacing: -.035em;
 }
+.apex-admin-context { display: flex; align-items: center; flex-wrap: wrap; gap: 12px; margin-top: 12px; color: var(--ptv-muted); font-size: 12px; }
+.apex-admin-role { padding: 3px 8px; border: 1px solid var(--ptv-line); border-radius: 5px; background: var(--ptv-surface); color: var(--ptv-text); font-weight: 500; }
+.apex-admin-advisory { max-width: 100%; font-size: 13px; line-height: 1.6; }
 
-.apex-admin-maintenance { display: flex; flex-wrap: wrap; gap: 8px; }
-.apex-admin-maintenance button { min-height: 40px; padding: 8px 14px; }
-.apex-admin-workspace { display: grid; grid-template-columns: minmax(0, 1fr); align-items: start; gap: 18px; }
-.apex-admin-navigation { min-width: 0; }
+.apex-admin-maintenance { display: flex; flex-wrap: wrap; gap: 10px; }
+.apex-admin-maintenance button { min-height: 40px; padding: 9px 15px; }
+.apex-admin-workspace { display: grid; grid-template-columns: minmax(0, 1fr); align-items: start; gap: 22px; margin-top: 24px; }
+.apex-admin-navigation { min-width: 0; padding: 14px 16px; border: 1px solid var(--ptv-line); border-radius: var(--f1-radius, 14px); background: var(--ptv-panel); }
 .apex-admin-navigation-desktop { display: none; }
-.apex-admin-navigation-mobile { display: grid; gap: 8px; }
+.apex-admin-navigation-title { margin: 2px 12px 22px; color: var(--ptv-text); font-size: 14px; font-weight: 650; letter-spacing: -.015em; }
+.apex-admin-navigation-mobile { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; gap: 12px; }
 .apex-admin-navigation-mobile label { color: var(--ptv-muted); font-size: 13px; font-weight: 500; }
 .apex-admin-navigation-mobile select {
   width: 100%;
   min-height: 48px;
   padding: 10px 14px;
   border: 1px solid var(--ptv-field-line);
-  border-radius: 10px;
+  border-radius: var(--f1-radius-sm, 8px);
   background: var(--ptv-panel);
   color: var(--ptv-text);
   font-size: 16px;
 }
 
-.apex-admin-nav-group + .apex-admin-nav-group { margin-top: 20px; }
-.apex-admin-nav-group h2 { margin: 0 10px 8px; color: var(--ptv-muted); font-size: 12px; font-weight: 500; }
-.apex-admin-nav-group > div { display: grid; gap: 3px; }
+.apex-admin-nav-group + .apex-admin-nav-group { margin-top: 22px; }
+.apex-admin-nav-group h2 { margin: 0 12px 8px; color: var(--ptv-muted); font-size: 11px; font-weight: 500; letter-spacing: .045em; }
+.apex-admin-nav-group > div { display: grid; gap: 4px; }
 .apex-admin-nav-item {
+  position: relative;
   display: flex;
   align-items: center;
   gap: 10px;
   width: 100%;
   min-height: 44px;
-  padding: 10px;
-  border-radius: 9px;
+  padding: 10px 12px;
+  border: 1px solid transparent;
+  border-radius: var(--f1-radius-sm, 8px);
   color: var(--ptv-muted);
   text-align: left;
-  font-size: 14px;
+  font-size: 13px;
   line-height: 1.4;
   transition: background-color 160ms var(--ptv-ease), color 160ms var(--ptv-ease);
 }
 .apex-admin-nav-item > svg { flex-shrink: 0; width: 18px; height: 18px; color: inherit; }
-.apex-admin-nav-item[aria-current='page'] { background: var(--ptv-selected); color: var(--ptv-accent); font-weight: 600; }
+.apex-admin-nav-item[aria-current='page'] { background: var(--ptv-selected); border-color: color-mix(in srgb, var(--ptv-accent) 18%, transparent); color: var(--ptv-accent); font-weight: 600; }
+.apex-admin-nav-item[aria-current='page']::after { content: ''; position: absolute; right: 9px; width: 4px; height: 4px; background: currentColor; transform: rotate(45deg); }
 @media (hover: hover) {
   .apex-admin-nav-item:hover { color: var(--ptv-text); background: var(--ptv-soft); }
   .apex-admin-nav-item[aria-current='page']:hover { color: var(--ptv-accent); background: var(--ptv-selected); }
@@ -73,21 +86,27 @@
 
 .apex-admin-section {
   min-width: 0;
-  scroll-margin-top: calc(5rem + var(--safe-top, 0px));
+  scroll-margin-top: calc(5.5rem + var(--safe-top, 0px));
   border: 1px solid var(--ptv-line);
-  border-radius: 16px;
+  border-radius: var(--f1-radius-lg, 20px);
   background: var(--ptv-panel);
+  box-shadow: 0 8px 28px rgb(9 25 29 / .035);
 }
-.apex-admin-section-heading { padding: 20px 24px 18px; border-bottom: 1px solid var(--ptv-line); }
-.apex-admin-section-category { display: block; margin-bottom: 6px; color: var(--ptv-muted); font-size: 12px; }
-.apex-admin-section-heading h2 { color: var(--ptv-text); font-size: 20px; font-weight: 650; letter-spacing: -.02em; }
-.apex-admin-content { width: 100%; min-width: 0; padding: 24px; }
+.apex-admin-section-heading { display: flex; align-items: center; gap: 14px; padding: 24px 28px; border-bottom: 1px solid var(--ptv-line); }
+.apex-admin-section-icon { display: inline-flex; flex-shrink: 0; align-items: center; justify-content: center; width: 40px; height: 40px; border: 1px solid var(--ptv-line); border-radius: 10px; background: var(--ptv-surface); color: var(--ptv-accent); }
+.apex-admin-section-icon > svg { width: 19px; height: 19px; color: inherit; }
+.apex-admin-section-title { min-width: 0; }
+.apex-admin-section-category { display: block; margin-bottom: 5px; color: var(--ptv-muted); font-size: 11px; letter-spacing: .035em; }
+.apex-admin-section-heading h2 { color: var(--ptv-text); font-size: 21px; font-weight: 650; line-height: 1.35; letter-spacing: -.025em; }
+.apex-admin-content { width: 100%; min-width: 0; padding: 28px; }
 .apex-admin-fields { width: 100%; min-width: 0; }
 .apex-admin-fields > :is(.space-y-4, .space-y-6) { min-width: 0; }
 .apex-admin-content :is(p, label) { overflow-wrap: anywhere; }
-.apex-admin-content p { line-height: 1.65; }
+.apex-admin-content p { line-height: 1.75; }
 .apex-admin-content :is(h3, h4) { line-height: 1.45; }
 .apex-admin-content :is(h3, h4) + p { margin-top: 6px; }
+.apex-admin-content :is(h3, h4):not(:first-child) { scroll-margin-top: 6rem; }
+.apex-admin-content .grid > * { min-width: 0; }
 
 /* Neutral sections are quiet; warning, success and error surfaces keep their own colours. */
 .apex-admin-fields > :is(.bg-white, .bg-gray-50) {
@@ -123,9 +142,16 @@
 .apex-admin-content :is(input:not([type='checkbox']):not([type='radio']):not([type='range']):not([type='color']):not([type='file']), select) {
   min-width: 0;
   min-height: 44px;
+  border-color: var(--ptv-field-line);
+  border-radius: var(--f1-radius-sm, 8px);
+  background-color: var(--ptv-surface);
+  color: var(--ptv-text);
+  box-shadow: none;
   line-height: 1.5;
 }
-.apex-admin-content textarea { min-width: 0; max-width: 100%; line-height: 1.65; }
+.apex-admin-content textarea { min-width: 0; max-width: 100%; border-color: var(--ptv-field-line); border-radius: var(--f1-radius-sm, 8px); background-color: var(--ptv-surface); color: var(--ptv-text); line-height: 1.75; box-shadow: none; }
+.apex-admin-content :is(input, select, textarea):focus-visible { outline: 2px solid var(--ptv-accent); outline-offset: 3px; }
+.apex-admin-content :is(input, textarea)::placeholder { color: var(--ptv-muted); opacity: .85; }
 .apex-admin-content :is(input, select, textarea):disabled { cursor: not-allowed; }
 .apex-admin-content button:is(.px-2, .px-3, .px-4, .px-6) {
   min-height: 36px;
@@ -187,13 +213,19 @@ html[data-moontvplus].dark { --apex-admin-warning: #edc474; }
 .apex-admin-content .relative.inline-flex { flex-shrink: 0; }
 .apex-admin-content label.relative.inline-flex { min-height: 44px; }
 .apex-admin-content label.relative.inline-flex > div { position: relative; }
+.apex-admin-fields > .flex { flex-wrap: wrap; }
+.apex-admin-section[data-section='dataMigration'] .apex-admin-content > .max-w-6xl { max-width: none; }
 
-.apex-admin-table-scroll { width: 100%; max-width: 100%; border: 1px solid var(--ptv-line); border-radius: 10px; overscroll-behavior-x: contain; }
+.apex-admin-table-scroll { width: 100%; max-width: 100%; border: 1px solid var(--ptv-line); border-radius: var(--f1-radius, 14px); overscroll-behavior-x: contain; scrollbar-width: thin; scrollbar-color: var(--ptv-field-line) var(--ptv-soft); }
 .apex-admin-table-scroll > table { width: 100%; min-width: 40rem; }
 .apex-admin-content :is(th, td) { padding: 12px 14px; }
-.apex-admin-content th { font-weight: 600; letter-spacing: 0; }
+.apex-admin-content th { background: var(--ptv-soft); color: var(--ptv-muted); font-size: 11px; font-weight: 600; letter-spacing: .035em; }
 .apex-admin-content td { overflow-wrap: anywhere; }
 .apex-admin-content td button { white-space: nowrap; }
+.apex-admin-content tbody > tr { border-color: var(--ptv-line); }
+@media (hover: hover) {
+  .apex-admin-content tbody > tr:hover { background-color: color-mix(in srgb, var(--ptv-selected) 38%, var(--ptv-panel)); }
+}
 
 .apex-admin-script-workspace { display: grid; grid-template-columns: minmax(0, 1fr); gap: 24px; }
 .apex-admin-script-list, .apex-admin-script-editor { min-width: 0; }
@@ -238,9 +270,9 @@ html[data-moontvplus] .ptv-dialog.apex-admin-overlay { background-color: rgb(7 1
 .apex-live-sortbar button:not([role='switch']) { min-height: 44px; }
 .apex-live-sort-switch::after { content: ''; position: absolute; inset: -9px 0; }
 
-@container admin (min-width: 58rem) {
-  .apex-admin-workspace { grid-template-columns: 208px minmax(0, 1fr); gap: 24px; }
-  .apex-admin-navigation { position: sticky; top: calc(5rem + var(--safe-top, 0px)); max-height: calc(100dvh - 6rem - var(--safe-top, 0px)); overflow-y: auto; scrollbar-width: thin; padding-right: 8px; }
+@container admin (min-width: 54rem) {
+  .apex-admin-workspace { grid-template-columns: 220px minmax(0, 1fr); gap: 24px; }
+  .apex-admin-navigation { position: sticky; top: calc(5rem + var(--safe-top, 0px)); max-height: calc(100dvh - 6rem - var(--safe-top, 0px)); overflow-y: auto; scrollbar-width: thin; padding: 20px 10px; }
   .apex-admin-navigation-desktop { display: block; }
   .apex-admin-navigation-mobile { display: none; }
 }
@@ -254,11 +286,22 @@ html[data-moontvplus] .ptv-dialog.apex-admin-overlay { background-color: rgb(7 1
 }
 
 @container admin (max-width: 40rem) {
-  .apex-admin-section-heading { padding: 18px 16px 16px; }
+  .apex-admin-section-heading { gap: 12px; padding: 20px 16px; }
+  .apex-admin-section-heading h2 { font-size: 19px; }
   .apex-admin-content { padding: 18px 16px; }
   .apex-admin-content :is(.p-6, .p-8) { padding: 16px; }
   .apex-admin-section[data-section='netDiskConfig'] .apex-admin-fields > details { padding-inline: 14px; }
   .apex-admin-content :is(input:not([type='checkbox']):not([type='radio']):not([type='range']):not([type='color']):not([type='file']), select, textarea) { font-size: 16px; }
+}
+
+@media (max-width: 767px) {
+  .apex-admin-page { padding-top: 20px; padding-bottom: calc(32px + env(safe-area-inset-bottom)); }
+  .apex-admin-header { align-items: flex-start; gap: 20px; margin-bottom: 20px; padding-bottom: 20px; }
+  .apex-admin-maintenance { flex-basis: 100%; }
+  .apex-admin-maintenance button { flex: 1; min-height: 44px; }
+  .apex-admin-navigation { padding: 12px; }
+  .apex-admin-workspace { gap: 16px; margin-top: 20px; }
+  .apex-admin-content .apex-admin-emby > .flex { flex-wrap: wrap; }
 }
 
 @media (pointer: coarse) {
@@ -269,4 +312,5 @@ html[data-moontvplus] .ptv-dialog.apex-admin-overlay { background-color: rgb(7 1
 @media (prefers-reduced-motion: reduce) {
   .apex-admin-page *, .apex-admin-overlay * { scroll-behavior: auto; }
   .apex-admin-content details::details-content { transition: none; }
+  .apex-admin-nav-item, .apex-admin-button, .apex-live-sort-switch span { transition: none; }
 }

@@ -19265,7 +19265,7 @@ function AdminPageClient() {
 
   if (loading) {
     return (
-      <PageLayout activePath='/admin'>
+      <PageLayout activePath='/admin' navigationMode='workspace'>
         <div className='apex-admin-page'>
           <div className='apex-admin-container'>
             <h1 className='text-2xl font-bold text-gray-900 dark:text-gray-100 mb-8'>
@@ -19288,7 +19288,7 @@ function AdminPageClient() {
   if (error) {
     // 显示无权限提示页面
     return (
-      <PageLayout activePath='/admin'>
+      <PageLayout activePath='/admin' navigationMode='workspace'>
         <div className='min-h-screen flex items-center justify-center px-4'>
           <div className='max-w-md w-full'>
             <div className='bg-white dark:bg-gray-800 rounded-lg shadow-lg p-8 text-center'>
@@ -19623,14 +19623,16 @@ function AdminPageClient() {
   );
 
   return (
-    <PageLayout activePath='/admin'>
+    <PageLayout activePath='/admin' navigationMode='workspace'>
       <div className='apex-admin-page'>
         <div className='apex-admin-container'>
           {/* 标题与维护操作 */}
           <div className='apex-admin-header'>
-            <h1 className='apex-admin-title'>
-              管理员设置
-            </h1>
+            <div className='apex-admin-heading'>
+              <span className='apex-admin-eyebrow'><Settings size={14} aria-hidden />管理后台</span>
+              <h1 className='apex-admin-title'>管理员设置</h1>
+              <p className='apex-admin-context'><span className='apex-admin-role'>{role === 'owner' ? '站长' : '管理员'}</span><span>{sections.length} 个配置视图</span></p>
+            </div>
             {config && role === 'owner' && (
               <div className='apex-admin-maintenance'>
                 <button
@@ -19651,7 +19653,7 @@ function AdminPageClient() {
 
           {/* TMDB 未配置提示 */}
           {config && !config.SiteConfig.TMDBApiKey && (
-            <div className='bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4 mb-4'>
+            <div className='apex-admin-advisory bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4 mb-4'>
               <div className='flex items-start gap-3'>
                 <div className='flex-shrink-0 mt-0.5'>
                   <svg
@@ -19677,7 +19679,7 @@ function AdminPageClient() {
 
           {/* 视频源过多提示 */}
           {config && (config.SourceConfig?.length ?? 0) > 50 && (
-            <div className='bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg p-4 mb-4'>
+            <div className='apex-admin-advisory bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg p-4 mb-4'>
               <div className='flex items-start gap-3'>
                 <div className='flex-shrink-0 mt-0.5'>
                   <svg
@@ -19704,6 +19706,7 @@ function AdminPageClient() {
           <div className='apex-admin-workspace'>
             <nav className='apex-admin-navigation' aria-label='管理设置导航'>
               <div className='apex-admin-navigation-desktop'>
+                <p className='apex-admin-navigation-title'>配置导航</p>
                 {navigationGroups.map((group, index) => (
                   <div className='apex-admin-nav-group' key={group.title}>
                     <h2 id={`admin-group-${index}`}>{group.title}</h2>
@@ -19714,6 +19717,7 @@ function AdminPageClient() {
                           key={item.key}
                           onClick={() => selectSection(item.key)}
                           aria-current={activeItem.key === item.key ? 'page' : undefined}
+                          aria-controls='admin-config-content'
                           className='apex-admin-nav-item'
                         >
                           {item.icon}
@@ -19744,13 +19748,17 @@ function AdminPageClient() {
 
             <section
               ref={contentScrollRef}
+              id='admin-config-content'
               className='apex-admin-section'
               data-section={activeItem.key}
               aria-labelledby='admin-section-title'
             >
               <header className='apex-admin-section-heading'>
-                <span className='apex-admin-section-category'>{activeGroup?.title}</span>
-                <h2 id='admin-section-title'>{activeItem.title}</h2>
+                <span className='apex-admin-section-icon' aria-hidden>{activeItem.icon}</span>
+                <div className='apex-admin-section-title'>
+                  <span className='apex-admin-section-category'>{activeGroup?.title}</span>
+                  <h2 id='admin-section-title'>{activeItem.title}</h2>
+                </div>
               </header>
               <div key={activeItem.key} className='apex-admin-content ptv-content-in'>
                 {activeItem.render?.()}
