@@ -10,6 +10,9 @@ import '../styles/apex-layout.css';
 import '../styles/f1-system.css';
 import '../styles/f1-media.css';
 import '../styles/f1-account.css';
+import '../styles/f1-reading-music.css';
+import '../styles/f1-room.css';
+import '../styles/f1-tv.css';
 
 import { parseAuthInfo } from '@/lib/auth';
 import { getConfig } from '@/lib/config';
@@ -401,11 +404,11 @@ export default async function RootLayout({
       suppressHydrationWarning
     >
       <head>
-        <meta name='theme-color' content='#f4f3ee' />
+        <meta name='theme-color' content='#f3f6f6' />
         {/* 首屏直接采用系统外观，不读取浏览器中保存的主题。 */}
         <script
           dangerouslySetInnerHTML={{
-            __html: `(()=>{const dark=window.matchMedia('(prefers-color-scheme: dark)').matches;const root=document.documentElement;root.classList.toggle('dark',dark);root.classList.toggle('light',!dark);root.style.colorScheme=dark?'dark':'light';document.querySelector('meta[name="theme-color"]')?.setAttribute('content',dark?'#0d161a':'#f4f3ee')})()`,
+            __html: `(()=>{const dark=window.matchMedia('(prefers-color-scheme: dark)').matches;const root=document.documentElement;root.classList.toggle('dark',dark);root.classList.toggle('light',!dark);root.style.colorScheme=dark?'dark':'light';document.querySelector('meta[name="theme-color"]')?.setAttribute('content',dark?'#101619':'#f3f6f6')})()`,
           }}
         />
         {/* 配套 moontvplus-extension 识别指纹；仅本项目部署站应带此标记 */}

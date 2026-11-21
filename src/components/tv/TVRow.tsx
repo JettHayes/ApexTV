@@ -8,10 +8,10 @@ import { TVSection } from './types';
 
 export default function TVRow({ section }: { section: TVSection }) {
   return (
-    <section className='mt-12'>
+    <section className='f1-tv-row mt-12'>
       <div className='mb-5 flex items-end justify-between gap-4'>
         <div>
-          <h2 className='text-4xl font-black tracking-tight text-white'>{section.title}</h2>
+          <h2 className='f1-tv-section-heading font-bold tracking-tight'>{section.title}</h2>
           {section.subtitle && <p className='mt-2 text-xl text-slate-400'>{section.subtitle}</p>}
         </div>
         {section.href && (

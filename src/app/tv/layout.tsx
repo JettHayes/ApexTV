@@ -15,9 +15,9 @@ export default function Layout({ children }: { children: ReactNode }) {
   }
 
   return (
-    <>
+    <div className='f1-tv-root'>
       {children}
       <TVRemoteReceiver />
-    </>
+    </div>
   );
 }

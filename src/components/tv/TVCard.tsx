@@ -18,11 +18,11 @@ export default function TVCard({ item }: { item: TVItem }) {
     <button
       type='button'
       onClick={() => router.push(playUrl)}
-      className='group w-[210px] shrink-0 cursor-pointer rounded-[28px] bg-white/[0.04] p-3 text-left outline-none transition duration-200 hover:bg-white/10 focus-visible:bg-white/10 tv-focusable'
+      className='f1-tv-card group shrink-0 cursor-pointer text-left outline-none transition duration-200 tv-focusable'
     >
-      <div className='relative aspect-[2/3] overflow-hidden rounded-[22px] bg-slate-900 shadow-xl shadow-black/50 transition duration-200 group-hover:scale-[1.03]'>
+      <div className='f1-tv-poster relative aspect-[2/3] overflow-hidden transition duration-200'>
         {poster ? (
-          <img src={poster} alt={item.title} className='h-full w-full object-cover' />
+          <img src={poster} alt={item.title} loading='lazy' decoding='async' className='h-full w-full object-cover' />
         ) : (
           <div className='flex h-full w-full items-center justify-center bg-gradient-to-br from-slate-800 to-slate-950 text-slate-500'>
             <Play className='h-14 w-14' />
@@ -35,8 +35,8 @@ export default function TVCard({ item }: { item: TVItem }) {
           </div>
         </div>
       </div>
-      <h3 className='mt-3 line-clamp-1 text-[22px] font-bold text-white'>{item.title}</h3>
-      <p className='mt-1 text-lg text-slate-400'>{item.year || '即刻播放'}</p>
+      <h3 className='f1-tv-card-title mt-3 line-clamp-1 font-bold'>{item.title}</h3>
+      <p className='f1-tv-card-meta mt-1'>{item.year || '即刻播放'}</p>
     </button>
   );
 }

@@ -33,7 +33,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     root.classList.toggle('light', theme === 'light');
     root.style.colorScheme = theme;
     document.querySelector('meta[name="theme-color"]')?.setAttribute(
-      'content', theme === 'dark' ? '#0d161a' : '#f4f3ee'
+      'content', theme === 'dark' ? '#101619' : '#f3f6f6'
     );
     setResolvedTheme(theme);
   }, []);

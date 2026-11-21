@@ -61,7 +61,7 @@ export default function TVBrowsePage({
 
   return (
     <TVLayout>
-      <section className='relative overflow-hidden rounded-[42px] border border-white/10 bg-slate-950/70 p-10 shadow-2xl shadow-black/60'>
+      <section className='f1-tv-feature relative overflow-hidden border border-white/10 bg-slate-950/70 p-10'>
         <div className='absolute inset-0 opacity-35'>
           {hero?.poster ? (
             <img src={hero.poster} alt='' className='h-full w-full object-cover blur-sm' />

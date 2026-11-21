@@ -17,7 +17,7 @@
 .f1-room-screen :is(button, select):focus-visible,
 .f1-room-chat :is(button, input):focus-visible,
 .f1-ai-panel :is(button, input, textarea):focus-visible { outline: 2px solid var(--ptv-accent, #00b5ad); outline-offset: 2px; }
-.f1-room-screen { background: var(--ptv-bg, #f3f6f6); color: var(--ptv-text, #252d31); }
+.f1-room-screen { background: var(--ptv-page); color: var(--ptv-text); }
 .f1-room-screen > div { max-width: var(--ptv-max, 1440px); padding-inline: var(--ptv-gutter, 24px); padding-bottom: calc(24px + env(safe-area-inset-bottom)); }
 .f1-room-screen > div > div:first-child,
 .f1-room-screen .space-y-4 > .rounded-xl { background: var(--ptv-panel, #fff); border-color: var(--ptv-line, #dce3e6); box-shadow: none; }

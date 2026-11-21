@@ -1,0 +1,57 @@
+/* TV has its own density and focus scale. Playback canvases remain cinematic. */
+.f1-tv-root { min-height: 100dvh; --tv-focus-ring: var(--ptv-accent); }
+.f1-tv-shell { background: var(--ptv-page); color: var(--ptv-text); }
+.f1-tv-ambient { background: linear-gradient(150deg, rgb(var(--apex-selected-rgb) / .28), transparent 38%); }
+.f1-tv-header { display: flex; align-items: center; gap: 36px; min-height: 104px; padding: 12px clamp(32px, 3vw, 64px); border-bottom: 1px solid var(--ptv-line); background: var(--ptv-page); }
+.f1-tv-brand { width: 190px; flex-shrink: 0; }
+.f1-tv-brand .ptv-brand-name { font-size: 30px; color: var(--ptv-text); }
+.f1-tv-navigation { flex: 1; min-width: 0; padding: 12px; gap: 8px; }
+.f1-tv-header .f1-tv-navigation a { min-height: 56px; padding: 14px 18px; border-radius: 10px; font-size: 20px; color: var(--ptv-muted); background: transparent; box-shadow: none; }
+.f1-tv-header .f1-tv-navigation a[data-selected='true'] { background: var(--ptv-selected); color: var(--ptv-accent); }
+.f1-tv-content { width: min(100%, 1920px); min-width: 0; margin-inline: auto; padding: 56px clamp(32px, 4vw, 72px) 72px; }
+.f1-tv-content--with-nav { padding-top: 144px; }
+.f1-tv-content > :is(section,div) { min-width: 0; }
+.f1-tv-row { margin-top: 40px; }
+.f1-tv-section-heading { display: flex; align-items: center; gap: 14px; font-size: 32px; color: var(--ptv-text); }
+.f1-tv-section-heading::before { content: ''; width: 7px; height: 24px; background: var(--ptv-accent); transform: skewX(-18deg); }
+.f1-tv-card { width: clamp(200px, 12.5vw, 244px); padding: 8px; border-radius: 16px; background: transparent; }
+.f1-tv-poster { border-radius: 12px; background: var(--ptv-soft); box-shadow: var(--f1-elevation); }
+.f1-tv-card-title { font-size: 23px; color: var(--ptv-text); }
+.f1-tv-card-meta { font-size: 19px; color: var(--ptv-muted); }
+.f1-tv-root .tv-focusable:focus,
+.f1-tv-root .tv-focusable:focus-visible,
+.f1-tv-root .tv-focused { outline: 4px solid var(--ptv-accent); outline-offset: 5px; box-shadow: 0 0 0 7px var(--ptv-page); }
+.f1-tv-root .tv-focusable::after { border-color: var(--ptv-accent); }
+.f1-tv-card:is(:focus,:focus-visible,.tv-focused) { background: var(--ptv-selected); }
+.f1-tv-card:is(:focus,:focus-visible,.tv-focused) .f1-tv-card-title { color: var(--ptv-accent); }
+.f1-tv-content :is(h1,h2,h3,.text-white,.text-slate-50,.text-slate-100,.text-slate-200):not(.f1-tv-feature *):not(.f1-tv-poster *) { color: var(--ptv-text); }
+.f1-tv-content :is(.text-slate-300,.text-slate-400,.text-slate-500):not(.f1-tv-feature *):not(.f1-tv-poster *) { color: var(--ptv-muted); }
+.f1-tv-content :is([class*='bg-white/'],[class*='bg-slate-950']):not(.f1-tv-feature):not(.f1-tv-feature *):not(.f1-tv-poster *) { background-color: var(--ptv-panel); }
+.f1-tv-content [class*='border-white/'] { border-color: var(--ptv-line); }
+.f1-tv-content > :is(section,div).rounded-3xl,
+.f1-tv-content > :is(section,div)[class*='rounded-['] { border-radius: 20px; }
+.f1-tv-root :is(.bg-rose-600,.bg-rose-500) { background-color: var(--ptv-action); color: var(--ptv-action-ink); }
+.f1-tv-root :is(.bg-rose-600,.bg-rose-500) :is(span,svg) { color: inherit; }
+.f1-tv-root :is(.text-rose-500,.text-rose-400,.text-rose-600) { color: var(--ptv-accent); }
+.f1-tv-content input { min-height: 64px; color: var(--ptv-text); background-color: var(--ptv-panel); border-color: var(--ptv-field-line); border-radius: 12px; }
+.f1-tv-content input::placeholder { color: var(--ptv-muted); }
+.f1-tv-content button { font-variant-numeric: tabular-nums; }
+.f1-tv-feature { border-radius: 20px; background: #101619; color: #dce3e6; }
+.f1-tv-feature h1 { font-size: clamp(44px, 4vw, 72px); }
+.f1-tv-feature > .relative { padding-block: 32px; }
+.f1-tv-root :is(button,a,input,select) { scroll-margin: 140px 24px 40px; }
+@media (max-width: 1280px) {
+  .f1-tv-header { gap: 12px; padding-inline: 24px; }
+  .f1-tv-brand { width: 150px; }
+  .f1-tv-brand .ptv-brand-name { font-size: 24px; }
+  .f1-tv-header .f1-tv-navigation a { padding-inline: 14px; font-size: 18px; }
+}
+@media (max-width: 900px) {
+  .f1-tv-header { flex-wrap: wrap; gap: 0; }
+  .f1-tv-brand { width: 100%; padding: 8px 12px; }
+  .f1-tv-content--with-nav { padding-top: 180px; }
+  .f1-tv-content { padding-inline: 24px; }
+  .f1-tv-feature h1 { font-size: 40px; }
+  .f1-tv-section-heading { font-size: 28px; }
+}
+@media (prefers-reduced-motion: reduce) { .f1-tv-root .tv-focusable { transition: none; } }

@@ -264,8 +264,8 @@ export default function MangaDetailPage() {
   if (!detail) return <MangaDetailSkeleton />;
 
   return (
-    <div className='space-y-6'>
-      <div className={cn('grid gap-6 md:grid-cols-[260px_1fr]', PANEL_CLASS)}>
+    <div className='f1-reading-detail f1-comic-detail space-y-6'>
+      <div className={cn('f1-reading-detail-hero grid gap-6 md:grid-cols-[260px_1fr]', PANEL_CLASS)}>
         {/* 封面立起来：外层投影 + 覆盖层书脊，和书墙上的卡片同一套。 */}
         <div
           className={cn(
