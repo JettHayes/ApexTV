@@ -280,10 +280,9 @@ div[data-media-provider] video {
   position: absolute;
   inset: -3px;
   border-radius: inherit;
-  background: linear-gradient(135deg, rgba(255,255,255,0.1), rgba(225,29,72,0.13));
-  box-shadow:
-    0 18px 44px rgba(0, 0, 0, 0.68),
-    0 0 26px rgba(225, 29, 72, 0.38);
+  border: 3px solid var(--ptv-accent);
+  background: transparent;
+  box-shadow: 0 8px 24px rgb(0 0 0 / .18);
   opacity: 0;
   pointer-events: none;
   transition: opacity 180ms var(--ptv-ease);
@@ -292,10 +291,10 @@ div[data-media-provider] video {
 .tv-focusable:focus,
 .tv-focusable:focus-visible,
 .tv-focused {
-  outline: none !important;
+  outline: none;
   scale: 1.055;
-  background-color: rgba(15, 23, 42, 0.96) !important;
-  color: #ffffff !important;
+  background-color: var(--ptv-selected);
+  color: var(--ptv-text);
   z-index: 30;
 }
 
@@ -305,22 +304,23 @@ div[data-media-provider] video {
   opacity: 1;
 }
 
-/* 选中项（data-selected / aria-pressed）聚焦时保持玫红底，避免与未选中项的聚焦态无法区分 */
+/* 焦点与选中分开：已选中的项聚焦时使用实色强调。 */
 .tv-focusable[data-selected='true']:focus,
 .tv-focusable[data-selected='true']:focus-visible,
 .tv-focusable[data-selected='true'].tv-focused,
 .tv-focusable[aria-pressed='true']:focus,
 .tv-focusable[aria-pressed='true']:focus-visible,
 .tv-focusable[aria-pressed='true'].tv-focused {
-  background-color: #e11d48 !important;
+  background-color: var(--ptv-action);
+  color: var(--ptv-action-ink);
 }
 
 /* 白底卡片（如二维码）聚焦时保持浅色，避免扫码区域被深色焦点样式盖住 */
 .tv-focusable.tv-focusable-light:focus,
 .tv-focusable.tv-focusable-light:focus-visible,
 .tv-focusable.tv-focusable-light.tv-focused {
-  background-color: #ffffff !important;
-  color: #0f172a !important;
+  background-color: #ffffff;
+  color: #0f172a;
 }
 
 /* input 不支持 ::after、overflow-hidden 会裁掉 ::after 光晕：回退为元素自身的静态阴影（不过渡） */
@@ -329,9 +329,7 @@ input.tv-focusable:focus-visible,
 .tv-focusable.overflow-hidden:focus,
 .tv-focusable.overflow-hidden:focus-visible,
 .tv-focusable.overflow-hidden.tv-focused {
-  box-shadow:
-    0 18px 44px rgba(0, 0, 0, 0.68),
-    0 0 26px rgba(225, 29, 72, 0.38) !important;
+  box-shadow: 0 0 0 3px var(--ptv-accent), 0 8px 24px rgb(0 0 0 / .18);
 }
 
 .tv-focusable:active {

@@ -5,6 +5,7 @@
 .f1-tv-header { display: flex; align-items: center; gap: 36px; min-height: 104px; padding: 12px clamp(32px, 3vw, 64px); border-bottom: 1px solid var(--ptv-line); background: var(--ptv-page); }
 .f1-tv-brand { width: 190px; flex-shrink: 0; }
 .f1-tv-brand .ptv-brand-name { font-size: 30px; color: var(--ptv-text); }
+.f1-tv-header .f1-tv-theme { width: 56px; height: 56px; flex-shrink: 0; border-radius: 10px; color: var(--ptv-text); }
 .f1-tv-navigation { flex: 1; min-width: 0; padding: 12px; gap: 8px; }
 .f1-tv-header .f1-tv-navigation a { min-height: 56px; padding: 14px 18px; border-radius: 10px; font-size: 20px; color: var(--ptv-muted); background: transparent; box-shadow: none; }
 .f1-tv-header .f1-tv-navigation a[data-selected='true'] { background: var(--ptv-selected); color: var(--ptv-accent); }
@@ -24,6 +25,8 @@
 .f1-tv-root .tv-focusable::after { border-color: var(--ptv-accent); }
 .f1-tv-card:is(:focus,:focus-visible,.tv-focused) { background: var(--ptv-selected); }
 .f1-tv-card:is(:focus,:focus-visible,.tv-focused) .f1-tv-card-title { color: var(--ptv-accent); }
+.f1-tv-root .tv-focusable[data-selected='true']:is(:focus,:focus-visible,.tv-focused) { background: var(--ptv-action); color: var(--ptv-action-ink); }
+.f1-tv-root .tv-focusable.tv-focusable-light:is(:focus,:focus-visible,.tv-focused) { background: #fff; color: #101619; }
 .f1-tv-content :is(h1,h2,h3,.text-white,.text-slate-50,.text-slate-100,.text-slate-200):not(.f1-tv-feature *):not(.f1-tv-poster *) { color: var(--ptv-text); }
 .f1-tv-content :is(.text-slate-300,.text-slate-400,.text-slate-500):not(.f1-tv-feature *):not(.f1-tv-poster *) { color: var(--ptv-muted); }
 .f1-tv-content :is([class*='bg-white/'],[class*='bg-slate-950']):not(.f1-tv-feature):not(.f1-tv-feature *):not(.f1-tv-poster *) { background-color: var(--ptv-panel); }

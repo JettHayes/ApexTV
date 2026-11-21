@@ -17,6 +17,7 @@ import { ReactNode, useEffect } from 'react';
 
 import TVVirtualRemote from './TVVirtualRemote';
 import BrandLogo from '../BrandLogo';
+import { ThemeToggle } from '../ThemeToggle';
 
 const navItems = [
   { label: '搜索', href: '/tv/search', icon: Search },
@@ -84,6 +85,7 @@ export default function TVLayout({
               );
             })}
           </nav>
+          <ThemeToggle className='tv-focusable f1-tv-theme' />
         </header>
       )}
       <div className={`f1-tv-content relative z-10 ${showNav ? 'f1-tv-content--with-nav' : ''}`}>{children}</div>
