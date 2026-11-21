@@ -1,0 +1,40 @@
+/* Shared room surfaces retain the application's light and dark theme. */
+.apex-room-page { gap: 24px; }
+.apex-room-page > .py-1 h1,
+.f1-room-screen h1 { font-family: var(--f1-display, inherit); font-style: italic; letter-spacing: -.025em; }
+.apex-room-page > .overflow-x-auto { gap: 4px; border-color: var(--ptv-line); }
+.apex-room-page > .overflow-x-auto button { min-height: 48px; padding-inline: 18px; }
+.apex-room-page > .overflow-x-auto button > div { background: var(--ptv-accent); }
+.f1-room-form { width: min(100%, 760px); }
+.f1-room-form > div, .apex-room-page .grid > .rounded-xl {
+  border-color: var(--ptv-line); border-radius: var(--f1-radius, 14px);
+  background: var(--ptv-panel); box-shadow: none;
+}
+.f1-room-feature { background: #252d31; color: #dce3e6; border: 1px solid #3c484b; }
+.f1-room-feature :is(.text-blue-100, .text-green-100) { color: #b9c9ca; }
+.f1-room-feature .backdrop-blur { background: #303a3e; backdrop-filter: none; }
+.apex-room-page :is(button, input, select, textarea):focus-visible,
+.f1-room-screen :is(button, select):focus-visible,
+.f1-room-chat :is(button, input):focus-visible,
+.f1-ai-panel :is(button, input, textarea):focus-visible { outline: 2px solid var(--ptv-accent, #00b5ad); outline-offset: 2px; }
+.f1-room-screen { background: var(--ptv-bg, #f3f6f6); color: var(--ptv-text, #252d31); }
+.f1-room-screen > div { max-width: var(--ptv-max, 1440px); padding-inline: var(--ptv-gutter, 24px); padding-bottom: calc(24px + env(safe-area-inset-bottom)); }
+.f1-room-screen > div > div:first-child,
+.f1-room-screen .space-y-4 > .rounded-xl { background: var(--ptv-panel, #fff); border-color: var(--ptv-line, #dce3e6); box-shadow: none; }
+.f1-room-screen .grid > .relative { border-color: #3c484b; background: #101619; }
+.f1-room-music section { max-width: var(--ptv-max, 1440px); padding-bottom: calc(24px + env(safe-area-inset-bottom)); }
+.f1-room-chat { max-height: min(80dvh, 560px); border: 1px solid #425054; overflow: hidden; }
+.f1-room-chat > .flex-1 { min-height: 80px; }
+.f1-ai-panel { background: var(--ptv-panel, #f3f6f6); color: var(--ptv-text, #252d31); }
+.f1-ai-panel > div:first-child { border-color: var(--ptv-line); }
+.f1-ai-comments > div > div[class*='bg-blue-50'] { background: var(--ptv-soft); border-color: var(--ptv-line); }
+@media (max-width: 767px) {
+  .apex-room-page { gap: 16px; }
+  .apex-room-page > .overflow-x-auto button { padding-inline: 14px; }
+  .f1-room-form { padding-block: 8px; }
+  .f1-room-form > div { padding: 18px; }
+  .f1-room-screen > div { padding-inline: 16px; }
+  .f1-room-screen > div > div:first-child { flex-wrap: wrap; }
+  .f1-room-screen .grid > .relative { min-height: min(56vw, 420px); }
+  .f1-room-chat { bottom: calc(5rem + env(safe-area-inset-bottom)); }
+}

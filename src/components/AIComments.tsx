@@ -173,7 +173,7 @@ export default function AIComments({ movieName, movieInfo }: AICommentsProps) {
   }
 
   return (
-    <div className='space-y-4'>
+    <div className='f1-ai-comments space-y-4'>
       {/* 头部统计和操作 */}
       <div className='flex items-center justify-between'>
         <div className='text-sm text-gray-600 dark:text-gray-400'>
@@ -202,7 +202,7 @@ export default function AIComments({ movieName, movieInfo }: AICommentsProps) {
       </div>
 
       {/* 评论列表 */}
-      <div className='space-y-4'>
+      <div className='f1-ai-comments space-y-4'>
         {comments.map((comment) => (
           <div
             key={comment.id}

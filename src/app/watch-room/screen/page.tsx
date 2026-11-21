@@ -156,7 +156,7 @@ export default function WatchRoomScreenPage() {
     : '未开始';
 
   return (
-    <div className='min-h-screen bg-white text-gray-900 dark:bg-black dark:text-gray-200'>
+    <div className='f1-room-screen min-h-screen bg-white text-gray-900 dark:bg-black dark:text-gray-200'>
       <div className='mx-auto flex min-h-screen max-w-7xl flex-col gap-4 px-4 py-4 lg:px-8'>
         <div className='flex items-center justify-between gap-4 rounded-2xl border border-gray-200 bg-white/90 px-5 py-4 shadow-sm dark:border-gray-800 dark:bg-gray-900/80'>
           <div>
@@ -192,7 +192,7 @@ export default function WatchRoomScreenPage() {
           </div>
         </div>
 
-        <div className='grid flex-1 grid-cols-1 gap-4 xl:grid-cols-[1fr_320px]'>
+        <div className='grid flex-1 grid-cols-1 gap-4 lg:grid-cols-[minmax(0,1fr)_320px]'>
           <div className='relative flex min-h-[420px] items-center justify-center overflow-hidden rounded-2xl border border-gray-200 bg-black dark:border-gray-800'>
             {isOwner ? (
               <video

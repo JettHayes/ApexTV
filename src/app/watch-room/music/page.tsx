@@ -524,7 +524,7 @@ export default function WatchRoomMusicPage() {
   const lyricIdleClass = isDark ? 'text-zinc-600 opacity-80' : 'text-zinc-500 opacity-80';
 
   return (
-    <main className={`relative min-h-screen overflow-hidden transition-colors ${themeRootClass}`}>
+    <main className={`f1-room-music relative min-h-screen overflow-hidden transition-colors ${themeRootClass}`}>
       <style>{`
         @keyframes music-room-vinyl-spin {
           from { transform: rotate(0deg); }
@@ -659,7 +659,7 @@ export default function WatchRoomMusicPage() {
               </div>
             </div>
 
-            <div className="hidden md:grid flex-1 gap-4 md:grid-cols-[420px_minmax(0,1fr)]">
+            <div className="hidden md:grid flex-1 gap-4 md:grid-cols-[minmax(280px,420px)_minmax(0,1fr)]">
               <div className={`${showCoverPanel ? 'block' : 'hidden'} min-w-0 md:block`}>
                   <div ref={desktopVolumeControlRef} className={`rounded-lg border p-4 md:p-6 ${isDark ? 'border-white/10 bg-black/20' : 'border-zinc-200 bg-white/80 shadow-sm'}`}>
                   <div className="relative">

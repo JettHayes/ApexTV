@@ -360,7 +360,7 @@ export default function ChatFloatingWindow() {
                       className='flex items-center justify-between bg-white dark:bg-gray-700 rounded-lg p-3 border border-gray-200 dark:border-gray-600'
                     >
                       <div className='flex items-center gap-3'>
-                        <div className='w-8 h-8 rounded-full bg-gradient-to-r from-blue-400 to-purple-500 flex items-center justify-center text-white font-bold text-sm'>
+                        <div className='w-8 h-8 rounded-full bg-teal-600 flex items-center justify-center text-white font-bold text-sm'>
                           {member.name.charAt(0).toUpperCase()}
                         </div>
                         <span className='text-sm font-medium text-gray-900 dark:text-gray-100'>{member.name}</span>
@@ -488,9 +488,9 @@ export default function ChatFloatingWindow() {
       </button>
 
       {/* 聊天窗口 */}
-      <div className="ptv-modal-in origin-bottom-right fixed bottom-20 right-4 z-[700] flex w-80 flex-col rounded-2xl bg-gray-800 shadow-2xl md:bottom-4 md:w-96">
+      <div className="f1-room-chat ptv-modal-in origin-bottom-right fixed bottom-20 right-4 z-[700] flex w-[min(20rem,calc(100vw-2rem))] flex-col rounded-2xl bg-gray-800 shadow-2xl md:bottom-4 md:w-96">
       {/* 头部 */}
-      <div className="rounded-t-2xl bg-green-500">
+      <div className="rounded-t-2xl bg-teal-700">
         {/* 第一行: 标题和窗口控制 */}
         <div className="flex items-center justify-between px-4 py-3">
           <div className="flex items-center gap-2">

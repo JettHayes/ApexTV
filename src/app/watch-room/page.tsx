@@ -369,7 +369,7 @@ function WatchRoomPageContent() {
       <div className="apex-page apex-room-page flex flex-col gap-6">
         {/* 房员等待提示 */}
         {currentRoom && !isOwner && (
-          <div className="mb-4 bg-gradient-to-r from-blue-500 to-purple-600 rounded-xl p-6 shadow-lg">
+          <div className="mb-4 f1-room-feature rounded-xl p-6 shadow-lg">
             <div className="flex flex-wrap items-center justify-between gap-4 text-white">
               <div className="flex min-w-0 items-center gap-4 flex-1">
                 <div className="relative">
@@ -481,7 +481,7 @@ function WatchRoomPageContent() {
         <div className="flex-1">
           {/* 创建房间 */}
           {activeTab === 'create' && (
-            <div className="ptv-content-in max-w-2xl mx-auto py-8">
+            <div className="ptv-content-in f1-room-form mx-auto py-8">
               <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-lg border border-gray-200 dark:border-gray-700">
                 <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-6">
                   创建新房间
@@ -491,7 +491,7 @@ function WatchRoomPageContent() {
                 {currentRoom ? (
                   <div className="space-y-4">
                     {/* 房间信息卡片 */}
-                    <div className="bg-gradient-to-r from-blue-500 to-purple-600 rounded-xl p-6 text-white">
+                    <div className="f1-room-feature rounded-xl p-6 text-white">
                       <div className="flex items-start justify-between mb-4">
                         <div>
                           <h3 className="text-2xl font-bold mb-1">{currentRoom.name}</h3>
@@ -702,7 +702,7 @@ function WatchRoomPageContent() {
 
           {/* 加入房间 */}
           {activeTab === 'join' && (
-            <div className="ptv-content-in max-w-2xl mx-auto py-8">
+            <div className="ptv-content-in f1-room-form mx-auto py-8">
               <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-lg border border-gray-200 dark:border-gray-700">
                 <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-6">
                   加入房间
@@ -712,7 +712,7 @@ function WatchRoomPageContent() {
                 {currentRoom ? (
                   <div className="space-y-4">
                     {/* 房间信息卡片 */}
-                    <div className="bg-gradient-to-r from-green-500 to-teal-600 rounded-xl p-6 text-white">
+                    <div className="f1-room-feature rounded-xl p-6 text-white">
                       <div className="flex items-start justify-between mb-4">
                         <div>
                           <h3 className="text-2xl font-bold mb-1">{currentRoom.name}</h3>
@@ -942,7 +942,7 @@ function WatchRoomPageContent() {
 
                       <button
                         onClick={() => handleJoinFromList(room)}
-                        className="w-full bg-purple-500 hover:bg-purple-600 text-white font-medium py-2.5 rounded-lg transition-colors"
+                        className="w-full bg-teal-600 hover:bg-teal-700 text-white font-medium py-2.5 rounded-lg transition-colors"
                       >
                         加入房间
                       </button>
