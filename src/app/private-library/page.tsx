@@ -628,8 +628,8 @@ export default function PrivateLibraryPage() {
 
   return (
     <PageLayout activePath='/private-library'>
-      <div className='ptv-library-page'>
-        <div className='apex-page-heading apex-heading-row'>
+      <div className='ptv-library-page f1-private-library'>
+        <div className='apex-page-heading apex-heading-row f1-media-heading'>
           <div>
             <h1 className='text-2xl font-bold text-gray-900 dark:text-gray-100'>
               私人影库
@@ -651,7 +651,7 @@ export default function PrivateLibraryPage() {
 
         {/* 第一级：源类型选择（OpenList / Emby / 小雅） */}
         {mounted && (
-          <div className='ptv-library-tools mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between'>
+          <div className='ptv-library-tools f1-library-toolbar mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between'>
             <CapsuleSwitch
               options={[
                 ...(runtimeConfig.OPENLIST_ENABLED ? [{ label: 'OpenList', value: 'openlist' }] : []),

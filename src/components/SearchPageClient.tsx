@@ -1799,9 +1799,13 @@ export function SearchPageClient({ searchBase = '/search' }: { searchBase?: stri
 
   return (
     <PageLayout activePath={searchBase}>
-      <div className='ptv-search-page overflow-visible mb-10' data-search-state={showResults ? 'results' : 'idle'}>
+      <div className='ptv-search-page f1-search-page overflow-visible' data-search-state={showResults ? 'results' : 'idle'}>
         {/* 搜索框 */}
-        <div className='apex-search-controls'>
+        <div className='apex-search-controls f1-search-console'>
+          <div className='f1-search-intro'>
+            <h1>找到下一部想看的</h1>
+            <p>搜索影片、剧集，或继续探索你的收藏。</p>
+          </div>
           <form onSubmit={handleSearch} role='search' aria-label='搜索影片' className='ptv-search-form mx-auto'>
             <div className='relative'>
               <Search className='absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400 dark:text-gray-500' />

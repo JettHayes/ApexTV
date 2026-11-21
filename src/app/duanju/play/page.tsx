@@ -1672,7 +1672,7 @@ function DuanjuPlayClient() {
   return (
     <div
       id='djplayer'
-      className={`${clean ? 'clean' : ''} ${playing ? '' : 'paused'} ${loading || videoLoading ? 'loading' : ''}${videoWide ? ' fit' : ''}`}
+      className={`f1-duanju-player ${clean ? 'clean' : ''} ${playing ? '' : 'paused'} ${loading || videoLoading ? 'loading' : ''}${videoWide ? ' fit' : ''}`}
       style={{ '--col-num': String(frameNum) } as React.CSSProperties}
     >
       <style dangerouslySetInnerHTML={{ __html: LOCAL_CSS }} />

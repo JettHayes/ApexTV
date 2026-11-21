@@ -1005,9 +1005,9 @@ const EpisodeSelector: React.FC<EpisodeSelectorProps> = ({
   }, [showEpisodeMenu]);
 
   return (
-    <div className='px-4 py-0 h-full min-h-0 flex flex-col overflow-hidden'>
+    <div className='f1-episode-workspace px-4 py-0 h-full min-h-0 flex flex-col overflow-hidden'>
       {/* 主要的 Tab 切换 - 无缝融入设计 */}
-      <div className='flex mb-1 -mx-4 flex-shrink-0'>
+      <div className='f1-episode-tabs flex mb-1 -mx-4 flex-shrink-0'>
         {/* 选集选项卡 - 仅在多集时显示 */}
         {totalEpisodes > 1 && (
           <button

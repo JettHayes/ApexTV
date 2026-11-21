@@ -205,8 +205,8 @@ export default function MovieRequestPage() {
 
   return (
     <PageLayout activePath='/movie-request'>
-      <div className='apex-page apex-request-page'>
-        <div className='apex-page-heading'>
+      <div className='apex-page apex-request-page f1-request-page'>
+        <div className='apex-page-heading f1-media-heading'>
           <h1 className='text-2xl font-bold text-gray-900 dark:text-gray-100'>
             求片
           </h1>
@@ -226,7 +226,7 @@ export default function MovieRequestPage() {
 
         {/* 搜索框 - 仅在功能启用时显示 */}
         {isFeatureEnabled && (
-          <div className='mb-6'>
+          <div className='f1-request-search mb-6'>
             <div className='flex gap-2'>
               <input
                 type='text'

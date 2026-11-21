@@ -2586,7 +2586,7 @@ function LivePageClient() {
 
   return (
     <PageLayout activePath='/live'>
-      <div className='ptv-live-page apex-live-content flex flex-col gap-4'>
+      <div className='ptv-live-page apex-live-content f1-tv-live-page flex flex-col gap-4'>
         <LiveTabs active='live' />
         {/* 第一行：页面标题 */}
         <div className='py-1'>
@@ -2895,7 +2895,7 @@ function LivePageClient() {
             </div>
 
             {/* 频道列表 */}
-            <div className='ptv-player-panel overflow-hidden'>
+            <div className='ptv-player-panel f1-channel-panel overflow-hidden'>
               <div className='px-4 py-0 h-full flex flex-col overflow-hidden'>
                 {/* 主要的 Tab 切换 */}
                 <div className='flex mb-1 -mx-4 flex-shrink-0'>

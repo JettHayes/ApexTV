@@ -423,8 +423,8 @@ function DuanjuPageClient() {
 
   return (
     <PageLayout activePath='/duanju'>
-      <div className='px-4 sm:px-10 py-4 sm:py-8 overflow-visible mb-10'>
-        <div className='mb-6 flex items-start justify-between gap-4'>
+      <div className='apex-page f1-duanju-page overflow-visible'>
+        <div className='apex-page-heading f1-media-heading flex items-start justify-between gap-4'>
           <div>
             <h1 className='text-2xl font-bold text-gray-800 dark:text-gray-200'>
               短剧
@@ -442,7 +442,7 @@ function DuanjuPageClient() {
           </Link>
         </div>
 
-        <div className='max-w-4xl mx-auto mb-8'>
+        <div className='f1-source-toolbar mb-8'>
           <div className='relative'>
             <div className='text-xs text-gray-500 dark:text-gray-400 mb-2 px-4'>
               服务
@@ -594,7 +594,7 @@ function DuanjuPageClient() {
               </div>
             ) : (
               <>
-                <div className='ptv-fade-in grid grid-cols-3 gap-x-2 gap-y-14 sm:gap-y-20 px-0 sm:px-2 sm:grid-cols-[repeat(auto-fill,_minmax(11rem,_1fr))] sm:gap-x-8'>
+                <div className='f1-poster-grid ptv-fade-in'>
                   {videos.map((item) => (
                     <div key={`${item.source}-${item.id}`} className='w-full'>
                       <VideoCard

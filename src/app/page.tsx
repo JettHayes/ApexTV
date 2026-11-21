@@ -881,22 +881,23 @@ function HomeClient() {
       <FireworksCanvas />
       {/* TMDB 热门轮播图 */}
       {homeBannerEnabled && (
-        <div className='ptv-home-hero-wrap'>
+        <div className='ptv-home-hero-wrap f1-home-hero'>
           <BannerCarousel delayLoad={true} />
         </div>
       )}
 
-      <div className='ptv-home-content overflow-visible'>
+      <div className='ptv-home-content f1-home-content overflow-visible'>
         <div className='w-full mx-auto'>
           {/* 首页内容 */}
           <>
             {/* 源站寻片和AI问片入口 */}
             <div>
             <div
-              className={`ptv-home-tools flex items-center justify-end gap-2 mb-4 ${
+              className={`ptv-home-tools f1-home-shortcuts flex items-center justify-end gap-2 mb-4 ${
                 homeBannerEnabled ? '' : 'mt-[30px]'
               }`}
             >
+              <span className='f1-shortcut-label'>快捷入口</span>
               <button
                 onClick={handleDirectPlay}
                 className='p-1.5 rounded-lg text-blue-500 hover:text-blue-600 transition-colors'
@@ -906,47 +907,27 @@ function HomeClient() {
               </button>
 
               {musicEnabled && (
-                <Link href='/music/rankings' prefetch={false}>
-                  <button
-                    className='p-1.5 rounded-lg text-green-500 hover:text-green-600 transition-colors'
-                    title='音乐视听'
-                  >
-                    <Music size={18} />
-                  </button>
+                <Link href='/music/rankings' prefetch={false} title='音乐视听' aria-label='音乐视听' className='p-1.5 rounded-lg transition-colors'>
+                  <Music size={18} />
                 </Link>
               )}
 
               {mangaEnabled && (
-                <Link href='/manga' prefetch={false}>
-                  <button
-                    className='p-1.5 rounded-lg text-emerald-500 hover:text-emerald-600 transition-colors'
-                    title='漫画展馆'
-                  >
-                    <BookOpen size={18} />
-                  </button>
+                <Link href='/manga' prefetch={false} title='漫画展馆' aria-label='漫画展馆' className='p-1.5 rounded-lg transition-colors'>
+                  <BookOpen size={18} />
                 </Link>
               )}
 
               {booksEnabled && (
-                <Link href='/books' prefetch={false}>
-                  <button
-                    className='p-1.5 rounded-lg text-amber-500 hover:text-amber-600 transition-colors'
-                    title='电子书馆'
-                  >
-                    <BookMarked size={18} />
-                  </button>
+                <Link href='/books' prefetch={false} title='电子书馆' aria-label='电子书馆' className='p-1.5 rounded-lg transition-colors'>
+                  <BookMarked size={18} />
                 </Link>
               )}
 
               {/* 源站寻片入口 */}
               {sourceSearchEnabled && (
-                <Link href='/source-search'>
-                  <button
-                    className='p-2 rounded-lg text-blue-500 hover:text-blue-600 transition-colors'
-                    title='源站寻片'
-                  >
-                    <ListVideo size={20} />
-                  </button>
+                <Link href='/source-search' title='源站寻片' aria-label='源站寻片' className='p-2 rounded-lg transition-colors'>
+                  <ListVideo size={20} />
                 </Link>
               )}
 

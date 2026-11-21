@@ -1005,12 +1005,13 @@ const VideoCard = forwardRef<VideoCardHandle, VideoCardProps>(
     return (
       <>
         <div
-          className={`ptv-video-card group relative w-full rounded-lg bg-transparent ${
+          className={`ptv-video-card f1-poster-card group relative w-full rounded-lg bg-transparent ${
             isUpcoming ? 'cursor-default' : 'cursor-pointer'
           } ${showUpcomingInfo ? 'z-[500]' : ''}`}
           onClick={handleClick}
           {...longPressProps}
           role='group'
+          data-orientation={orientation}
           aria-label={actualTitle}
           style={
             {
@@ -1059,7 +1060,7 @@ const VideoCard = forwardRef<VideoCardHandle, VideoCardProps>(
           />
           {/* 海报容器：不在外层 overflow-hidden，避免裁切来源数量浮层 */}
           <div
-            className={`relative rounded-lg ${
+            className={`f1-poster-art relative rounded-lg ${
               origin === 'live'
                 ? 'ring-1 ring-gray-300/80 dark:ring-gray-600/80'
                 : ''

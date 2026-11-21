@@ -780,11 +780,11 @@ function DoubanPageClient() {
 
   return (
     <PageLayout activePath={getActivePath()}>
-      <div className='apex-page apex-catalog-page'>
+      <div className='apex-page apex-catalog-page f1-catalog-page'>
         {/* 页面标题和选择器 */}
         <div className='apex-catalog-intro'>
           {/* 页面标题 */}
-          <div className='apex-page-heading'>
+          <div className='apex-page-heading f1-media-heading'>
             <h1 className='text-2xl sm:text-3xl font-bold text-gray-800 mb-1 sm:mb-2 dark:text-gray-200'>
               {getPageTitle()}
             </h1>

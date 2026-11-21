@@ -456,9 +456,9 @@ function SourceSearchPageClient() {
 
   return (
     <PageLayout activePath='/source-search'>
-      <div className='px-4 sm:px-10 py-4 sm:py-8 overflow-visible mb-10'>
+      <div className='apex-page f1-source-search-page overflow-visible'>
         {/* 页面标题 */}
-        <div className='mb-6'>
+        <div className='apex-page-heading f1-media-heading'>
           <h1 className='flex items-center gap-2 text-2xl font-bold text-gray-800 dark:text-gray-200'>
             源站寻片
             {isSpecialVersion && (
@@ -475,7 +475,7 @@ function SourceSearchPageClient() {
         </div>
 
         {/* 源选择和分类选择 */}
-        <div className='max-w-4xl mx-auto mb-8 space-y-6'>
+        <div className='f1-source-toolbar mb-8 space-y-6'>
           {/* 源选择 CapsuleSwitch */}
           <div className='relative'>
             <div className='flex items-center justify-between gap-3 mb-3'>
@@ -684,7 +684,7 @@ function SourceSearchPageClient() {
               </div>
             ) : (
               <>
-                <div className='ptv-fade-in grid grid-cols-3 gap-x-2 gap-y-14 sm:gap-y-20 px-0 sm:px-2 sm:grid-cols-[repeat(auto-fill,_minmax(11rem,_1fr))] sm:gap-x-8'>
+                <div className='f1-poster-grid ptv-fade-in'>
                   {videos.map((item) => (
                     <div
                       key={`${item.source}-${item.id}`}

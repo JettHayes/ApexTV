@@ -10634,7 +10634,7 @@ function PlayPageClient() {
 
   return (
     <PageLayout activePath='/play' hideNavigation={isWebFullscreen}>
-      <div className='ptv-play-page'>
+      <div className='ptv-play-page f1-cinema-page'>
       {/* TMDB背景图 */}
       {!tmdbBackdropDisabled && tmdbBackdrop && (
         <div
@@ -10787,7 +10787,7 @@ function PlayPageClient() {
 
       <div className='apex-page apex-play-content relative z-10 flex flex-col gap-3'>
         {/* 第一行：影片标题 */}
-        <div className='py-1'>
+        <div className='f1-player-heading py-1'>
           <h1 className='text-xl font-semibold flex items-center gap-2 flex-wrap text-[color:var(--ptv-text)]'>
             <span>
               {videoTitle || '影片标题'}
@@ -11577,7 +11577,7 @@ function PlayPageClient() {
 
             {/* 选集和换源 - 在移动端始终显示，在 lg 及以上可折叠 */}
             <div
-              className='ptv-player-panel relative z-10 h-[350px] overflow-hidden'
+              className='ptv-player-panel f1-film-panel relative z-10 h-[350px] overflow-hidden'
             >
               <EpisodeSelector
                 totalEpisodes={totalEpisodes}
@@ -11613,7 +11613,7 @@ function PlayPageClient() {
         {!isDirectPlay && (
           <>
             {/* 详情展示 */}
-            <div className='grid grid-cols-1 md:grid-cols-5 lg:grid-cols-6 gap-4'>
+            <div className='f1-film-summary grid grid-cols-1 md:grid-cols-5 lg:grid-cols-6 gap-4'>
               {/* 文字区 */}
               <div className='md:col-span-4 lg:col-span-5'>
                 <div className='p-6 flex flex-col min-h-0'>

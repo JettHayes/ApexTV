@@ -475,7 +475,7 @@ export default function WebLivePage() {
 
   return (
     <PageLayout activePath='/web-live'>
-      <div className='ptv-live-page apex-live-content flex flex-col gap-4'>
+      <div className='ptv-live-page apex-live-content f1-web-live-page flex flex-col gap-4'>
         <LiveTabs active='web-live' />
         <div className='py-1'>
           <h1 className='text-xl font-semibold text-gray-900 dark:text-gray-100 flex items-center gap-2 max-w-[80%]'>
@@ -598,7 +598,7 @@ export default function WebLivePage() {
                 <WebLiveRoomDetails source={currentSource} info={streamInfo} loading={isVideoLoading} error={!!errorMessage} />
               )}
               {playback?.kind === 'stream' && playback.url && playback.liveStatus !== 'offline' && (
-                <section className='ptv-live-settings' aria-label='直播画质与线路'>
+                <section className='ptv-live-settings f1-broadcast-console' aria-label='直播画质与线路'>
                   {variant && (
                     <div className='ptv-live-controls'>
                       <label className='ptv-live-field'>
@@ -837,7 +837,7 @@ export default function WebLivePage() {
 
             </div>
 
-            <div className='ptv-player-panel overflow-hidden'>
+            <div className='ptv-player-panel f1-room-panel overflow-hidden'>
               <div className='px-4 py-0 h-full flex flex-col overflow-hidden'>
                 <div className='flex mb-1 -mx-6 flex-shrink-0'>
                   <div

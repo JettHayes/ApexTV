@@ -191,10 +191,10 @@ export default function PersonalLibraryPage({ view }: { view: string }) {
   const activeList = library.lists.find((item) => item.id === list);
   return (
     <PageLayout activePath={'/my/' + current.id}>
-      <div className='my-page'>
-        <header className='my-heading'>
+      <div className='my-page f1-personal-library'>
+        <header className='my-heading f1-media-heading'>
           <div>
-            <p className='my-eyebrow'>我的内容</p>
+            <p className='my-eyebrow'>个人媒体库</p>
             <h1>{current.title}</h1>
             <p>{current.intro}</p>
           </div>

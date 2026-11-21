@@ -27,7 +27,7 @@ export default function WebLiveRoomDetails({ source, info, loading, error }: {
   const title = info?.title || source.name;
   const owner = info?.name;
   return (
-    <section className='ptv-room-info' aria-label='直播间信息' aria-busy={loading}>
+    <section className='ptv-room-info f1-room-identity' aria-label='直播间信息' aria-busy={loading}>
       <WebLiveAvatar avatar={info?.avatar} cover={info?.cover} />
       <div className='ptv-room-copy'>
         <div className='ptv-room-heading'>

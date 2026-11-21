@@ -137,8 +137,8 @@ export default function AdvancedRecommendationPage() {
 
   return (
     <PageLayout activePath='/advanced-recommendation'>
-      <div className='apex-page apex-recommendation-page'>
-        <div className='apex-page-heading'>
+      <div className='apex-page apex-recommendation-page f1-discovery-page'>
+        <div className='apex-page-heading f1-media-heading'>
           <h1 className='text-2xl font-bold text-gray-800 dark:text-gray-200 flex items-center gap-2'>
             <Blend className='w-6 h-6 text-green-500' />
             高级推荐
@@ -149,7 +149,7 @@ export default function AdvancedRecommendationPage() {
         </div>
 
         <div className='space-y-6'>
-          <div>
+          <div className='f1-source-toolbar'>
             <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3'>
               选择脚本源
             </label>
@@ -187,7 +187,7 @@ export default function AdvancedRecommendationPage() {
           {!isLoadingSources && sources.length > 0 && (
             <>
               {videos.length > 0 ? (
-                <div className='ptv-fade-in grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-3 sm:gap-4'>
+                <div className='f1-poster-grid ptv-fade-in'>
                   {videos.map((video, index) => (
                     <VideoCard
                       key={`${video.source}-${video.id}-${index}`}
