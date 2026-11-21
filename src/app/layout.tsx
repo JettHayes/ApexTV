@@ -8,6 +8,7 @@ import './globals.css';
 import '../styles/petronas.css';
 import '../styles/apex-layout.css';
 import '../styles/f1-system.css';
+import '../styles/f1-media.css';
 import '../styles/f1-account.css';
 
 import { parseAuthInfo } from '@/lib/auth';

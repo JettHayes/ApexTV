@@ -825,7 +825,7 @@ export default function CorrectDialog({
       </div>
     ) : (
       <div className='ptv-scrim-in fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 backdrop-blur-sm'>
-        <div className='ptv-modal-in bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-2xl max-h-[80vh] overflow-hidden flex flex-col m-4'>
+        <div role='dialog' aria-modal='true' aria-label='影片纠错' className='ptv-dialog f1-task-dialog ptv-modal-in bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-2xl max-h-[80vh] overflow-hidden flex flex-col m-4'>
           {dialogContent}
         </div>
       </div>

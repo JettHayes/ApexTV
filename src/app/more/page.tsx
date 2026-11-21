@@ -18,7 +18,7 @@ export default function MorePage() {
   ];
   return (
     <PageLayout activePath='/more'>
-      <div className='ptv-more apex-more-page'>
+      <div className='ptv-more apex-more-page f1-more-page'>
         <div className='apex-page-heading'><h1>更多</h1><p>音乐、阅读与更多观看方式</p></div>
         {sections.filter((section) => section.items.length > 0).map(({ title, items }) => (
           <section key={title} className='mt-8' aria-label={title}>

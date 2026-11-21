@@ -22,9 +22,9 @@ export default async function SpecialPage() {
   const specialCount = (config.SpecialSourceApis || []).length;
 
   return (
-    <main className='min-h-screen bg-gray-50 text-gray-900 dark:bg-black dark:text-slate-100'>
+    <main className='f1-standalone f1-special-page min-h-screen'>
       <section className='mx-auto flex min-h-screen w-full max-w-xl items-center px-5 py-10'>
-        <div className='w-full rounded-2xl border border-gray-200 bg-white p-6 shadow-xl dark:border-white/10 dark:bg-zinc-950 sm:p-8'>
+        <div className='f1-surface w-full p-6 sm:p-8'>
           <h1 className='text-2xl font-semibold tracking-tight text-gray-900 dark:text-white'>
             特殊源
           </h1>

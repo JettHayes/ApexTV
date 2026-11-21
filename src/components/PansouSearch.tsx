@@ -1152,7 +1152,7 @@ export default function PansouSearch({
       </div>
       {showNameDialog && (
         <div className='ptv-scrim-in fixed inset-0 z-[1000] flex items-center justify-center bg-black/50'>
-          <div className='ptv-modal-in bg-white dark:bg-gray-800 rounded-lg p-6 max-w-md w-full mx-4 shadow-xl'>
+          <div role='dialog' aria-modal='true' aria-label='网盘资源操作' className='ptv-dialog f1-task-dialog ptv-modal-in bg-white dark:bg-gray-800 rounded-lg p-6 max-w-md w-full mx-4 shadow-xl'>
             <h3 className='text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4'>
               设置资源名称
             </h3>

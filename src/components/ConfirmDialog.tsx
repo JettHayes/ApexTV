@@ -1,7 +1,7 @@
 'use client';
 
 import { AlertTriangle, X } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useEffect, useId, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 
 interface ConfirmDialogProps {
@@ -26,6 +26,39 @@ export function ConfirmDialog({
   variant = 'warning',
 }: ConfirmDialogProps) {
   const [rendered, setRendered] = useState(isOpen);
+  const panelRef = useRef<HTMLDivElement>(null);
+  const cancelRef = useRef(onCancel);
+  cancelRef.current = onCancel;
+  const titleId = useId();
+  const messageId = useId();
+
+  useEffect(() => {
+    if (!isOpen) return;
+    const previousFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    const frame = requestAnimationFrame(() => panelRef.current?.querySelector<HTMLButtonElement>('[data-confirm-cancel]')?.focus());
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        event.preventDefault();
+        cancelRef.current();
+      }
+      if (event.key !== 'Tab') return;
+      const buttons = panelRef.current?.querySelectorAll<HTMLButtonElement>('button:not(:disabled)');
+      if (!buttons?.length) return;
+      const first = buttons[0];
+      const last = buttons[buttons.length - 1];
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault(); last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault(); first.focus();
+      }
+    };
+    document.addEventListener('keydown', handleKeyDown);
+    return () => {
+      cancelAnimationFrame(frame);
+      document.removeEventListener('keydown', handleKeyDown);
+      if (previousFocus?.isConnected) previousFocus.focus();
+    };
+  }, [isOpen]);
 
   // 延迟卸载，等待退出动画完成
   useEffect(() => {
@@ -63,15 +96,18 @@ export function ConfirmDialog({
       }`}
     >
       <div
-        role='alertdialog'
-        aria-modal='true'
-        aria-label={title}
+        aria-hidden='true'
         className={`absolute inset-0 bg-black/50 ${
           isOpen ? 'ptv-scrim-in' : 'ptv-scrim-out'
         }`}
         onClick={onCancel}
       />
       <div
+        ref={panelRef}
+        role='alertdialog'
+        aria-modal='true'
+        aria-labelledby={titleId}
+        aria-describedby={messageId}
         className={`ptv-dialog ${
           isOpen ? 'ptv-modal-in' : 'ptv-modal-out'
         } relative flex max-h-[calc(100dvh-2rem)] w-full max-w-md flex-col overflow-hidden bg-white dark:bg-gray-900 rounded-lg shadow-xl`}
@@ -80,7 +116,7 @@ export function ConfirmDialog({
         <div className='flex shrink-0 items-center justify-between gap-3 p-4 border-b border-gray-200 dark:border-gray-700'>
           <div className='flex items-center gap-3'>
             <AlertTriangle className={`w-6 h-6 ${styles.icon}`} />
-            <h2 className='text-lg font-semibold text-gray-800 dark:text-gray-200'>
+            <h2 id={titleId} className='text-lg font-semibold text-gray-800 dark:text-gray-200'>
               {title}
             </h2>
           </div>
@@ -95,7 +131,7 @@ export function ConfirmDialog({
 
         {/* Content */}
         <div className='min-h-0 overflow-y-auto p-4'>
-          <p className='text-sm text-gray-700 dark:text-gray-300 whitespace-pre-line'>
+          <p id={messageId} className='text-sm text-gray-700 dark:text-gray-300 whitespace-pre-line'>
             {message}
           </p>
         </div>
@@ -103,6 +139,7 @@ export function ConfirmDialog({
         {/* Footer */}
         <div className='flex shrink-0 flex-wrap items-center justify-end gap-3 p-4 border-t border-gray-200 dark:border-gray-700'>
           <button
+            data-confirm-cancel
             onClick={onCancel}
             className='min-h-11 px-4 py-2 text-sm text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 rounded transition-colors'
           >

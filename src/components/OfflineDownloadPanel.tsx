@@ -184,7 +184,7 @@ export function OfflineDownloadPanel({ isOpen, onClose }: OfflineDownloadPanelPr
 
   const panelContent = (
     <div className='ptv-scrim-in fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4'>
-      <div className='ptv-modal-in bg-white dark:bg-gray-800 rounded-lg shadow-2xl w-full max-w-4xl max-h-[80vh] flex flex-col'>
+      <div role='dialog' aria-modal='true' aria-label='离线文件管理' className='ptv-dialog f1-task-dialog ptv-modal-in bg-white dark:bg-gray-800 rounded-lg shadow-2xl w-full max-w-4xl max-h-[80vh] flex flex-col'>
         {/* 标题栏 */}
         <div className='flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700'>
           <h2 className='text-xl font-bold text-gray-900 dark:text-white'>
