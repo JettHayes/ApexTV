@@ -63,6 +63,9 @@ export function ConfirmDialog({
       }`}
     >
       <div
+        role='alertdialog'
+        aria-modal='true'
+        aria-label={title}
         className={`absolute inset-0 bg-black/50 ${
           isOpen ? 'ptv-scrim-in' : 'ptv-scrim-out'
         }`}
@@ -83,6 +86,7 @@ export function ConfirmDialog({
           </div>
           <button
             onClick={onCancel}
+            aria-label='关闭确认框'
             className='flex h-11 w-11 shrink-0 items-center justify-center hover:bg-gray-100 dark:hover:bg-gray-800 rounded transition-colors'
           >
             <X className='w-5 h-5 text-gray-600 dark:text-gray-400' />

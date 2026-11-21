@@ -29,7 +29,7 @@ const Sidebar = ({ onToggle }: { onToggle?: (collapsed: boolean) => void; active
   const searchParams = useSearchParams();
   const isUnderPath = pathname === SPECIAL_SOURCE_PATH || pathname.startsWith(SPECIAL_SOURCE_PATH + '/');
   const { primary, categories, personal, other } = useNavigationItems(isUnderPath ? SPECIAL_SOURCE_PATH : '/search');
-  const [isCollapsed, setIsCollapsed] = useState(false);
+  const [isCollapsed, setIsCollapsed] = useState(true);
   const [hasSavedChoice, setHasSavedChoice] = useState(false);
   const [animate, setAnimate] = useState(false);
 
@@ -39,7 +39,7 @@ const Sidebar = ({ onToggle }: { onToggle?: (collapsed: boolean) => void; active
       const saved = localStorage.getItem('sidebarCollapsed');
       const explicit = saved === 'true' || saved === 'false';
       setHasSavedChoice(explicit);
-      const collapsed = explicit ? saved === 'true' : media.matches;
+      const collapsed = explicit ? saved === 'true' : true;
       setIsCollapsed(collapsed);
       window.__sidebarCollapsed = collapsed;
     };
@@ -65,7 +65,7 @@ const Sidebar = ({ onToggle }: { onToggle?: (collapsed: boolean) => void; active
 
   const resetChoice = () => {
     localStorage.removeItem('sidebarCollapsed');
-    const next = window.matchMedia('(min-width: 768px) and (max-width: 1199px)').matches;
+    const next = true;
     setHasSavedChoice(false);
     setAnimate(true);
     setIsCollapsed(next);
@@ -93,7 +93,7 @@ const Sidebar = ({ onToggle }: { onToggle?: (collapsed: boolean) => void; active
         <aside data-sidebar data-collapsed={isCollapsed} data-animate={animate} className={`ptv-sidebar fixed left-0 top-0 z-40 h-dvh border-r ${isCollapsed ? 'w-16' : 'w-64'}`}>
           <div className='flex h-full flex-col'>
             <div className='ptv-sidebar-brand'>
-              {!isCollapsed && <BrandLogo />}
+              <BrandLogo compact={isCollapsed} />
               <button type='button' onClick={handleToggle} aria-label={isCollapsed ? '展开导航' : '收起导航'} aria-expanded={!isCollapsed}
                 className='ptv-sidebar-toggle flex shrink-0 items-center justify-center rounded-lg'>
                 <Menu className='h-5 w-5' />

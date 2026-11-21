@@ -5,20 +5,20 @@ import { usePathname } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 
-import { BackButton, recordNavigation } from './BackButton';
+import { recordNavigation } from './BackButton';
+import ChannelToolbar from './ChannelToolbar';
 import MobileBottomNav from './MobileBottomNav';
 import MobileHeader from './MobileHeader';
 import Sidebar from './Sidebar';
-import { ThemeToggle } from './ThemeToggle';
-import { UserMenu } from './UserMenu';
 
 interface PageLayoutProps {
   children: React.ReactNode;
   activePath?: string;
   hideNavigation?: boolean; // 控制是否隐藏顶部和底部导航栏
+  navigationMode?: 'default' | 'workspace';
 }
 
-const PageLayout = ({ children, activePath = '/', hideNavigation = false }: PageLayoutProps) => {
+const PageLayout = ({ children, activePath = '/', hideNavigation = false, navigationMode = 'default' }: PageLayoutProps) => {
   const router = useRouter();
   const pathname = usePathname();
   const [backgroundImage, setBackgroundImage] = useState('');
@@ -70,7 +70,7 @@ const PageLayout = ({ children, activePath = '/', hideNavigation = false }: Page
 
   return (
     <>
-      <div className='ptv-page relative w-full min-h-dvh overflow-hidden' data-page={page}>
+      <div className='ptv-page relative w-full min-h-dvh overflow-hidden' data-page={page} data-navigation={navigationMode}>
         {shouldShowSharedBackground && backgroundImage && createPortal(
           <>
             <div
@@ -89,9 +89,9 @@ const PageLayout = ({ children, activePath = '/', hideNavigation = false }: Page
         )}
 
         {/* 主要布局容器 */}
-        <div className='relative z-10 flex md:grid md:grid-cols-[auto_1fr] w-full min-h-screen md:min-h-auto'>
+        <div className={`relative z-10 flex ${navigationMode === 'default' && !hideNavigation ? 'md:grid md:grid-cols-[auto_1fr]' : ''} w-full min-h-screen md:min-h-auto`}>
           {/* 侧边栏 - 桌面端显示，移动端隐藏 */}
-          {!hideNavigation && (
+          {!hideNavigation && navigationMode === 'default' && (
             <div className='hidden md:block'>
               <Sidebar activePath={activePath} />
             </div>
@@ -99,20 +99,7 @@ const PageLayout = ({ children, activePath = '/', hideNavigation = false }: Page
 
           {/* 主内容区域 */}
           <div className='relative min-w-0 flex-1'>
-            {/* 桌面端左上角返回按钮 */}
-            {!hideNavigation && showBackButton && (
-              <div className='absolute top-3 left-1 z-20 hidden md:flex'>
-                <BackButton />
-              </div>
-            )}
-
-            {/* 桌面端顶部按钮 */}
-            {!hideNavigation && (
-              <div className='ptv-page-utilities absolute top-2 right-4 z-20 hidden md:flex items-center gap-2'>
-                <ThemeToggle />
-                <UserMenu />
-              </div>
-            )}
+            {!hideNavigation && <ChannelToolbar />}
 
             {/* 主内容 */}
             <main
@@ -124,7 +111,7 @@ const PageLayout = ({ children, activePath = '/', hideNavigation = false }: Page
         </div>
 
         {/* 移动端底部导航 */}
-        {!hideNavigation && (
+        {!hideNavigation && navigationMode === 'default' && (
           <div className='md:hidden'>
             <MobileBottomNav activePath={activePath} />
           </div>
