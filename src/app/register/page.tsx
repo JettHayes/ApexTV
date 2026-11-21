@@ -2,6 +2,8 @@
 
 'use client';
 
+import AuthBrandPanel from '@/components/AuthBrandPanel';
+
 import { CheckCircle, Eye, EyeOff, Lock,Send, User } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Suspense, useEffect, useRef, useState } from 'react';
@@ -165,7 +167,7 @@ function RegisterPageClient() {
 
   return (
     <div
-      className='ptv-auth relative min-h-screen min-h-[100dvh] flex flex-col items-center justify-center px-4 py-16'
+      className='ptv-auth f1-auth-split relative min-h-screen min-h-[100dvh] flex flex-col items-center justify-center px-4 py-16'
       style={backgroundImage ? {
         backgroundImage: `url(${backgroundImage})`,
         backgroundSize: 'cover',
@@ -176,6 +178,7 @@ function RegisterPageClient() {
       <div className='absolute top-4 right-4 z-20'>
         <ThemeToggle />
       </div>
+      <AuthBrandPanel />
       <div className='ptv-auth-panel ptv-login-panel relative z-10 w-full max-w-md rounded-3xl p-10'>
         <h1 className='text-green-600 tracking-tight text-center text-3xl font-extrabold mb-2 bg-clip-text drop-shadow-sm'>
           {siteName}

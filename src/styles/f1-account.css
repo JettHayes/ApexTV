@@ -1,0 +1,51 @@
+.f1-auth-brand { display: none; }
+.ptv-auth.f1-auth-split { background-color: var(--ptv-page); }
+.ptv-auth.f1-auth-split::before { pointer-events: none; }
+.f1-auth-split .ptv-auth-panel { background: rgb(var(--apex-panel-rgb) / .97); border: 1px solid var(--ptv-line); border-radius: 20px; box-shadow: var(--f1-elevation); padding: clamp(24px, 3vw, 40px); }
+.f1-auth-split .ptv-login-brand h1 { font-family: var(--f1-display); color: var(--ptv-text); letter-spacing: -.035em; }
+.f1-auth-split .ptv-login-eyebrow { color: var(--ptv-accent); letter-spacing: .16em; }
+.f1-auth-split .ptv-field-control { min-height: 52px; border-radius: 10px; }
+.f1-auth-split .ptv-login-submit { border-radius: 10px; }
+.f1-auth-split form label:not(.ptv-switch) { color: var(--ptv-text); }
+.f1-auth-split form .sr-only { position: static; display: block; width: auto; height: auto; padding: 0; margin: 0 0 8px; overflow: visible; clip: auto; white-space: normal; font-size: 13px; font-weight: 600; }
+.f1-auth-split .ptv-login-brand { text-align: left; align-items: flex-start; }
+.f1-auth-split .ptv-login-brand > img { display: none; }
+.f1-auth-split .ptv-login-panel > h1 { text-align: left; color: var(--ptv-text); font-size: 30px; font-family: var(--f1-display); }
+.f1-auth-split .ptv-login-panel > h1 + p { text-align: left; color: var(--ptv-muted); }
+.f1-auth-split form input { min-height: 50px; font-size: 16px; }
+.f1-qr-login { display: grid; align-content: center; }
+.f1-qr-login > section { width: min(100%, 480px); }
+.f1-qr-login h1 { font-size: clamp(24px, 3vw, 30px); color: var(--ptv-text); }
+.f1-qr-login p { line-height: 1.75; color: var(--ptv-muted); }
+.f1-qr-login :is(button,a) { min-height: 48px; border-radius: 10px; }
+.f1-qr-login :is(.bg-rose-600) { background: var(--ptv-action); color: var(--ptv-action-ink); }
+.f1-qr-login :is(.bg-white\/10,.bg-white\/5) { background: var(--ptv-soft); color: var(--ptv-text); }
+.ptv-account-menu { padding: 8px; border: 1px solid var(--ptv-line); border-radius: 16px; }
+.ptv-account-header { padding: 8px 6px 14px; }
+.ptv-account-profile { padding: 10px; background: var(--ptv-soft); border-radius: 10px; }
+.ptv-account-avatar, .ptv-personal-avatar { border-radius: 12px; font-family: var(--f1-display); }
+.ptv-account-menu > div > button:not(.ptv-account-profile) { margin-block: 2px; padding-inline: 14px; }
+.ptv-personal-center, .ptv-client-tools, .ptv-tv-access { border-radius: 20px; }
+.ptv-client-tools section, .ptv-tv-access section { border-radius: 12px; }
+.ptv-personal-center :is(input, select), .ptv-tv-access :is(input,select) { min-height: 44px; }
+@media (min-width: 1024px) {
+  .ptv-auth.f1-auth-split { display: grid; grid-template-columns: minmax(0, 1fr) minmax(360px, 440px); align-content: center; align-items: stretch; justify-content: center; gap: clamp(40px, 6vw, 120px); padding: 72px max(6vw, calc((100vw - 1440px)/2)); }
+  .f1-auth-brand { display: flex; position: relative; z-index: 1; flex-direction: column; justify-content: space-between; gap: 64px; min-height: 540px; padding: 40px 0; overflow: hidden; }
+  .f1-auth-brand .ptv-brand { flex: none; gap: 12px; }
+  .f1-auth-brand .ptv-brand-name { font-size: 30px; color: var(--ptv-text); }
+  .f1-auth-message { position: relative; padding-block: 24px; }
+  .f1-auth-marker { display: block; width: 56px; height: 4px; margin-bottom: 28px; background: var(--ptv-accent); transform: skewX(-25deg); }
+  .f1-auth-message h2 { font-size: clamp(32px, 3.2vw, 48px); font-weight: 650; line-height: 1.5; letter-spacing: -.04em; color: var(--ptv-text); }
+  .f1-auth-message p { margin-top: 24px; color: var(--ptv-muted); font-size: 16px; line-height: 1.9; }
+  .f1-auth-signature { display: flex; gap: 7px; height: 24px; }
+  .f1-auth-signature span { width: 64px; transform: skewX(-28deg); background: var(--ptv-accent); opacity: .6; }
+  .f1-auth-signature span:nth-child(2) { opacity: .25; }
+  .f1-auth-signature span:nth-child(3) { opacity: .1; }
+  .f1-auth-split .ptv-auth-panel { align-self: center; margin: 0; }
+}
+@media (max-width: 1023px) {
+  .ptv-auth.f1-auth-split { padding: max(60px, env(safe-area-inset-top)) 20px max(40px, env(safe-area-inset-bottom)); }
+  .f1-auth-split .ptv-login-brand > img { display: block; }
+  .f1-auth-split .ptv-auth-panel { width: min(100%, 460px); }
+}
+@media (prefers-reduced-motion: reduce) { .f1-auth-brand { animation: none; } }

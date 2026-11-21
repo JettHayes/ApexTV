@@ -77,7 +77,7 @@ export default function MediaShell({
           className={
             isReader
               ? 'mx-auto flex h-14 max-w-7xl items-center gap-3 px-3 sm:h-16 sm:px-6'
-              : 'apex-media-header-inner'
+              : 'apex-media-header-inner f1-reading-toolbar'
           }
         >
           <div
