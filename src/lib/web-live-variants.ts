@@ -31,3 +31,15 @@ export function resolveVariant(items: WebLiveVariant[], preference: WebLivePrefe
   ));
   return { selected, fallback };
 }
+
+/** 播放失败后优先换同画质线路，再尝试较低画质；不自动切到另一种协议。 */
+export function recoveryVariant(items: WebLiveVariant[], preference: WebLivePreference | null, failed: ReadonlySet<string>): WebLiveVariant | undefined {
+  if (!preference) return undefined;
+  const available = items.filter((item) => item.type === preference.type && !failed.has(item.id));
+  const sameQuality = available.find((item) => qualityName(item) === preference.quality);
+  if (sameQuality) return sameQuality;
+  const qualities = qualityOptions(items);
+  const previousIndex = qualities.indexOf(preference.quality);
+  if (previousIndex < 0) return undefined;
+  return available.find((item) => qualities.indexOf(qualityName(item)) > previousIndex);
+}

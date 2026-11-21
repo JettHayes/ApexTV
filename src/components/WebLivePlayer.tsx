@@ -7,17 +7,21 @@ export default function WebLivePlayer({
   type,
   onFailure,
   onPlaying,
+  onBuffering,
 }: {
   url: string;
   type: 'hls' | 'flv';
   onFailure: (message: string, retryable: boolean, code?: string) => void;
   onPlaying?: () => void;
+  onBuffering?: () => void;
 }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const failureRef = useRef(onFailure);
   failureRef.current = onFailure;
   const playingRef = useRef(onPlaying);
   playingRef.current = onPlaying;
+  const bufferingRef = useRef(onBuffering);
+  bufferingRef.current = onBuffering;
 
   useEffect(() => {
     const container = containerRef.current;
@@ -39,6 +43,12 @@ export default function WebLivePlayer({
       element.onplaying = () => {
         if (!cancelled) playingRef.current?.();
       };
+      const stopStablePlayback = () => {
+        if (!cancelled) bufferingRef.current?.();
+      };
+      element.onwaiting = stopStablePlayback;
+      element.onstalled = stopStablePlayback;
+      element.onpause = stopStablePlayback;
       element.onended = () =>
         fail('直播已结束，正在检查房间状态', true, 'PLAYBACK_ENDED');
       try {
@@ -140,6 +150,9 @@ export default function WebLivePlayer({
         (video as HTMLVideoElement).onerror = null;
         (video as HTMLVideoElement).onplaying = null;
         (video as HTMLVideoElement).onended = null;
+        (video as HTMLVideoElement).onwaiting = null;
+        (video as HTMLVideoElement).onstalled = null;
+        (video as HTMLVideoElement).onpause = null;
       }
       try {
         destroyStream();

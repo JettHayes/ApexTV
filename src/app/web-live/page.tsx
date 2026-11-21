@@ -8,7 +8,7 @@ import { useWebLiveSync } from '@/hooks/useWebLiveSync';
 import { useYouTubeLiveRefresh } from '@/hooks/useYouTubeLiveRefresh';
 import { useWebLiveRecovery } from '@/hooks/useWebLiveRecovery';
 import { getWebLiveRoomUrl, webLiveSourceLabel, type WebLivePlayback, type WebLiveRoomInfo, type WebLiveSource, type WebLiveVariant, webLivePlatformName } from '@/lib/web-live';
-import { chooseVariant, qualityName, qualityOptions, resolveVariant, type WebLivePreference } from '@/lib/web-live-variants';
+import { chooseVariant, qualityName, qualityOptions, recoveryVariant, resolveVariant, type WebLivePreference } from '@/lib/web-live-variants';
 
 import LiveTabs from '@/components/LiveTabs';
 import LoadingStyle, {
@@ -61,6 +61,8 @@ export default function WebLivePage() {
   const [selectionNotice, setSelectionNotice] = useState('');
   const [showAdvancedPlayback, setShowAdvancedPlayback] = useState(false);
   const preferenceRef = useRef<WebLivePreference | null>(null);
+  const failedVariantsRef = useRef(new Set<string>());
+  const stablePlaybackTimerRef = useRef<ReturnType<typeof setTimeout>>();
 
   const originalVideoUrl = playback?.originalUrl || '';
   const [streamInfo, setStreamInfo] = useState<WebLiveRoomInfo | null>(null);
@@ -96,7 +98,6 @@ export default function WebLivePage() {
       setErrorCode('');
     },
     onError: (message, retryable, code) => {
-      setPlayback(null);
       setErrorMessage(message);
       setCanAutoRetry(retryable);
       setErrorCode(code || 'NETWORK_ERROR');
@@ -200,17 +201,24 @@ export default function WebLivePage() {
 
   useEffect(() => () => {
     streamRequestRef.current?.abort();
+    clearTimeout(stablePlaybackTimerRef.current);
   }, []);
 
   const handleSourceClick = async (source: WebLiveSource, automatic = false) => {
+    clearTimeout(stablePlaybackTimerRef.current);
     if (!automatic) {
       resetRecovery();
+      failedVariantsRef.current.clear();
       if (source.key !== currentSource?.key) preferenceRef.current = null;
     }
     streamRequestRef.current?.abort();
     const controller = new AbortController();
     streamRequestRef.current = controller;
-    setPlayback(null);
+    if (source.key !== currentSource?.key) {
+      setPlayback(null);
+      setSelectedVariant('');
+      setSelectionNotice('');
+    }
     setCurrentSource(source);
     setIsVideoLoading(true);
     setErrorMessage(null);
@@ -251,10 +259,19 @@ export default function WebLivePage() {
       setStreamInfo(result);
       const variants = result.variants || [];
       const preference = preferenceRef.current;
-      const { selected: preferred, fallback } = resolveVariant(variants, preference);
+      const resolved = resolveVariant(variants, preference);
+      const alternative = ['huya', 'bilibili'].includes(source.platform) && automatic && failedVariantsRef.current.size
+        ? recoveryVariant(variants, preference, failedVariantsRef.current)
+        : undefined;
+      const preferred = alternative || resolved.selected;
       setSelectedVariant(preferred?.id || '');
-      setSelectionNotice(fallback
+      setSelectionNotice(alternative
+        ? qualityName(alternative) === preference?.quality
+          ? '上一条线路播放失败，已保留画质并尝试其他线路。'
+          : '较高画质的线路暂不可用，已尝试较低画质；你仍可手动切换。'
+        : resolved.fallback
         ? '原画质或线路暂不可用，已切换到当前可用选项。' : '');
+      if (automatic && !alternative) failedVariantsRef.current.clear();
       if (preferred) preferenceRef.current = { quality: qualityName(preferred), cdn: preferred.cdn, type: preferred.type };
     } catch (error) {
       if (!controller.signal.aborted) {
@@ -269,16 +286,22 @@ export default function WebLivePage() {
   };
 
   const handlePlaybackFailure = (message: string, retryable: boolean, code = 'NETWORK_ERROR') => {
+    clearTimeout(stablePlaybackTimerRef.current);
     const customExpired = currentSource?.platform === 'custom' && code === 'HTTP_EXPIRED';
     const customEnded = currentSource?.platform === 'custom' && code === 'PLAYBACK_ENDED';
-    setPlayback(null);
+    if (currentSource && ['huya', 'bilibili'].includes(currentSource.platform) && selectedVariant) failedVariantsRef.current.add(selectedVariant);
     setErrorMessage(customExpired ? '自定义播放地址已失效或访问被拒绝，请更新源地址；系统无法替外部源续签。' : customEnded ? '自定义直播源已结束，请检查是否为回放地址或需要更新的临时地址。' : message);
     setCanAutoRetry(retryable && !customExpired && !customEnded);
     setErrorCode(customExpired ? 'CUSTOM_URL_EXPIRED' : code);
   };
 
   const handlePlaying = () => {
-    resetRecovery();
+    clearTimeout(stablePlaybackTimerRef.current);
+    // 短暂出画面后立即断流不算恢复，连续播放后才重置退避和失败线路。
+    stablePlaybackTimerRef.current = setTimeout(() => {
+      resetRecovery();
+      failedVariantsRef.current.clear();
+    }, 15000);
     setCanAutoRetry(false);
     setErrorMessage(null);
     setErrorCode('');
@@ -302,8 +325,14 @@ export default function WebLivePage() {
   const protocolTypes = Array.from(new Set(protocols.map((item) => item.type)));
   const selectVariant = (item: WebLiveVariant | undefined, notice = '') => {
     if (!item) return;
+    clearTimeout(stablePlaybackTimerRef.current);
+    streamRequestRef.current?.abort();
     resetRecovery();
+    failedVariantsRef.current.clear();
+    setIsVideoLoading(false);
     setErrorMessage(null);
+    setCanAutoRetry(false);
+    setErrorCode('');
     setSelectionNotice(notice);
     preferenceRef.current = { quality: qualityName(item), cdn: item.cdn, type: item.type };
     setSelectedVariant(item.id);
@@ -488,8 +517,8 @@ export default function WebLivePage() {
                     <TwitchLivePlayer channel={currentSource.roomId} embedUrl={playback.embedUrl} title={streamInfo?.title || currentSource.name} onStatus={handleTwitchStatus} />
                   ) : playback?.kind === 'embed' && playback.embedUrl ? (
                     <iframe key={currentSource?.key + ':' + playback.embedUrl} src={playback.embedUrl} title={streamInfo?.title || currentSource?.name || '直播'} className='h-full w-full border-0' style={currentSource?.platform === 'twitch' ? { minHeight: 300 } : undefined} referrerPolicy='strict-origin-when-cross-origin' allow='autoplay; encrypted-media; fullscreen; picture-in-picture' allowFullScreen />
-                  ) : playback?.kind === 'stream' && playback.url && playback.liveStatus !== 'offline' && (
-                    <WebLivePlayer url={variant?.url || playback.url} type={variant?.type || playback.type || 'hls'} onFailure={handlePlaybackFailure} onPlaying={handlePlaying} />
+                  ) : playback?.kind === 'stream' && playback.url && playback.liveStatus !== 'offline' && !errorMessage && !isVideoLoading && (
+                    <WebLivePlayer url={variant?.url || playback.url} type={variant?.type || playback.type || 'hls'} onFailure={handlePlaybackFailure} onPlaying={handlePlaying} onBuffering={() => clearTimeout(stablePlaybackTimerRef.current)} />
                   )}
                 </div>
 
@@ -529,6 +558,7 @@ export default function WebLivePage() {
                           <p className='text-orange-300 font-medium'>{errorMessage}</p>
                         </div>
                         {canAutoRetry && <p className='text-xs text-gray-300'>稍后会自动重试，也可以立即检查。</p>}
+                        {variant && <p className='text-xs text-gray-300'>也可在播放器下方切换清晰度或播放线路，无需刷新页面。</p>}
                         <button type='button' onClick={() => currentSource && handleSourceClick(currentSource)} className='rounded-lg bg-green-600 px-4 py-2 text-white'>立即检查</button>
                       </div>
                     </div>
@@ -590,7 +620,7 @@ export default function WebLivePage() {
                           const next = chooseVariant(qualityVariants.filter((item) => (item.cdn || '') === event.target.value), qualityName(variant), event.target.value || undefined, variant.type);
                           selectVariant(next, next && next.type !== variant.type ? '该线路没有当前协议，已选择可用协议。' : '');
                         }}>
-                          {cdns.map((cdn, index) => <option key={cdn} value={cdn}>线路 {index + 1}{cdn === 'AL' ? ' · 阿里云' : cdn === 'TX' ? ' · 腾讯云' : ''}</option>)}
+                          {cdns.map((cdn, index) => <option key={cdn} value={cdn}>线路 {index + 1}{cdn === 'AL' ? ' · 阿里云' : cdn === 'TX' ? ' · 腾讯云' : cdn.startsWith('ts-') ? ' · HLS' : cdn.startsWith('fmp4-') ? ' · HLS 备用' : cdn.startsWith('flv-') ? ' · FLV' : ''}</option>)}
                         </select>
                         <ChevronDown aria-hidden='true' />
                         </span>

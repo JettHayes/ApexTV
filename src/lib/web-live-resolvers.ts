@@ -283,6 +283,7 @@ async function huya(
     roomId,
     anchorId: anchorId != null ? String(anchorId) : infoOnly.anchorId,
     liveStatus: status,
+    qualityNote: '按平台公开返回的档位列出；个别线路可能暂不可用，可切换线路或降低清晰度，无需刷新页面。',
   });
 }
 
@@ -383,6 +384,7 @@ async function bilibili(
         for (const codec of format.codec || []) {
           if (
             !['ts', 'fmp4', 'flv'].includes(format.format_name) ||
+            codec.codec_name !== 'avc' ||
             (item.qn && Number(codec.current_qn) !== item.qn)
           )
             continue;
@@ -398,7 +400,8 @@ async function bilibili(
         (b.format === 'ts' ? 0 : b.format === 'fmp4' ? 1 : 2)
   );
   const variants: WebLiveVariant[] = [];
-  const perQuality: Record<string, number> = {};
+  const perFormat: Record<string, number> = {};
+  const seen = new Set<string>();
   for (const { format, codec } of formats)
     for (const [index, item] of (codec.url_info || [])
       .slice(0, 3)
@@ -407,24 +410,27 @@ async function bilibili(
         item.extra || ''
       }`;
       if (!/^https?:\/\//i.test(url)) continue;
+      const host = new URL(url).hostname;
       const type = format === 'flv' ? 'flv' : 'hls';
       const quality = Number(codec.current_qn) || 0;
-      const qualityKey = String(quality);
-      if ((perQuality[qualityKey] || 0) >= 3) continue;
-      perQuality[qualityKey] = (perQuality[qualityKey] || 0) + 1;
+      const formatKey = `${quality}-${format}`;
+      const id = `${format}-${codec.codec_name}-${quality}-${host}`;
+      if (seen.has(id) || (perFormat[formatKey] || 0) >= 2) continue;
+      seen.add(id);
+      perFormat[formatKey] = (perFormat[formatKey] || 0) + 1;
       const qualityName =
         data?.g_qn_desc?.find((q: any) => q.qn === quality)?.desc ||
         `${quality}`;
       variants.push({
-        id: `${format}-${codec.codec_name}-${quality}-${index}`,
+        id,
         label: `${qualityName} · ${format.toUpperCase()} · 线路${index + 1}`,
         url,
         type,
         quality,
-        cdn: `线路${index + 1}`,
+        cdn: `${format}-${host}`,
       });
     }
-  return result(variants.slice(0, 12), {
+  return result(variants.slice(0, 24), {
     name: owner?.code === 0 ? owner.data?.info?.uname : undefined,
     avatar: owner?.code === 0 ? owner.data?.info?.face : undefined,
     title: detail?.code === 0 ? detail.data?.title : undefined,
