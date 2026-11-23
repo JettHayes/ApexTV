@@ -37,7 +37,7 @@ jobs:
             - name: Checkout target repo
               uses: actions/checkout@v5
               with:
-                  token: ${{ github.token }}
+                  token: ${{ secrets.SYNC_TOKEN }}
                   fetch-depth: 0
 
             - name: Fetch upstream
@@ -61,7 +61,7 @@ jobs:
             - name: Prepare sync branch
               if: steps.check.outputs.has_updates == 'true'
               env:
-                  GH_TOKEN: ${{ github.token }}
+                  GH_TOKEN: ${{ secrets.SYNC_TOKEN }}
               run: |
                   PR_NUMBER=$(gh pr list --head "${SYNC_BRANCH}" --base "${TARGET_BRANCH}" --state open --json number --jq '.[0].number // empty')
                   echo "PR_NUMBER=${PR_NUMBER}" >> "$GITHUB_ENV"
@@ -113,7 +113,7 @@ jobs:
             - name: Create pull request
               if: steps.check.outputs.has_updates == 'true' && env.PR_NUMBER == ''
               env:
-                  GH_TOKEN: ${{ github.token }}
+                  GH_TOKEN: ${{ secrets.SYNC_TOKEN }}
               run: |
                   gh pr create \
                       --base "${TARGET_BRANCH}" \
