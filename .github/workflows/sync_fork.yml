@@ -37,7 +37,7 @@ jobs:
             - name: Checkout target repo
               uses: actions/checkout@v5
               with:
-                  token: ${{ secrets.SYNC_TOKEN }}
+                  token: ${{ github.token }}
                   fetch-depth: 0
 
             - name: Fetch upstream
@@ -61,7 +61,7 @@ jobs:
             - name: Prepare sync branch
               if: steps.check.outputs.has_updates == 'true'
               env:
-                  GH_TOKEN: ${{ secrets.SYNC_TOKEN }}
+                  GH_TOKEN: ${{ github.token }}
               run: |
                   PR_NUMBER=$(gh pr list --head "${SYNC_BRANCH}" --base "${TARGET_BRANCH}" --state open --json number --jq '.[0].number // empty')
                   echo "PR_NUMBER=${PR_NUMBER}" >> "$GITHUB_ENV"
@@ -113,7 +113,7 @@ jobs:
             - name: Create pull request
               if: steps.check.outputs.has_updates == 'true' && env.PR_NUMBER == ''
               env:
-                  GH_TOKEN: ${{ secrets.SYNC_TOKEN }}
+                  GH_TOKEN: ${{ github.token }}
               run: |
                   gh pr create \
                       --base "${TARGET_BRANCH}" \
@@ -124,6 +124,6 @@ jobs:
 
                   - 合并时请选择 **Create a merge commit**，不要使用 Squash 或 Rebase，否则下次同步会重复出现已合并的提交。
                   - 若提示存在冲突，可在网页上解决简单冲突；复杂冲突需在本地处理。合并前 main 不会被修改。
-                  - 工作流目录 \`.github/workflows\` 保持 ApexTV 当前配置，不跟随上游变化。
+                  - 工作流目录 \\`.github/workflows\\` 保持 ApexTV 当前配置，不跟随上游变化。
                   EOF
                   )"
