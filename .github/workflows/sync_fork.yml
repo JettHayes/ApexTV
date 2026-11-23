@@ -63,7 +63,7 @@ jobs:
               env:
                   GH_TOKEN: ${{ secrets.SYNC_TOKEN }}
               run: |
-                  PR_NUMBER=$(gh pr list --head "${SYNC_BRANCH}" --base "${TARGET_BRANCH}" --state open --json number --jq '.[0].number // empty')
+                  PR_NUMBER=$(gh pr list --repo "$GITHUB_REPOSITORY" --head "${SYNC_BRANCH}" --base "${TARGET_BRANCH}" --state open --json number --jq '.[0].number // empty')
                   echo "PR_NUMBER=${PR_NUMBER}" >> "$GITHUB_ENV"
 
                   MERGING=false
@@ -116,6 +116,7 @@ jobs:
                   GH_TOKEN: ${{ secrets.SYNC_TOKEN }}
               run: |
                   gh pr create \
+                      --repo "$GITHUB_REPOSITORY" \
                       --base "${TARGET_BRANCH}" \
                       --head "${SYNC_BRANCH}" \
                       --title "chore: 同步上游 ${UPSTREAM_REPO} 更新" \
@@ -124,6 +125,6 @@ jobs:
 
                   - 合并时请选择 **Create a merge commit**，不要使用 Squash 或 Rebase，否则下次同步会重复出现已合并的提交。
                   - 若提示存在冲突，可在网页上解决简单冲突；复杂冲突需在本地处理。合并前 main 不会被修改。
-                  - 工作流目录 \\`.github/workflows\\` 保持 ApexTV 当前配置，不跟随上游变化。
+                  - 工作流目录 \`.github/workflows\` 保持 ApexTV 当前配置，不跟随上游变化。
                   EOF
                   )"
