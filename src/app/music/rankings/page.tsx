@@ -1,12 +1,15 @@
 'use client';
 
-import { ListMusic } from 'lucide-react';
+import { ListMusic, Play } from 'lucide-react';
+import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
+import { isRequestCancelled,reportAppError, requestJson } from '@/lib/app-error';
 import { musicSources, normalizeSource } from '@/lib/music/shared';
 import type { Playlist } from '@/lib/music/types';
 
+import ErrorNotice from '@/components/ErrorNotice';
 import MusicEmpty, { MusicSleeveGridSkeleton } from '@/components/music/MusicEmpty';
 import MusicPage from '@/components/music/MusicPage';
 import MusicSwitch from '@/components/music/MusicSwitch';
@@ -28,6 +31,8 @@ export default function MusicRankingsPage() {
   // 初值是 true：这页挂载即发请求，给 false 会先用"长度为 0"的判断渲染一帧空态
   // （"无法获取此榜单"），effect 跑起来才切成骨架。骨架才是真正的初始态。
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<unknown>(null);
+  const [retry, setRetry] = useState(0);
 
   useEffect(() => {
     const source = normalizeSource(searchParams.get('source'));
@@ -35,11 +40,8 @@ export default function MusicRankingsPage() {
     let active = true;
     setCurrentSource(source);
     setLoading(true);
-    fetch(`/api/music/v2/discovery/boards?source=${source}`, { signal: controller.signal })
-      .then((res) => {
-        if (!res.ok) throw new Error('榜单请求失败');
-        return res.json();
-      })
+    setError(null);
+    requestJson<any>(`/api/music/v2/discovery/boards?source=${source}`, { signal: controller.signal }, '获取榜单')
       .then((data) => {
         if (!active) return;
         if (data.success) {
@@ -54,13 +56,13 @@ export default function MusicRankingsPage() {
           setPlaylists([]);
         }
       })
-      .catch(() => { if (active) setPlaylists([]); })
+      .catch((err) => { if (active && !isRequestCancelled(err)) { reportAppError(err, '获取榜单'); setError(err); } })
       .finally(() => { if (active) setLoading(false); });
     return () => {
       active = false;
       controller.abort();
     };
-  }, [searchParams]);
+  }, [searchParams, retry]);
 
   const currentSourceLabel =
     musicSources.find((item) => item.key === currentSource)?.label || '音源';
@@ -80,8 +82,32 @@ export default function MusicRankingsPage() {
     >
       {loading ? (
         <MusicSleeveGridSkeleton count={10} />
+      ) : error ? (
+        <ErrorNotice error={error} context='获取榜单' onRetry={() => setRetry((value) => value + 1)} />
       ) : playlists.length > 0 ? (
-        <div className={`${MUSIC_SLEEVE_GRID} f1-album-grid`}>
+        <>
+          <section className='f1-music-ranking-feature'>
+            {playlists[0].cover && <img src={playlists[0].cover} alt='' referrerPolicy='no-referrer' />}
+            <div className='f1-music-ranking-feature-copy'>
+              <span>{currentSourceLabel} · 榜单</span>
+              <h2>{playlists[0].name}</h2>
+              {playlists[0].updateFrequency && <p>{playlists[0].updateFrequency}</p>}
+              <button type='button' onClick={() => router.push(
+                `/music/rankings/${playlists[0].source || currentSource}/${encodeURIComponent(playlists[0].id)}?name=${encodeURIComponent(playlists[0].name)}`
+              )}><Play size={15} fill='currentColor' />查看榜单</button>
+            </div>
+          </section>
+          <section className='f1-music-ranking-quick'>
+            <div className='f1-music-ranking-heading'><h2>热歌榜单</h2><Link href='/music/songlists'>推荐歌单 ›</Link></div>
+            <div>{playlists.slice(0, 5).map((playlist, index) => (
+              <button key={playlist.id} type='button' onClick={() => router.push(
+                `/music/rankings/${playlist.source || currentSource}/${encodeURIComponent(playlist.id)}?name=${encodeURIComponent(playlist.name)}`
+              )}><span>{String(index + 1).padStart(2, '0')}</span><strong>{playlist.name}</strong></button>
+            ))}</div>
+          </section>
+          <section className='f1-music-ranking-all'>
+          <h2>全部榜单</h2>
+          <div className={`${MUSIC_SLEEVE_GRID} f1-album-grid`}>
           {playlists.map((playlist, index) => (
             <SleeveCard
               key={playlist.id}
@@ -102,7 +128,9 @@ export default function MusicRankingsPage() {
               }
             />
           ))}
-        </div>
+          </div>
+          </section>
+        </>
       ) : (
         <MusicEmpty
           icon={ListMusic}

@@ -24,8 +24,8 @@ const navItems = [
   { label: '主页', href: '/tv', icon: Home },
   { label: '电影', href: '/tv/movie', icon: Film },
   { label: '剧集', href: '/tv/series', icon: Tv },
-  { label: '动漫', href: '/tv/anime', icon: Sparkles },
   { label: '综艺', href: '/tv/variety', icon: MonitorPlay },
+  { label: '动漫', href: '/tv/anime', icon: Sparkles },
   { label: '直播', href: '/tv/live', icon: Radio },
   { label: '私人影库', href: '/tv/private', icon: Heart },
   { label: '我的', href: '/tv/me', icon: User },
@@ -54,12 +54,12 @@ export default function TVLayout({
   }, [pathname, showNav]);
 
   return (
-    <main className='ptv-tv f1-tv-shell min-h-screen overflow-x-hidden'>
+    <main className='ptv-tv f1-tv-shell min-h-screen overflow-x-hidden' data-tv-page={pathname}>
       <div className='f1-tv-ambient fixed inset-0 pointer-events-none' />
       {showNav && (
-        <header className='f1-tv-header fixed inset-x-0 top-0 z-40'>
+        <header className='f1-tv-header fixed inset-y-0 left-0 z-40'>
           <div className='f1-tv-brand'><BrandLogo /></div>
-          <nav aria-label='电视主导航' className='f1-tv-navigation flex items-center gap-3 overflow-x-auto overscroll-x-contain [scrollbar-width:none]'>
+          <nav aria-label='电视主导航' className='f1-tv-navigation flex flex-col overflow-y-auto overscroll-y-contain [scrollbar-width:none]'>
             {navItems.map((item) => {
               const active =
                 item.href === '/tv'

@@ -1,11 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-import { isMusicSource, lxGetJson, unwrapLxArray } from '@/lib/music-v2';
-import { badRequest, internalError } from '@/lib/music-v2-api';
+import { reportAppError } from '@/lib/app-error';
 import {
   getNativeBoardCovers,
   normalizeBoardCover,
 } from '@/lib/music/board-covers.server';
+import { isMusicSource, lxGetJson, unwrapLxArray } from '@/lib/music-v2';
+import { badRequest, internalError } from '@/lib/music-v2-api';
 
 export const runtime = 'nodejs';
 
@@ -32,6 +33,7 @@ export async function GET(request: NextRequest) {
     let actualSource = source as typeof source;
     let list: Board[] = [];
     const errors: string[] = [];
+    let lastError: unknown;
 
     for (const candidate of fallbackSources) {
       try {
@@ -46,10 +48,14 @@ export async function GET(request: NextRequest) {
           break;
         }
       } catch (error) {
-        const message = (error as Error).message;
-        errors.push(`${candidate}: ${message}`);
-        console.error(`[music-v2] 获取榜单源失败: ${candidate}`, error);
+        errors.push(candidate);
+        lastError = error;
+        reportAppError(error, '获取榜单源');
       }
+    }
+
+    if (list.length === 0 && errors.length === fallbackSources.length) {
+      return internalError('所有榜单音源均获取失败，请稍后重试', lastError);
     }
 
     const covers = list.some(
@@ -80,7 +86,7 @@ export async function GET(request: NextRequest) {
       },
     });
   } catch (error) {
-    console.error('[music-v2] 获取榜单失败:', error);
-    return internalError('获取榜单失败', (error as Error).message);
+    reportAppError(error, '获取榜单');
+    return internalError('获取榜单失败', error);
   }
 }

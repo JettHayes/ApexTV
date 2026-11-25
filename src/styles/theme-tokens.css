@@ -1,0 +1,804 @@
+/* Apex TV color authority. Component styles consume these semantic tokens. */
+html[data-moontvplus] {
+  --apex-accent-rgb: 0 125 120;
+  --ptv-accent: rgb(var(--apex-accent-rgb));
+  --apex-action-rgb: 0 181 173;
+  --ptv-action: rgb(var(--apex-action-rgb));
+  --apex-action-hover-rgb: 0 159 152;
+  --ptv-action-hover: rgb(var(--apex-action-hover-rgb));
+  --apex-action-ink-rgb: 16 22 25;
+  --ptv-action-ink: rgb(var(--apex-action-ink-rgb));
+  --ptv-info: #0e61ac;
+  --apex-text-rgb: 25 36 40;
+  --ptv-text: rgb(var(--apex-text-rgb));
+  --apex-muted-rgb: 100 116 122;
+  --ptv-muted: rgb(var(--apex-muted-rgb));
+  --apex-page-rgb: 243 246 246;
+  --ptv-page: rgb(var(--apex-page-rgb));
+  --apex-panel-rgb: 255 255 255;
+  --ptv-panel: rgb(var(--apex-panel-rgb));
+  --apex-surface-rgb: 255 255 255;
+  --ptv-surface: rgb(var(--apex-surface-rgb));
+  --apex-soft-rgb: 233 239 240;
+  --ptv-soft: rgb(var(--apex-soft-rgb));
+  --apex-line-rgb: 215 224 226;
+  --ptv-line: rgb(var(--apex-line-rgb));
+  --apex-selected-rgb: 224 246 245;
+  --ptv-selected: rgb(var(--apex-selected-rgb));
+  --ptv-error: #b42318;
+  --ptv-success: #167044;
+  --ptv-shadow: 0 12px 32px rgba(10, 34, 36, 0.08);
+  --skeleton-color: var(--ptv-soft);
+  --skeleton-highlight: var(--ptv-panel);
+  --ptv-gutter: clamp(18px, 2.4vw, 52px);
+  --ptv-max: 1920px;
+  --ptv-page-top: 28px;
+  --ptv-section-gap: clamp(28px, 3vw, 44px);
+  --ptv-title-size: clamp(24px, 2.1vw, 32px);
+  --ptv-sidebar-collapsed-width: 80px;
+  --ptv-ease: cubic-bezier(0.16, 1, 0.3, 1);
+  --theme-primary: var(--ptv-accent);
+  --theme-primary-hover: var(--ptv-action-hover);
+  --theme-bg: var(--ptv-page);
+  --theme-bg-secondary: var(--ptv-surface);
+  --theme-text: var(--ptv-text);
+  --theme-text-secondary: var(--ptv-muted);
+  --theme-border: var(--ptv-line);
+  color-scheme: light;
+}
+
+html[data-moontvplus].dark {
+  --apex-accent-rgb: 0 181 173;
+  --ptv-accent: rgb(var(--apex-accent-rgb));
+  --apex-action-rgb: 0 181 173;
+  --ptv-action: rgb(var(--apex-action-rgb));
+  --apex-action-hover-rgb: 38 192 185;
+  --ptv-action-hover: rgb(var(--apex-action-hover-rgb));
+  --apex-action-ink-rgb: 16 22 25;
+  --ptv-action-ink: rgb(var(--apex-action-ink-rgb));
+  --ptv-info: #83b8e7;
+  --apex-text-rgb: 243 246 246;
+  --ptv-text: rgb(var(--apex-text-rgb));
+  --apex-muted-rgb: 170 183 187;
+  --ptv-muted: rgb(var(--apex-muted-rgb));
+  --apex-page-rgb: 16 22 25;
+  --ptv-page: rgb(var(--apex-page-rgb));
+  --apex-panel-rgb: 25 34 38;
+  --ptv-panel: rgb(var(--apex-panel-rgb));
+  --apex-surface-rgb: 37 45 49;
+  --ptv-surface: rgb(var(--apex-surface-rgb));
+  --apex-soft-rgb: 37 45 49;
+  --ptv-soft: rgb(var(--apex-soft-rgb));
+  --apex-line-rgb: 56 67 72;
+  --ptv-line: rgb(var(--apex-line-rgb));
+  --apex-selected-rgb: 22 54 56;
+  --ptv-selected: rgb(var(--apex-selected-rgb));
+  --ptv-error: #fda29b;
+  --ptv-success: #86d9a6;
+  --ptv-shadow: 0 12px 32px rgba(0, 0, 0, 0.22);
+  color-scheme: dark;
+}
+
+html[data-moontvplus] {
+  /* On-soft text is slightly darker in light mode to exceed 4.5:1 on #E9EFF0. */
+  --apex-muted-on-soft-rgb: 91 107 113;
+  --ptv-muted-on-soft: rgb(var(--apex-muted-on-soft-rgb));
+  --ptv-silver: #dce3e6;
+  --ptv-warning: #8b5b00;
+  --ptv-warning-bg: #fff4d6;
+  --ptv-info-hover: #084b86;
+  --ptv-error-hover: #912018;
+  --ptv-on-status: #f3f6f6;
+  --ptv-selected-line: color-mix(
+    in srgb,
+    var(--ptv-accent) 35%,
+    var(--ptv-line)
+  );
+  --ptv-hover-panel: color-mix(
+    in srgb,
+    var(--ptv-selected) 38%,
+    var(--ptv-panel)
+  );
+  --ptv-danger-panel: color-mix(in srgb, var(--ptv-error) 6%, var(--ptv-panel));
+  --ptv-danger-hover: color-mix(
+    in srgb,
+    var(--ptv-error) 13%,
+    var(--ptv-panel)
+  );
+  --ptv-danger-line: color-mix(in srgb, var(--ptv-error) 24%, var(--ptv-line));
+  /* Media surfaces remain dark in either theme; photographs and video remain untouched. */
+  --apex-media-bg-rgb: 16 22 25;
+  --apex-media-panel-rgb: 25 34 38;
+  --apex-media-high-rgb: 37 45 49;
+  --apex-media-text-rgb: 243 246 246;
+  --apex-media-muted-rgb: 170 183 187;
+  --apex-media-line-rgb: 56 67 72;
+  --ptv-media-bg: rgb(var(--apex-media-bg-rgb));
+  --ptv-media-panel: rgb(var(--apex-media-panel-rgb));
+  --ptv-media-high: rgb(var(--apex-media-high-rgb));
+  --ptv-media-text: rgb(var(--apex-media-text-rgb));
+  --ptv-media-muted: rgb(var(--apex-media-muted-rgb));
+  --ptv-media-line: rgb(var(--apex-media-line-rgb));
+  --ptv-media-accent: var(--ptv-action);
+  --ptv-media-rating: #f4d271;
+  --ptv-rating: #946300;
+  --ptv-code-bg: var(--ptv-media-panel);
+  --ptv-code-text: var(--ptv-media-text);
+  --ptv-code-line: var(--ptv-media-line);
+  --ptv-hero-scrim: linear-gradient(
+    90deg,
+    rgb(var(--apex-media-bg-rgb) / 0.94) 0%,
+    rgb(var(--apex-media-bg-rgb) / 0.85) 42%,
+    rgb(var(--apex-media-bg-rgb) / 0.13) 100%
+  );
+  --ptv-vinyl-texture: repeating-radial-gradient(
+      circle,
+      transparent 0 2px,
+      rgb(var(--apex-media-text-rgb) / 0.05) 2px 3px
+    ),
+    conic-gradient(
+      from 40deg,
+      var(--ptv-media-bg),
+      var(--ptv-media-high) 12%,
+      var(--ptv-media-panel) 24%,
+      var(--ptv-media-bg) 40%,
+      var(--ptv-media-high) 56%,
+      var(--ptv-media-panel) 72%,
+      var(--ptv-media-high) 88%,
+      var(--ptv-media-bg)
+    );
+  --ptv-vinyl-label: radial-gradient(
+    circle,
+    var(--ptv-media-text) 0 26%,
+    transparent 27%
+  );
+  --ptv-vinyl-shadow: 0 0 0 3px var(--ptv-page), 0 0 0 4px var(--ptv-line),
+    0 6px 16px rgb(var(--apex-media-bg-rgb) / 0.45);
+  --f1-silver: var(--ptv-silver);
+  --f1-racing: var(--ptv-action);
+  --f1-elevation: 0 8px 28px rgb(var(--apex-media-bg-rgb) / 0.065);
+  --f1-scrim: rgb(var(--apex-media-bg-rgb) / 0.64);
+}
+html[data-moontvplus].dark {
+  --apex-muted-on-soft-rgb: 170 183 187;
+  --ptv-rating: var(--ptv-media-rating);
+  --ptv-warning: #e9cd90;
+  --ptv-warning-bg: #352e1e;
+  --f1-elevation: 0 12px 32px rgb(var(--apex-media-bg-rgb) / 0.2);
+}
+
+/* Approved signal/rating colors and shared opacity/interaction derivatives. */
+html[data-moontvplus] {
+  --ptv-signal-red: #f05252;
+  --ptv-signal-red-off: #46292d;
+  --ptv-signal-red-edge: #633e40;
+  --ptv-rating-high-a: #ffd54a;
+  --ptv-rating-high-b: #ff8a3d;
+  --ptv-rating-high-ink: #4a2600;
+  --ptv-rating-low-a: var(--ptv-soft);
+  --ptv-rating-low-b: var(--ptv-line);
+  --ptv-rating-low-ink: var(--ptv-text);
+  --ptv-accent-on-clear-18: color-mix(
+    in srgb,
+    var(--ptv-accent) 18%,
+    transparent
+  );
+  --ptv-media-bg-alpha-3_5: color-mix(
+    in srgb,
+    var(--ptv-media-bg) 3.5%,
+    transparent
+  );
+  --ptv-warning-on-panel-7: color-mix(
+    in srgb,
+    var(--ptv-warning) 7%,
+    var(--ptv-panel)
+  );
+  --ptv-warning-on-line-28: color-mix(
+    in srgb,
+    var(--ptv-warning) 28%,
+    var(--ptv-line)
+  );
+  --ptv-warning-on-panel-14: color-mix(
+    in srgb,
+    var(--ptv-warning) 14%,
+    var(--ptv-panel)
+  );
+  --ptv-success-on-panel-6: color-mix(
+    in srgb,
+    var(--ptv-success) 6%,
+    var(--ptv-panel)
+  );
+  --ptv-success-on-line-26: color-mix(
+    in srgb,
+    var(--ptv-success) 26%,
+    var(--ptv-line)
+  );
+  --ptv-success-on-panel-13: color-mix(
+    in srgb,
+    var(--ptv-success) 13%,
+    var(--ptv-panel)
+  );
+  --ptv-accent-on-line-30: color-mix(
+    in srgb,
+    var(--ptv-accent) 30%,
+    var(--ptv-line)
+  );
+  --ptv-media-bg-alpha-58: color-mix(
+    in srgb,
+    var(--ptv-media-bg) 58%,
+    transparent
+  );
+  --ptv-action-alpha-80: color-mix(in srgb, var(--ptv-action) 80%, transparent);
+  --ptv-action-alpha-60: color-mix(in srgb, var(--ptv-action) 60%, transparent);
+  --ptv-media-bg-alpha-10: color-mix(
+    in srgb,
+    var(--ptv-media-bg) 10%,
+    transparent
+  );
+  --ptv-media-bg-alpha-30: color-mix(
+    in srgb,
+    var(--ptv-media-bg) 30%,
+    transparent
+  );
+  --ptv-media-bg-alpha-50: color-mix(
+    in srgb,
+    var(--ptv-media-bg) 50%,
+    transparent
+  );
+  --ptv-media-bg-alpha-80: color-mix(
+    in srgb,
+    var(--ptv-media-bg) 80%,
+    transparent
+  );
+  --ptv-media-bg-alpha-18: color-mix(
+    in srgb,
+    var(--ptv-media-bg) 18%,
+    transparent
+  );
+  --ptv-media-text-alpha-94: color-mix(
+    in srgb,
+    var(--ptv-media-text) 94%,
+    transparent
+  );
+  --ptv-media-bg-alpha-94: color-mix(
+    in srgb,
+    var(--ptv-media-bg) 94%,
+    transparent
+  );
+  --ptv-accent-on-clear-70: color-mix(
+    in srgb,
+    var(--ptv-accent) 70%,
+    transparent
+  );
+  --ptv-accent-on-clear-13: color-mix(
+    in srgb,
+    var(--ptv-accent) 13%,
+    transparent
+  );
+  --ptv-accent-on-clear-45: color-mix(
+    in srgb,
+    var(--ptv-accent) 45%,
+    transparent
+  );
+  --ptv-accent-on-clear-85: color-mix(
+    in srgb,
+    var(--ptv-accent) 85%,
+    transparent
+  );
+  --ptv-accent-on-clear-22: color-mix(
+    in srgb,
+    var(--ptv-accent) 22%,
+    transparent
+  );
+  --ptv-accent-on-panel-45: color-mix(
+    in srgb,
+    var(--ptv-accent) 45%,
+    var(--ptv-panel)
+  );
+  --ptv-media-bg-alpha-55: color-mix(
+    in srgb,
+    var(--ptv-media-bg) 55%,
+    transparent
+  );
+  --ptv-media-bg-alpha-60: color-mix(
+    in srgb,
+    var(--ptv-media-bg) 60%,
+    transparent
+  );
+  --ptv-warning-on-clear-80: color-mix(
+    in srgb,
+    var(--ptv-warning) 80%,
+    transparent
+  );
+  --ptv-media-bg-alpha-35: color-mix(
+    in srgb,
+    var(--ptv-media-bg) 35%,
+    transparent
+  );
+  --ptv-media-bg-alpha-85: color-mix(
+    in srgb,
+    var(--ptv-media-bg) 85%,
+    transparent
+  );
+  --ptv-media-bg-alpha-40: color-mix(
+    in srgb,
+    var(--ptv-media-bg) 40%,
+    transparent
+  );
+  --ptv-media-text-alpha-70: color-mix(
+    in srgb,
+    var(--ptv-media-text) 70%,
+    transparent
+  );
+  --ptv-media-bg-alpha-70: color-mix(
+    in srgb,
+    var(--ptv-media-bg) 70%,
+    transparent
+  );
+  --ptv-text-on-clear-5: color-mix(in srgb, var(--ptv-text) 5%, transparent);
+  --ptv-text-on-clear-10: color-mix(in srgb, var(--ptv-text) 10%, transparent);
+  --ptv-media-bg-alpha-45: color-mix(
+    in srgb,
+    var(--ptv-media-bg) 45%,
+    transparent
+  );
+  --ptv-media-bg-alpha-88: color-mix(
+    in srgb,
+    var(--ptv-media-bg) 88%,
+    transparent
+  );
+  --ptv-line-on-clear-55: color-mix(in srgb, var(--ptv-line) 55%, transparent);
+  --ptv-media-bg-alpha-28: color-mix(
+    in srgb,
+    var(--ptv-media-bg) 28%,
+    transparent
+  );
+  --ptv-error-on-clear-35: color-mix(
+    in srgb,
+    var(--ptv-error) 35%,
+    transparent
+  );
+  --ptv-error-on-panel-5: color-mix(
+    in srgb,
+    var(--ptv-error) 5%,
+    var(--ptv-panel)
+  );
+  --ptv-accent-on-clear-25: color-mix(
+    in srgb,
+    var(--ptv-accent) 25%,
+    transparent
+  );
+  --ptv-media-bg-alpha-5: color-mix(
+    in srgb,
+    var(--ptv-media-bg) 5%,
+    transparent
+  );
+  --ptv-panel-on-clear-82: color-mix(
+    in srgb,
+    var(--ptv-panel) 82%,
+    transparent
+  );
+  --ptv-error-on-line-28: color-mix(
+    in srgb,
+    var(--ptv-error) 28%,
+    var(--ptv-line)
+  );
+  --ptv-accent-on-clear-20: color-mix(
+    in srgb,
+    var(--ptv-accent) 20%,
+    transparent
+  );
+  --ptv-accent-on-line-50: color-mix(
+    in srgb,
+    var(--ptv-accent) 50%,
+    var(--ptv-line)
+  );
+  --ptv-panel-on-clear-85: color-mix(
+    in srgb,
+    var(--ptv-panel) 85%,
+    transparent
+  );
+  --ptv-media-bg-alpha-90: color-mix(
+    in srgb,
+    var(--ptv-media-bg) 90%,
+    transparent
+  );
+  --ptv-media-text-alpha-16: color-mix(
+    in srgb,
+    var(--ptv-media-text) 16%,
+    transparent
+  );
+  --ptv-media-text-alpha-30: color-mix(
+    in srgb,
+    var(--ptv-media-text) 30%,
+    transparent
+  );
+  --ptv-media-bg-alpha-22: color-mix(
+    in srgb,
+    var(--ptv-media-bg) 22%,
+    transparent
+  );
+  --ptv-media-text-alpha-80: color-mix(
+    in srgb,
+    var(--ptv-media-text) 80%,
+    transparent
+  );
+  --ptv-media-text-alpha-18: color-mix(
+    in srgb,
+    var(--ptv-media-text) 18%,
+    transparent
+  );
+  --ptv-media-bg-alpha-92: color-mix(
+    in srgb,
+    var(--ptv-media-bg) 92%,
+    transparent
+  );
+  --ptv-accent-on-panel-16: color-mix(
+    in srgb,
+    var(--ptv-accent) 16%,
+    var(--ptv-panel)
+  );
+  --ptv-page-on-clear-82: color-mix(in srgb, var(--ptv-page) 82%, transparent);
+  --ptv-media-bg-alpha-7: color-mix(
+    in srgb,
+    var(--ptv-media-bg) 7%,
+    transparent
+  );
+  --ptv-media-bg-alpha-12: color-mix(
+    in srgb,
+    var(--ptv-media-bg) 12%,
+    transparent
+  );
+  --ptv-media-bg-alpha-42: color-mix(
+    in srgb,
+    var(--ptv-media-bg) 42%,
+    transparent
+  );
+  --ptv-media-bg-alpha-16: color-mix(
+    in srgb,
+    var(--ptv-media-bg) 16%,
+    transparent
+  );
+  --ptv-media-bg-alpha-4: color-mix(
+    in srgb,
+    var(--ptv-media-bg) 4%,
+    transparent
+  );
+  --ptv-media-bg-alpha-96: color-mix(
+    in srgb,
+    var(--ptv-media-bg) 96%,
+    transparent
+  );
+  --ptv-media-bg-alpha-95: color-mix(
+    in srgb,
+    var(--ptv-media-bg) 95%,
+    transparent
+  );
+  --ptv-media-bg-alpha-32: color-mix(
+    in srgb,
+    var(--ptv-media-bg) 32%,
+    transparent
+  );
+  --ptv-media-text-alpha-20: color-mix(
+    in srgb,
+    var(--ptv-media-text) 20%,
+    transparent
+  );
+  --ptv-accent-on-clear-24: color-mix(
+    in srgb,
+    var(--ptv-accent) 24%,
+    transparent
+  );
+  --ptv-media-bg-alpha-78: color-mix(
+    in srgb,
+    var(--ptv-media-bg) 78%,
+    transparent
+  );
+  --ptv-media-bg-alpha-20: color-mix(
+    in srgb,
+    var(--ptv-media-bg) 20%,
+    transparent
+  );
+  --ptv-panel-on-clear-86: color-mix(
+    in srgb,
+    var(--ptv-panel) 86%,
+    transparent
+  );
+  --ptv-media-text-alpha-13: color-mix(
+    in srgb,
+    var(--ptv-media-text) 13%,
+    transparent
+  );
+  --ptv-accent-on-clear-15: color-mix(
+    in srgb,
+    var(--ptv-accent) 15%,
+    transparent
+  );
+  --ptv-media-text-alpha-28: color-mix(
+    in srgb,
+    var(--ptv-media-text) 28%,
+    transparent
+  );
+  --ptv-media-bg-alpha-72: color-mix(
+    in srgb,
+    var(--ptv-media-bg) 72%,
+    transparent
+  );
+  --ptv-media-bg-alpha-25: color-mix(
+    in srgb,
+    var(--ptv-media-bg) 25%,
+    transparent
+  );
+  --ptv-media-bg-alpha-84: color-mix(
+    in srgb,
+    var(--ptv-media-bg) 84%,
+    transparent
+  );
+  --ptv-media-bg-alpha-65: color-mix(
+    in srgb,
+    var(--ptv-media-bg) 65%,
+    transparent
+  );
+  --ptv-media-text-alpha-65: color-mix(
+    in srgb,
+    var(--ptv-media-text) 65%,
+    transparent
+  );
+  --ptv-media-text-alpha-35: color-mix(
+    in srgb,
+    var(--ptv-media-text) 35%,
+    transparent
+  );
+  --ptv-media-bg-alpha-91: color-mix(
+    in srgb,
+    var(--ptv-media-bg) 91%,
+    transparent
+  );
+  --ptv-media-bg-alpha-53_3: color-mix(
+    in srgb,
+    var(--ptv-media-bg) 53.3%,
+    transparent
+  );
+  --ptv-media-panel-alpha-92_9: color-mix(
+    in srgb,
+    var(--ptv-media-panel) 92.9%,
+    transparent
+  );
+  --ptv-media-panel-alpha-94_9: color-mix(
+    in srgb,
+    var(--ptv-media-panel) 94.9%,
+    transparent
+  );
+  --ptv-media-panel-alpha-96_1: color-mix(
+    in srgb,
+    var(--ptv-media-panel) 96.1%,
+    transparent
+  );
+  --ptv-page-on-clear-35: color-mix(in srgb, var(--ptv-page) 35%, transparent);
+  --ptv-media-bg-alpha-52: color-mix(
+    in srgb,
+    var(--ptv-media-bg) 52%,
+    transparent
+  );
+  --ptv-action-on-clear-16: color-mix(
+    in srgb,
+    var(--ptv-action) 16%,
+    transparent
+  );
+  --ptv-accent-on-clear-12: color-mix(
+    in srgb,
+    var(--ptv-accent) 12%,
+    transparent
+  );
+  --ptv-text-on-clear-3_5: color-mix(
+    in srgb,
+    var(--ptv-text) 3.5%,
+    transparent
+  );
+  --ptv-page-on-clear-58: color-mix(in srgb, var(--ptv-page) 58%, transparent);
+  --ptv-media-text-alpha-5: color-mix(
+    in srgb,
+    var(--ptv-media-text) 5%,
+    transparent
+  );
+  --ptv-accent-on-clear-16: color-mix(
+    in srgb,
+    var(--ptv-accent) 16%,
+    transparent
+  );
+  --ptv-action-alpha-90: color-mix(in srgb, var(--ptv-action) 90%, transparent);
+  --ptv-accent-on-line-40: color-mix(
+    in srgb,
+    var(--ptv-accent) 40%,
+    var(--ptv-line)
+  );
+}
+
+/* Explicit reader paper choices and official service identities do not replace the app palette. */
+html[data-moontvplus] {
+  --ptv-reader-light-bg: #fdfbf6;
+  --ptv-reader-light-text: #2a241d;
+  --ptv-reader-sepia-bg: #f5f0e6;
+  --ptv-reader-sepia-text: #3b322a;
+  --ptv-reader-dark-bg: #13100d;
+  --ptv-reader-dark-text: #ece3d5;
+  --ptv-reader-link: var(--ptv-accent);
+  --ptv-reader-dark-link: var(--ptv-action);
+  --ptv-platform-bilibili: #00a1d6;
+  --ptv-platform-youtube: #d62929;
+  --ptv-platform-twitch: #9146ff;
+  --ptv-vinyl-grooves: repeating-radial-gradient(
+    circle,
+    transparent 0,
+    transparent 3px,
+    rgb(var(--apex-media-text-rgb) / 0.055) 3px,
+    rgb(var(--apex-media-text-rgb) / 0.055) 4px
+  );
+  --ptv-record-shadow: 0 0 0 8px rgb(var(--apex-media-text-rgb) / 0.055),
+    0 20px 42px rgb(var(--apex-media-bg-rgb) / 0.65),
+    inset 0 0 28px rgb(var(--apex-media-text-rgb) / 0.045);
+}
+
+/* Shared derivatives used by embedded player styles and overlays. */
+html[data-moontvplus] {
+  --ptv-media-bg-alpha-62: color-mix(
+    in srgb,
+    var(--ptv-media-bg) 62%,
+    transparent
+  );
+  --ptv-media-text-alpha-14: color-mix(
+    in srgb,
+    var(--ptv-media-text) 14%,
+    transparent
+  );
+  --ptv-media-text-alpha-12: color-mix(
+    in srgb,
+    var(--ptv-media-text) 12%,
+    transparent
+  );
+  --ptv-media-bg-alpha-86: color-mix(
+    in srgb,
+    var(--ptv-media-bg) 86%,
+    transparent
+  );
+  --ptv-media-text-alpha-8: color-mix(
+    in srgb,
+    var(--ptv-media-text) 8%,
+    transparent
+  );
+  --ptv-media-text-alpha-26: color-mix(
+    in srgb,
+    var(--ptv-media-text) 26%,
+    transparent
+  );
+  --ptv-media-text-alpha-72: color-mix(
+    in srgb,
+    var(--ptv-media-text) 72%,
+    transparent
+  );
+  --ptv-media-text-alpha-24: color-mix(
+    in srgb,
+    var(--ptv-media-text) 24%,
+    transparent
+  );
+  --ptv-media-text-alpha-10: color-mix(
+    in srgb,
+    var(--ptv-media-text) 10%,
+    transparent
+  );
+  --ptv-media-text-alpha-6: color-mix(
+    in srgb,
+    var(--ptv-media-text) 6%,
+    transparent
+  );
+  --ptv-media-text-alpha-22: color-mix(
+    in srgb,
+    var(--ptv-media-text) 22%,
+    transparent
+  );
+  --ptv-media-bg-alpha-82: color-mix(
+    in srgb,
+    var(--ptv-media-bg) 82%,
+    transparent
+  );
+  --ptv-media-text-alpha-90: color-mix(
+    in srgb,
+    var(--ptv-media-text) 90%,
+    transparent
+  );
+  --ptv-media-bg-alpha-15: color-mix(
+    in srgb,
+    var(--ptv-media-bg) 15%,
+    transparent
+  );
+}
+
+/* Shared derivatives used by embedded player styles and overlays. */
+html[data-moontvplus] {
+  --ptv-media-text-alpha-4_5: color-mix(
+    in srgb,
+    var(--ptv-media-text) 4.5%,
+    transparent
+  );
+  --ptv-media-text-alpha-4: color-mix(
+    in srgb,
+    var(--ptv-media-text) 4%,
+    transparent
+  );
+  --ptv-media-text-alpha-25: color-mix(
+    in srgb,
+    var(--ptv-media-text) 25%,
+    transparent
+  );
+  --ptv-media-bg-alpha-8: color-mix(
+    in srgb,
+    var(--ptv-media-bg) 8%,
+    transparent
+  );
+  --ptv-media-bg-alpha-75: color-mix(
+    in srgb,
+    var(--ptv-media-bg) 75%,
+    transparent
+  );
+}
+
+html[data-moontvplus] {
+  --ptv-danger-fill: #b42318;
+  --ptv-loading-glow: drop-shadow(0 0 1px var(--ptv-media-rating))
+    drop-shadow(0 0 15px var(--ptv-media-rating));
+}
+/* Secondary surfaces inherit an accessible secondary-text tone without changing the base palette. */
+:where(
+    .bg-gray-100,
+    .bg-gray-200,
+    .bg-library-edge,
+    .bg-music-card-2,
+    [class~='bg-music-card-2/70'],
+    [class~='bg-library-ochre-tint'],
+    [class~='bg-library-ochre-tint/50']
+  ) {
+  --ptv-muted: var(--ptv-muted-on-soft);
+  --apex-muted-rgb: var(--apex-muted-on-soft-rgb);
+}
+
+/* Accessible interaction variants: base colors remain unchanged. */
+html[data-moontvplus] {
+  --apex-accent-on-soft-rgb: 0 115 110;
+  --ptv-accent-on-soft: rgb(var(--apex-accent-on-soft-rgb));
+  --ptv-field-line: rgb(113 133 142);
+}
+html[data-moontvplus].dark {
+  --apex-accent-on-soft-rgb: 0 181 173;
+}
+:where(
+    .bg-gray-100,
+    .bg-gray-200,
+    .bg-library-edge,
+    .bg-music-card-2,
+    [class~='bg-music-card-2/70'],
+    [class~='bg-library-ochre-tint'],
+    [class~='bg-library-ochre-tint/50']
+  ) {
+  --ptv-accent: var(--ptv-accent-on-soft);
+  --apex-accent-rgb: var(--apex-accent-on-soft-rgb);
+}
+
+html[data-moontvplus] {
+  --ptv-cover-control-bg: color-mix(
+    in srgb,
+    var(--ptv-media-bg) 80%,
+    transparent
+  );
+}
+
+:where(
+    .bg-apex-selected,
+    [class~='bg-apex-selected/70'],
+    [class~='bg-apex-selected/80'],
+    [class~='bg-apex-selected/90']
+  ) {
+  --ptv-muted: var(--ptv-muted-on-soft);
+  --apex-muted-rgb: var(--apex-muted-on-soft-rgb);
+  --ptv-accent: var(--ptv-accent-on-soft);
+  --apex-accent-rgb: var(--apex-accent-on-soft-rgb);
+}

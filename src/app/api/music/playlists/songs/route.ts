@@ -1,7 +1,7 @@
 /* eslint-disable no-console */
-
 import { NextRequest, NextResponse } from 'next/server';
 
+import { reportAppError } from '@/lib/app-error';
 import { getAuthInfoFromCookie } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { requireFeaturePermission } from '@/lib/permissions';
@@ -16,7 +16,7 @@ export async function GET(request: NextRequest) {
     // 从 cookie 获取用户信息
     const authInfo = getAuthInfoFromCookie(request);
     if (!authInfo || !authInfo.username) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return NextResponse.json({ error: '请先登录' }, { status: 401 });
     }
 
     // 检查用户状态
@@ -53,9 +53,9 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({ songs });
   } catch (error) {
-    console.error('GET /api/music/playlists/songs error:', error);
+    reportAppError(error, '音乐接口');
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { error: '服务内部错误，请稍后重试' },
       { status: 500 }
     );
   }
@@ -69,7 +69,7 @@ export async function POST(request: NextRequest) {
     // 从 cookie 获取用户信息
     const authInfo = getAuthInfoFromCookie(request);
     if (!authInfo || !authInfo.username) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return NextResponse.json({ error: '请先登录' }, { status: 401 });
     }
 
     // 检查用户状态
@@ -130,9 +130,9 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error('POST /api/music/playlists/songs error:', error);
+    reportAppError(error, '音乐接口');
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { error: '服务内部错误，请稍后重试' },
       { status: 500 }
     );
   }
@@ -146,7 +146,7 @@ export async function DELETE(request: NextRequest) {
     // 从 cookie 获取用户信息
     const authInfo = getAuthInfoFromCookie(request);
     if (!authInfo || !authInfo.username) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return NextResponse.json({ error: '请先登录' }, { status: 401 });
     }
 
     // 检查用户状态
@@ -185,9 +185,9 @@ export async function DELETE(request: NextRequest) {
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error('DELETE /api/music/playlists/songs error:', error);
+    reportAppError(error, '音乐接口');
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { error: '服务内部错误，请稍后重试' },
       { status: 500 }
     );
   }

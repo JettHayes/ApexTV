@@ -1,3 +1,4 @@
+import { appErrorPayload, reportAppError } from '@/lib/app-error';
 /* eslint-disable @typescript-eslint/no-explicit-any,no-console,@typescript-eslint/no-non-null-assertion */
 
 import { NextRequest, NextResponse } from 'next/server';
@@ -21,7 +22,7 @@ async function terminateUserSessions(username: string, reason: string): Promise<
     await storage.deleteAllPushSubscriptions?.(username);
     console.log(`Terminated all sessions for ${username}: ${reason}`);
   } catch (error) {
-    console.error(`Failed to terminate sessions for ${username}:`, error);
+    reportAppError(error, "后台配置服务");
   }
 }
 
@@ -514,12 +515,12 @@ export async function POST(request: NextRequest) {
       }
     );
   } catch (error) {
-    console.error('用户管理操作失败:', error);
+    reportAppError(error, "用户管理操作失败");
     return NextResponse.json(
-      {
+      {...{
         error: '用户管理操作失败',
         details: (error as Error).message,
-      },
+      }, ...appErrorPayload(error, "后台配置服务", 500)},
       { status: 500 }
     );
   }

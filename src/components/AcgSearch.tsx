@@ -1,6 +1,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 'use client';
 
+import { formatAppError, readJsonResponse, reportAppError } from '@/lib/app-error';
+
 import {
   Activity,
   AlertCircle,
@@ -194,12 +196,7 @@ export default function AcgSearch({
         }),
       });
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || '搜索失败');
-      }
-
-      const data: AcgSearchResult = await response.json();
+      const data = await readJsonResponse<AcgSearchResult>(response, '搜索资源');
       // 规范化字段，避免 guid 为对象时整表共用同一个 key
       const normalizedItems: AcgSearchItem[] = (data.items || []).map(
         (item, index) => {
@@ -282,7 +279,8 @@ export default function AcgSearch({
 
       setCurrentPage(page);
     } catch (err: any) {
-      const errorMsg = err.message || '搜索失败，请稍后重试';
+      reportAppError(err, '搜索资源');
+      const errorMsg = formatAppError(err, '搜索资源');
       setError(errorMsg);
       onError?.(errorMsg);
     } finally {
@@ -366,7 +364,7 @@ export default function AcgSearch({
   const healthBadgeClass = (level: MagnetHealthLevel) => {
     switch (level) {
       case 'good':
-        return 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300';
+        return "bg-apex-selected text-apex-accent-on-soft dark:bg-apex-selected/40 dark:text-apex-accent-on-soft";
       case 'ok':
         return 'bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-200';
       case 'risk':
@@ -407,11 +405,7 @@ export default function AcgSearch({
           skipCache: Boolean(healthMap[itemId]),
         }),
       });
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || '测活失败');
-      }
+      const data = await readJsonResponse<any>(response, '测活');
 
       setHealthMap((prev) => ({
         ...prev,
@@ -427,8 +421,9 @@ export default function AcgSearch({
         },
       }));
     } catch (err: any) {
+      reportAppError(err, '测活');
       setToast({
-        message: err.message || '测活失败',
+        message: formatAppError(err, '测活'),
         type: 'error',
         onClose: () => setToast(null),
       });
@@ -472,11 +467,7 @@ export default function AcgSearch({
         }),
       });
 
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || '添加下载任务失败');
-      }
+      const data = await readJsonResponse<any>(response, '添加下载任务');
 
       setToast({
         message: data.path
@@ -486,8 +477,9 @@ export default function AcgSearch({
         onClose: () => setToast(null),
       });
     } catch (err: any) {
+      reportAppError(err, '添加下载任务');
       setToast({
-        message: err.message || '添加下载任务失败',
+        message: formatAppError(err, '添加下载任务'),
         type: 'error',
         onClose: () => setToast(null),
       });
@@ -516,8 +508,9 @@ export default function AcgSearch({
         onClose: () => setToast(null),
       });
     } catch (err: any) {
+      reportAppError(err, '复制');
       setToast({
-        message: err.message || '复制失败',
+        message: formatAppError(err, '复制'),
         type: 'error',
         onClose: () => setToast(null),
       });
@@ -727,7 +720,7 @@ export default function AcgSearch({
                 value={customName}
                 onChange={(e) => setCustomName(e.target.value)}
                 placeholder='请输入资源名称'
-                className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-green-500'
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-apex-accent"
                 autoFocus
               />
               <label className='mt-4 block text-sm font-medium text-gray-700 dark:text-gray-300'>
@@ -736,7 +729,7 @@ export default function AcgSearch({
               <select
                 value={downloadTool}
                 onChange={(e) => setDownloadTool(e.target.value as DownloadTool)}
-                className='mt-1 w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-green-500'
+                className="mt-1 w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-apex-accent"
               >
                 {downloadToolOptions.map((option) => (
                   <option key={option.value} value={option.value}>
@@ -756,7 +749,7 @@ export default function AcgSearch({
                 value={downloadPath}
                 onChange={(e) => setDownloadPath(e.target.value)}
                 placeholder='留空使用离线下载目录'
-                className='mt-1 w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-green-500'
+                className="mt-1 w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-apex-accent"
               />
               <p className='mt-1 text-xs text-gray-500 dark:text-gray-400'>
                 可选；最终保存到「该目录/资源名称」

@@ -1,3 +1,4 @@
+import { appErrorPayload, reportAppError } from '@/lib/app-error';
 /* eslint-disable @typescript-eslint/no-explicit-any,no-console */
 
 import { NextRequest, NextResponse } from 'next/server';
@@ -127,7 +128,7 @@ export async function POST(req: NextRequest) {
       await db.deleteGlobalValue('duanju');
       console.log('已清除短剧视频源缓存');
     } catch (error) {
-      console.error('清除短剧视频源缓存失败:', error);
+      reportAppError(error, "清除短剧视频源缓存失败");
       // 不影响主流程，继续执行
     }
 
@@ -195,7 +196,7 @@ export async function POST(req: NextRequest) {
                 );
                 console.log(`用户 ${username} 导入成功 (${storageType})`);
               } else {
-                console.error(`${storageType} storage 缺少 createUserWithHashedPassword 方法`);
+                reportAppError(`${storageType} storage 缺少 createUserWithHashedPassword 方法`, "后台配置服务");
                 return false;
               }
             } else if (storageType === 'postgres') {
@@ -213,7 +214,7 @@ export async function POST(req: NextRequest) {
                 );
                 console.log(`用户 ${username} 导入成功 (Postgres)`);
               } else {
-                console.error(`Postgres storage 缺少 createUserWithHashedPassword 方法`);
+                reportAppError(`Postgres storage 缺少 createUserWithHashedPassword 方法`, "后台配置服务");
                 return false;
               }
             } else {
@@ -442,7 +443,7 @@ export async function POST(req: NextRequest) {
 
           return true;
         } catch (error) {
-          console.error(`导入用户 ${username} 失败:`, error);
+          reportAppError(error, "后台配置服务");
           return false;
         }
       });
@@ -477,14 +478,14 @@ export async function POST(req: NextRequest) {
     });
 
   } catch (error) {
-    console.error('数据导入失败:', error);
+    reportAppError(error, "数据导入失败");
     // 清除进度信息
     const authInfo = getAuthInfoFromCookie(req);
     if (authInfo?.username) {
       clearProgress(authInfo.username, 'import');
     }
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : '导入失败' },
+      {...{ error: error instanceof Error ? error.message : '导入失败' }, ...appErrorPayload(error, "后台配置服务", 500)},
       { status: 500 }
     );
   }

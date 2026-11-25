@@ -1,3 +1,4 @@
+import { reportAppError } from '@/lib/app-error';
 import { NextRequest, NextResponse } from 'next/server';
 
 import { getConfig } from '@/lib/config';
@@ -21,8 +22,9 @@ export async function GET(request: NextRequest) {
     });
     return NextResponse.json(sources, { headers: { 'Cache-Control': 'no-store' } });
   } catch (error) {
+    const info = reportAppError(error, '获取直播源');
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : '获取失败' },
+      { error: info.message, code: info.code, upstreamStatus: info.upstreamStatus },
       { status: 500 }
     );
   }

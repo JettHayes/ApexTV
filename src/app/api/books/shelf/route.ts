@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 
+import { reportAppError } from '@/lib/app-error';
 import { BookShelfItem } from '@/lib/book.types';
 import { db } from '@/lib/db';
 
@@ -22,8 +23,8 @@ export async function GET(request: NextRequest) {
 
     const records = await db.getAllBookShelf(username);
     return NextResponse.json(records, { status: 200 });
-  } catch {
-    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+  } catch (error) {
+    return NextResponse.json((({ code, message, status, upstreamStatus }) => ({ error: message, code, status, upstreamStatus }))(reportAppError(error, '电子书服务')), { status: 500 });
   }
 }
 
@@ -44,8 +45,8 @@ export async function POST(request: NextRequest) {
       saveTime: item.saveTime ?? Date.now(),
     });
     return NextResponse.json({ success: true }, { status: 200 });
-  } catch {
-    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+  } catch (error) {
+    return NextResponse.json((({ code, message, status, upstreamStatus }) => ({ error: message, code, status, upstreamStatus }))(reportAppError(error, '电子书服务')), { status: 500 });
   }
 }
 
@@ -67,7 +68,7 @@ export async function DELETE(request: NextRequest) {
       }));
     }
     return NextResponse.json({ success: true }, { status: 200 });
-  } catch {
-    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+  } catch (error) {
+    return NextResponse.json((({ code, message, status, upstreamStatus }) => ({ error: message, code, status, upstreamStatus }))(reportAppError(error, '电子书服务')), { status: 500 });
   }
 }

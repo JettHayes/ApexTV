@@ -1,7 +1,10 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 'use client';
 
-import { Bot, Loader2, RefreshCw, Send, Sparkles, Trash2, X } from 'lucide-react';
+import { formatAppError, readJsonResponse, reportAppError } from '@/lib/app-error';
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
+
+import { Bot, ChevronDown, Copy, Loader2, RefreshCw, Send, Sparkles, Trash2, X } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
@@ -47,6 +50,7 @@ interface AIChatPanelProps {
   onStreamingChange?: (isStreaming: boolean) => void;
   useDrawer?: boolean;
   drawerWidth?: string;
+  embedded?: boolean;
 }
 
 type MarkdownSegment =
@@ -250,6 +254,7 @@ export default function AIChatPanel({
   onStreamingChange,
   useDrawer = false,
   drawerWidth = 'w-full md:w-[min(420px,50vw)]',
+  embedded = false,
 }: AIChatPanelProps) {
   const pathname = usePathname();
 
@@ -265,6 +270,9 @@ export default function AIChatPanel({
     { role: 'assistant', content: welcomeMessage },
   ]);
   const [input, setInput] = useState('');
+  const [suggestionOffset, setSuggestionOffset] = useState(0);
+  const [copiedContent, setCopiedContent] = useState('');
+  const [copyError, setCopyError] = useState('');
   const [isStreaming, setIsStreaming] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const [currentUsername, setCurrentUsername] = useState('用户');
@@ -272,7 +280,9 @@ export default function AIChatPanel({
   const [toolChain, setToolChain] = useState<ToolChainItem[]>([]);
   // 工具链实时镜像，供流式结束固化到消息时读取最新状态（setState 是异步的）
   const toolChainRef = useRef<ToolChainItem[]>([]);
-  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const conversationRef = useRef<HTMLDivElement>(null);
+  const composerRef = useRef<HTMLElement>(null);
+  const followLatestRef = useRef(true);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const prevStorageKeyRef = useRef<string>(storageKey);
   const abortControllerRef = useRef<AbortController | null>(null);
@@ -348,7 +358,7 @@ export default function AIChatPanel({
               className='flex items-center gap-2 text-sm text-gray-600 dark:text-gray-300'
             >
               {live && status === 'running' ? (
-                <Loader2 size={14} className='animate-spin text-teal-500' />
+                <Loader2 size={14} className="animate-spin text-apex-accent-on-soft" />
               ) : (
                 <span
                   className={
@@ -432,7 +442,7 @@ export default function AIChatPanel({
           <div className='overflow-x-auto'>
             <table className='m-0 min-w-full border-separate border-spacing-0 text-left text-sm'>
               <thead>
-                <tr className='bg-teal-50 dark:bg-teal-950/40'>
+                <tr className="bg-apex-selected dark:bg-apex-selected/40">
                 {segment.header.map((cell, cellIndex) => (
                   <th
                     key={cellIndex}
@@ -450,7 +460,7 @@ export default function AIChatPanel({
               {segment.rows.map((row, rowIndex) => (
                 <tr
                   key={rowIndex}
-                  className='transition-colors odd:bg-white even:bg-gray-50/70 hover:bg-teal-50/70 dark:odd:bg-gray-900 dark:even:bg-gray-800/40 dark:hover:bg-teal-950/25'
+                  className="transition-colors odd:bg-white even:bg-gray-50/70 hover:bg-apex-selected/70 dark:odd:bg-gray-900 dark:even:bg-gray-800/40 dark:hover:bg-apex-selected/25"
                 >
                   {row.map((cell, cellIndex) => (
                     <td
@@ -473,14 +483,29 @@ export default function AIChatPanel({
     });
   };
 
-  // 自动滚动到底部
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: smoothScrollBehavior() });
-  };
+  useEffect(() => {
+    if (!isOpen && !embedded) return;
+    const frame = window.requestAnimationFrame(() => {
+      const conversation = conversationRef.current;
+      if (conversation && followLatestRef.current) {
+        conversation.scrollTo({ top: conversation.scrollHeight, behavior: isStreaming ? 'auto' : smoothScrollBehavior() });
+      }
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [messages, toolChain, isStreaming, isOpen, embedded]);
 
   useEffect(() => {
-    scrollToBottom();
-  }, [messages]);
+    if ((!isOpen && !embedded) || typeof ResizeObserver === 'undefined') return;
+    const conversation = conversationRef.current;
+    const composer = composerRef.current;
+    if (!conversation || !composer) return;
+    const observer = new ResizeObserver(() => {
+      if (followLatestRef.current) conversation.scrollTop = conversation.scrollHeight;
+    });
+    observer.observe(conversation);
+    observer.observe(composer);
+    return () => observer.disconnect();
+  }, [isOpen, embedded]);
 
   useEffect(() => {
     const authInfo = getAuthInfoFromBrowserCookie();
@@ -505,7 +530,7 @@ export default function AIChatPanel({
           setMessages(parsed);
         }
       } catch (error) {
-        console.error('加载聊天记录失败:', error);
+        reportAppError(error, "加载聊天记录失败");
       }
     }
 
@@ -520,7 +545,7 @@ export default function AIChatPanel({
     try {
       sessionStorage.setItem(storageKey, JSON.stringify(messages));
     } catch (error) {
-      console.error('保存聊天记录失败:', error);
+      reportAppError(error, "保存聊天记录失败");
     }
   }, [messages, storageKey]); // 消息变化时保存
 
@@ -569,7 +594,7 @@ export default function AIChatPanel({
       }
 
       // 只在非抽屉模式下防止背景滚动
-      if (!useDrawer) {
+      if (!useDrawer && !embedded) {
         const originalOverflow = document.body.style.overflow;
         const originalPaddingRight = document.body.style.paddingRight;
 
@@ -585,11 +610,12 @@ export default function AIChatPanel({
         };
       }
     }
-  }, [isOpen, useDrawer]);
+  }, [isOpen, useDrawer, embedded]);
 
   const handleSendMessage = async (retryMessage?: string) => {
     const isRetry = typeof retryMessage === 'string';
     if (isStreaming || (!isRetry && !input.trim())) return;
+    followLatestRef.current = true;
 
     const userMessage = isRetry ? retryMessage.trim() : input.trim();
     const requestHistory = (isRetry ? messages.slice(0, -2) : messages).filter(
@@ -630,7 +656,7 @@ export default function AIChatPanel({
       });
 
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
+        const errorData = await readJsonResponse<any>(response, "AI 请求");
      const errorMsg = errorData.error || errorData.details || `请求失败 (${response.status})`;
         throw new Error(errorMsg);
       }
@@ -651,7 +677,7 @@ export default function AIChatPanel({
         let streamError = '';
         let buffer = ''; // 缓冲区，用于保存不完整的行
 
-        while (true) {
+        for (;;) {
           const { done, value } = await reader.read();
           if (done) break;
 
@@ -694,7 +720,7 @@ export default function AIChatPanel({
                 }
 
                 if (json.error) {
-                  streamError = String(json.error);
+                  streamError = formatAppError(json.error, 'AI 回答');
                   continue;
                 }
 
@@ -714,7 +740,7 @@ export default function AIChatPanel({
                   });
                 }
               } catch (e) {
-                console.error('解析SSE数据失败:', e);
+                reportAppError(e, "解析SSE数据失败");
               }
             }
           }
@@ -750,7 +776,7 @@ export default function AIChatPanel({
                   }
                 }
               } catch (e) {
-                console.error('解析最终缓冲区数据失败:', e);
+                reportAppError(e, "解析最终缓冲区数据失败");
               }
             }
           }
@@ -786,7 +812,7 @@ export default function AIChatPanel({
         }
       } else {
         // 处理非流式响应
-        const data = await response.json();
+        const data = await readJsonResponse<any>(response, "AI 请求");
         if (data.error) throw new Error(String(data.error));
         const content = data.content || '';
 
@@ -819,14 +845,14 @@ export default function AIChatPanel({
         return;
       }
 
-      console.error('发送消息失败:', error);
+      reportAppError(error, "发送消息失败");
 
       // 更新最后一条空消息为错误消息
       setMessages((prev) => {
         const newMessages = [...prev];
         newMessages[newMessages.length - 1] = {
           role: 'assistant',
-          content: `❌ 抱歉，出现了错误：\n\n${(error as Error).message}`,
+          content: `❌ 抱歉，出现了错误：\n\n${formatAppError(error, 'AI 问片')}`,
           error: true,
           retryMessage: userMessage,
         };
@@ -855,469 +881,104 @@ export default function AIChatPanel({
     sessionStorage.removeItem(storageKey);
 
     // 重置消息为欢迎消息
+    setCopiedContent('');
+    setCopyError('');
     clearToolChain();
     setMessages([{ role: 'assistant', content: welcomeMessage }]);
 
     console.log('已清空聊天上下文');
   };
 
-  const modalContent = useDrawer ? (
-    // 抽屉模式
-    <div
-      className={`fixed inset-0 z-[1002] flex items-center justify-end transition-opacity duration-200 pointer-events-none ${
-        isOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'
-      }`}
-    >
-      <div
-        className={`f1-ai-panel ptv-dialog relative ${drawerWidth} h-full bg-white dark:bg-gray-900 shadow-2xl flex flex-col transition-transform duration-300 ease-out pointer-events-auto ${
-          isOpen ? 'translate-x-0' : 'translate-x-full'
-        }`}
-      >
-        {/* 头部 */}
-        <div className='flex items-center justify-between border-b border-gray-200 p-4 dark:border-gray-700'>
-          <div className='flex items-center gap-3 min-w-0 flex-1'>
-            <div className='flex h-10 w-10 items-center justify-center rounded-full bg-teal-600 flex-shrink-0'>
-              <Sparkles size={20} className='text-white' />
-            </div>
-            <div className='min-w-0 flex-1'>
-              <h2 className='text-lg font-semibold text-gray-900 dark:text-white'>
-                AI影视助手
-              </h2>
-              {context?.title && (
-                <p className='text-xs text-gray-500 dark:text-gray-400 truncate'>
-                  正在讨论: {context.title}
-                  {context.year && ` (${context.year})`}
-                </p>
-              )}
-            </div>
+
+  const suggestions = context?.title ? [
+    { label: '这部作品讲了什么？', question: context.title + '讲的是什么故事？' },
+    { label: '这部作品的评价', question: context.title + '这部作品评价怎么样？' },
+    { label: '有没有续集？', question: context.title + '有没有续集？' },
+    { label: '分析主要角色', question: '分析' + context.title + '中主要角色的成长线。' },
+    { label: '推荐相似作品', question: '有哪些和' + context.title + '相似的电影或剧集？' },
+    { label: '梳理关键情节', question: '帮我梳理' + context.title + '的关键情节，并先提醒是否包含剧透。' },
+  ] : [
+    { label: '推荐高分电影', question: '推荐一些高分电影' },
+    { label: '最近有什么新片？', question: '最近有什么新电影上映？' },
+    { label: '推荐一部轻松的作品', question: '推荐一部适合放松时观看的电影。' },
+    { label: '想看科幻电影', question: '推荐几部值得看的科幻电影。' },
+    { label: '适合朋友一起看', question: '推荐几部适合和朋友一起看的电影。' },
+    { label: '推荐一部悬疑剧', question: '推荐一部情节紧凑的悬疑剧。' },
+  ];
+  const visibleSuggestions = Array.from({ length: 3 }, (_, index) => suggestions[(suggestionOffset + index) % suggestions.length]);
+  const toolSummary = (items: ToolChainItem[], live: boolean) => items.length > 0 ? (
+    <details className='f1-ai-tools' open>
+      <summary><Sparkles size={14} aria-hidden /><span>调用工具</span><small>{items.length} 项</small><ChevronDown size={14} aria-hidden /></summary>
+      <div>{renderToolChain(items, live)}</div>
+    </details>
+  ) : null;
+
+  const modalContent = (
+    <div className={embedded ? 'f1-ai-embedded' : 'f1-ai-overlay fixed inset-0 z-[1002] flex transition-[opacity,visibility] duration-200 ' + (isOpen ? 'opacity-100' : 'invisible pointer-events-none opacity-0') + (useDrawer ? ' pointer-events-none items-stretch justify-end' : ' items-center justify-center')}
+      data-mode={embedded ? 'embedded' : useDrawer ? 'drawer' : 'dialog'} aria-hidden={!isOpen}
+      onClick={(event) => { if (!useDrawer && event.target === event.currentTarget && isOpen) onClose(); }}>
+      <section role={embedded ? undefined : 'dialog'} aria-modal={embedded ? undefined : !useDrawer} aria-label='AI 问片助手'
+        className={'f1-ai-panel f1-ai-reference pointer-events-auto flex flex-col overflow-hidden ' + (useDrawer ? drawerWidth : '') + (useDrawer && !isOpen ? ' translate-x-full' : '')}>
+        <header className='f1-ai-header'>
+          <div className='f1-ai-heading'><Sparkles size={19} aria-hidden /><h2>AI 问片助手</h2></div>
+          <div className='f1-ai-header-actions'>
+            <button type='button' onClick={handleClearContext} disabled={isStreaming} aria-label='清空聊天记录' title='清空聊天记录'><Trash2 size={17} /></button>
+            <button type='button' onClick={onClose} aria-label='关闭 AI 问片'><X size={19} /></button>
           </div>
-          <button
-            onClick={onClose}
-            className='rounded-lg p-2 text-gray-500 transition-colors hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800 flex-shrink-0'
-          >
-            <X size={20} />
-          </button>
-        </div>
-
-        {/* 消息列表 */}
-        <div className='flex-1 overflow-y-auto p-4'>
-          <div className='space-y-4'>
-            {messages.map((message, index) => (
-              <div
-                key={index}
-                className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
-              >
-                <div
-                  className={`flex gap-3 ${
-                    message.role === 'user'
-                      ? 'max-w-[80%] flex-row-reverse'
-                      : 'w-full'
-                  }`}
-                >
-                  {/* 头像 */}
-                  <div
-                    className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full ${
-                      message.role === 'user'
-                        ? 'bg-blue-500'
-                        : 'bg-teal-600'
-                    }`}
-                  >
-                    {message.role === 'user' ? (
-                      <span className='text-xs font-semibold text-white'>
-                        {userAvatarText}
-                      </span>
-                    ) : (
-                      <Bot size={16} className='text-white' />
-                    )}
-                  </div>
-
-                  {/* 消息内容 */}
-                  <div
-                    className={`rounded-2xl px-4 py-2 ${
-                      message.role === 'user'
-                        ? 'bg-blue-500 text-white'
-                        : 'flex-1 bg-gray-100 text-gray-900 dark:bg-gray-800 dark:text-white'
-                    }`}
-                  >
-                    {message.role === 'user' ? (
-                      <p className='whitespace-pre-wrap break-words text-sm leading-relaxed'>
-                        {message.content}
-                      </p>
-                    ) : (
-                      <div className='w-full'>
-                        {/* 历史消息中已固化的工具调用：持续显示 */}
-                        {message.toolCalls && message.toolCalls.length > 0 && (
-                          <div className='mb-2'>
-                            {renderToolChain(
-                              message.toolCalls as ToolChainItem[],
-                              false
-                            )}
-                          </div>
-                        )}
-                        {/* 流式中的最后一个 assistant 消息：实时工具链合并显示在气泡内 */}
-                        {isStreaming &&
-                          index === messages.length - 1 &&
-                          renderToolChain(toolChain, true)}
-                        <div className='prose prose-sm max-w-none dark:prose-invert prose-p:my-2 prose-p:leading-relaxed prose-pre:bg-gray-800 prose-pre:text-gray-100 dark:prose-pre:bg-gray-900 prose-code:text-teal-600 dark:prose-code:text-teal-400 prose-code:bg-teal-50 dark:prose-code:bg-teal-900/20 prose-code:px-1 prose-code:py-0.5 prose-code:rounded prose-code:before:content-none prose-code:after:content-none prose-a:text-inherit dark:prose-a:text-inherit prose-a:no-underline hover:prose-a:underline prose-strong:text-gray-900 dark:prose-strong:text-white prose-ul:my-2 prose-ol:my-2 prose-li:my-1'>
-                          {renderAssistantContent(message.content)}
-                        </div>
-                        {message.error &&
-                          index === messages.length - 1 &&
-                          !isStreaming &&
-                          message.retryMessage && (
-                            <button
-                              type='button'
-                              onClick={() => handleSendMessage(message.retryMessage)}
-                              className='mt-3 inline-flex items-center gap-1.5 rounded-lg border border-gray-300 px-3 py-1.5 text-sm text-gray-700 transition-colors hover:bg-gray-200 dark:border-gray-600 dark:text-gray-200 dark:hover:bg-gray-700'
-                            >
-                              <RefreshCw size={14} />
-                              重试
-                            </button>
-                          )}
-                        {/* 流式但还没有任何文本时显示“AI正在思考...” */}
-                        {isStreaming &&
-                          index === messages.length - 1 &&
-                          !message.content &&
-                          toolChain.length === 0 && (
-                            <div className='flex items-center gap-2'>
-                              <Loader2 size={16} className='animate-spin text-gray-500' />
-                              <span className='text-sm text-gray-500 dark:text-gray-400'>
-                                AI正在思考...
-                              </span>
-                            </div>
-                          )}
-                      </div>
-                    )}
-                  </div>
-                </div>
+          <p>{context?.title ? '正在讨论：' + context.title + (context.year ? ' (' + context.year + ')' : '') : '为你解答剧情、角色与观影问题'}</p>
+        </header>
+        <div ref={conversationRef} className='f1-ai-conversation' onScroll={(event) => {
+          const box = event.currentTarget;
+          followLatestRef.current = box.scrollHeight - box.clientHeight - box.scrollTop < 64;
+        }}>
+          {messages.map((message, index) => (
+            <article key={index} className={'f1-ai-turn f1-ai-turn--' + message.role}>
+              <span className='f1-ai-avatar' aria-hidden='true'>{message.role === 'user' ? userAvatarText : <Bot size={17} />}</span>
+              <div className='f1-ai-bubble'>
+                {message.role === 'user' ? <p>{message.content}</p> : <>
+                  {message.toolCalls && toolSummary(message.toolCalls as ToolChainItem[], false)}
+                  {isStreaming && index === messages.length - 1 && toolSummary(toolChain, true)}
+                  <div className='f1-ai-markdown prose prose-sm max-w-none dark:prose-invert'>{renderAssistantContent(message.content)}</div>
+                  {message.error && index === messages.length - 1 && !isStreaming && message.retryMessage && (
+                    <button type='button' className='f1-ai-retry' onClick={() => handleSendMessage(message.retryMessage)}><RefreshCw size={14} />重试</button>
+                  )}
+                  {isStreaming && index === messages.length - 1 && !message.content && toolChain.length === 0 && (
+                    <div className='f1-ai-thinking' role='status'><Loader2 size={16} className='animate-spin' /><span>AI 正在思考…</span></div>
+                  )}
+                  {message.content && !(isStreaming && index === messages.length - 1) && (
+                    <div className='f1-ai-message-actions'>
+                      <button type='button' onClick={async () => {
+                        setCopyError('');
+                        try { await navigator.clipboard.writeText(message.content); setCopiedContent(message.content); }
+                        catch { setCopyError('复制失败，请选中回复文字手动复制。'); }
+                      }} aria-label='复制回复'><Copy size={14} />{copiedContent === message.content ? '已复制' : '复制'}</button>
+                    </div>
+                  )}
+                </>}
               </div>
-            ))}
-
-            <div ref={messagesEndRef} />
-          </div>
+            </article>
+          ))}
+          <div className='f1-ai-scroll-end' aria-hidden='true' />
         </div>
-
-        {/* 输入区域 */}
-        <div className='border-t border-gray-200 p-4 pb-[max(1rem,env(safe-area-inset-bottom))] dark:border-gray-700'>
-          <div className='flex gap-2'>
-            <button
-              onClick={handleClearContext}
-              className='flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border border-gray-300 text-gray-500 transition-colors hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-600 dark:text-gray-400 dark:hover:bg-gray-800'
-              title='清空聊天记录'
-              disabled={isStreaming}
-            >
-              <Trash2 size={20} />
-            </button>
-            <textarea
-              ref={inputRef}
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              onKeyDown={handleKeyDown}
-              placeholder={isMobile ? '输入你的问题...' : '输入你的问题... (Shift+Enter换行)'}
-              disabled={isStreaming}
-              rows={1}
-              className='flex-1 resize-none rounded-xl border border-gray-300 bg-white px-4 py-3 text-sm text-gray-900 placeholder-gray-400 transition-colors focus:border-teal-500 focus:outline-none focus:ring-2 focus:ring-teal-500/20 disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-600 dark:bg-gray-800 dark:text-white dark:placeholder-gray-500 dark:focus:border-teal-400'
-              style={{
-                minHeight: '48px',
-                maxHeight: '120px',
-              }}
-              onInput={(e) => {
-                const target = e.target as HTMLTextAreaElement;
-                target.style.height = 'auto';
-                target.style.height = `${Math.min(target.scrollHeight, 120)}px`;
-              }}
-            />
-            <button
-              onClick={() => handleSendMessage()}
-              disabled={!input.trim() || isStreaming}
-              className='flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-teal-600 text-white transition-colors hover:bg-teal-700 disabled:cursor-not-allowed disabled:opacity-50'
-            >
-              {isStreaming ? (
-                <Loader2 size={20} className='animate-spin' />
-              ) : (
-                <Send size={20} />
-              )}
+        <footer ref={composerRef} className='f1-ai-composer'>
+          <div className='f1-ai-suggestions'>
+            <div><h3><Sparkles size={13} aria-hidden />推荐提问</h3><button type='button' disabled={isStreaming} onClick={() => setSuggestionOffset((value) => (value + 3) % suggestions.length)}><RefreshCw size={12} />换一换</button></div>
+            <div>{visibleSuggestions.map((suggestion) => <button type='button' disabled={isStreaming} key={suggestion.question} onClick={() => { setInput(suggestion.question); inputRef.current?.focus(); }}>{suggestion.label}</button>)}</div>
+          </div>
+          <div className='f1-ai-input-row'>
+            <textarea ref={inputRef} value={input} onChange={(event) => setInput(event.target.value)} onKeyDown={handleKeyDown}
+              placeholder={isMobile ? '向 AI 问片助手提问…' : '向 AI 问片助手提问…（Shift+Enter 换行）'}
+              aria-label='向 AI 问片助手提问' disabled={isStreaming} rows={1}
+              onInput={(event) => { const field = event.currentTarget; field.style.height = 'auto'; field.style.height = Math.min(field.scrollHeight, 120) + 'px'; }} />
+            <button type='button' className='f1-ai-send' onClick={() => handleSendMessage()} disabled={!input.trim() || isStreaming} aria-label={isStreaming ? '正在生成回复' : '发送问题'}>
+              {isStreaming ? <Loader2 size={19} className='animate-spin' /> : <Send size={19} />}
             </button>
           </div>
-
-          {/* 快捷提示 */}
-          {messages.length === 1 && !isStreaming && (
-            <div className='mt-3 flex flex-wrap gap-2'>
-              {context?.title ? (
-                <>
-                  <button
-                    onClick={() =>
-                      setInput(`${context.title}讲的是什么故事？`)
-                    }
-                    className='rounded-full bg-gray-100 px-3 py-1 text-xs text-gray-600 transition-colors hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700'
-                  >
-                    剧情介绍
-                  </button>
-                  <button
-                    onClick={() => setInput(`${context.title}这部作品评价怎么样？`)}
-                    className='rounded-full bg-gray-100 px-3 py-1 text-xs text-gray-600 transition-colors hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700'
-                  >
-                    这部作品的评价
-                  </button>
-                  <button
-                    onClick={() => setInput(`${context.title}有没有续集？`)}
-                    className='rounded-full bg-gray-100 px-3 py-1 text-xs text-gray-600 transition-colors hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700'
-                  >
-                    有没有续集
-                  </button>
-                </>
-              ) : (
-                <>
-                  <button
-                    onClick={() => setInput('推荐一些高分电影')}
-                    className='rounded-full bg-gray-100 px-3 py-1 text-xs text-gray-600 transition-colors hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700'
-                  >
-                    推荐高分电影
-                  </button>
-                  <button
-                    onClick={() => setInput('最近有什么新电影上映？')}
-                    className='rounded-full bg-gray-100 px-3 py-1 text-xs text-gray-600 transition-colors hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700'
-                  >
-                    最新上映
-                  </button>
-                </>
-              )}
-            </div>
-          )}
-        </div>
-      </div>
-    </div>
-  ) : (
-    // 原有的居中弹窗模式
-    <div
-      className={`fixed inset-0 z-[1002] flex items-center justify-center bg-black/50 backdrop-blur-sm overflow-hidden transition-[opacity,visibility] duration-200 ${
-        isOpen ? 'opacity-100' : 'invisible opacity-0 pointer-events-none'
-      }`}
-      onClick={(e) => {
-        // 点击遮罩层关闭弹窗
-        if (e.target === e.currentTarget && isOpen) {
-          onClose();
-        }
-      }}
-    >
-      <div className='f1-ai-panel ptv-dialog relative mx-4 my-auto flex h-[85vh] supports-[height:100dvh]:h-[85dvh] max-h-[min(600px,calc(100vh-2rem))] supports-[height:100dvh]:max-h-[min(600px,calc(100dvh-2rem))] w-full max-w-3xl flex-col rounded-2xl bg-white shadow-2xl dark:bg-gray-900'>
-        {/* 头部 */}
-        <div className='flex items-center justify-between border-b border-gray-200 p-4 dark:border-gray-700'>
-          <div className='flex items-center gap-3 min-w-0 flex-1'>
-            <div className='flex h-10 w-10 items-center justify-center rounded-full bg-teal-600 flex-shrink-0'>
-              <Sparkles size={20} className='text-white' />
-            </div>
-            <div className='min-w-0 flex-1'>
-        <h2 className='text-lg font-semibold text-gray-900 dark:text-white'>
-                AI影视助手
-              </h2>
-              {context?.title && (
-                <p className='text-xs text-gray-500 dark:text-gray-400 truncate'>
-                  正在讨论: {context.title}
-                  {context.year && ` (${context.year})`}
-                </p>
-              )}
-            </div>
-          </div>
-          <button
-            onClick={onClose}
-            className='rounded-lg p-2 text-gray-500 transition-colors hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800 flex-shrink-0'
-          >
-         <X size={20} />
-          </button>
-        </div>
-
-        {/* 消息列表 */}
-        <div className='flex-1 overflow-y-auto p-4'>
-          <div className='space-y-4'>
-            {messages.map((message, index) => (
-              <div
-                key={index}
-                className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
-              >
-                <div
-                  className={`flex gap-3 ${
-                    message.role === 'user'
-                      ? 'max-w-[80%] flex-row-reverse'
-                      : 'w-full'
-                  }`}
-                >
-                  {/* 头像 */}
-                  <div
-                    className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full ${
-                      message.role === 'user'
-                        ? 'bg-blue-500'
-                        : 'bg-teal-600'
-                    }`}
-                  >
-                    {message.role === 'user' ? (
-                      <span className='text-xs font-semibold text-white'>
-                        {userAvatarText}
-                      </span>
-                    ) : (
-                      <Bot size={16} className='text-white' />
-                    )}
-                  </div>
-
-                  {/* 消息内容 */}
-                  <div
-                    className={`rounded-2xl px-4 py-2 ${
-                      message.role === 'user'
-                        ? 'bg-blue-500 text-white'
-                        : 'flex-1 bg-gray-100 text-gray-900 dark:bg-gray-800 dark:text-white'
-                    }`}
-                  >
-                    {message.role === 'user' ? (
-                      <p className='whitespace-pre-wrap break-words text-sm leading-relaxed'>
-                        {message.content}
-                      </p>
-                    ) : (
-                      <div className='w-full'>
-                        {/* 历史消息中已固化的工具调用：持续显示 */}
-                        {message.toolCalls && message.toolCalls.length > 0 && (
-                          <div className='mb-2'>
-                            {renderToolChain(
-                              message.toolCalls as ToolChainItem[],
-                              false
-                            )}
-                          </div>
-                        )}
-                        {/* 流式中的最后一个 assistant 消息：实时工具链合并显示在气泡内 */}
-                        {isStreaming &&
-                          index === messages.length - 1 &&
-                          renderToolChain(toolChain, true)}
-                        <div className='prose prose-sm max-w-none dark:prose-invert prose-p:my-2 prose-p:leading-relaxed prose-pre:bg-gray-800 prose-pre:text-gray-100 dark:prose-pre:bg-gray-900 prose-code:text-teal-600 dark:prose-code:text-teal-400 prose-code:bg-teal-50 dark:prose-code:bg-teal-900/20 prose-code:px-1 prose-code:py-0.5 prose-code:rounded prose-code:before:content-none prose-code:after:content-none prose-a:text-inherit dark:prose-a:text-inherit prose-a:no-underline hover:prose-a:underline prose-strong:text-gray-900 dark:prose-strong:text-white prose-ul:my-2 prose-ol:my-2 prose-li:my-1'>
-                          {renderAssistantContent(message.content)}
-                        </div>
-                        {message.error &&
-                          index === messages.length - 1 &&
-                          !isStreaming &&
-                          message.retryMessage && (
-                            <button
-                              type='button'
-                              onClick={() => handleSendMessage(message.retryMessage)}
-                              className='mt-3 inline-flex items-center gap-1.5 rounded-lg border border-gray-300 px-3 py-1.5 text-sm text-gray-700 transition-colors hover:bg-gray-200 dark:border-gray-600 dark:text-gray-200 dark:hover:bg-gray-700'
-                            >
-                              <RefreshCw size={14} />
-                              重试
-                            </button>
-                          )}
-                        {/* 流式但还没有任何文本时显示“AI正在思考...” */}
-                        {isStreaming &&
-                          index === messages.length - 1 &&
-                          !message.content &&
-                          toolChain.length === 0 && (
-                            <div className='flex items-center gap-2'>
-                              <Loader2 size={16} className='animate-spin text-gray-500' />
-                              <span className='text-sm text-gray-500 dark:text-gray-400'>
-                                AI正在思考...
-                              </span>
-                            </div>
-                          )}
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
-            ))}
-
-            <div ref={messagesEndRef} />
-          </div>
-        </div>
-
-        {/* 输入区域 */}
-        <div className='border-t border-gray-200 p-4 dark:border-gray-700'>
-          <div className='flex gap-2'>
-            <button
-              onClick={handleClearContext}
-              className='flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border border-gray-300 text-gray-500 transition-colors hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-600 dark:text-gray-400 dark:hover:bg-gray-800'
-              title='清空聊天记录'
-              disabled={isStreaming}
-            >
-              <Trash2 size={20} />
-            </button>
-            <textarea
-              ref={inputRef}
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              onKeyDown={handleKeyDown}
-              placeholder={isMobile ? '输入你的问题...' : '输入你的问题... (Shift+Enter换行)'}
-              disabled={isStreaming}
-              rows={1}
-              className='flex-1 resize-none rounded-xl border border-gray-300 bg-white px-4 py-3 text-sm text-gray-900 placeholder-gray-400 transition-colors focus:border-teal-500 focus:outline-none focus:ring-2 focus:ring-teal-500/20 disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-600 dark:bg-gray-800 dark:text-white dark:placeholder-gray-500 dark:focus:border-teal-400'
-              style={{
-                minHeight: '48px',
-                maxHeight: '120px',
-              }}
-              onInput={(e) => {
-                const target = e.target as HTMLTextAreaElement;
-                target.style.height = 'auto';
-                target.style.height = `${Math.min(target.scrollHeight, 120)}px`;
-              }}
-            />
-            <button
-              onClick={() => handleSendMessage()}
-              disabled={!input.trim() || isStreaming}
-              className='flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-teal-600 text-white transition-colors hover:bg-teal-700 disabled:cursor-not-allowed disabled:opacity-50'
-            >
-              {isStreaming ? (
-                <Loader2 size={20} className='animate-spin' />
-              ) : (
-                <Send size={20} />
-              )}
-            </button>
-          </div>
-
-          {/* 快捷提示 */}
-          {messages.length === 1 && !isStreaming && (
-            <div className='mt-3 flex flex-wrap gap-2'>
-              {context?.title ? (
-                <>
-                  <button
-                    onClick={() =>
-                      setInput(`${context.title}讲的是什么故事？`)
-                    }
-                    className='rounded-full bg-gray-100 px-3 py-1 text-xs text-gray-600 transition-colors hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700'
-                  >
-                    剧情介绍
-                  </button>
-                  <button
-                    onClick={() => setInput(`${context.title}这部作品评价怎么样？`)}
-                    className='rounded-full bg-gray-100 px-3 py-1 text-xs text-gray-600 transition-colors hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700'
-                  >
-                    这部作品的评价
-                  </button>
-                  <button
-                    onClick={() => setInput(`${context.title}有没有续集？`)}
-                    className='rounded-full bg-gray-100 px-3 py-1 text-xs text-gray-600 transition-colors hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700'
-                  >
-                    有没有续集
-                  </button>
-                </>
-              ) : (
-                <>
-                  <button
-                    onClick={() => setInput('推荐一些高分电影')}
-                    className='rounded-full bg-gray-100 px-3 py-1 text-xs text-gray-600 transition-colors hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700'
-                  >
-                    推荐高分电影
-                  </button>
-                  <button
-                    onClick={() => setInput('最近有什么新电影上映？')}
-                    className='rounded-full bg-gray-100 px-3 py-1 text-xs text-gray-600 transition-colors hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700'
-                  >
-                    最新上映
-                  </button>
-                </>
-              )}
-            </div>
-          )}
-        </div>
-      </div>
+          {copyError && <p className='f1-ai-copy-error' role='status'>{copyError}</p>}
+        </footer>
+      </section>
     </div>
   );
 
-  return typeof window !== 'undefined'
-    ? createPortal(modalContent, document.body)
-    : null;
+  return embedded ? modalContent : typeof window !== 'undefined' ? createPortal(modalContent, document.body) : null;
 }

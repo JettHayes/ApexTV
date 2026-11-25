@@ -16,6 +16,7 @@ import {
   LIBRARY_FOCUS,
   LIBRARY_ICON_BUTTON_GHOST,
 } from '@/components/media/library';
+import MangaReadingDock from '@/components/manga/MangaReadingDock';
 import MediaShell, { MediaShellTab } from '@/components/media/MediaShell';
 import { useSite } from '@/components/SiteProvider';
 
@@ -69,7 +70,7 @@ function getMeta(
       )}&returnTo=${encodeURIComponent(returnTo)}`,
     };
   }
-  return { title: '漫画推荐', subtitle: '按来源查看热门与最新漫画' };
+  return { title: '漫画发现', subtitle: '浏览热门与最新漫画，收藏喜欢的作品' };
 }
 
 export default function MangaLayout({
@@ -109,21 +110,25 @@ export default function MangaLayout({
   );
 
   return (
-    <div className='f1-reading-shell f1-comic-shell' data-reader={isReadingPage ? 'manga' : undefined}>
-    <MediaShell
-      siteName={siteName}
-      title={meta.title}
-      subtitle={meta.subtitle}
-      backHref={meta.backHref}
-      tabs={tabs}
-      reader={
-        isReadingPage
-          ? { actions: readerActions, mainClassName: READER_MAIN_CLASS }
-          : undefined
-      }
+    <div
+      className='f1-reading-shell f1-comic-shell'
+      data-reader={isReadingPage ? 'manga' : undefined}
     >
-      {children}
-    </MediaShell>
+      <MediaShell
+        siteName={siteName}
+        title={meta.title}
+        subtitle={meta.subtitle}
+        backHref={meta.backHref}
+        tabs={tabs}
+        reader={
+          isReadingPage
+            ? { actions: readerActions, mainClassName: READER_MAIN_CLASS }
+            : undefined
+        }
+      >
+        {children}
+        {!isReadingPage && <MangaReadingDock />}
+      </MediaShell>
     </div>
   );
 }

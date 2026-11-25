@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
+import { AppRequestError, formatAppError, reportAppError } from '@/lib/app-error';
 import type {
   BookCatalogResult,
   BookListItem,
@@ -66,13 +67,15 @@ export default function BooksCatalogPage() {
     fetch('/api/books/sources', { signal: abort.signal })
       .then(async (res) => {
         const json = await res.json();
-        if (!res.ok) throw new Error('书源列表加载失败');
+        if (!res.ok) throw new AppRequestError({ ...json, status: res.status }, '加载书源');
         return json;
       })
       .then((json) => setSources(json.sources || []))
-      .catch(() => {
-        if (!abort.signal.aborted)
-          setSourceError('书源列表加载失败，可返回发现页重试。');
+      .catch((error) => {
+        if (!abort.signal.aborted) {
+          reportAppError(error, '加载书源');
+          setSourceError(formatAppError(error, '加载书源'));
+        }
       });
     return () => abort.abort();
   }, []);
@@ -124,11 +127,9 @@ export default function BooksCatalogPage() {
             json.upstreamStatus === 403 ||
             /请求失败[:：]?\s*403/.test(json.error || '')
           ) {
-            throw new Error(
-              '书源网站拒绝了服务器访问（403）。此书源可能需要验证或限制了访问地区，可以换一个书源。'
-            );
+            throw new AppRequestError({ ...json, status: res.status }, '加载书源目录');
           }
-          throw new Error(json.error || '目录加载失败');
+          throw new AppRequestError({ ...json, status: res.status }, '加载书源目录');
         }
         if (id !== generation.current || abort.signal.aborted) return;
         const result = json as BookCatalogResult;
@@ -154,7 +155,8 @@ export default function BooksCatalogPage() {
       } catch (cause) {
         if (id !== generation.current || abort.signal.aborted) return;
         if (append) failed.current.add(target);
-        setError(cause instanceof Error ? cause.message : '目录加载失败');
+        reportAppError(cause, '加载书源目录');
+        setError(formatAppError(cause, '加载书源目录'));
       } finally {
         if (id === generation.current) {
           setLoading(false);

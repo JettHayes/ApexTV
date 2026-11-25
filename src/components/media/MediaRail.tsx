@@ -27,7 +27,7 @@ export default function MediaRail({
       <div
         className={cn(
           BOOK_SHELF_BOARD,
-          'shadow-[0_6px_12px_-10px_rgba(0,0,0,0.45)]'
+          "shadow-[0_6px_12px_-10px_var(--ptv-media-bg-alpha-45)]"
         )}
       >
         <div className={BOOK_RAIL}>{children}</div>

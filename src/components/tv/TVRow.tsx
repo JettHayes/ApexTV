@@ -8,8 +8,8 @@ import { TVSection } from './types';
 
 export default function TVRow({ section }: { section: TVSection }) {
   return (
-    <section className='f1-tv-row mt-12'>
-      <div className='mb-5 flex items-end justify-between gap-4'>
+    <section className='f1-tv-row' data-layout={section.layout || 'poster'}>
+      <div className='f1-tv-row-heading flex items-end justify-between gap-4'>
         <div>
           <h2 className='f1-tv-section-heading font-bold tracking-tight'>{section.title}</h2>
           {section.subtitle && <p className='mt-2 text-xl text-slate-400'>{section.subtitle}</p>}
@@ -20,8 +20,8 @@ export default function TVRow({ section }: { section: TVSection }) {
           </Link>
         )}
       </div>
-      <div data-tv-focus-row='horizontal' className='-my-4 flex gap-5 overflow-x-auto px-5 py-10 [scrollbar-width:none]'>
-        {section.items.map((item) => <TVCard key={`${section.title}-${item.id}`} item={item} />)}
+      <div data-tv-focus-row='horizontal' className='f1-tv-row-track flex gap-5 overflow-x-auto [scrollbar-width:none]'>
+        {section.items.map((item) => <TVCard landscape={section.layout === 'continue'} key={`${section.title}-${item.id}`} item={item} />)}
       </div>
     </section>
   );

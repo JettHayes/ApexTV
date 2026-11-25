@@ -61,7 +61,7 @@ export async function GET() {
 
       if (!apiKey) {
         return NextResponse.json(
-          { code: 400, message: 'TMDB API Key 未配置' },
+          { code: 400, source: 'TMDB', message: 'TMDB API Key 未配置', list: [] },
           { status: 400 }
         );
       }
@@ -237,7 +237,7 @@ function parseTXBannerData(data: any): any[] {
       });
 
       if (bannerItems.length > 0) {
-        return bannerItems;
+        return bannerItems.slice(0, 10);
       }
     }
 
@@ -280,8 +280,8 @@ async function getDoubanBannerContent(): Promise<{ code: number; list: any[] }> 
       return { code: 200, list: [] };
     }
 
-    // 取前5个电影
-    const topMovies = hotMoviesData.items.slice(0, 5);
+    // 按榜单顺序取前 10 部电影
+    const topMovies = hotMoviesData.items.slice(0, 10);
 
     // 为每个电影获取详情信息
     const bannerItems = await Promise.all(

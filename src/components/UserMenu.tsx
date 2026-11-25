@@ -9,9 +9,6 @@ import {
   ExternalLink,
   LogOut,
   Monitor,
-  Package,
-  Puzzle,
-  Router as RouterIcon,
   Rss,
   Settings,
   Shield,
@@ -25,24 +22,26 @@ import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 
+import './UserMenu.css';
+
+import { formatAppError, readJsonResponse, reportAppError } from '@/lib/app-error';
 import { getAuthInfoFromBrowserCookie } from '@/lib/auth';
 
 import { DeviceManagementPanel } from './DeviceManagementPanel';
 import { DownloadManagementPanel } from './DownloadManagementPanel';
 import { EmailSettingsPanel } from './EmailSettingsPanel';
+import { LocalSettingsPanel } from './LocalSettingsPanel';
 import { NotificationPanel } from './NotificationPanel';
 import { OfflineDownloadPanel } from './OfflineDownloadPanel';
 import { PersonalCenterPanel } from './PersonalCenterPanel';
-import { LocalSettingsPanel } from './LocalSettingsPanel';
 import TVRemotePanel from './tv/TVRemotePanel';
-import './UserMenu.css';
 
 interface AuthInfo {
   username?: string;
   role?: 'owner' | 'admin' | 'user';
 }
 
-export const UserMenu: React.FC = () => {
+export const UserMenu: React.FC<{ quickActions?: boolean }> = ({ quickActions = false }) => {
   const router = useRouter();
   const [isOpen, setIsOpen] = useState(false);
   const [isProfileCenterOpen, setIsProfileCenterOpen] = useState(false);
@@ -54,7 +53,6 @@ export const UserMenu: React.FC = () => {
   const [isNotificationPanelOpen, setIsNotificationPanelOpen] = useState(false);
   const [isEmailSettingsOpen, setIsEmailSettingsOpen] = useState(false);
   const [isDeviceManagementOpen, setIsDeviceManagementOpen] = useState(false);
-  const [isEcoAppsOpen, setIsEcoAppsOpen] = useState(false);
   const [isDownloadManagementOpen, setIsDownloadManagementOpen] =
     useState(false);
   const [isTVRemoteOpen, setIsTVRemoteOpen] = useState(false);
@@ -96,7 +94,6 @@ export const UserMenu: React.FC = () => {
       isOfflineDownloadPanelOpen ||
       isEmailSettingsOpen ||
       isDeviceManagementOpen ||
-      isEcoAppsOpen ||
       isDownloadManagementOpen ||
       isTvQrScannerOpen ||
       isTVRemoteOpen
@@ -125,7 +122,6 @@ export const UserMenu: React.FC = () => {
     isOfflineDownloadPanelOpen,
     isEmailSettingsOpen,
     isDeviceManagementOpen,
-    isEcoAppsOpen,
     isDownloadManagementOpen,
     isTvQrScannerOpen,
     isTVRemoteOpen,
@@ -444,16 +440,14 @@ export const UserMenu: React.FC = () => {
     setEmailSettingsMessageType(null);
     try {
       const response = await fetch('/api/telegram/bind', { method: 'POST' });
-      const data = await response.json().catch(() => ({}));
-      if (!response.ok) {
-        throw new Error(data.error || '生成 Telegram 绑定码失败');
-      }
+      const data = await readJsonResponse<{ code?: string; deepLink?: string }>(response, '生成 Telegram 绑定码');
       setTelegramBindCode(data.code || '');
       setTelegramDeepLink(data.deepLink || '');
       setEmailSettingsMessage('Telegram 绑定码已生成，请在 10 分钟内完成绑定');
       setEmailSettingsMessageType('success');
     } catch (error) {
-      setEmailSettingsMessage(error instanceof Error ? error.message : '生成 Telegram 绑定码失败');
+      reportAppError(error, '生成 Telegram 绑定码');
+      setEmailSettingsMessage(formatAppError(error, '生成 Telegram 绑定码'));
       setEmailSettingsMessageType('error');
     } finally {
       setTelegramBindingBusy(false);
@@ -625,9 +619,9 @@ export const UserMenu: React.FC = () => {
       setEmailSettingsMessage('浏览器系统通知已开启');
       setEmailSettingsMessageType('success');
     } catch (error) {
-      console.error('开启浏览器通知失败:', error);
+      reportAppError(error, '开启浏览器通知');
       setPushNotifications(false);
-      setEmailSettingsMessage(error instanceof Error ? error.message : '开启浏览器通知失败');
+      setEmailSettingsMessage(formatAppError(error, '开启浏览器通知'));
       setEmailSettingsMessageType('error');
     } finally {
       setPushNotificationsBusy(false);
@@ -649,21 +643,18 @@ export const UserMenu: React.FC = () => {
         }),
       });
 
-      if (response.ok) {
+      await readJsonResponse(response, '保存通知设置');
+      {
         setEmailSettingsMessage('保存成功！');
         setEmailSettingsMessageType('success');
         setTimeout(() => {
           setEmailSettingsMessage('');
           setEmailSettingsMessageType(null);
         }, 3000);
-      } else {
-        const data = await response.json();
-        setEmailSettingsMessage(data.error || '保存失败');
-        setEmailSettingsMessageType('error');
       }
     } catch (error) {
-      console.error('保存通知设置失败:', error);
-      setEmailSettingsMessage('保存失败，请重试');
+      reportAppError(error, '保存通知设置');
+      setEmailSettingsMessage(formatAppError(error, '保存通知设置'));
       setEmailSettingsMessageType('error');
     } finally {
       setEmailSettingsSaving(false);
@@ -1005,18 +996,14 @@ export const UserMenu: React.FC = () => {
         }),
       });
 
-      const data = await response.json();
-
-      if (!response.ok) {
-        setPasswordError(data.error || '修改密码失败');
-        return;
-      }
+      await readJsonResponse(response, '修改密码');
 
       // 修改成功，关闭弹窗并登出
       setIsChangePasswordOpen(false);
       await handleLogout();
     } catch (error) {
-      setPasswordError('网络错误，请稍后重试');
+      reportAppError(error, '修改密码');
+      setPasswordError(formatAppError(error, '修改密码'));
     } finally {
       setPasswordLoading(false);
     }
@@ -1100,6 +1087,7 @@ export const UserMenu: React.FC = () => {
         {/* 菜单项 */}
         <div className='py-1'>
           {/* 通知按钮 */}
+          {!quickActions && (
           <button
             onClick={() => {
               setIsOpen(false);
@@ -1115,6 +1103,7 @@ export const UserMenu: React.FC = () => {
               </span>
             )}
           </button>
+          )}
 
           {/* 设置按钮 */}
           <button
@@ -1136,7 +1125,7 @@ export const UserMenu: React.FC = () => {
             </button>
           )}
 
-          <div className='ptv-account-divider' />
+          {showOfflineDownload && <div className='ptv-account-divider' />}
           {/* 离线下载按钮 */}
           {showOfflineDownload && (
             <button
@@ -1158,18 +1147,6 @@ export const UserMenu: React.FC = () => {
           >
             <Monitor className='w-4 h-4 text-gray-500 dark:text-gray-400' />
             <span className='font-medium'>电视访问</span>
-          </button>
-
-          {/* 生态应用按钮 */}
-          <button
-            onClick={() => {
-              setIsOpen(false);
-              setIsEcoAppsOpen(true);
-            }}
-            className='w-full px-3 py-2 text-left flex items-center gap-2.5 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors text-sm'
-          >
-            <Package className='w-4 h-4 text-gray-500 dark:text-gray-400' />
-            <span className='font-medium'>客户端与工具</span>
           </button>
 
           {/* 分割线 */}
@@ -1228,7 +1205,7 @@ export const UserMenu: React.FC = () => {
                 playsInline
               />
               <div className='pointer-events-none absolute inset-0 grid place-items-center'>
-                <div className='h-64 w-64 rounded-xl border-4 border-white/90 [box-shadow:0_0_0_9999px_rgba(0,0,0,0.58),0_0_30px_rgba(244,63,94,0.55)] sm:h-80 sm:w-80' />
+                <div className="h-64 w-64 rounded-xl border-4 border-white/90 [box-shadow:0_0_0_9999px_var(--ptv-media-bg-alpha-58),0_0_30px_var(--ptv-media-bg-alpha-55)] sm:h-80 sm:w-80" />
               </div>
               <div className='absolute left-0 right-0 top-0 flex items-start justify-between gap-4 bg-gradient-to-b from-black/75 to-transparent p-5 text-white sm:p-7'>
                 <div>
@@ -1276,7 +1253,7 @@ export const UserMenu: React.FC = () => {
             </div>
             <button
               onClick={handleCloseSubscribe}
-              className='flex h-9 w-9 cursor-pointer items-center justify-center rounded-full text-slate-500 transition hover:bg-slate-100 hover:text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-500 dark:hover:bg-white/10 dark:hover:text-white'
+              className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-full text-slate-500 transition hover:bg-slate-100 hover:text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-apex-accent dark:hover:bg-white/10 dark:hover:text-white"
               aria-label='Close'
             >
               <X className='h-5 w-5' />
@@ -1388,7 +1365,7 @@ export const UserMenu: React.FC = () => {
                     <div className='flex gap-2'>
                       <input
                         type='text'
-                        className='min-w-0 flex-1 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 outline-none focus:ring-2 focus:ring-green-500 dark:border-white/10 dark:bg-slate-900 dark:text-slate-200'
+                        className="min-w-0 flex-1 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 outline-none focus:ring-2 focus:ring-apex-accent dark:border-white/10 dark:bg-slate-900 dark:text-slate-200"
                         value={subscribeUrl}
                         readOnly
                       />
@@ -1459,7 +1436,7 @@ export const UserMenu: React.FC = () => {
                   <button
                     type='button'
                     onClick={handleCopyOrionBaseUrl}
-                    className='inline-flex cursor-pointer items-center justify-center gap-2 rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-black text-white transition hover:bg-indigo-700'
+                    className="inline-flex cursor-pointer items-center justify-center gap-2 rounded-xl bg-apex-action px-4 py-2.5 text-sm font-black text-apex-action-ink transition hover:bg-apex-action"
                   >
                     <Copy className='h-4 w-4' />
                     {orionBaseUrlCopySuccess ? '已复制' : '复制'}
@@ -1473,7 +1450,7 @@ export const UserMenu: React.FC = () => {
                 href='https://github.com/mtvpls/OrionTV_Build/tags'
                 target='_blank'
                 rel='noopener noreferrer'
-                className='mt-5 inline-flex cursor-pointer items-center justify-center gap-2 rounded-xl bg-indigo-600 px-5 py-3 text-sm font-black text-white transition hover:bg-indigo-700'
+                className="mt-5 inline-flex cursor-pointer items-center justify-center gap-2 rounded-xl bg-apex-action px-5 py-3 text-sm font-black text-apex-action-ink transition hover:bg-apex-action"
               >
                 下载 OrionTV
                 <ExternalLink className='h-4 w-4' />
@@ -1612,7 +1589,7 @@ export const UserMenu: React.FC = () => {
               </label>
               <input
                 type='password'
-                className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-colors bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400'
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-apex-accent focus:border-transparent transition-colors bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
                 placeholder='请输入新密码'
                 value={newPassword}
                 onChange={(e) => setNewPassword(e.target.value)}
@@ -1627,7 +1604,7 @@ export const UserMenu: React.FC = () => {
               </label>
               <input
                 type='password'
-                className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-colors bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400'
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-apex-accent focus:border-transparent transition-colors bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
                 placeholder='请再次输入新密码'
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
@@ -1672,247 +1649,24 @@ export const UserMenu: React.FC = () => {
     </>
   );
 
-  // 生态应用面板内容
-  const ecoAppsPanel = (
-    <>
-      {/* 背景遮罩 */}
-      <div
-        className='ptv-scrim-in fixed inset-0 bg-black/50 backdrop-blur-sm z-[1000]'
-        onClick={() => setIsEcoAppsOpen(false)}
-        onTouchMove={(e) => {
-          e.preventDefault();
-        }}
-        onWheel={(e) => {
-          e.preventDefault();
-        }}
-        style={{
-          touchAction: 'none',
-        }}
-      />
-
-      {/* 生态应用面板 */}
-      <div className='ptv-dialog ptv-modal-in ptv-client-tools fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-2xl bg-white dark:bg-gray-900 rounded-xl shadow-xl z-[1001] overflow-hidden'>
-        <div
-          className='h-full max-h-[85vh] flex flex-col'
-          data-panel-content
-          onTouchMove={(e) => {
-            e.stopPropagation();
-          }}
-          style={{
-            touchAction: 'auto',
-          }}
-        >
-          {/* 标题栏 */}
-          <div className='flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700'>
-            <h3 className='text-xl font-bold text-gray-800 dark:text-gray-200'>
-              客户端与工具
-            </h3>
-            <div className='flex items-center gap-2'>
-              {/* 关闭按钮 */}
-              <button
-                onClick={() => setIsEcoAppsOpen(false)}
-                className='w-8 h-8 p-1 rounded-full flex items-center justify-center text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors'
-                aria-label='Close'
-              >
-                <X className='w-full h-full' />
-              </button>
-            </div>
-          </div>
-
-          {/* 应用列表 */}
-          <div className='flex-1 overflow-y-auto p-6'>
-            <div className='grid gap-6 md:grid-cols-1'>
-              {/* MoonTVPlus-PC 客户端 */}
-              <div className='bg-gray-50 dark:bg-gray-800 rounded-lg p-5 border border-gray-200 dark:border-gray-700'>
-                <div className='flex items-start gap-4'>
-                  <div className='flex-shrink-0 relative'>
-                    <img
-                      src='/logo.png'
-                      alt='MoonTVPlus-PC'
-                      className='w-16 h-16 rounded-xl object-cover'
-                    />
-                    <div className='absolute -bottom-1 -right-1 w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center shadow-lg'>
-                      <Monitor className='w-3.5 h-3.5 text-white' />
-                    </div>
-                  </div>
-                  <div className='flex-1 min-w-0'>
-                    <h4 className='text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2'>
-                      MoonTVPlus-PC客户端
-                    </h4>
-                    <p className='text-sm text-gray-600 dark:text-gray-400 mb-3'>
-                      Windows 桌面客户端，使用 mpv 播放视频并处理字幕。连接本站后的具体功能兼容性待验证，界面由客户端提供。
-                    </p>
-                    <a
-                      href='https://github.com/mtvpls/MoonTVPlus-PC/releases'
-                      target='_blank'
-                      rel='noopener noreferrer'
-                      className='inline-flex items-center gap-2 px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white text-sm font-medium rounded-lg transition-colors'
-                    >
-                      <Download className='w-4 h-4' />
-                      下载
-                      <ExternalLink className='w-3 h-3' />
-                    </a>
-                  </div>
-                </div>
-              </div>
-
-              {/* Selene 跨平台客户端 */}
-              <div className='bg-gray-50 dark:bg-gray-800 rounded-lg p-5 border border-gray-200 dark:border-gray-700'>
-                <div className='flex items-start gap-4'>
-                  <div className='flex-shrink-0 relative'>
-                    <img
-                      src='/icons/Selene.png'
-                      alt='Selene'
-                      className='w-16 h-16 rounded-xl object-cover'
-                    />
-                    <span className='absolute -top-1 -right-1 px-1.5 py-0.5 bg-orange-500 text-white text-[10px] font-bold rounded'>
-                      二开
-                    </span>
-                  </div>
-                  <div className='flex-1 min-w-0'>
-                    <h4 className='text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2'>
-                      Selene 跨平台客户端
-                    </h4>
-                    <p className='text-sm text-gray-600 dark:text-gray-400 mb-3'>
-                      面向 Android、iOS、macOS 和 Windows 的独立客户端，用于搜索与播放。安装方式和连接本站后的兼容性需按设备验证。
-                    </p>
-                    <div className='flex flex-wrap gap-2'>
-                      <a
-                        href='https://github.com/mtvpls/Selene-Build/releases'
-                        target='_blank'
-                        rel='noopener noreferrer'
-                        className='inline-flex items-center gap-2 px-4 py-2 bg-green-500 hover:bg-green-600 text-white text-sm font-medium rounded-lg transition-colors'
-                      >
-                        <Download className='w-4 h-4' />
-                        下载
-                        <ExternalLink className='w-3 h-3' />
-                      </a>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* OrionTV TV专用客户端 */}
-              <div className='bg-gray-50 dark:bg-gray-800 rounded-lg p-5 border border-gray-200 dark:border-gray-700'>
-                <div className='flex items-start gap-4'>
-                  <div className='flex-shrink-0 relative'>
-                    <img
-                      src='/icons/OrionTV.png'
-                      alt='OrionTV'
-                      className='w-16 h-16 rounded-xl object-cover'
-                    />
-                    <span className='absolute -top-1 -right-1 px-1.5 py-0.5 bg-orange-500 text-white text-[10px] font-bold rounded'>
-                      二开
-                    </span>
-                  </div>
-                  <div className='flex-1 min-w-0'>
-                    <h4 className='text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2'>
-                      OrionTV TV专用客户端
-                    </h4>
-                    <p className='text-sm text-gray-600 dark:text-gray-400 mb-3'>
-                      面向 Android TV 和电视盒子的第三方客户端，适合遥控器操作；连接本站后的兼容性待验证，界面由客户端提供。
-                    </p>
-                    <a
-                      href='https://github.com/mtvpls/OrionTV_Build/tags'
-                      target='_blank'
-                      rel='noopener noreferrer'
-                      className='inline-flex items-center gap-2 px-4 py-2 bg-indigo-500 hover:bg-indigo-600 text-white text-sm font-medium rounded-lg transition-colors'
-                    >
-                      <Download className='w-4 h-4' />
-                      下载
-                      <ExternalLink className='w-3 h-3' />
-                    </a>
-                  </div>
-                </div>
-              </div>
-
-              {/* 私人影库转码器 */}
-              <div className='bg-gray-50 dark:bg-gray-800 rounded-lg p-5 border border-gray-200 dark:border-gray-700'>
-                <div className='flex items-start gap-4'>
-                  <div className='flex-shrink-0 relative'>
-                    <div className='w-16 h-16 rounded-xl bg-amber-500 flex items-center justify-center shadow-sm'>
-                      <RouterIcon className='w-8 h-8 text-white' />
-                    </div>
-                    <span className='absolute -top-1 -right-1 px-1.5 py-0.5 bg-red-500 text-white text-[10px] font-bold rounded'>
-                      MKV转码
-                    </span>
-                  </div>
-                  <div className='flex-1 min-w-0'>
-                    <h4 className='text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2'>
-                      私人影库转码器
-                    </h4>
-                    <p className='text-sm text-gray-600 dark:text-gray-400 mb-3'>
-                      为私人影库中的 MKV 视频提供转码播放能力，可处理部分无音频问题，通常需要较高的本机性能。需在观看设备本机另行运行转码服务（localhost:19080）；Vercel 部署不包含此服务。内封字幕仅支持文本字幕，图片字幕不支持。
-                    </p>
-                    <a
-                      href='https://github.com/mtvpls/moontvplus-transcoder/tags'
-                      target='_blank'
-                      rel='noopener noreferrer'
-                      className='inline-flex items-center gap-2 px-4 py-2 bg-amber-500 hover:bg-amber-600 text-white text-sm font-medium rounded-lg transition-colors'
-                    >
-                      <Download className='w-4 h-4' />
-                      下载
-                      <ExternalLink className='w-3 h-3' />
-                    </a>
-                  </div>
-                </div>
-              </div>
-
-              {/* MoonTVPlus 插件 */}
-              <div className='bg-gray-50 dark:bg-gray-800 rounded-lg p-5 border border-gray-200 dark:border-gray-700'>
-                <div className='flex items-start gap-4'>
-                  <div className='flex-shrink-0 relative'>
-                    <div className='w-16 h-16 rounded-xl bg-purple-500 flex items-center justify-center shadow-sm'>
-                      <Puzzle className='w-8 h-8 text-white' />
-                    </div>
-                    <span className='absolute -top-1 -right-1 px-1.5 py-0.5 bg-purple-600 text-white text-[10px] font-bold rounded'>
-                      插件
-                    </span>
-                  </div>
-                  <div className='flex-1 min-w-0'>
-                    <h4 className='text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2'>
-                      MoonTVPlus 插件
-                    </h4>
-                    <p className='text-sm text-gray-600 dark:text-gray-400 mb-3'>
-                      桌面浏览器扩展，用于处理私人影库超分功能读取视频帧时的跨域（CORS）限制。
-                    </p>
-                    <a
-                      href='https://github.com/mtvpls/moontvplus-extension/releases'
-                      target='_blank'
-                      rel='noopener noreferrer'
-                      className='inline-flex items-center gap-2 px-4 py-2 bg-purple-500 hover:bg-purple-600 text-white text-sm font-medium rounded-lg transition-colors'
-                    >
-                      <Download className='w-4 h-4' />
-                      下载
-                      <ExternalLink className='w-3 h-3' />
-                    </a>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* 底部说明 */}
-          <div className='p-6 pt-4 border-t border-gray-200 dark:border-gray-700'>
-            <p className='text-xs text-gray-500 dark:text-gray-400 text-center'>
-              选择适合您设备的客户端下载使用
-            </p>
-          </div>
-        </div>
-      </div>
-    </>
-  );
-
   return (
     <>
+      {quickActions && <>
+        <button type='button' className='f1-icon-button f1-top-notifications' aria-label='通知中心' title='通知中心'
+          disabled={!mounted} onClick={() => { setIsOpen(false); setIsNotificationPanelOpen(true); }}>
+          <Bell size={19} aria-hidden />
+          {unreadCount > 0 && <span className='f1-top-unread' aria-label={String(unreadCount) + ' 条未读通知'} />}
+        </button>
+
+      </>}
       <div className='relative'>
         <button
           onClick={handleMenuClick}
-          className='w-10 h-10 p-2 rounded-full flex items-center justify-center text-gray-600 hover:bg-gray-200/50 dark:text-gray-300 dark:hover:bg-gray-700/50 active:scale-95 transition-[background-color,color,transform] duration-150'
+          className='ptv-account-trigger w-11 h-11 shrink-0 p-0 rounded-full flex items-center justify-center text-gray-600 hover:bg-gray-200/50 dark:text-gray-300 dark:hover:bg-gray-700/50 active:scale-95 transition-[background-color,color,transform] duration-150'
           aria-label='账户菜单'
           aria-expanded={isOpen}
         >
-          <User className='w-full h-full' />
+          {quickActions ? <span className='f1-top-avatar' aria-hidden='true'>{avatarText}</span> : <User className='w-full h-full' />}
         </button>
         {/* 未读通知红点 */}
         {unreadCount > 0 && (
@@ -2047,9 +1801,6 @@ export const UserMenu: React.FC = () => {
         mounted={mounted}
         onClose={() => setIsTVRemoteOpen(false)}
       />
-
-      {/* 使用 Portal 将生态应用面板渲染到 document.body */}
-      {isEcoAppsOpen && mounted && createPortal(ecoAppsPanel, document.body)}
 
       {/* 确认对话框 */}
       {confirmDialog.isOpen &&

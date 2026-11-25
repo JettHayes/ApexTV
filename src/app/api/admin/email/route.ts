@@ -1,3 +1,4 @@
+import { appErrorPayload, reportAppError } from '@/lib/app-error';
 import { NextRequest, NextResponse } from 'next/server';
 
 import type { AdminConfig } from '@/lib/admin.types';
@@ -56,9 +57,9 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json(safeConfig);
   } catch (error) {
-    console.error('获取邮件配置失败:', error);
+    reportAppError(error, "获取邮件配置失败");
     return NextResponse.json(
-      { error: (error as Error).message },
+      {...{ error: (error as Error).message }, ...appErrorPayload(error, "后台配置服务", 500)},
       { status: 500 }
     );
   }
@@ -108,9 +109,9 @@ export async function POST(request: NextRequest) {
         await EmailService.sendTestEmail(emailConfig, testEmail, siteName);
         return NextResponse.json({ success: true, message: '测试邮件发送成功' });
       } catch (error) {
-        console.error('发送测试邮件失败:', error);
+        reportAppError(error, "发送测试邮件失败");
         return NextResponse.json(
-          { error: `发送失败: ${(error as Error).message}` },
+          {...{ error: `发送失败: ${(error as Error).message}` }, ...appErrorPayload(error, "后台配置服务", 500)},
           { status: 500 }
         );
       }
@@ -181,9 +182,9 @@ export async function POST(request: NextRequest) {
       { status: 400 }
     );
   } catch (error) {
-    console.error('处理邮件配置失败:', error);
+    reportAppError(error, "处理邮件配置失败");
     return NextResponse.json(
-      { error: (error as Error).message },
+      {...{ error: (error as Error).message }, ...appErrorPayload(error, "后台配置服务", 500)},
       { status: 500 }
     );
   }

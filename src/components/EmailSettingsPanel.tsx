@@ -124,7 +124,7 @@ export function EmailSettingsPanel({
         style={{ touchAction: 'none' }}
       />
 
-      <div className='ptv-modal-in fixed left-1/2 top-1/2 z-[1001] w-[calc(100%-2rem)] max-w-lg -translate-x-1/2 -translate-y-1/2 overflow-hidden rounded-2xl bg-white shadow-xl dark:bg-gray-900'>
+      <div className='ptv-dialog ptv-notification-settings ptv-modal-in fixed left-1/2 top-1/2 z-[1001] w-[calc(100%-2rem)] max-w-lg -translate-x-1/2 -translate-y-1/2 overflow-hidden rounded-2xl bg-white shadow-xl dark:bg-gray-900'>
         <div
           className='max-h-[85vh] overflow-y-auto p-6'
           data-panel-content
@@ -145,7 +145,7 @@ export function EmailSettingsPanel({
             </div>
             <button
               onClick={onClose}
-              className='flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-gray-500 transition-colors hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:hover:bg-gray-800'
+              className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-gray-500 transition-colors hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-apex-accent dark:hover:bg-gray-800"
               aria-label='关闭通知设置'
             >
               <X className='h-5 w-5' />
@@ -218,7 +218,7 @@ export function EmailSettingsPanel({
                     onChange={(e) => onUserEmailChange(e.target.value)}
                     placeholder='输入您的邮箱地址'
                     disabled={emailSettingsSaving}
-                    className='mb-4 w-full rounded-xl border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-900 transition-colors placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-600 dark:bg-gray-900 dark:text-white'
+                    className="mb-4 w-full rounded-xl border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-900 transition-colors placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-apex-accent disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-600 dark:bg-gray-900 dark:text-white"
                   />
 
                   <div className='flex items-center justify-between gap-4 rounded-xl bg-white p-3 dark:bg-gray-900/70'>
@@ -244,7 +244,7 @@ export function EmailSettingsPanel({
               {notificationTab === 'push' && (
                 <section className='rounded-2xl border border-gray-200 bg-gray-50 p-4 dark:border-gray-700 dark:bg-gray-800'>
                   <div className='mb-4 flex items-start gap-3'>
-                    <div className='flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-indigo-100 text-indigo-600 dark:bg-indigo-900/30 dark:text-indigo-300'>
+                    <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-apex-selected text-apex-accent-on-soft dark:bg-apex-selected/30 dark:text-apex-accent-on-soft">
                       <MonitorSmartphone className='h-5 w-5' />
                     </div>
                     <div className='min-w-0 flex-1'>
@@ -360,7 +360,7 @@ export function EmailSettingsPanel({
               <button
                 onClick={onSave}
                 disabled={emailSettingsSaving}
-                className='mt-[10px] flex w-full items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:bg-blue-400 dark:focus:ring-offset-gray-900 dark:disabled:bg-blue-500'
+                className="mt-[10px] flex w-full items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-apex-accent focus:ring-offset-2 disabled:cursor-not-allowed disabled:bg-blue-400 dark:focus:ring-offset-gray-900 dark:disabled:bg-blue-500"
               >
                 {emailSettingsSaving ? (
                   <>

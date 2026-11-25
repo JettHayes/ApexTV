@@ -1,3 +1,4 @@
+import { appErrorPayload, reportAppError } from '@/lib/app-error';
 /* eslint-disable no-console */
 
 import { NextRequest, NextResponse } from 'next/server';
@@ -228,7 +229,7 @@ export async function POST(request: NextRequest) {
         await OpenListClient.login(normalizedURL, Username, Password);
         console.log('[OpenList Config] 主源账号密码验证成功');
       } catch (error) {
-        console.error('[OpenList Config] 主源账号密码验证失败:', error);
+        reportAppError(error, "[OpenList Config] 主源账号密码验证失败");
         return NextResponse.json(
           { error: '主源账号密码验证失败: ' + (error as Error).message },
           { status: 400 }
@@ -264,9 +265,9 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ error: '未知操作' }, { status: 400 });
   } catch (error) {
-    console.error('OpenList 配置操作失败:', error);
+    reportAppError(error, "OpenList 配置操作失败");
     return NextResponse.json(
-      { error: '操作失败', details: (error as Error).message },
+      {...{ error: '操作失败', details: (error as Error).message }, ...appErrorPayload(error, "后台配置服务", 500)},
       { status: 500 }
     );
   }

@@ -1,5 +1,8 @@
 'use client';
 
+import { formatAppError, readJsonResponse, reportAppError } from '@/lib/app-error';
+
+
 import {
   ChevronDown,
   ChevronLeft,
@@ -109,7 +112,7 @@ export default function TVRemotePanel({
       const response = await fetch('/api/tv-remote/devices', {
         cache: 'no-store',
       });
-      const data = await response.json().catch(() => ({}));
+      const data = await readJsonResponse<any>(response, "电视端");
       if (!response.ok) {
         throw new Error(data.error || '无法获取电视端列表');
       }
@@ -126,7 +129,7 @@ export default function TVRemotePanel({
     } catch (error) {
       setDevices([]);
       setSelectedDeviceId('');
-      setStatus(error instanceof Error ? error.message : '无法获取电视端列表');
+      setStatus(formatAppError(reportAppError(error, "电视端"), "电视端"));
     } finally {
       setLoading(false);
     }
@@ -156,12 +159,9 @@ export default function TVRemotePanel({
         command: { key, repeat, digit },
         }),
       });
-      const data: SocketResponse = await response.json().catch(() => ({
-        success: false,
-        error: '发送失败',
-      }));
+      const data: SocketResponse = await readJsonResponse<any>(response, "电视端");
       if (!response.ok || !data.success) {
-        setStatus(data.error || '发送失败');
+        setStatus(formatAppError(reportAppError(data.error || '发送失败', "电视端"), "电视端"));
       }
     } catch {
       setStatus('发送失败');
@@ -179,12 +179,9 @@ export default function TVRemotePanel({
         command: { mode, text: value },
         }),
       });
-      const data: SocketResponse = await response.json().catch(() => ({
-        success: false,
-        error: '文本发送失败',
-      }));
+      const data: SocketResponse = await readJsonResponse<any>(response, "电视端");
       if (!response.ok || !data.success) {
-        setStatus(data.error || '文本发送失败');
+        setStatus(formatAppError(reportAppError(data.error || '文本发送失败', "电视端"), "电视端"));
       } else if (mode === 'append' || mode === 'replace') {
         setStatus('文本已发送到电视端输入框');
       }
@@ -204,7 +201,7 @@ export default function TVRemotePanel({
         onWheel={(e) => e.preventDefault()}
         style={{ touchAction: 'none' }}
       />
-      <div className='ptv-modal-in fixed inset-x-3 top-1/2 z-[1001] mx-auto max-h-[94vh] max-w-md -translate-y-1/2 overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-2xl shadow-black/30 dark:border-white/10 dark:bg-slate-950'>
+      <div className='ptv-dialog ptv-remote-panel ptv-modal-in fixed inset-x-3 top-1/2 z-[1001] mx-auto max-h-[94vh] max-w-md -translate-y-1/2 overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-2xl shadow-black/30 dark:border-white/10 dark:bg-slate-950'>
         <div
           className='max-h-[94vh] overflow-y-auto p-5'
           data-panel-content

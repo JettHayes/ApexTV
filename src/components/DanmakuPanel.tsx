@@ -319,11 +319,7 @@ export default function DanmakuPanel({
             spellCheck='false'
             data-form-type='other'
             data-lpignore='true'
-            className='flex-1 min-w-[220px] rounded-lg border border-gray-300 px-3 py-2 text-sm
-                     transition-colors focus:border-green-500 focus:outline-none
-                     focus:ring-2 focus:ring-green-500/20
-                     dark:border-gray-600 dark:bg-gray-800 dark:text-white
-                     sm:px-4'
+            className="flex-1 min-w-[220px] rounded-lg border border-gray-300 px-3 py-2 text-sm\n                     transition-colors focus:border-apex-accent focus:outline-none\n                     focus:ring-2 focus:ring-apex-accent/20\n                     dark:border-gray-600 dark:bg-gray-800 dark:text-white\n                     sm:px-4"
             disabled={isSearching}
           />
           <button

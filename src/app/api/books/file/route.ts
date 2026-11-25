@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-import { db } from '@/lib/db';
+import { reportAppError } from '@/lib/app-error';
 import { bookProvider } from '@/lib/book-provider';
+import { db } from '@/lib/db';
 
 import { getAuthorizedBooksUsername } from '../_utils';
 
@@ -104,7 +105,7 @@ export async function GET(request: NextRequest) {
     });
     return await proxyFile(request, resolved.sourceId, resolved.href);
   } catch (error) {
-    return NextResponse.json({ error: (error as Error).message }, { status: 400 });
+    return NextResponse.json((({ code, message, status, upstreamStatus }) => ({ error: message, code, status, upstreamStatus }))(reportAppError(error, '电子书服务')), { status: 400 });
   }
 }
 
@@ -117,6 +118,6 @@ export async function POST(request: NextRequest) {
     const resolved = await resolveFileHref(username, payload);
     return await proxyFile(request, resolved.sourceId, resolved.href);
   } catch (error) {
-    return NextResponse.json({ error: (error as Error).message }, { status: 400 });
+    return NextResponse.json((({ code, message, status, upstreamStatus }) => ({ error: message, code, status, upstreamStatus }))(reportAppError(error, '电子书服务')), { status: 400 });
   }
 }

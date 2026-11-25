@@ -1,5 +1,8 @@
 'use client';
 
+import { formatAppError, readJsonResponse, reportAppError } from '@/lib/app-error';
+
+
 import { useCallback,useEffect, useState } from 'react';
 
 import { useEnableComments } from '@/hooks/useEnableComments';
@@ -55,7 +58,7 @@ export default function DoubanRecommendations({ doubanId }: DoubanRecommendation
         throw new Error('获取推荐失败');
       }
 
-      const result = await response.json();
+      const result = await readJsonResponse<any>(response, "内容操作");
       console.log('获取到推荐:', result.recommendations);
 
       const recommendationsData = result.recommendations || [];
@@ -63,8 +66,8 @@ export default function DoubanRecommendations({ doubanId }: DoubanRecommendation
 
       setRecommendationCache(cacheKey, recommendationsData);
     } catch (err) {
-      console.error('获取推荐失败:', err);
-      setError(err instanceof Error ? err.message : '获取推荐失败');
+      reportAppError(err, "获取推荐失败");
+      setError(formatAppError(err, "内容操作"));
     } finally {
       setLoading(false);
     }

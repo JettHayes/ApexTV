@@ -1,4 +1,7 @@
 'use client';
+
+import { formatAppError } from '@/lib/app-error';
+
 import {
   Dialog,
   DialogBackdrop,
@@ -55,7 +58,7 @@ export default function OrganizeVideoDialog({
       .catch((error) => {
         if (active)
           setError(
-            error instanceof Error ? error.message : '加载失败，请重新打开'
+            formatAppError(error, "内容操作")
           );
       });
     return () => {
@@ -81,7 +84,7 @@ export default function OrganizeVideoDialog({
       setLists((data) => [...data, id]);
       setName('');
     } catch (error) {
-      setError(error instanceof Error ? error.message : '创建失败');
+      setError(formatAppError(error, "内容操作"));
     } finally {
       setBusy(false);
     }
@@ -93,7 +96,7 @@ export default function OrganizeVideoDialog({
       await organizeVideo(video, { status, lists });
       onClose();
     } catch (error) {
-      setError(error instanceof Error ? error.message : '保存失败');
+      setError(formatAppError(error, "内容操作"));
     } finally {
       setBusy(false);
     }

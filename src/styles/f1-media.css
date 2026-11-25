@@ -21,16 +21,13 @@
 /* A broad cinematic hero and compact rails; user-selected hero scale is retained. */
 .f1-home-hero { margin-bottom: 16px; padding-top: 8px; }
 .f1-home-hero .ptv-hero { border: 1px solid rgb(var(--apex-line-rgb) / .65); border-radius: var(--f1-radius-lg); box-shadow: var(--f1-elevation); isolation: isolate; }
-.f1-home-hero .ptv-hero::after { background: linear-gradient(90deg, rgb(7 17 22 / .88), rgb(7 17 22 / .42) 52%, transparent 82%); }
+.f1-home-hero .ptv-hero::after { background: linear-gradient(90deg, var(--ptv-media-bg-alpha-88), var(--ptv-media-bg-alpha-42) 52%, transparent 82%); }
 .f1-hero-layout { padding: 0; }
 .f1-home-hero .ptv-hero-content { max-width: min(760px, 68%); padding: clamp(28px, 4.4vw, 72px) clamp(28px, 4.4vw, 72px) 58px; }
-.f1-home-hero .ptv-hero-content h2 { font-size: clamp(30px, 3.7vw, 60px); font-weight: 750; letter-spacing: -.045em; text-shadow: 0 2px 20px rgb(0 0 0 / .16); }
+.f1-home-hero .ptv-hero-content h2 { font-size: clamp(30px, 3.7vw, 60px); font-weight: 750; letter-spacing: -.045em; text-shadow: 0 2px 20px var(--ptv-media-bg-alpha-16); }
 .f1-home-hero .ptv-hero-content p { font-size: 14px; line-height: 1.8; }
 .f1-home-hero .ptv-hero-play { border-radius: var(--f1-radius-sm); box-shadow: none; }
 .f1-home-hero .ptv-hero-indicators { gap: 2px; }
-.f1-home-content .f1-home-shortcuts { min-height: 48px; margin-block: 0 12px; padding-block: 6px; border-bottom: 1px solid var(--ptv-line); }
-.f1-home-shortcuts .f1-shortcut-label { margin-right: auto; font-size: 12px; font-weight: 550; letter-spacing: .035em; color: var(--ptv-muted); }
-.f1-home-shortcuts :is(a, button) { display: inline-flex; align-items: center; justify-content: center; min-width: 44px; min-height: 44px; border-radius: var(--f1-radius-sm); color: var(--ptv-muted); }
 .f1-home-content .f1-continue { margin-block: 22px 32px; }
 .f1-home-content section h2 { display: flex; align-items: center; gap: 10px; font-size: clamp(18px, 1.5vw, 24px); }
 .f1-home-content section h2::before { content: ''; width: 5px; height: 16px; flex: none; background: var(--ptv-accent); transform: skewX(-18deg); }
@@ -46,7 +43,7 @@
 .f1-poster-card .ptv-video-card-meta { gap: 9px; font-size: 12px; font-variant-numeric: tabular-nums; }
 .f1-poster-card .ptv-video-card-menu { border-radius: var(--f1-radius-sm); }
 .f1-poster-card[data-orientation='horizontal'] .f1-poster-art { border-radius: var(--f1-radius-sm); }
-.f1-poster-card[data-orientation='horizontal'] { box-shadow: 0 3px 16px rgb(0 0 0 / .04); }
+.f1-poster-card[data-orientation='horizontal'] { box-shadow: 0 3px 16px var(--ptv-media-bg-alpha-4); }
 
 /* Search is an actual work surface, with history aligned to the same center line. */
 .f1-search-page { padding-top: var(--ptv-page-top); padding-bottom: 64px; }
@@ -55,7 +52,7 @@
 .f1-search-intro h1 { font-size: clamp(23px, 2.2vw, 34px); line-height: 1.4; letter-spacing: -.04em; font-weight: 700; color: var(--ptv-text); }
 .f1-search-intro p { margin-top: 8px; font-size: 13px; line-height: 1.7; color: var(--ptv-muted); }
 .f1-search-page .ptv-search-form { gap: 10px; }
-.f1-search-page .ptv-search-form input { border-color: var(--ptv-line); background: var(--ptv-page); }
+.f1-search-page .ptv-search-form input { border-color: var(--ptv-field-line); background: var(--ptv-page); }
 .f1-search-page .ptv-search-submit { border-radius: var(--f1-radius-sm); min-width: 92px; }
 .f1-search-page .apex-search-options { margin-top: 8px; padding-top: 8px; }
 .f1-search-page[data-search-state='results'] .f1-search-intro { display: none; }
@@ -96,13 +93,13 @@
 .ptv-live-page:is(.f1-tv-live-page, .f1-web-live-page) .ptv-player-grid { border-radius: var(--f1-radius-lg); box-shadow: var(--f1-elevation); background: var(--ptv-panel); }
 .f1-cinema-page .ptv-play-backdrop { opacity: .045; }
 .f1-cinema-page .ptv-player-canvas,
-.ptv-live-page:is(.f1-tv-live-page, .f1-web-live-page) .ptv-player-canvas { background: #070d10; }
+.ptv-live-page:is(.f1-tv-live-page, .f1-web-live-page) .ptv-player-canvas { background: var(--ptv-media-bg); }
 .f1-cinema-page .ptv-player-tools { padding: 14px 18px; border-top: 1px solid var(--ptv-line); background: var(--ptv-panel); }
 .f1-cinema-page .ptv-tool-stack { row-gap: 12px; }
 .f1-cinema-page .f1-film-panel { background: var(--ptv-panel); }
 .f1-episode-workspace .f1-episode-tabs { margin-bottom: 14px; padding: 8px 8px 0; background: var(--ptv-panel); border-bottom: 1px solid var(--ptv-line); gap: 4px; }
 .f1-episode-workspace .f1-episode-tabs > button { min-height: 48px; padding: 12px; font-size: 13px; border-radius: var(--f1-radius-sm) var(--f1-radius-sm) 0 0; }
-.f1-episode-workspace .f1-episode-tabs > button[aria-pressed='true'] { background: var(--ptv-selected); }
+.f1-episode-workspace .f1-episode-tabs > button[aria-pressed='true'] { background: var(--ptv-selected); --ptv-muted: var(--ptv-muted-on-soft); --apex-muted-rgb: var(--apex-muted-on-soft-rgb); --ptv-accent: var(--ptv-accent-on-soft); --apex-accent-rgb: var(--apex-accent-on-soft-rgb); }
 .f1-episode-workspace button { font-variant-numeric: tabular-nums; }
 .f1-cinema-page .f1-film-summary { margin-top: 8px; padding: 20px; border: 1px solid var(--ptv-line); border-radius: var(--f1-radius-lg); background: var(--ptv-panel); }
 .f1-film-summary h1 { font-size: clamp(24px, 2.1vw, 36px); letter-spacing: -.035em; }
@@ -122,7 +119,7 @@
 .f1-room-identity .ptv-room-avatar { width: 60px; height: 60px; border-radius: var(--f1-radius); }
 .f1-room-identity .ptv-room-heading { flex-wrap: wrap; align-items: baseline; gap: 8px 14px; }
 .f1-room-identity .ptv-room-heading h2 { font-size: clamp(18px, 1.7vw, 25px); font-weight: 700; }
-.f1-room-identity .ptv-room-state { margin-top: 0; padding: 2px 8px; border-radius: 5px; background: var(--ptv-soft); }
+.f1-room-identity .ptv-room-state { margin-top: 0; padding: 2px 8px; border-radius: 5px; background: var(--ptv-soft); --ptv-muted: var(--ptv-muted-on-soft); --apex-muted-rgb: var(--apex-muted-on-soft-rgb); --ptv-accent: var(--ptv-accent-on-soft); --apex-accent-rgb: var(--apex-accent-on-soft-rgb); }
 .f1-room-identity .ptv-room-meta { gap: 6px 14px; margin-top: 10px; font-size: 11px; }
 .f1-broadcast-console { padding-block: 20px 8px; background: var(--ptv-panel); }
 .f1-broadcast-console .ptv-live-field > span:first-child { font-size: 11px; letter-spacing: .04em; }
@@ -137,11 +134,11 @@
 :is(.f1-cinema-page, .f1-tv-live-page, .f1-web-live-page) .art-controls-left,
 :is(.f1-cinema-page, .f1-tv-live-page, .f1-web-live-page) .art-controls-right { gap: 4px; }
 :is(.f1-cinema-page, .f1-tv-live-page, .f1-web-live-page) .art-control { border-radius: 6px; }
-:is(.f1-cinema-page, .f1-tv-live-page, .f1-web-live-page) .art-setting-panel { border: 1px solid rgb(220 227 230 / .18); border-radius: 12px; background: rgb(16 22 25 / .96); color: #dce3e6; }
+:is(.f1-cinema-page, .f1-tv-live-page, .f1-web-live-page) .art-setting-panel { border: 1px solid var(--ptv-media-text-alpha-18); border-radius: 12px; background: var(--ptv-media-bg-alpha-96); color: var(--ptv-silver); }
 :is(.f1-cinema-page, .f1-tv-live-page, .f1-web-live-page) .art-setting-item { min-height: 42px; }
 
 /* Short-drama has its own immersive canvas and inherits only panel tokens. */
-html[data-moontvplus] #djplayer.f1-duanju-player { --surface: var(--ptv-panel); --surface-2: var(--ptv-soft); --fg: var(--ptv-text); --muted: var(--ptv-muted); --line: var(--ptv-line); --accent: var(--ptv-action); --accent-2: var(--ptv-accent); --accent-ink: var(--ptv-action-ink); --radius: var(--f1-radius); --player: #070d10; font-family: inherit; }
+html[data-moontvplus] #djplayer.f1-duanju-player { --surface: var(--ptv-panel); --surface-2: var(--ptv-soft); --fg: var(--ptv-text); --muted: var(--ptv-muted); --line: var(--ptv-line); --accent: var(--ptv-action); --accent-2: var(--ptv-accent); --accent-ink: var(--ptv-action-ink); --radius: var(--f1-radius); --player: var(--ptv-media-bg); font-family: inherit; }
 html[data-moontvplus] #djplayer.f1-duanju-player .iconbtn { width: 44px; height: 44px; border-radius: var(--f1-radius-sm); }
 html[data-moontvplus] #djplayer.f1-duanju-player .top { padding-inline: 18px; }
 html[data-moontvplus] #djplayer.f1-duanju-player .name { font-size: 15px; letter-spacing: -.015em; }
@@ -151,7 +148,6 @@ html[data-moontvplus] #djplayer.f1-duanju-player .drawer { border-top: 1px solid
 @media (hover: hover) and (pointer: fine) {
   .ptv-page .f1-poster-card:hover { transform: translateY(-4px); }
   .ptv-page .f1-poster-card[data-orientation='horizontal']:hover { transform: translateY(-2px); }
-  .f1-home-shortcuts :is(a, button):hover { color: var(--ptv-accent); background: var(--ptv-selected); }
   .f1-personal-library .my-poster:hover { outline: 1px solid var(--ptv-accent); outline-offset: 3px; }
 }
 @media (min-width: 1600px) {
@@ -175,13 +171,11 @@ html[data-moontvplus] #djplayer.f1-duanju-player .drawer { border-top: 1px solid
   .f1-poster-grid, .f1-catalog-page .apex-poster-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 24px 12px; }
   .f1-home-hero { padding-top: 4px; }
   .f1-home-hero .ptv-hero { border-radius: var(--f1-radius); }
-  .f1-home-hero .ptv-hero::after { background: linear-gradient(0deg, rgb(7 17 22 / .95), rgb(7 17 22 / .32) 68%, transparent); }
+  .f1-home-hero .ptv-hero::after { background: linear-gradient(0deg, var(--ptv-media-bg-alpha-95), var(--ptv-media-bg-alpha-32) 68%, transparent); }
   .f1-home-hero .ptv-hero-content { max-width: 100%; padding: 24px 22px 52px; }
   .f1-home-hero .ptv-hero-content h2 { font-size: clamp(28px, 7.5vw, 38px); }
   .f1-home-hero .ptv-hero-content p { font-size: 13px; }
   .f1-home-content .apex-rail-item { width: 140px; min-width: 140px; }
-  .f1-home-content .f1-home-shortcuts { gap: 3px; }
-  .f1-shortcut-label { font-size: 11px; }
   .f1-search-page .f1-search-console { padding: 20px 16px; border-radius: var(--f1-radius); }
   .f1-search-page .ptv-search-form { gap: 8px; }
   .f1-search-page .ptv-search-submit { min-width: 66px; padding-inline: 13px; }
@@ -213,11 +207,133 @@ html[data-moontvplus] #djplayer.f1-duanju-player .drawer { border-top: 1px solid
 @media (max-width: 479px) {
   .f1-poster-grid, .f1-catalog-page .apex-poster-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .f1-personal-library .my-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .f1-home-content .f1-home-shortcuts { justify-content: space-between; }
-  .f1-home-shortcuts .f1-shortcut-label { display: none; }
   .f1-request-search { padding: 16px; }
 }
 @media (prefers-reduced-motion: reduce) {
   .ptv-page .f1-poster-card { transition: none; }
   .ptv-page .f1-poster-card:hover { transform: none; }
+}
+
+/* Detail content follows the poster / information / supporting sections hierarchy. */
+.f1-film-details .f1-detail-heading, .f1-resource-dialog .f1-detail-heading {
+  padding: 18px 22px; border-bottom: 1px solid var(--ptv-line);
+  background: var(--ptv-panel); flex-shrink: 0;
+}
+.f1-detail-heading button { display: inline-flex; align-items: center; justify-content: center; min-width: 44px; min-height: 44px; border-radius: 8px; }
+.f1-film-details .f1-detail-content { padding: 24px; }
+.f1-detail-hero { display: grid; grid-template-columns: 144px minmax(0,1fr); gap: 24px; margin-bottom: 28px; padding-bottom: 24px; border-bottom: 1px solid var(--ptv-line); }
+.f1-detail-poster > div { width: 144px; height: 216px; border-radius: 12px; box-shadow: var(--f1-elevation); }
+.f1-detail-hero:not(:has(.f1-detail-poster)) { grid-template-columns: minmax(0,1fr); }
+.f1-detail-identity { align-self: center; }
+.f1-detail-identity h3 { font-size: clamp(24px,3vw,34px); line-height: 1.35; letter-spacing: -.035em; }
+.f1-detail-content > div:not(.f1-detail-hero) { margin-top: 24px; }
+.f1-detail-content h4 { font-size: 14px; letter-spacing: .025em; margin-bottom: 12px; }
+.f1-detail-content p { line-height: 1.85; }
+.f1-resource-dialog { border: 1px solid var(--ptv-line); border-radius: 18px; background: var(--ptv-panel); color: var(--ptv-text); box-shadow: var(--f1-elevation); }
+.f1-resource-dialog h2 { min-width: 0; font-size: 17px; overflow-wrap: anywhere; }
+.f1-episode-workspace .f1-episode-range { margin: 0 -16px 14px; padding: 0 12px; min-height: 56px; border-bottom: 1px solid var(--ptv-line); background: var(--ptv-panel); }
+.f1-episode-workspace .f1-episode-icon { min-width: 44px; min-height: 44px; border: 1px solid var(--ptv-line); border-radius: 8px; }
+@media (max-width: 479px) {
+  .f1-film-details .f1-detail-heading, .f1-resource-dialog .f1-detail-heading { padding: 12px 16px; }
+  .f1-film-details .f1-detail-content { padding: 18px 16px; }
+  .f1-detail-hero { grid-template-columns: 100px minmax(0,1fr); gap: 16px; }
+  .f1-detail-poster > div { width: 100px; height: 150px; }
+  .f1-detail-identity h3 { font-size: 22px; }
+}
+
+/* Playback: player at left, film identity and episodes at right. */
+.f1-cinema-page .ptv-player-grid { gap: 12px; overflow: visible; border: 0; border-radius: 0; box-shadow: none; background: transparent; }
+.f1-cinema-page .ptv-player-canvas, .f1-cinema-page .ptv-player-canvas .shadow-lg { overflow: hidden; border-radius: 7px; }
+.f1-cinema-page .ptv-player-grid > .f1-film-panel { border: 0; border-radius: 0; background: transparent; }
+.f1-film-side-content { display: flex; flex-direction: column; min-height: 0; overflow: hidden; }
+.f1-film-side-info { flex: none; padding: 2px 2px 12px; color: var(--ptv-text); }
+.f1-film-side-info h2 { font-size: 18px; font-weight: 700; line-height: 1.3; }
+.f1-film-side-meta { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 8px; }
+.f1-film-side-meta span { padding: 3px 6px; border-radius: 4px; background: var(--ptv-soft); color: var(--ptv-muted-on-soft); font-size: 11px; line-height: 1.3; --ptv-muted: var(--ptv-muted-on-soft); --apex-muted-rgb: var(--apex-muted-on-soft-rgb); --ptv-accent: var(--ptv-accent-on-soft); --apex-accent-rgb: var(--apex-accent-on-soft-rgb); }
+.f1-film-side-meta .f1-film-side-rating { color: var(--ptv-rating); }
+.f1-film-side-info p { display: -webkit-box; overflow: hidden; -webkit-box-orient: vertical; -webkit-line-clamp: 2; margin-top: 10px; color: var(--ptv-muted); font-size: 12px; line-height: 1.5; }
+.f1-film-side-actions { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 9px; }
+.f1-cinema-page .f1-film-side-actions button { display: inline-flex; align-items: center; justify-content: center; gap: 4px; min-height: 30px; padding: 4px 8px; border: 1px solid var(--ptv-line); border-radius: 5px; background: var(--ptv-soft); color: var(--ptv-text); font-size: 11px; --ptv-muted: var(--ptv-muted-on-soft); --apex-muted-rgb: var(--apex-muted-on-soft-rgb); --ptv-accent: var(--ptv-accent-on-soft); --apex-accent-rgb: var(--apex-accent-on-soft-rgb); }
+.f1-film-side-actions button svg { width: 14px; height: 14px; }
+.f1-film-side-episodes { flex: 1; min-height: 180px; overflow: hidden; border: 1px solid var(--ptv-line); border-radius: 8px; background: var(--ptv-panel); }
+.f1-film-side-episodes .f1-episode-tabs { margin-bottom: 8px; padding-top: 0; }
+.f1-film-side-episodes .f1-episode-tabs > button { min-height: 38px; padding: 8px; }
+.f1-cinema-page .f1-film-summary { margin-top: 8px; border-radius: 8px; }
+@media (min-width: 1200px) {
+  .f1-cinema-page .ptv-player-grid:not(.ptv-player-grid-collapsed) { grid-template-columns: minmax(0, 1fr) minmax(230px, 28%); }
+  .f1-cinema-page .ptv-player-panel > .f1-film-side-content { position: absolute; inset: 0; height: auto; }
+}
+@media (max-width: 1199px) {
+  .f1-cinema-page .ptv-player-grid > .f1-film-panel { height: auto; max-height: none; min-height: 0; overflow: visible; border: 0; }
+  .f1-cinema-page .ptv-player-panel > .f1-film-side-content { height: auto; }
+  .f1-film-side-episodes { height: 330px; }
+}
+
+.f1-cinema-page .f1-player-heading { gap: 10px; margin-bottom: 12px; }
+.f1-player-breadcrumbs { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; min-width: 0; }
+.f1-player-breadcrumbs > a, .f1-player-breadcrumbs > span { color: var(--ptv-muted); font-size: 12px; }
+.f1-cinema-page .f1-player-breadcrumbs h1 { font-size: 14px; letter-spacing: normal; }
+.f1-cinema-page .f1-player-heading > .hidden { margin-left: auto; flex: none; }
+.f1-film-title { position: relative; }
+.f1-film-side-actions > .flex { flex-wrap: wrap; gap: 5px; width: 100%; margin-top: 4px; }
+.f1-film-side-actions > .flex > .flex { gap: 1px; }
+.f1-film-side-actions > .flex > span { font-size: 11px; }
+.f1-film-side-actions > .flex svg { width: 13px; height: 13px; }
+.f1-film-side-actions > .flex > .flex > div { width: 13px; height: 13px; }
+.f1-film-desc-link { display: inline-flex; margin-top: 5px; color: var(--ptv-accent); font-size: 11px; }
+#film-details { scroll-margin-top: 88px; }
+.f1-film-detail-heading { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 16px; padding-bottom: 12px; border-bottom: 1px solid var(--ptv-line); }
+.f1-film-detail-heading h2 { font-size: 16px; font-weight: 650; }
+.f1-film-detail-heading button { min-height: 36px; padding: 6px 10px; border-radius: 6px; color: var(--ptv-accent); font-size: 12px; }
+.f1-film-detail-copy > div { padding: 0; }
+.f1-film-detail-cover > div { padding: 0; }
+@media (min-width:768px) { .f1-cinema-page .f1-film-summary { grid-template-columns: minmax(0,1fr) 130px; padding: 18px; } }
+@media (max-width:767px) { .f1-player-breadcrumbs > a, .f1-player-breadcrumbs > span { display: none; } .f1-cinema-page .f1-player-breadcrumbs h1 { font-size: 15px; } }
+@media (pointer:coarse) { .f1-cinema-page .f1-film-side-actions button { min-width: 44px; min-height: 44px; } }
+
+.f1-film-side-tabs { display: flex; flex: none; gap: 2px; overflow-x: auto; border-bottom: 1px solid var(--ptv-line); }
+.f1-film-side-tabs button { flex: 1 0 auto; min-height: 40px; padding: 8px; border-bottom: 2px solid transparent; color: var(--ptv-muted); font-size: 12px; }
+.f1-film-side-tabs button[aria-pressed='true'] { color: var(--ptv-text); border-color: var(--ptv-accent); }
+.f1-film-side-info[hidden], .f1-film-side-episodes[hidden], .f1-film-side-pane[hidden] { display: none; }
+.f1-film-side-tabs + .f1-film-side-info { padding-top: 14px; }
+.f1-film-side-pane { flex: 1; min-height: 0; overflow: auto; padding: 12px; color: var(--ptv-text); background: var(--ptv-panel); }
+.f1-film-side-ai { display: flex; overflow: hidden; padding: 0; }
+.f1-ai-embedded { display: flex; flex: 1; min-width: 0; min-height: 0; }
+.f1-ai-embedded .f1-ai-panel { width: 100%; max-width: none; height: 100%; max-height: none; border: 0; border-radius: 0; box-shadow: none; }
+
+/* One continuous auxiliary panel with full-width controls. */
+.f1-cinema-page .f1-player-panel-toggle { position: absolute; z-index: 610; top: 10px; right: 10px; }
+.f1-cinema-page .f1-player-panel-toggle button { min-height: 34px; border: 1px solid var(--ptv-media-text-alpha-20); border-radius: 6px; background: var(--ptv-media-bg-alpha-80); box-shadow: none; }
+.f1-cinema-page .f1-player-panel-toggle :is(span, svg) { color: var(--ptv-media-text); }
+.f1-cinema-page .ptv-player-grid > .f1-film-panel { border: 1px solid var(--ptv-line); border-radius: 8px; background: var(--ptv-panel); }
+.f1-film-side-content { width: 100%; }
+.f1-film-side-tabs { width: 100%; gap: 0; }
+.f1-film-side-tabs button { flex: 1 1 0; min-width: 0; }
+.f1-film-side-info, .f1-film-side-tabs + .f1-film-side-info { padding: 12px; }
+.f1-film-side-episodes { border: 0; border-radius: 0; }
+.f1-film-side-episodes .f1-episode-workspace { padding: 0; }
+.f1-film-side-episodes .f1-episode-tabs { width: 100%; margin: 0; padding: 0; gap: 0; }
+.f1-film-side-episodes .f1-episode-tabs > button { border-radius: 0; }
+.f1-film-side-episodes .f1-episode-workspace > .ptv-content-in { padding: 12px; margin-top: 0; }
+.f1-film-side-episodes .f1-episode-range { margin: -12px -12px 12px; padding: 0 12px; }
+
+/* Clear hierarchy: film identity, playback tabs, then the active pane. */
+.f1-cinema-page .ptv-player-grid > .f1-film-panel { border-radius: 12px; }
+.f1-film-side-content { height: 100%; }
+.f1-film-side-tabs { padding: 6px; gap: 4px; background: var(--ptv-soft); --ptv-muted: var(--ptv-muted-on-soft); --apex-muted-rgb: var(--apex-muted-on-soft-rgb); --ptv-accent: var(--ptv-accent-on-soft); --apex-accent-rgb: var(--apex-accent-on-soft-rgb); }
+.f1-film-side-tabs button { min-height: 38px; border: 0; border-radius: 7px; font-size: 13px; font-weight: 600; }
+.f1-film-side-tabs button[aria-pressed='true'] { background: var(--ptv-panel); color: var(--ptv-accent); box-shadow: 0 1px 3px var(--ptv-media-bg-alpha-5); }
+.f1-film-side-info, .f1-film-side-tabs + .f1-film-side-info { padding: 18px; border-bottom: 1px solid var(--ptv-line); }
+.f1-film-side-info h2 { font-size: 20px; line-height: 1.4; }
+.f1-film-side-info p { font-size: 13px; line-height: 1.65; }
+.f1-film-desc-link { font-size: 12px; margin-top: 7px; }
+.f1-film-side-actions { gap: 8px; margin-top: 14px; }
+.f1-cinema-page .f1-film-side-actions button { min-height: 36px; padding: 7px 11px; gap: 6px; border-radius: 7px; font-size: 12px; background: var(--ptv-panel); }
+.f1-film-side-episodes .f1-episode-tabs { margin: 0; padding: 12px 12px 0; gap: 4px; border-bottom: 0; }
+.f1-film-side-episodes .f1-episode-tabs > button { min-height: 40px; border: 0; border-radius: 7px; background: var(--ptv-soft); color: var(--ptv-muted-on-soft); font-size: 13px; font-weight: 600; transition: background-color 160ms, color 160ms; --ptv-muted: var(--ptv-muted-on-soft); --apex-muted-rgb: var(--apex-muted-on-soft-rgb); --ptv-accent: var(--ptv-accent-on-soft); --apex-accent-rgb: var(--apex-accent-on-soft-rgb); }
+.f1-film-side-episodes .f1-episode-tabs > button[aria-pressed='true'] { background: var(--ptv-selected); color: var(--ptv-accent); box-shadow: inset 0 0 0 1px var(--ptv-accent-on-clear-22); --ptv-muted: var(--ptv-muted-on-soft); --apex-muted-rgb: var(--apex-muted-on-soft-rgb); --ptv-accent: var(--ptv-accent-on-soft); --apex-accent-rgb: var(--apex-accent-on-soft-rgb); }
+.f1-film-side-episodes .f1-episode-workspace > .ptv-content-in { padding: 16px 12px 12px; }
+.f1-film-side-episodes .f1-episode-range { margin: 0 0 12px; padding: 0; border-bottom: 1px solid var(--ptv-line); }
+@media (pointer: coarse) {
+  .f1-film-side-episodes .f1-episode-tabs > button, .f1-cinema-page .f1-film-side-actions button { min-height: 44px; }
 }

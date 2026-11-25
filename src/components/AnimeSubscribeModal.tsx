@@ -1,5 +1,8 @@
 'use client';
 
+import { formatAppError, readJsonResponse } from '@/lib/app-error';
+
+
 import { FlaskConical, Loader2, Sparkles, X } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
@@ -76,7 +79,7 @@ export default function AnimeSubscribeModal({
     if (!isOpen || sourcesLoaded) return;
     let cancelled = false;
     fetch('/api/openlist/sources')
-      .then((res) => (res.ok ? res.json() : null))
+      .then((res) => (res.ok ? readJsonResponse<any>(res, "内容操作") : null))
       .then((data) => {
         if (cancelled) return;
         if (Array.isArray(data?.sources) && data.sources.length) {
@@ -156,10 +159,10 @@ export default function AnimeSubscribeModal({
         body: JSON.stringify({ title: keyword, source: form.source }),
       });
       if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
+        const data = await readJsonResponse<any>(res, "内容操作");
         throw new Error(data.error || '智能识别失败');
       }
-      const data: FansubRecognizeResult = await res.json();
+      const data: FansubRecognizeResult = await readJsonResponse<any>(res, "内容操作");
       setRecognition(data);
     } catch (e) {
       setRecognition(null);
@@ -225,10 +228,10 @@ export default function AnimeSubscribeModal({
         }),
       });
       if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
+        const data = await readJsonResponse<any>(res, "内容操作");
         throw new Error(data.error || '测试失败');
       }
-      const data: EpisodeTestResult = await res.json();
+      const data: EpisodeTestResult = await readJsonResponse<any>(res, "内容操作");
       setTestResult(data);
     } catch (e) {
       setTestResult(null);
@@ -272,8 +275,8 @@ export default function AnimeSubscribeModal({
         return;
       }
       if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
-        setError(data.error || '创建订阅失败');
+        const data = await readJsonResponse<any>(res, "内容操作");
+        setError(formatAppError(data.error || '创建订阅失败', "内容操作"));
         return;
       }
       onSuccess?.();

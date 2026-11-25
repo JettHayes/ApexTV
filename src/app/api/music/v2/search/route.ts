@@ -41,6 +41,6 @@ export async function GET(request: NextRequest) {
       }
     );
   } catch (error) {
-    return internalError('搜索歌曲失败', (error as Error).message);
+    return internalError('搜索歌曲失败', error);
   }
 }

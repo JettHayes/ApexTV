@@ -1,3 +1,5 @@
+import { AppRequestError } from '@/lib/app-error';
+
 export interface LxStreamCandidate {
   url?: unknown;
   sourceId?: string;
@@ -193,7 +195,8 @@ export async function openMusicStream(options: OpenMusicStreamOptions) {
         headers: upstream.headers,
       });
       return { response, candidate, attempts };
-    } catch {
+    } catch (error) {
+      if (error instanceof AppRequestError) status = error.info.upstreamStatus || error.info.status || status;
       if (reader) await reader.cancel().catch(() => undefined);
       else if (upstream?.body) await upstream.body.cancel().catch(() => undefined);
       if (controller.signal.aborted) reason = 'TIMEOUT_OR_ABORT';

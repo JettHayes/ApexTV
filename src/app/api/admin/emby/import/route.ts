@@ -1,3 +1,4 @@
+import { appErrorPayload } from '@/lib/app-error';
 import { NextRequest, NextResponse } from 'next/server';
 
 import { getAuthInfoFromCookie } from '@/lib/auth';
@@ -73,7 +74,7 @@ export async function POST(request: NextRequest) {
     });
   } catch (error) {
     return NextResponse.json(
-      { error: '导入失败: ' + (error as Error).message },
+      {...{ error: '导入失败: ' + (error as Error).message }, ...appErrorPayload(error, "后台配置服务", 500)},
       { status: 500 }
     );
   }

@@ -1,3 +1,4 @@
+import { appErrorPayload, reportAppError } from '@/lib/app-error';
 /* eslint-disable no-console,no-case-declarations */
 
 import { NextRequest, NextResponse } from 'next/server';
@@ -56,7 +57,7 @@ export async function POST(request: NextRequest) {
           const nums = await refreshLiveChannels(liveInfo);
           liveInfo.channelNumber = nums;
         } catch (error) {
-          console.error('刷新直播源失败:', error);
+          reportAppError(error, "刷新直播源失败");
           liveInfo.channelNumber = 0;
         }
 
@@ -122,7 +123,7 @@ export async function POST(request: NextRequest) {
           const nums = await refreshLiveChannels(editSource);
           editSource.channelNumber = nums;
         } catch (error) {
-          console.error('刷新直播源失败:', error);
+          reportAppError(error, "刷新直播源失败");
           editSource.channelNumber = 0;
         }
         break;
@@ -175,7 +176,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ success: true });
   } catch (error) {
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : '操作失败' },
+      {...{ error: error instanceof Error ? error.message : '操作失败' }, ...appErrorPayload(error, "后台配置服务", 500)},
       { status: 500 }
     );
   }

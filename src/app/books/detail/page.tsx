@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
 
+import { AppRequestError, formatAppError, reportAppError } from '@/lib/app-error';
 import {
   deleteBookShelf,
   getAllBookShelf,
@@ -191,13 +192,13 @@ export default function BookDetailPage() {
     })
       .then(async (res) => {
         const json = await res.json();
-        if (!res.ok) throw new Error(json.error || '获取详情失败');
+        if (!res.ok) throw new AppRequestError({ ...json, status: res.status }, '获取电子书详情');
         if (abort.signal.aborted) return;
         setDetail(json);
         cacheBookDetail(json);
       })
       .catch((err) => {
-        if (!abort.signal.aborted) setError(err.message || '获取详情失败');
+        if (!abort.signal.aborted) { reportAppError(err, '获取电子书详情'); setError(formatAppError(err, '获取电子书详情')); }
       });
     return () => abort.abort();
   }, [sourceId, bookId, cached]);
@@ -238,14 +239,15 @@ export default function BookDetailPage() {
     })
       .then(async (res) => {
         const json = await res.json();
-        if (!res.ok) throw new Error(json.error || '获取章节失败');
+        if (!res.ok) throw new AppRequestError({ ...json, status: res.status }, '获取电子书章节');
         if (cancelled) return;
         setChapters((json.chapters || []) as BookChapter[]);
       })
       .catch((err) => {
         if (cancelled) return;
         setChapters([]);
-        setChaptersError(err.message || '获取章节失败');
+        reportAppError(err, '获取电子书章节');
+        setChaptersError(formatAppError(err, '获取电子书章节'));
       })
       .finally(() => {
         if (!cancelled) setChaptersLoading(false);
@@ -409,7 +411,7 @@ export default function BookDetailPage() {
                       detail.title
                     );
                   } catch (err) {
-                    setError((err as Error).message || '下载文件失败');
+                    reportAppError(err, '下载电子书'); setError(formatAppError(err, '下载电子书'));
                   } finally {
                     setFileBusy('');
                   }
@@ -500,7 +502,7 @@ export default function BookDetailPage() {
                         item.href
                       );
                     } catch (err) {
-                      setError((err as Error).message || '打开文件失败');
+                      reportAppError(err, '打开电子书'); setError(formatAppError(err, '打开电子书'));
                     } finally {
                       setFileBusy('');
                     }

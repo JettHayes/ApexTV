@@ -1,7 +1,10 @@
-// 观影室首页 - 选项卡式界面
 'use client';
 
-import { List as ListIcon, Lock, RefreshCw,UserPlus, Users } from 'lucide-react';
+import { formatAppError, reportAppError } from '@/lib/app-error';
+// 观影室首页 - 选项卡式界面
+
+
+import { ArrowRight, Lock, Monitor, Music2, RefreshCw, UserPlus, Users, Video } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Suspense, useEffect,useRef,useState } from 'react';
 
@@ -58,7 +61,7 @@ function WatchRoomPageContent() {
   const linkRoomId = searchParams.get('room');
   const watchRoom = useWatchRoomContext();
   const { getRoomList, isConnected, createRoom, joinRoom, currentRoom, isOwner, members, socket } = watchRoom;
-  const [activeTab, setActiveTab] = useState<TabType>('create');
+  const [activeTab, setActiveTab] = useState<TabType>('list');
   const [musicEnabled, setMusicEnabled] = useState(false);
 
   // 获取当前登录用户（在客户端挂载后读取，避免 hydration 错误）
@@ -117,7 +120,7 @@ function WatchRoomPageContent() {
       const roomList = await getRoomList();
       setRooms(roomList);
     } catch (error) {
-      console.error('[WatchRoom] Failed to load rooms:', error);
+      reportAppError(error, "观影室");
     } finally {
       if (showLoading) {
         setLoading(false);
@@ -171,7 +174,7 @@ function WatchRoomPageContent() {
         roomType: 'sync',
       });
     } catch (error: any) {
-      showToast(error.message || '创建房间失败', 'error');
+      showToast(formatAppError(reportAppError(error.message || '创建房间失败', "观影室"), "观影室"), 'error');
     } finally {
       setCreateLoading(false);
     }
@@ -212,7 +215,7 @@ function WatchRoomPageContent() {
       // 注意：加入房间后，isOwner 状态会在 useWatchRoom 中更新
       // 跳转逻辑会在 useEffect 中处理
     } catch (error: any) {
-      showToast(error.message || '加入房间失败', 'error');
+      showToast(formatAppError(reportAppError(error.message || '加入房间失败', "观影室"), "观影室"), 'error');
     } finally {
       setJoinLoading(false);
     }
@@ -236,7 +239,7 @@ function WatchRoomPageContent() {
       roomId: linkRoomId.trim().toUpperCase(),
       userName: currentUsername,
     }).catch((error: any) => {
-      showToast(error.message || '加入房间失败', 'error');
+      showToast(formatAppError(reportAppError(error.message || '加入房间失败', "观影室"), "观影室"), 'error');
     });
   }, [linkRoomId, watchRoom.isConnected, currentRoom, currentUsername, joinRoom]);
 
@@ -358,11 +361,6 @@ function WatchRoomPageContent() {
     return '刚刚';
   };
 
-  const tabs = [
-    { id: 'create' as TabType, label: '创建房间', icon: Users },
-    { id: 'join' as TabType, label: '加入房间', icon: UserPlus },
-    { id: 'list' as TabType, label: '房间列表', icon: ListIcon },
-  ];
 
   return (
     <PageLayout activePath="/watch-room">
@@ -428,7 +426,7 @@ function WatchRoomPageContent() {
                       router.push('/watch-room/screen');
                     }
                   }}
-                  className="px-6 py-2 bg-white text-blue-600 font-medium rounded-lg hover:bg-white/90 transition-colors whitespace-nowrap"
+                  className="px-6 py-2 bg-white text-apex-media-accent font-medium rounded-lg hover:bg-white/90 transition-colors whitespace-nowrap"
                 >
                   立即加入
                 </button>
@@ -453,28 +451,21 @@ function WatchRoomPageContent() {
           </p>
         </div>
 
-        {/* 选项卡 */}
-        <div className="flex overflow-x-auto border-b border-gray-200 dark:border-gray-700">
-          {tabs.map((tab) => {
-            const Icon = tab.icon;
-            return (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                className={`flex shrink-0 items-center gap-2 px-6 py-3 text-sm font-medium transition-colors relative
-                  ${
-                    activeTab === tab.id
-                      ? 'text-blue-600 dark:text-blue-400'
-                      : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
-                  }
-                `}
-              >
-                <Icon className="w-4 h-4" />
-                {tab.label}
-                <div className={`absolute bottom-0 left-0 right-0 h-0.5 bg-blue-600 dark:bg-blue-400 origin-center transition-transform duration-200 ${activeTab === tab.id ? 'scale-x-100' : 'scale-x-0'}`} />
-              </button>
-            );
-          })}
+        <div className="f1-room-entry-grid" aria-label="观影室操作">
+          <button type="button" className="f1-room-entry f1-room-entry-create" onClick={() => setActiveTab('create')} aria-pressed={activeTab === 'create'}>
+            <span className="f1-room-entry-icon"><Video aria-hidden="true" /></span>
+            <span><strong>创建观影室</strong><small>创建房间，邀请好友一起观看</small></span>
+            <ArrowRight className="f1-room-entry-arrow" aria-hidden="true" />
+          </button>
+          <button type="button" className="f1-room-entry f1-room-entry-join" onClick={() => setActiveTab('join')} aria-pressed={activeTab === 'join'}>
+            <span className="f1-room-entry-icon"><UserPlus aria-hidden="true" /></span>
+            <span><strong>加入观影室</strong><small>输入房间号，加入已有房间</small></span>
+            <ArrowRight className="f1-room-entry-arrow" aria-hidden="true" />
+          </button>
+        </div>
+        <div className="f1-room-list-heading">
+          <h2>房间列表</h2>
+          {activeTab !== 'list' && <button type="button" onClick={() => setActiveTab('list')}>查看公开房间 <ArrowRight size={16} /></button>}
         </div>
 
         {/* 选项卡内容 */}
@@ -495,7 +486,7 @@ function WatchRoomPageContent() {
                       <div className="flex items-start justify-between mb-4">
                         <div>
                           <h3 className="text-2xl font-bold mb-1">{currentRoom.name}</h3>
-                          <p className="text-blue-100 text-sm">{currentRoom.description || '暂无描述'}</p>
+                          <p className="text-apex-media-accent text-sm">{currentRoom.description || '暂无描述'}</p>
                         </div>
                         {isOwner && (
                           <span className="bg-yellow-400 text-yellow-900 px-3 py-1 rounded-full text-xs font-bold">
@@ -506,15 +497,15 @@ function WatchRoomPageContent() {
 
                       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-4">
                         <div className="bg-white/10 backdrop-blur rounded-lg p-3">
-                          <p className="text-blue-100 text-xs mb-1">房间号</p>
+                          <p className="text-apex-media-accent text-xs mb-1">房间号</p>
                           <p className="text-xl font-mono font-bold">{currentRoom.id}</p>
                         </div>
                         <div className="bg-white/10 backdrop-blur rounded-lg p-3">
-                          <p className="text-blue-100 text-xs mb-1">成员数</p>
+                          <p className="text-apex-media-accent text-xs mb-1">成员数</p>
                           <p className="text-xl font-bold">{members.length} 人</p>
                         </div>
                         <div className="bg-white/10 backdrop-blur rounded-lg p-3">
-                          <p className="text-blue-100 text-xs mb-1">房间类型</p>
+                          <p className="text-apex-media-accent text-xs mb-1">房间类型</p>
                           <p className="text-base font-bold">{currentRoom.roomType === 'screen' ? '屏幕共享' : currentRoom.roomType === 'music' ? '一起听' : '进度同步'}</p>
                         </div>
                       </div>
@@ -561,7 +552,7 @@ function WatchRoomPageContent() {
                       <button
                         type="button"
                         onClick={() => router.push('/music?watchRoom=music')}
-                        className="w-full bg-emerald-500 hover:bg-emerald-600 text-white font-medium py-3 rounded-lg transition-colors"
+                        className="w-full bg-apex-action hover:bg-apex-action text-apex-action-ink font-medium py-3 rounded-lg transition-colors"
                       >
                         进入音乐页面
                       </button>
@@ -585,7 +576,7 @@ function WatchRoomPageContent() {
                       value={createForm.roomName}
                       onChange={(e) => setCreateForm({ ...createForm, roomName: e.target.value })}
                       placeholder="请输入房间名称"
-                      className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-apex-accent"
                       maxLength={50}
                       required
                     />
@@ -599,7 +590,7 @@ function WatchRoomPageContent() {
                       value={createForm.description}
                       onChange={(e) => setCreateForm({ ...createForm, description: e.target.value })}
                       placeholder="请输入房间描述（可选）"
-                      className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+                      className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-apex-accent resize-none"
                       rows={3}
                       maxLength={200}
                     />
@@ -614,7 +605,7 @@ function WatchRoomPageContent() {
                       value={createForm.password}
                       onChange={(e) => setCreateForm({ ...createForm, password: e.target.value })}
                       placeholder="留空表示无需密码"
-                      className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-apex-accent"
                       maxLength={20}
                     />
                   </div>
@@ -625,7 +616,7 @@ function WatchRoomPageContent() {
                       id="isPublic"
                       checked={createForm.isPublic}
                       onChange={(e) => setCreateForm({ ...createForm, isPublic: e.target.checked })}
-                      className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                      className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-apex-accent"
                     />
                     <label htmlFor="isPublic" className="text-sm text-gray-700 dark:text-gray-300">
                       在房间列表中公开显示
@@ -667,7 +658,7 @@ function WatchRoomPageContent() {
                           onClick={() => setCreateForm({ ...createForm, roomType: 'music' })}
                           className={`rounded-lg border p-4 text-left transition-colors ${
                             createForm.roomType === 'music'
-                              ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-900/20'
+                              ? "border-apex-accent bg-apex-selected dark:bg-apex-selected/20"
                               : 'border-gray-300 dark:border-gray-600'
                           }`}
                         >
@@ -716,7 +707,7 @@ function WatchRoomPageContent() {
                       <div className="flex items-start justify-between mb-4">
                         <div>
                           <h3 className="text-2xl font-bold mb-1">{currentRoom.name}</h3>
-                          <p className="text-green-100 text-sm">{currentRoom.description || '暂无描述'}</p>
+                          <p className="text-apex-media-accent text-sm">{currentRoom.description || '暂无描述'}</p>
                         </div>
                         {isOwner && (
                           <span className="bg-yellow-400 text-yellow-900 px-3 py-1 rounded-full text-xs font-bold">
@@ -727,15 +718,15 @@ function WatchRoomPageContent() {
 
                       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-4">
                         <div className="bg-white/10 backdrop-blur rounded-lg p-3">
-                          <p className="text-green-100 text-xs mb-1">房间号</p>
+                          <p className="text-apex-media-accent text-xs mb-1">房间号</p>
                           <p className="text-xl font-mono font-bold">{currentRoom.id}</p>
                         </div>
                         <div className="bg-white/10 backdrop-blur rounded-lg p-3">
-                          <p className="text-green-100 text-xs mb-1">成员数</p>
+                          <p className="text-apex-media-accent text-xs mb-1">成员数</p>
                           <p className="text-xl font-bold">{members.length} 人</p>
                         </div>
                         <div className="bg-white/10 backdrop-blur rounded-lg p-3">
-                          <p className="text-green-100 text-xs mb-1">房间类型</p>
+                          <p className="text-apex-media-accent text-xs mb-1">房间类型</p>
                           <p className="text-base font-bold">{currentRoom.roomType === 'screen' ? '屏幕共享' : '进度同步'}</p>
                         </div>
                       </div>
@@ -795,7 +786,7 @@ function WatchRoomPageContent() {
                       value={joinForm.roomId}
                       onChange={(e) => setJoinForm({ ...joinForm, roomId: e.target.value.toUpperCase() })}
                       placeholder="请输入6位房间号"
-                      className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 font-mono text-lg tracking-wider focus:outline-none focus:ring-2 focus:ring-green-500"
+                      className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 font-mono text-lg tracking-wider focus:outline-none focus:ring-2 focus:ring-apex-accent"
                       maxLength={6}
                       required
                     />
@@ -810,7 +801,7 @@ function WatchRoomPageContent() {
                       value={joinForm.password}
                       onChange={(e) => setJoinForm({ ...joinForm, password: e.target.value })}
                       placeholder="如果房间有密码，请输入"
-                      className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-green-500"
+                      className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-apex-accent"
                       maxLength={20}
                     />
                   </div>
@@ -880,73 +871,43 @@ function WatchRoomPageContent() {
 
               {/* 房间卡片列表 */}
               {rooms.length > 0 && (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div className="f1-room-directory">
                   {rooms.map((room) => (
-                    <div
-                      key={room.id}
-                      className="bg-white dark:bg-gray-800 rounded-xl p-5 border border-gray-200 dark:border-gray-700 hover:shadow-lg transition-shadow"
-                    >
-                      <div className="flex items-start justify-between mb-3">
-                        <div className="flex-1 min-w-0">
-                          <h3 className="text-lg font-bold text-gray-900 dark:text-gray-100 truncate">
-                            {room.name}
-                          </h3>
-                          {room.description && (
-                            <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-2 mt-1">
-                              {room.description}
-                            </p>
-                          )}
+                    <article key={room.id} className="f1-room-card">
+                      <div className="f1-room-card-heading">
+                        <div className="f1-room-type-art" aria-hidden="true">
+                          {room.currentState?.type === 'music' && room.currentState.song.pic
+                            ? <img src={room.currentState.song.pic} alt="" />
+                            : room.roomType === 'music' ? <Music2 /> : room.roomType === 'screen' ? <Monitor /> : <Video />}
                         </div>
-                        {room.password && (
-                          <Lock className="w-5 h-5 text-yellow-500 flex-shrink-0 ml-2" />
-                        )}
+                        <div className="f1-room-card-identity">
+                          <span className="f1-room-type-label">{room.roomType === 'screen' ? '屏幕共享' : room.roomType === 'music' ? '一起听' : '进度同步'}</span>
+                          <h3>{room.name}</h3>
+                          {room.description && <p>{room.description}</p>}
+                        </div>
+                        {room.password && <Lock className="f1-room-lock" aria-label="需要房间密码" />}
                       </div>
-
-                      <div className="space-y-2 text-sm mb-4">
-                        <div className="flex items-center justify-between">
-                          <span className="text-gray-500 dark:text-gray-400">房间号</span>
-                          <span className="font-mono text-lg font-bold text-gray-900 dark:text-gray-100">
-                            {room.id}
-                          </span>
-                        </div>
-                        <div className="flex items-center gap-2 text-gray-600 dark:text-gray-400">
-                          <Users className="w-4 h-4" />
-                          <span>{room.memberCount} 人在线</span>
-                        </div>
-                        <div className="flex items-center justify-between text-gray-600 dark:text-gray-400">
-                          <span>房主</span>
-                          <span className="font-medium">{room.ownerName}</span>
-                        </div>
-                        <div className="flex items-center justify-between text-gray-600 dark:text-gray-400">
-                          <span>类型</span>
-                          <span>{room.roomType === 'screen' ? '屏幕共享' : room.roomType === 'music' ? '一起听' : '进度同步'}</span>
-                        </div>
-                        <div className="flex items-center justify-between text-gray-600 dark:text-gray-400">
-                          <span>创建时间</span>
-                          <span>{formatTime(room.createdAt)}</span>
-                        </div>
-                        {room.currentState && (
-                          <div className="mt-2 rounded-lg bg-blue-50 dark:bg-blue-900/30 px-3 py-2 border border-blue-200 dark:border-blue-800">
-                            <p className="text-xs text-blue-700 dark:text-blue-300 truncate">
-                              {room.currentState.type === 'play'
-                                ? `正在播放: ${room.currentState.videoName}`
-                                : room.currentState.type === 'live'
-                                  ? `正在观看: ${room.currentState.channelName}`
-                                  : room.currentState.type === 'music'
-                                    ? `正在听: ${room.currentState.song.name} - ${room.currentState.song.artist}`
-                                    : '正在共享屏幕'}
-                            </p>
-                          </div>
-                        )}
-                      </div>
-
-                      <button
-                        onClick={() => handleJoinFromList(room)}
-                        className="w-full bg-teal-600 hover:bg-teal-700 text-white font-medium py-2.5 rounded-lg transition-colors"
-                      >
-                        加入房间
-                      </button>
-                    </div>
+                      <dl className="f1-room-card-facts">
+                        <div><dt>房主</dt><dd>{room.ownerName}</dd></div>
+                        <div><dt>在线</dt><dd><Users size={14} />{room.memberCount} 人</dd></div>
+                        <div><dt>创建时间</dt><dd>{formatTime(room.createdAt)}</dd></div>
+                      </dl>
+                      {room.currentState && (
+                        <p className="f1-room-now-playing">
+                          {room.currentState.type === 'play'
+                            ? `正在播放: ${room.currentState.videoName}`
+                            : room.currentState.type === 'live'
+                              ? `正在观看: ${room.currentState.channelName}`
+                              : room.currentState.type === 'music'
+                                ? `正在听: ${room.currentState.song.name} - ${room.currentState.song.artist}`
+                                : '正在共享屏幕'}
+                        </p>
+                      )}
+                      <footer className="f1-room-card-footer">
+                        <span>房间号 <strong>{room.id}</strong></span>
+                        <button onClick={() => handleJoinFromList(room)}>加入房间</button>
+                      </footer>
+                    </article>
                   ))}
                 </div>
               )}

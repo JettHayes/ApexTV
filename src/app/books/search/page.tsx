@@ -13,6 +13,7 @@ import {
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
+import { AppRequestError, formatAppError, reportAppError } from '@/lib/app-error';
 import type {
   BookListItem,
   BookSearchFailure,
@@ -23,9 +24,9 @@ import {
   cacheBookListItem,
 } from '@/lib/book-route-cache.client';
 import {
+  type BookSearchPlanSummary,
   fetchBookSearchPlan,
   traverseBookSearchBatches,
-  type BookSearchPlanSummary,
 } from '@/lib/book-search.client';
 import {
   buildBookSourceOptions,
@@ -239,14 +240,11 @@ export default function BooksSearchPage() {
         saveState(current);
       } catch (error) {
         if (id !== generation.current) return;
+        if (!abort.signal.aborted) reportAppError(error, '搜索电子书');
         current = {
           ...current,
           status: abort.signal.aborted ? 'stopped' : 'error',
-          error: abort.signal.aborted
-            ? ''
-            : error instanceof Error
-            ? error.message
-            : '搜索失败',
+          error: abort.signal.aborted ? '' : formatAppError(error, '搜索电子书'),
         };
         flush();
         saveState(current);
@@ -274,11 +272,11 @@ export default function BooksSearchPage() {
       .then(async (response) => {
         const data = await response.json();
         if (!response.ok)
-          throw new Error('书源列表加载失败；仍可尝试全部书源搜索');
+          throw new AppRequestError({ ...data, status: response.status }, '加载书源');
         setSources(data.sources || []);
       })
       .catch((error) => {
-        if (!abort.signal.aborted) setSourceError(error.message);
+        if (!abort.signal.aborted) { reportAppError(error, '加载书源'); setSourceError(formatAppError(error, '加载书源')); }
       });
     return () => {
       abort.abort();

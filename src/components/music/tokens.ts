@@ -118,11 +118,10 @@ export const MUSIC_BAR_SUB = MUSIC_LABEL;
  * ------------------------------------------------------------------ */
 
 /**
- * 实心主按钮（播放全部）。填主题色、白字——注意白字走 music-chip 而不是
- * text-white，否则会被管理端主题层染掉。
+ * 实心主按钮：品牌青绿搭配深色文字，封面上的逆色文字另用 music-chip。
  */
 export const MUSIC_BUTTON = cn(
-  'inline-flex min-h-11 items-center gap-2 rounded-lg bg-music-theme px-4 py-2.5 text-sm font-semibold text-music-chip transition-colors duration-200 hover:bg-music-theme-hover disabled:cursor-not-allowed disabled:opacity-40 dark:bg-music-night-theme dark:text-[#062421] dark:hover:bg-music-night-theme-hover',
+  'inline-flex min-h-11 items-center gap-2 rounded-lg bg-music-theme px-4 py-2.5 text-sm font-semibold text-music-action-ink transition-colors duration-200 hover:bg-music-theme-hover disabled:cursor-not-allowed disabled:opacity-40 dark:bg-music-night-theme dark:text-music-action-ink dark:hover:bg-music-night-theme-hover',
   MUSIC_FOCUS
 );
 
@@ -140,7 +139,7 @@ export const MUSIC_DANGER_BUTTON = cn(
 
 /** 行内图标按钮（收藏 / 稍后播放 / 移除）。 */
 export const MUSIC_ICON_BUTTON = cn(
-  'inline-flex h-11 w-11 shrink-0 cursor-pointer items-center justify-center rounded-full text-music-muted transition-colors duration-200 hover:bg-music-card-2 hover:text-music-theme dark:text-music-night-muted dark:hover:bg-music-night-card-2 dark:hover:text-music-night-theme',
+  'inline-flex h-11 w-11 shrink-0 cursor-pointer items-center justify-center rounded-full text-music-muted transition-colors duration-200 hover:bg-music-card-2 hover:text-music-accent dark:text-music-night-muted dark:hover:bg-music-night-card-2 dark:hover:text-music-night-accent',
   MUSIC_FOCUS
 );
 
@@ -176,7 +175,7 @@ export const MUSIC_SWITCH_CARET = 'h-3 w-3 shrink-0 opacity-45';
 
 /** 菜单与菜单项。z-[60] 是为了压过固定播放器（z-50）。 */
 export const MUSIC_MENU =
-  'absolute right-0 top-[calc(100%+6px)] z-[60] grid w-[200px] gap-1 rounded-[10px] border border-music-edge bg-music-paper p-1 shadow-[0_14px_32px_-14px_rgba(0,0,0,0.55)] dark:border-music-night-edge dark:bg-music-night-card';
+  "absolute right-0 top-[calc(100%+6px)] z-[60] grid w-[200px] gap-1 rounded-[10px] border border-music-edge bg-music-paper p-1 shadow-[0_14px_32px_-14px_var(--ptv-media-bg-alpha-55)] dark:border-music-night-edge dark:bg-music-night-card";
 
 export const MUSIC_MENU_ITEM = cn(
   'flex min-h-11 w-full cursor-pointer items-center gap-2.5 rounded-[7px] px-3 py-2 text-left text-[13px] text-music-ink transition-colors duration-150',
@@ -190,7 +189,7 @@ export const MUSIC_MENU_ITEM = cn(
  * 所以凡是要"变淡的主题色"都得换一种画法，别用斜杠透明度。
  */
 export const MUSIC_MENU_ITEM_ACTIVE =
-  'bg-music-card-2 font-semibold text-music-theme dark:bg-music-night-card-2 dark:text-music-night-theme';
+  'bg-music-card-2 font-semibold text-music-accent dark:bg-music-night-card-2 dark:text-music-night-accent';
 
 export const MUSIC_MENU_ITEM_IDLE =
   'hover:bg-music-card-2 dark:hover:bg-music-night-card-2';
@@ -219,7 +218,7 @@ export const MUSIC_SEG_ITEM = cn(
 );
 
 export const MUSIC_SEG_ITEM_ACTIVE =
-  'bg-music-theme font-semibold text-music-chip dark:bg-music-night-theme dark:text-[#062421]';
+  'bg-music-theme font-semibold text-music-action-ink dark:bg-music-night-theme dark:text-music-action-ink';
 
 export const MUSIC_SEG_ITEM_IDLE =
   'hover:bg-music-card-2 hover:text-music-ink dark:hover:bg-music-night-card-2 dark:hover:text-music-night-ink';
@@ -273,9 +272,8 @@ export const MUSIC_SLEEVE = 'relative block w-full text-left';
  */
 export const MUSIC_SLEEVE_DISC = cn(
   'absolute right-[-14px] top-1/2 aspect-square w-[64%] -translate-y-1/2 rounded-full bg-music-vinyl',
-  'shadow-[0_0_0_3px_#fdf4e9,0_0_0_4px_#e7d6bd,0_6px_16px_rgba(0,0,0,0.45)]',
-  'dark:shadow-[0_0_0_3px_#16100b,0_0_0_4px_#3a2e21,0_6px_16px_rgba(0,0,0,0.55)]'
-);
+  'shadow-[var(--ptv-vinyl-shadow)]',
+  );
 
 /**
  * 盘心标签：一圈细边 + 中间那点纸色。
@@ -285,7 +283,7 @@ export const MUSIC_SLEEVE_DISC = cn(
  * background-image，而 `background-image: <渐变>, <颜色>` 是非法值，整条会被浏览器丢掉。
  */
 export const MUSIC_SLEEVE_DISC_LABEL =
-  'absolute inset-[34%] rounded-full border border-white/20 bg-music-night-card bg-[radial-gradient(circle,#f6ece1_0_26%,transparent_27%)]';
+  'absolute inset-[34%] rounded-full border border-white/20 bg-music-night-card bg-[image:var(--ptv-vinyl-label)]';
 
 /** 唱片套面：默认编号排版，有封面时作为图片与文字的共同容器。 */
 export const MUSIC_FACE = cn(
@@ -296,7 +294,7 @@ export const MUSIC_FACE = cn(
   // 16px blur，等于拿 62% 的黑把整条月牙盖住：夜里盘面和页面本来就都是黑的，
   // 这么一压就什么都没了，只剩套子右边一道黑缝。收成 2px/4px 的接缝，够读出
   // "套口压着盘"，又不吃掉盘面。
-  'shadow-[0_1px_2px_rgba(0,0,0,0.22),0_14px_24px_-16px_rgba(0,0,0,0.5),2px_0_4px_-2px_rgba(0,0,0,0.5),inset_2px_0_0_rgba(255,255,255,0.13),inset_5px_0_9px_-5px_rgba(0,0,0,0.5)]'
+  "shadow-[0_1px_2px_var(--ptv-media-bg-alpha-22),0_14px_24px_-16px_var(--ptv-media-bg-alpha-50),2px_0_4px_-2px_var(--ptv-media-bg-alpha-50),inset_2px_0_0_var(--ptv-media-text-alpha-13),inset_5px_0_9px_-5px_var(--ptv-media-bg-alpha-50)]"
 );
 
 export const MUSIC_FACE_TOP =
@@ -350,7 +348,7 @@ export const MUSIC_COVER = 'block w-full text-left';
  * 同一族的 MUSIC_SINGER_FRAME / MUSIC_PICK_FRAME 同理，各自都带着 block。
  */
 export const MUSIC_COVER_FRAME = cn(
-  'relative block aspect-square overflow-hidden rounded-[2px] bg-music-art shadow-[0_1px_2px_rgba(0,0,0,0.22),0_14px_24px_-16px_rgba(0,0,0,0.5)]',
+  "relative block aspect-square overflow-hidden rounded-[2px] bg-music-art shadow-[0_1px_2px_var(--ptv-media-bg-alpha-22),0_14px_24px_-16px_var(--ptv-media-bg-alpha-50)]",
   'dark:bg-music-night-art'
 );
 
@@ -396,7 +394,7 @@ export const MUSIC_SINGER = 'group block w-full text-center';
  */
 export const MUSIC_SINGER_FRAME = cn(
   'relative mx-auto mb-2.5 block aspect-square w-full max-w-[128px] overflow-hidden rounded-full bg-music-art',
-  'shadow-[0_1px_2px_rgba(0,0,0,0.22),0_12px_22px_-16px_rgba(0,0,0,0.5)] dark:bg-music-night-art'
+  "shadow-[0_1px_2px_var(--ptv-media-bg-alpha-22),0_12px_22px_-16px_var(--ptv-media-bg-alpha-50)] dark:bg-music-night-art"
 );
 
 /** 头像图：hover 时轻微推近，是这一页唯一一处位移，留给它。 */
@@ -444,7 +442,7 @@ export const MUSIC_ROW_INDEX =
  * 读不出"唱片"，只读成一堆圆圈；这里退回方形。
  */
 export const MUSIC_ROW_ART =
-  'relative h-[34px] w-[34px] shrink-0 overflow-hidden rounded-[4px] bg-music-art shadow-[0_1px_2px_rgba(0,0,0,0.22)] dark:bg-music-night-art';
+  "relative h-[34px] w-[34px] shrink-0 overflow-hidden rounded-[4px] bg-music-art shadow-[0_1px_2px_var(--ptv-media-bg-alpha-22)] dark:bg-music-night-art";
 
 export const MUSIC_ROW_TEXT = 'flex min-w-0 flex-col gap-0.5';
 
@@ -453,7 +451,7 @@ export const MUSIC_ROW_NAME =
 
 /** 正在播放时的歌名，走主题色。 */
 export const MUSIC_ROW_NAME_THEME =
-  'text-music-theme dark:text-music-night-theme';
+  'text-music-accent dark:text-music-night-accent';
 
 export const MUSIC_ROW_ARTIST =
   'truncate font-music-body text-[calc(11*var(--music-px))] text-music-muted dark:text-music-night-muted';
@@ -477,7 +475,7 @@ export const MUSIC_ROW_ACTIONS = 'flex shrink-0 items-center gap-0.5';
  * 该和歌曲行（MUSIC_ROW）长得是一家人，不该另立一种"卡片"。
  */
 export const MUSIC_QUEUE_SHELL = cn(
-  'flex h-[90vh] max-h-[90vh] w-full max-w-2xl flex-col overflow-hidden rounded-[4px] border border-music-edge bg-music-paper shadow-[0_24px_60px_-20px_rgba(0,0,0,0.7)] md:h-auto dark:border-music-night-edge dark:bg-music-night-card'
+  "flex h-[90vh] max-h-[90vh] w-full max-w-2xl flex-col overflow-hidden rounded-[4px] border border-music-edge bg-music-paper shadow-[0_24px_60px_-20px_var(--ptv-media-bg-alpha-70)] md:h-auto dark:border-music-night-edge dark:bg-music-night-card"
 );
 
 /** 顶栏：底下压一道实心线，和页面标题行（MUSIC_BAR）同一个手法。 */
@@ -521,7 +519,7 @@ export const MUSIC_TAG = cn(
 );
 
 export const MUSIC_TAG_ACTIVE =
-  'border-music-theme bg-music-theme font-medium text-music-chip dark:border-music-night-theme dark:bg-music-night-theme dark:text-[#062421]';
+  'border-music-theme bg-music-theme font-medium text-music-action-ink dark:border-music-night-theme dark:bg-music-night-theme dark:text-music-action-ink';
 
 export const MUSIC_TAG_IDLE =
   'border-music-edge bg-music-card text-music-ink hover:border-music-ink-soft dark:border-music-night-edge dark:bg-music-night-card dark:text-music-night-ink dark:hover:border-music-night-ink-soft';
@@ -542,7 +540,7 @@ export const MUSIC_HOT_RANK =
   'w-6 shrink-0 text-center font-music-mono text-[calc(12*var(--music-px))] font-semibold text-music-graphite [font-variant-numeric:tabular-nums] dark:text-music-night-graphite';
 
 export const MUSIC_HOT_RANK_TOP =
-  'text-music-theme dark:text-music-night-theme';
+  'text-music-accent dark:text-music-night-accent';
 
 export const MUSIC_HOT_WORD =
   'truncate font-music-body text-[calc(13*var(--music-px))] text-music-ink dark:text-music-night-ink';
@@ -555,12 +553,12 @@ export const MUSIC_DRAWER_SCRIM =
   'absolute inset-0 cursor-default bg-black/55 backdrop-blur-sm';
 
 export const MUSIC_DRAWER = cn(
-  'absolute left-0 top-0 flex h-full w-72 max-w-[85vw] flex-col border-r border-music-edge bg-music-paper px-5 py-6 shadow-[20px_0_40px_rgba(0,0,0,0.35)]',
+  "absolute left-0 top-0 flex h-full w-72 max-w-[85vw] flex-col border-r border-music-edge bg-music-paper px-5 py-6 shadow-[20px_0_40px_var(--ptv-media-bg-alpha-35)]",
   'dark:border-music-night-edge dark:bg-music-night'
 );
 
 export const MUSIC_DRAWER_BRAND =
-  'grid h-10 w-10 shrink-0 place-items-center rounded-[3px] bg-music-theme text-music-chip dark:bg-music-night-theme';
+  'grid h-10 w-10 shrink-0 place-items-center rounded-[3px] bg-music-theme text-music-action-ink dark:bg-music-night-theme';
 
 export const MUSIC_DRAWER_TITLE =
   'font-music-display text-[calc(17*var(--music-px))] font-semibold uppercase tracking-[0.06em] text-music-ink dark:text-music-night-ink';
@@ -577,7 +575,7 @@ export const MUSIC_DRAWER_ITEM = cn(
 
 /** 选中项：一道主题色竖线 + 底色，不用渐变和阴影。 */
 export const MUSIC_DRAWER_ITEM_ACTIVE =
-  'bg-music-card-2 text-music-theme dark:bg-music-night-card-2 dark:text-music-night-theme';
+  'bg-music-card-2 text-music-accent dark:bg-music-night-card-2 dark:text-music-night-accent';
 
 export const MUSIC_DRAWER_ITEM_IDLE =
   'text-music-muted hover:bg-music-card-2 hover:text-music-ink dark:text-music-night-muted dark:hover:bg-music-night-card-2 dark:hover:text-music-night-ink';
@@ -657,6 +655,6 @@ export const MUSIC_COUNT =
  * `-ml-2` 抵掉左内边距，让箭头和下面的标题左对齐。
  */
 export const MUSIC_BACK_BUTTON = cn(
-  'inline-flex cursor-pointer items-center gap-1.5 rounded-[2px] -ml-2 px-2 py-1 font-music-mono text-[calc(10*var(--music-px))] uppercase tracking-[0.14em] text-music-muted transition-colors duration-200 hover:text-music-theme dark:text-music-night-muted dark:hover:text-music-night-theme',
+  'inline-flex cursor-pointer items-center gap-1.5 rounded-[2px] -ml-2 px-2 py-1 font-music-mono text-[calc(10*var(--music-px))] uppercase tracking-[0.14em] text-music-muted transition-colors duration-200 hover:text-music-accent dark:text-music-night-muted dark:hover:text-music-night-accent',
   MUSIC_FOCUS
 );

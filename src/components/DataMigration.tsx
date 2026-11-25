@@ -2,7 +2,7 @@
 'use client';
 
 import { AlertCircle, AlertTriangle, CheckCircle, Download, FileCheck, Lock, Upload } from 'lucide-react';
-import { useEffect, useRef, useState } from 'react';
+import { type ReactNode, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 
 interface DataMigrationProps {
@@ -15,7 +15,7 @@ interface AlertModalProps {
   type: 'success' | 'error' | 'warning';
   title: string;
   message?: string;
-  html?: string;
+  content?: ReactNode;
   confirmText?: string;
   onConfirm?: () => void;
   showConfirm?: boolean;
@@ -28,7 +28,7 @@ const AlertModal = ({
   type,
   title,
   message,
-  html,
+  content,
   confirmText = '确定',
   onConfirm,
   showConfirm = false,
@@ -89,11 +89,10 @@ const AlertModal = ({
             </p>
           )}
 
-          {html && (
-            <div
-              className="text-left text-gray-600 dark:text-gray-400 mb-4"
-              dangerouslySetInnerHTML={{ __html: html }}
-            />
+          {content && (
+            <div className="text-left text-gray-600 dark:text-gray-400 mb-4">
+              {content}
+            </div>
           )}
 
           <div className="flex justify-center space-x-3">
@@ -156,7 +155,7 @@ const DataMigration = ({ onRefreshConfig }: DataMigrationProps) => {
     type: 'success' | 'error' | 'warning';
     title: string;
     message?: string;
-    html?: string;
+    content?: ReactNode;
     confirmText?: string;
     onConfirm?: () => void;
     showConfirm?: boolean;
@@ -327,17 +326,17 @@ const DataMigration = ({ onRefreshConfig }: DataMigrationProps) => {
       showAlert({
         type: 'success',
         title: '导入成功',
-        html: `
-          <div class="text-left">
+        content: (
+          <div className="text-left">
             <p><strong>导入完成！</strong></p>
-            <p class="mt-2">导入的用户数量: ${result.importedUsers}</p>
-            <p>备份时间: ${new Date(result.timestamp).toLocaleString('zh-CN')}</p>
-            <p>服务器版本: ${result.serverVersion || '未知版本'}</p>
-            <p>漫画数据: ${result.importedMangaData ? '已导入' : '未导入'}</p>
-            <p>电子书数据: ${result.importedBookData ? '已导入' : '未导入'}</p>
-            <p class="mt-3 text-orange-600">请刷新页面以查看最新数据。</p>
+            <p className="mt-2">导入的用户数量: {result.importedUsers}</p>
+            <p>备份时间: {new Date(result.timestamp).toLocaleString('zh-CN')}</p>
+            <p>服务器版本: {result.serverVersion || '未知版本'}</p>
+            <p>漫画数据: {result.importedMangaData ? '已导入' : '未导入'}</p>
+            <p>电子书数据: {result.importedBookData ? '已导入' : '未导入'}</p>
+            <p className="mt-3 text-orange-600">请刷新页面以查看最新数据。</p>
           </div>
-        `,
+        ),
         confirmText: '刷新页面',
         showConfirm: true,
         onConfirm: async () => {
@@ -410,7 +409,7 @@ const DataMigration = ({ onRefreshConfig }: DataMigrationProps) => {
                     value={exportPassword}
                     onChange={(e) => setExportPassword(e.target.value)}
                     placeholder="设置强密码保护备份文件"
-                    className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                    className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-apex-accent focus:border-apex-accent transition-colors"
                     disabled={isExporting}
                   />
                   <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
@@ -426,7 +425,7 @@ const DataMigration = ({ onRefreshConfig }: DataMigrationProps) => {
                       checked={includeMangaExport}
                       onChange={(e) => setIncludeMangaExport(e.target.checked)}
                       disabled={isExporting}
-                      className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                      className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-apex-accent"
                     />
                     漫画数据（书架 + 阅读记录）
                   </label>
@@ -436,7 +435,7 @@ const DataMigration = ({ onRefreshConfig }: DataMigrationProps) => {
                       checked={includeBooksExport}
                       onChange={(e) => setIncludeBooksExport(e.target.checked)}
                       disabled={isExporting}
-                      className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                      className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-apex-accent"
                     />
                     电子书数据（书架 + 阅读记录）
                   </label>
@@ -596,7 +595,7 @@ const DataMigration = ({ onRefreshConfig }: DataMigrationProps) => {
         type={alertModal.type}
         title={alertModal.title}
         message={alertModal.message}
-        html={alertModal.html}
+        content={alertModal.content}
         confirmText={alertModal.confirmText}
         onConfirm={alertModal.onConfirm}
         showConfirm={alertModal.showConfirm}

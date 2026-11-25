@@ -1,3 +1,4 @@
+import { reportAppError } from '@/lib/app-error';
 // Socket.IO 客户端管理
 import type { Socket } from 'socket.io-client';
 import { io } from 'socket.io-client';
@@ -125,7 +126,7 @@ class WatchRoomSocketManager {
 
       this.socket.once('connect_error', (error) => {
         // eslint-disable-next-line no-console
-        console.error('[WatchRoom] Connection error:', error);
+        reportAppError(error, "观影室");
         this.connectionPromise = null;
         reject(error);
       });
@@ -190,7 +191,7 @@ class WatchRoomSocketManager {
 
     this.socket.on('error', (error) => {
       // eslint-disable-next-line no-console
-      console.error('[WatchRoom] Socket error:', error);
+      reportAppError(error, "观影室");
     });
 
     // 监听心跳响应
@@ -216,7 +217,7 @@ class WatchRoomSocketManager {
     // 监听重连失败
     this.socket.io.on('reconnect_failed', () => {
       // eslint-disable-next-line no-console
-      console.error('[WatchRoom] Reconnect failed after all attempts');
+      reportAppError('[WatchRoom] Reconnect failed after all attempts', "观影室");
       this.reconnectFailedCallback?.();
     });
   }
@@ -307,7 +308,7 @@ class WatchRoomSocketManager {
   // 手动重连
   async reconnect(): Promise<boolean> {
     if (!this.config) {
-      console.error('[WatchRoom] No config available for reconnection');
+      reportAppError('[WatchRoom] No config available for reconnection', "观影室");
       return false;
     }
 
@@ -341,7 +342,7 @@ class WatchRoomSocketManager {
       await this.connect(this.config);
       return true;
     } catch (error) {
-      console.error('[WatchRoom] Manual reconnection failed:', error);
+      reportAppError(error, "观影室");
       return false;
     }
   }

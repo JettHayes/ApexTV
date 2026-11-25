@@ -1,10 +1,11 @@
 'use client';
 
-import { ArrowDownWideNarrow, ArrowUpWideNarrow } from 'lucide-react';
+import { ArrowDownWideNarrow, ArrowUpWideNarrow, ChevronLeft, ChevronRight, List, Settings } from 'lucide-react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { type MouseEvent, useEffect, useMemo, useRef, useState } from 'react';
 
+import { formatAppError, reportAppError, requestJson } from '@/lib/app-error';
 import { cn } from '@/lib/cn';
 import { getAllMangaReadRecords, getAllMangaShelf, saveMangaReadRecord, saveMangaShelf } from '@/lib/db.client';
 import type { MangaChapter, MangaDetail, MangaReadRecord, MangaShelfItem } from '@/lib/manga.types';
@@ -142,6 +143,8 @@ export default function MangaReadPage() {
   const returnTo = searchParams.get('returnTo') || '/manga';
 
   const [pages, setPages] = useState<string[]>([]);
+  const [pagesLoading, setPagesLoading] = useState(true);
+  const [error, setError] = useState('');
   const [activePage, setActivePage] = useState(0);
   const [readMode, setReadMode] = useState<ReadMode>('vertical');
   const [scaleMode, setScaleMode] = useState<ScaleMode>('fit');
@@ -314,10 +317,20 @@ export default function MangaReadPage() {
 
   useEffect(() => {
     if (!chapterId) return;
-    fetch(`/api/manga/pages?chapterId=${encodeURIComponent(chapterId)}`)
-      .then((res) => res.json())
+    const controller = new AbortController();
+    setError('');
+    setPages([]);
+    setPagesLoading(true);
+    requestJson<{ pages: string[] }>(`/api/manga/pages?chapterId=${encodeURIComponent(chapterId)}`, { signal: controller.signal }, '加载漫画页面')
       .then((data) => setPages(data.pages || []))
-      .catch(() => setPages([]));
+      .catch((err) => {
+        if (controller.signal.aborted) return;
+        setPages([]);
+        reportAppError(err, '加载漫画页面');
+        setError(formatAppError(err, '加载漫画页面'));
+      })
+      .finally(() => { if (!controller.signal.aborted) setPagesLoading(false); });
+    return () => controller.abort();
   }, [chapterId]);
 
   useEffect(() => {
@@ -331,10 +344,9 @@ export default function MangaReadPage() {
       sourceName,
     });
 
-    fetch(`/api/manga/detail?${params.toString()}`)
-      .then((res) => res.json())
+    requestJson<MangaDetail>(`/api/manga/detail?${params.toString()}`, undefined, '加载漫画详情')
       .then((data) => setMangaDetail(data))
-      .catch(() => setMangaDetail(null));
+      .catch((err) => { setMangaDetail(null); reportAppError(err, '加载漫画详情'); setError(formatAppError(err, '加载漫画详情')); });
   }, [cover, mangaId, sourceId, sourceName, title]);
 
   useEffect(() => {
@@ -884,14 +896,14 @@ export default function MangaReadPage() {
     <div className='f1-comic-reader mx-auto max-w-6xl' data-read-mode={readMode}>
       {settingsOpen && (
         <div
-          className='ptv-scrim-in fixed inset-0 z-40 flex items-center justify-center bg-black/40 px-4'
+          className='f1-reader-settings-overlay ptv-scrim-in fixed inset-0 z-40 flex bg-black/40'
           onClick={() => setSettingsOpen(false)}
         >
           <div
             className={cn(READER_SHEET, 'f1-reader-settings ptv-modal-in w-full max-w-sm p-5')}
             onClick={(e) => e.stopPropagation()}
           >
-            <div className='mb-4'>
+            <div className='f1-reader-settings-header mb-4'>
               <div
                 className={cn(
                   'text-base font-semibold',
@@ -903,7 +915,7 @@ export default function MangaReadPage() {
               </div>
             </div>
 
-            <div className='space-y-5'>
+            <div className='f1-reader-settings-body space-y-5'>
               <div>
                 <div className={cn('mb-2 text-sm font-medium', LIBRARY_TEXT)}>
                   显示方式
@@ -976,7 +988,7 @@ export default function MangaReadPage() {
                 </div>
               </div>
 
-              <div className='flex justify-end'>
+              <div className='f1-reader-settings-footer flex justify-end'>
                 <button
                   type='button'
                   className={LIBRARY_BUTTON}
@@ -993,11 +1005,11 @@ export default function MangaReadPage() {
       {chapterListOpen && (
         <div className='ptv-scrim-in fixed inset-0 z-40 bg-black/30' onClick={() => setChapterListOpen(false)}>
           <div
-            className='ptv-drawer-in absolute right-0 top-14 h-[calc(100vh-3.5rem)] supports-[height:100dvh]:h-[calc(100dvh-3.5rem)] w-full max-w-sm overflow-y-auto pb-[env(safe-area-inset-bottom)] border-l border-library-edge bg-library-card shadow-xl dark:border-library-night-edge dark:bg-library-night-card sm:top-16 sm:h-[calc(100vh-4rem)] sm:supports-[height:100dvh]:h-[calc(100dvh-4rem)]'
+            className='f1-reader-drawer ptv-drawer-in absolute right-0 top-14 h-[calc(100vh-3.5rem)] supports-[height:100dvh]:h-[calc(100dvh-3.5rem)] w-full max-w-sm overflow-y-auto pb-[env(safe-area-inset-bottom)] border-l border-library-edge bg-library-card shadow-xl dark:border-library-night-edge dark:bg-library-night-card sm:top-16 sm:h-[calc(100vh-4rem)] sm:supports-[height:100dvh]:h-[calc(100dvh-4rem)]'
             onClick={(event) => event.stopPropagation()}
           >
             <div className='p-4'>
-              <div className='mb-3 flex items-center justify-end'>
+              <div className='f1-reader-drawer-heading mb-3 flex items-center justify-between'><h2>章节目录</h2>
                 <button
                   type='button'
                   className={cn(LIBRARY_GHOST_BUTTON, 'px-3 py-2')}
@@ -1046,7 +1058,7 @@ export default function MangaReadPage() {
       )}
 
       <div
-        className='relative min-h-[calc(100vh-5rem)] supports-[height:100dvh]:min-h-[calc(100dvh-5rem)] select-none px-0 py-3 sm:px-3'
+        className='f1-comic-stage relative min-h-[calc(100vh-5rem)] supports-[height:100dvh]:min-h-[calc(100dvh-5rem)] select-none px-0 py-3 sm:px-3'
         onClick={handleReaderClick}
       >
         {showChapterComplete && (
@@ -1157,6 +1169,7 @@ export default function MangaReadPage() {
             className={cn(
               'fixed bottom-[calc(1rem+env(safe-area-inset-bottom))] left-1/2 z-20 -translate-x-1/2 rounded-full px-2.5 py-0.5 text-sm font-medium',
               pages.length > 1 ? 'cursor-pointer' : 'pointer-events-none',
+              controlsVisible ? 'hidden' : '',
               READER_HUD
             )}
           >
@@ -1164,7 +1177,9 @@ export default function MangaReadPage() {
           </button>
         )}
 
-        {pages.length === 0 && <MangaReadSkeleton readMode={readMode} pageGap={pageGap} />}
+        {error && <p role='alert'>{error}</p>}
+        {!error && pagesLoading && <MangaReadSkeleton readMode={readMode} pageGap={pageGap} />}
+        {!error && !pagesLoading && pages.length === 0 && <p>此章节暂无页面。</p>}
 
         {pages.length === 0 ? (
           null
@@ -1248,6 +1263,25 @@ export default function MangaReadPage() {
           </div>
         )}
       </div>
+
+      {controlsVisible && !settingsOpen && !chapterListOpen && !jumpDialogOpen && !showChapterComplete && (
+        <nav className='f1-comic-mode-bar' aria-label='阅读模式'>
+          {READ_MODE_OPTIONS.map((option) => (
+            <button key={option.value} type='button' aria-pressed={readMode === option.value} onClick={() => setReadMode(option.value)}>{option.label}</button>
+          ))}
+        </nav>
+      )}
+      {controlsVisible && pages.length > 0 && !settingsOpen && !chapterListOpen && !jumpDialogOpen && !showChapterComplete ? (
+        <nav className='f1-comic-controls' aria-label='漫画阅读工具栏'>
+          <button type='button' onClick={() => { setChapterListOpen(true); setSettingsOpen(false); }} aria-label='打开章节目录'><List size={19} /><span>目录</span></button>
+          <button type='button' onClick={goPrev} aria-label='上一页'><ChevronLeft size={20} /><span>上一页</span></button>
+          <button type='button' className='f1-comic-progress' onClick={openJumpDialog} aria-label={`跳转页面，当前第 ${activePage + 1} 页，共 ${pages.length} 页`}>
+            <span className='f1-comic-progress-track'><span style={{ width: `${progress}%` }} /></span><span>{Math.min(activePage + 1, pages.length)} / {pages.length}</span>
+          </button>
+          <button type='button' onClick={goNext} aria-label='下一页'><ChevronRight size={20} /><span>下一页</span></button>
+          <button type='button' onClick={() => { setSettingsOpen(true); setChapterListOpen(false); }} aria-label='打开阅读设置'><Settings size={19} /><span>设置</span></button>
+        </nav>
+      ) : null}
 
       <Link
         href={buildDetailHref()}

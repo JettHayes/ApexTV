@@ -4,9 +4,9 @@
 
 import * as fs from 'fs';
 import { NextRequest, NextResponse } from 'next/server';
-import * as path from 'path';
 
 import { getAuthInfoFromCookie } from '@/lib/auth';
+import { OfflineDownloadPathError, resolveOfflineDownloadDirectory, resolveOfflineDownloadFile } from '@/lib/offline-download-path';
 
 // 检查是否启用离线下载功能
 const OFFLINE_DOWNLOAD_ENABLED = process.env.NEXT_PUBLIC_ENABLE_OFFLINE_DOWNLOAD === 'true';
@@ -48,21 +48,13 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: '参数不完整' }, { status: 400 });
     }
 
-    // 构建文件路径
-    const downloadDir = path.join(
-      OFFLINE_DOWNLOAD_DIR,
-      source,
-      videoId,
-      `ep${parseInt(episodeIndex) + 1}`
-    );
-    const filePath = path.join(downloadDir, file);
-
-    // 安全检查：确保文件路径在下载目录内
-    const normalizedFilePath = path.normalize(filePath);
-    const normalizedDownloadDir = path.normalize(downloadDir);
-    if (!normalizedFilePath.startsWith(normalizedDownloadDir)) {
-      return NextResponse.json({ error: '非法路径' }, { status: 403 });
+    if (!/^\d+$/.test(episodeIndex)) {
+      return NextResponse.json({ error: '集数参数无效' }, { status: 400 });
     }
+    const downloadDir = resolveOfflineDownloadDirectory(
+      OFFLINE_DOWNLOAD_DIR, source, videoId, Number(episodeIndex)
+    );
+    const filePath = resolveOfflineDownloadFile(OFFLINE_DOWNLOAD_DIR, downloadDir, file);
 
     // 检查文件是否存在
     if (!fs.existsSync(filePath)) {
@@ -124,6 +116,9 @@ export async function GET(request: NextRequest) {
       },
     });
   } catch (error) {
+    if (error instanceof OfflineDownloadPathError) {
+      return NextResponse.json({ error: error.message }, { status: 403 });
+    }
     console.error('代理本地文件失败:', error);
     return NextResponse.json(
       { error: error instanceof Error ? error.message : '代理失败' },

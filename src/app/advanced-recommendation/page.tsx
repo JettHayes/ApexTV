@@ -1,5 +1,7 @@
 'use client';
 
+import { formatAppError, readJsonResponse, reportAppError } from '@/lib/app-error';
+
 import { Blend, Loader2 } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
@@ -38,11 +40,7 @@ export default function AdvancedRecommendationPage() {
       setIsLoadingSources(true);
       try {
         const response = await fetch('/api/advanced-recommendation/sources');
-        const data = await response.json();
-
-        if (!response.ok) {
-          throw new Error(data.error || '获取脚本源失败');
-        }
+        const data = await readJsonResponse<any>(response, '获取脚本源');
 
         const nextSources: ScriptSourceOption[] = Array.isArray(data.sources)
           ? data.sources
@@ -57,7 +55,8 @@ export default function AdvancedRecommendationPage() {
 
         setSelectedSource(initialSource);
       } catch (err) {
-        setError(err instanceof Error ? err.message : '获取脚本源失败');
+        reportAppError(err, '获取脚本源');
+        setError(formatAppError(err, '获取脚本源'));
       } finally {
         setIsLoadingSources(false);
         initializedRef.current = true;
@@ -99,17 +98,14 @@ export default function AdvancedRecommendationPage() {
         const response = await fetch(
           `/api/advanced-recommendation/videos?source=${encodeURIComponent(selectedSource)}&page=${page}`
         );
-        const data = await response.json();
-
-        if (!response.ok) {
-          throw new Error(data.error || '获取推荐失败');
-        }
+        const data = await readJsonResponse<any>(response, '获取推荐');
 
         const nextResults = Array.isArray(data.results) ? data.results : [];
         setVideos((prev) => (page === 1 ? nextResults : [...prev, ...nextResults]));
         setHasMore(Number(data.page || page) < Number(data.pageCount || 1));
       } catch (err) {
-        setError(err instanceof Error ? err.message : '获取推荐失败');
+        reportAppError(err, '获取推荐');
+        setError(formatAppError(err, '获取推荐'));
         setHasMore(false);
       } finally {
         setIsLoadingVideos(false);
@@ -187,6 +183,30 @@ export default function AdvancedRecommendationPage() {
           {!isLoadingSources && sources.length > 0 && (
             <>
               {videos.length > 0 ? (
+                <>
+                <section className='f1-recommend-feature' aria-label='主推影片'>
+                  <div className='f1-recommend-feature-card'>
+                    <VideoCard
+                      id={videos[0].id}
+                      source={videos[0].source}
+                      source_name={videos[0].source_name}
+                      title={videos[0].title}
+                      poster={videos[0].poster}
+                      year={videos[0].year}
+                      rate={typeof videos[0].rating === 'number' ? String(videos[0].rating) : undefined}
+                      douban_id={videos[0].douban_id}
+                      tmdb_id={videos[0].tmdb_id}
+                      from='source-search'
+                    />
+                  </div>
+                  <div className='f1-recommend-feature-copy' aria-hidden='true'>
+                    <h2>{videos[0].title}</h2>
+                    <p>{[typeof videos[0].rating === 'number' ? String(videos[0].rating) : '', videos[0].year, videos[0].type_name || videos[0].class].filter(Boolean).join(' · ')}</p>
+                    {videos[0].desc && <p className='f1-recommend-feature-description'>{videos[0].desc}</p>}
+                    <span>▶ 播放</span>
+                  </div>
+                </section>
+                <div className='f1-recommend-section-heading'><h2>为你推荐</h2></div>
                 <div className='f1-poster-grid ptv-fade-in'>
                   {videos.map((video, index) => (
                     <VideoCard
@@ -208,6 +228,7 @@ export default function AdvancedRecommendationPage() {
                     />
                   ))}
                 </div>
+                </>
               ) : !isLoadingVideos && !error ? (
                 <div className='flex items-center justify-center h-32 rounded-xl border border-dashed border-gray-300 bg-gray-50/70 text-sm text-gray-500 dark:border-gray-700 dark:bg-gray-800/50 dark:text-gray-400'>
                   当前脚本暂无推荐内容

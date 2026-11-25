@@ -4,13 +4,14 @@ import { CheckCircle2, Compass, Search, XCircle } from 'lucide-react';
 import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
 
+import { AppRequestError, formatAppError, reportAppError } from '@/lib/app-error';
 import { getAllBookReadRecords } from '@/lib/book.db.client';
 import { BookReadRecord, BookSource } from '@/lib/book.types';
 import { buildBookReadPath } from '@/lib/book-route-cache.client';
 import { cn } from '@/lib/cn';
 
-import ContinueReadingCard from '@/components/media/ContinueReadingCard';
 import BooksPagination from '@/components/books/BooksPagination';
+import ContinueReadingCard from '@/components/media/ContinueReadingCard';
 import EmptyState from '@/components/media/EmptyState';
 import {
   BOOK_RAIL_ITEM,
@@ -95,11 +96,11 @@ export default function BooksHomePage() {
     fetch('/api/books/sources')
       .then(async (res) => {
         const json = await res.json();
-        if (!res.ok) throw new Error(json.error || '加载书源失败');
+        if (!res.ok) throw new AppRequestError({ ...json, status: res.status }, '加载书源');
         return json;
       })
       .then((data) => setSources(data.sources || []))
-      .catch((err) => setError(err.message || '加载书源失败'))
+      .catch((err) => { reportAppError(err, '加载书源'); setError(formatAppError(err, '加载书源')); })
       .finally(() => setLoading(false));
 
     getAllBookReadRecords()

@@ -82,7 +82,7 @@
   padding-block: 4px 12px; border-bottom: 1px solid var(--ptv-line); scrollbar-width: thin;
 }
 .apex-media-tabs > a { display: inline-flex; align-items: center; flex-shrink: 0; gap: 8px; min-height: 44px; padding: 10px 16px; border-radius: 8px; font-size: 13px; }
-.apex-media-tabs > a[aria-current='page'] { background: var(--ptv-selected); color: var(--ptv-accent); }
+.apex-media-tabs > a[aria-current='page'] { background: var(--ptv-selected); color: var(--ptv-accent); --ptv-muted: var(--ptv-muted-on-soft); --apex-muted-rgb: var(--apex-muted-on-soft-rgb); --ptv-accent: var(--ptv-accent-on-soft); --apex-accent-rgb: var(--apex-accent-on-soft-rgb); }
 .apex-media-main { width: 100%; max-width: var(--ptv-max); min-width: 0; margin-inline: auto; padding: 24px var(--ptv-gutter) 48px; }
 .apex-media-main > * { min-width: 0; }
 .apex-media-main .font-book { font-family: inherit; }
@@ -101,8 +101,8 @@
 
 #nprogress .bar, .dark #nprogress .bar { background: var(--ptv-accent); box-shadow: none; }
 #nprogress .peg, .dark #nprogress .peg { box-shadow: 0 0 8px var(--ptv-accent); }
-.apex-segmented { border: 1px solid var(--ptv-line); border-radius: 11px; background: var(--ptv-soft); }
-.apex-segmented .apex-segment-indicator { border-radius: 7px; background: var(--ptv-panel); box-shadow: 0 1px 3px rgb(0 0 0 / .05); }
+.apex-segmented { border: 1px solid var(--ptv-line); border-radius: 11px; background: var(--ptv-soft); --ptv-muted: var(--ptv-muted-on-soft); --apex-muted-rgb: var(--apex-muted-on-soft-rgb); --ptv-accent: var(--ptv-accent-on-soft); --apex-accent-rgb: var(--apex-accent-on-soft-rgb); }
+.apex-segmented .apex-segment-indicator { border-radius: 7px; background: var(--ptv-panel); box-shadow: 0 1px 3px var(--ptv-media-bg-alpha-5); }
 .apex-segmented button { min-height: 40px; border-radius: 7px; font-size: 13px; }
 .apex-segmented button[aria-pressed='true'] { color: var(--ptv-accent); }
 .apex-reading-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 28px 20px; }
@@ -121,9 +121,9 @@
 .apex-music-heading p { margin-top: 7px; font-family: inherit; font-size: 12px; letter-spacing: 0; text-transform: none; }
 .apex-music-navigation { display: flex; flex-shrink: 0; align-items: center; gap: 4px; padding: 4px; border: 1px solid var(--ptv-line); border-radius: 11px; background: var(--ptv-panel); }
 .apex-music-navigation a { display: flex; align-items: center; justify-content: center; min-height: 40px; padding: 8px 14px; border-radius: 7px; white-space: nowrap; color: var(--ptv-muted); font-size: 13px; transition: background-color 160ms, color 160ms; }
-.apex-music-navigation a[aria-current='page'] { background: var(--ptv-selected); color: var(--ptv-accent); font-weight: 600; }
+.apex-music-navigation a[aria-current='page'] { background: var(--ptv-selected); color: var(--ptv-accent); font-weight: 600; --ptv-muted: var(--ptv-muted-on-soft); --apex-muted-rgb: var(--apex-muted-on-soft-rgb); --ptv-accent: var(--ptv-accent-on-soft); --apex-accent-rgb: var(--apex-accent-on-soft-rgb); }
 .apex-music-actions { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; max-width: 100%; }
-.apex-music-empty { min-height: min(48vh, 400px); padding: 40px 20px; border: 1px dashed var(--ptv-line); border-radius: 14px; background: color-mix(in srgb, var(--ptv-panel) 82%, transparent); }
+.apex-music-empty { min-height: min(48vh, 400px); padding: 40px 20px; border: 1px dashed var(--ptv-line); border-radius: 14px; background: var(--ptv-panel-on-clear-82); }
 .apex-playlist-workspace { align-items: start; }
 @media (max-width: 1199px) {
  .apex-music-navigation { order: 3; width: 100%; overflow-x: auto; }
@@ -134,14 +134,14 @@
  .apex-music-navigation { gap: 2px; padding: 3px; }
  .apex-music-navigation a { min-height: 44px; padding-inline: 10px; font-size: 12px; }
 }
-@media (hover: hover) and (pointer: fine) { .apex-music-navigation a:not([aria-current='page']):hover { background: var(--ptv-soft); color: var(--ptv-text); } }
+@media (hover: hover) and (pointer: fine) { .apex-music-navigation a:not([aria-current='page']):hover { background: var(--ptv-soft); color: var(--ptv-text); --ptv-muted: var(--ptv-muted-on-soft); --apex-muted-rgb: var(--apex-muted-on-soft-rgb); --ptv-accent: var(--ptv-accent-on-soft); --apex-accent-rgb: var(--apex-accent-on-soft-rgb); } }
 
 /* 动画只作用于局部内容，避免外壳产生 transform 层叠上下文影响浮层和视频。 */
 .apex-catalog-intro, .apex-page-heading, .apex-media-header-inner { animation: apex-content-enter 240ms var(--ptv-ease) backwards; }
 @keyframes apex-content-enter { from { opacity: 0; translate: 0 6px; } to { opacity: 1; translate: 0 0; } }
 @media (hover: hover) and (pointer: fine) {
-  .apex-secondary-button:hover { border-color: var(--ptv-accent); background: var(--ptv-soft); }
-  .apex-media-tabs > a:not([aria-current='page']):hover { background: var(--ptv-soft); }
+  .apex-secondary-button:hover { border-color: var(--ptv-accent); background: var(--ptv-soft); --ptv-muted: var(--ptv-muted-on-soft); --apex-muted-rgb: var(--apex-muted-on-soft-rgb); --ptv-accent: var(--ptv-accent-on-soft); --apex-accent-rgb: var(--apex-accent-on-soft-rgb); }
+  .apex-media-tabs > a:not([aria-current='page']):hover { background: var(--ptv-soft); --ptv-muted: var(--ptv-muted-on-soft); --apex-muted-rgb: var(--apex-muted-on-soft-rgb); --ptv-accent: var(--ptv-accent-on-soft); --apex-accent-rgb: var(--apex-accent-on-soft-rgb); }
 }
 @media (min-width: 768px) {
   html[data-moontvplus] { --ptv-page-top: 64px; }
@@ -182,11 +182,11 @@
 @media (max-width: 479px) { .apex-poster-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 28px 14px; } }
 @media (min-width: 480px) and (max-width: 767px) { .ptv-page .ptv-media-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
 
-.ptv-live-offline { background: #0c171b; color: #e8eeeb; }
-.ptv-live-offline > svg { color: #8badad; }
+.ptv-live-offline { background: var(--ptv-media-bg); color: var(--ptv-media-text); }
+.ptv-live-offline > svg { color: var(--ptv-media-muted); }
 .ptv-live-offline h3 { font-size: clamp(18px, 2vw, 24px); font-weight: 600; }
-.ptv-live-offline p { max-width: 36ch; color: #a5b7ba; font-size: 14px; line-height: 1.7; }
-.ptv-live-offline button { min-height: 44px; padding: 9px 18px; border: 1px solid #587276; border-radius: 9px; color: #e8eeeb; background: #1d2d33; }
-.ptv-live-offline button:hover { background: #284148; }
+.ptv-live-offline p { max-width: 36ch; color: var(--ptv-media-muted); font-size: 14px; line-height: 1.7; }
+.ptv-live-offline button { min-height: 44px; padding: 9px 18px; border: 1px solid var(--ptv-media-line); border-radius: 9px; color: var(--ptv-media-text); background: var(--ptv-media-panel); }
+.ptv-live-offline button:hover { background: var(--ptv-media-panel); }
 
-.ptv-twitch-play { min-height: 44px; background: #e8eeeb; color: #0c171b; border: 1px solid #d4dcd7; }
+.ptv-twitch-play { min-height: 44px; background: var(--ptv-media-text); color: var(--ptv-media-bg); border: 1px solid var(--ptv-line); }

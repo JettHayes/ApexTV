@@ -3,7 +3,7 @@
 import { MAIN_SOURCE_NAME } from '@/lib/openlist-sources';
 
 const DEFAULT_FIELD_CLASS =
-  'px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed';
+  "px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-apex-accent focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed";
 
 interface OpenListPathInputProps {
   /** 序列化后的值：主源为纯路径，备用源为「源名@路径」 */

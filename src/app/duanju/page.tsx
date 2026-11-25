@@ -1,6 +1,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, react-hooks/exhaustive-deps */
 'use client';
 
+import { formatAppError, readJsonResponse, reportAppError } from '@/lib/app-error';
+
 import { ArrowLeft, ChevronUp, Loader2 } from 'lucide-react';
 import Link from 'next/link';
 import {
@@ -92,6 +94,9 @@ function DuanjuPageClient() {
   const [selectedParentCategory, setSelectedParentCategory] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('');
   const [videos, setVideos] = useState<SearchResult[]>([]);
+  const [sourceError, setSourceError] = useState('');
+  const [categoryError, setCategoryError] = useState('');
+  const [videoError, setVideoError] = useState('');
   const [isLoadingSources, setIsLoadingSources] = useState(true);
   const [isLoadingVideos, setIsLoadingVideos] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
@@ -191,10 +196,11 @@ function DuanjuPageClient() {
     if (!restoreChecked) return;
 
     const fetchSources = async () => {
+      setSourceError('');
       setIsLoadingSources(true);
       try {
         const response = await fetch('/api/duanju/sources');
-        const data = await response.json();
+        const data = await readJsonResponse<any>(response, '获取影视数据');
         if (data.code === 200 && Array.isArray(data.data)) {
           const list = data.data as DuanjuSource[];
           setSources(list);
@@ -208,7 +214,8 @@ function DuanjuPageClient() {
           }
         }
       } catch (error) {
-        console.error('Failed to load duanju sources:', error);
+        reportAppError(error, '获取短剧源');
+        setSourceError(formatAppError(error, '获取短剧源'));
       } finally {
         setIsLoadingSources(false);
       }
@@ -240,11 +247,12 @@ function DuanjuPageClient() {
     }
 
     const fetchCategories = async () => {
+      setCategoryError('');
       try {
         const response = await fetch(
           `/api/duanju/categories?source=${encodeURIComponent(selectedSource)}`
         );
-        const data = await response.json();
+        const data = await readJsonResponse<any>(response, '获取影视数据');
         if (data.code === 200 && Array.isArray(data.data)) {
           const list = data.data as CategoryNode[];
           setCategories(list);
@@ -285,7 +293,8 @@ function DuanjuPageClient() {
           }
         }
       } catch (error) {
-        console.error('Failed to load duanju categories:', error);
+        reportAppError(error, '获取短剧分类');
+        setCategoryError(formatAppError(error, '获取短剧分类'));
         // 分类加载失败时回退到采集源标记的短剧分类，保证列表可用
         const source = sources.find((item) => item.key === selectedSource);
         if (source?.typeId) {
@@ -347,12 +356,13 @@ function DuanjuPageClient() {
     }
 
     const fetchVideos = async () => {
+      setVideoError('');
       setIsLoadingVideos(true);
       try {
         const response = await fetch(
           `/api/duanju/videos?source=${encodeURIComponent(selectedSource)}&categoryId=${encodeURIComponent(selectedCategory)}&page=${currentPage}`
         );
-        const data = await response.json();
+        const data = await readJsonResponse<any>(response, '获取影视数据');
         if (data.code === 200 && Array.isArray(data.data)) {
           if (currentPage === 1) {
             setVideos(data.data);
@@ -362,7 +372,9 @@ function DuanjuPageClient() {
           setHasMore(data.page < data.pageCount);
         }
       } catch (error) {
-        console.error('Failed to load duanju videos:', error);
+        reportAppError(error, '获取短剧列表');
+        setVideoError(formatAppError(error, '获取短剧列表'));
+        setHasMore(false);
       } finally {
         setIsLoadingVideos(false);
       }
@@ -424,6 +436,8 @@ function DuanjuPageClient() {
   return (
     <PageLayout activePath='/duanju'>
       <div className='apex-page f1-duanju-page overflow-visible'>
+        {videoError && videos.length > 0 && <p role='alert' className='text-red-500'>{videoError}</p>}
+        {(sourceError || categoryError || videoError) && <button type='button' onClick={() => window.location.reload()} className='text-red-500 underline'>重试</button>}
         <div className='apex-page-heading f1-media-heading flex items-start justify-between gap-4'>
           <div>
             <h1 className='text-2xl font-bold text-gray-800 dark:text-gray-200'>
@@ -457,7 +471,7 @@ function DuanjuPageClient() {
             ) : sources.length === 0 ? (
               <div className='flex items-center justify-center h-12 bg-gray-50/80 rounded-lg border border-gray-200/50 dark:bg-gray-800 dark:border-gray-700'>
                 <span className='text-sm text-gray-500 dark:text-gray-400'>
-                  暂无包含短剧分类的采集源
+                  {sourceError || '暂无包含短剧分类的采集源'}
                 </span>
               </div>
             ) : (
@@ -572,7 +586,7 @@ function DuanjuPageClient() {
 
         {selectedSource && !selectedCategory && (
           <div className='text-center text-gray-500 py-8 dark:text-gray-400'>
-            当前采集源暂无短剧分类
+            {categoryError || '当前采集源暂无短剧分类'}
           </div>
         )}
 
@@ -590,7 +604,7 @@ function DuanjuPageClient() {
               </div>
             ) : videos.length === 0 ? (
               <div className='text-center text-gray-500 py-8 dark:text-gray-400'>
-                暂无短剧
+                {videoError || '暂无短剧'}
               </div>
             ) : (
               <>

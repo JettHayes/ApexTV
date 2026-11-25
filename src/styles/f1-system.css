@@ -4,16 +4,9 @@ html[data-moontvplus] {
   --f1-radius: 14px;
   --f1-radius-lg: 20px;
   --f1-header-height: 72px;
-  --f1-display: 'Rajdhani', 'Bahnschrift', 'DIN Alternate', 'MiSans', sans-serif;
-  --f1-silver: #dce3e6;
-  --f1-racing: #00b5ad;
-  --f1-elevation: 0 8px 28px rgb(16 35 41 / .065);
-  --f1-panel: var(--ptv-panel);
-  --f1-scrim: rgb(6 15 19 / .64);
-  --f1-fast: 160ms;
+  --f1-display: 'Rajdhani', 'Bahnschrift', 'DIN Alternate', 'MiSans', sans-serif;  --f1-panel: var(--ptv-panel);  --f1-fast: 160ms;
   --f1-enter: 260ms;
 }
-html[data-moontvplus].dark { --f1-elevation: 0 12px 32px rgb(0 0 0 / .2); }
 html[data-moontvplus] body { font-feature-settings: 'ss01'; -webkit-font-smoothing: antialiased; }
 html[data-moontvplus] :where(button, a, input, select, textarea) { -webkit-tap-highlight-color: transparent; }
 html[data-moontvplus] :where(button, a, [tabindex]):focus-visible { outline: 2px solid var(--ptv-accent); outline-offset: 4px; }
@@ -25,16 +18,23 @@ html[data-moontvplus] :where(button):disabled { cursor: not-allowed; }
 .f1-channel-name { padding-inline: 8px; font-size: 14px; font-weight: 600; }
 .f1-channel-links { display: flex; min-width: 0; overflow-x: auto; gap: 6px; scrollbar-width: none; }
 .f1-channel-links a { position: relative; display: inline-flex; align-items: center; min-height: 44px; padding: 9px 18px; white-space: nowrap; color: var(--ptv-muted); font-size: 14px; font-weight: 550; border-radius: var(--f1-radius-sm); }
-.f1-channel-links a[aria-current='page'] { color: var(--ptv-accent); background: var(--ptv-selected); }
+.f1-channel-links a[aria-current='page'] { color: var(--ptv-accent); background: var(--ptv-selected); --ptv-muted: var(--ptv-muted-on-soft); --apex-muted-rgb: var(--apex-muted-on-soft-rgb); --ptv-accent: var(--ptv-accent-on-soft); --apex-accent-rgb: var(--apex-accent-on-soft-rgb); }
 .f1-channel-links a[aria-current='page']::after { content: ''; position: absolute; height: 2px; left: 18px; right: 18px; bottom: 2px; background: var(--ptv-accent); transform: skewX(-20deg); }
 .f1-icon-button { display: inline-flex; align-items: center; justify-content: center; min-width: 44px; min-height: 44px; border-radius: var(--f1-radius-sm); color: var(--ptv-muted); }
+.ptv-page:has(.ptv-sidebar) { --ptv-sidebar-width: 240px; --ptv-sidebar-collapsed-width: 80px; }
+.ptv-page:has(.ptv-sidebar[data-collapsed='true']) { --ptv-sidebar-width: 80px; }
+.ptv-page .ptv-sidebar, .ptv-page .sidebar-offset { width: var(--ptv-sidebar-width); flex-shrink: 0; }
 .ptv-sidebar { background-image: linear-gradient(165deg, rgb(var(--apex-panel-rgb) / .4), transparent 35%); }
 .ptv-sidebar-brand { min-height: var(--f1-header-height); border-bottom-color: transparent; }
+.ptv-sidebar-brand .ptv-brand-name { font-size: 24px; }
+.ptv-sidebar-brand .ptv-brand-mark { width: 40px; height: 34px; flex: none; }
+.ptv-sidebar-brand .ptv-brand-mark img { width: 46px; height: 46px; }
+.ptv-sidebar-brand .ptv-brand > svg { width: 40px; height: 40px; flex: none; }
 .ptv-sidebar[data-collapsed='true'] .ptv-sidebar-brand { flex-direction: column; padding: 12px 8px 4px; min-height: 112px; gap: 2px; }
 .ptv-sidebar[data-collapsed='true'] .ptv-brand { flex: none; justify-content: center; min-height: 44px; }
-.ptv-sidebar[data-collapsed='true'] .ptv-nav-link { padding-inline: 0; justify-content: center; min-height: 48px; margin-block: 4px; }
+.ptv-sidebar[data-collapsed='true'] .ptv-nav-link { padding-inline: 0; justify-content: center; min-height: 44px; margin-block: 0; }
 .ptv-sidebar[data-collapsed='true'] .ptv-nav-link svg { width: 22px; height: 22px; }
-.ptv-sidebar .ptv-nav-link { position: relative; border-radius: 10px; }
+.ptv-sidebar .ptv-nav-link { position: relative; min-height: 44px; border-radius: 10px; }
 .ptv-sidebar .ptv-nav-link[data-active='true']::before { content: ''; width: 3px; height: 18px; position: absolute; inset-inline-start: 0; background: var(--ptv-accent); transform: skewY(-18deg); border-radius: 2px; }
 .ptv-nav-group { margin-top: 18px; padding-top: 8px; }
 .ptv-sidebar[data-collapsed='true'] .ptv-nav-group { border-top: 1px solid var(--ptv-line); margin-inline: 8px; }
@@ -55,8 +55,8 @@ html[data-moontvplus] :where(button):disabled { cursor: not-allowed; }
 .f1-button:active { transform: translateY(1px); }
 .f1-tabs { display: flex; align-items: center; gap: 6px; min-width: 0; overflow-x: auto; padding-bottom: 8px; border-bottom: 1px solid var(--ptv-line); }
 .f1-tabs :is(a,button) { min-height: 44px; flex-shrink: 0; padding: 10px 16px; border-radius: 8px; }
-.f1-tabs :is([aria-current='page'],[aria-selected='true']) { color: var(--ptv-accent); background: var(--ptv-selected); }
-.ptv-dialog { border: 1px solid var(--ptv-line); border-radius: var(--f1-radius-lg); box-shadow: 0 24px 80px rgb(0 0 0 / .25); }
+.f1-tabs :is([aria-current='page'],[aria-selected='true']) { color: var(--ptv-accent); background: var(--ptv-selected); --ptv-muted: var(--ptv-muted-on-soft); --apex-muted-rgb: var(--apex-muted-on-soft-rgb); --ptv-accent: var(--ptv-accent-on-soft); --apex-accent-rgb: var(--apex-accent-on-soft-rgb); }
+.ptv-dialog { border: 1px solid var(--ptv-line); border-radius: var(--f1-radius-lg); box-shadow: 0 24px 80px var(--ptv-media-bg-alpha-25); }
 .ptv-popover, .ptv-menu { border-radius: var(--f1-radius); box-shadow: var(--f1-elevation); }
 .ptv-dialog :is(input:not([type='range']):not([type='checkbox']):not([type='radio']),select,textarea) { border-radius: var(--f1-radius-sm); }
 .f1-state { display: grid; place-content: center; justify-items: center; gap: 14px; padding: clamp(28px, 5vw, 64px); text-align: center; min-height: 220px; color: var(--ptv-muted); }
@@ -68,7 +68,7 @@ html[data-moontvplus] :where(button):disabled { cursor: not-allowed; }
 .f1-standalone { min-height: 100dvh; background: var(--ptv-page); color: var(--ptv-text); }
 .ptv-page[data-navigation='workspace'] .ptv-page-main { padding-bottom: 24px; }
 @media (hover: hover) and (pointer: fine) {
-  .f1-channel-links a:hover, .f1-icon-button:hover { background: var(--ptv-soft); color: var(--ptv-text); }
+  .f1-channel-links a:hover, .f1-icon-button:hover { background: var(--ptv-soft); color: var(--ptv-text); --ptv-muted: var(--ptv-muted-on-soft); --apex-muted-rgb: var(--apex-muted-on-soft-rgb); --ptv-accent: var(--ptv-accent-on-soft); --apex-accent-rgb: var(--apex-accent-on-soft-rgb); }
   .f1-button:hover { border-color: var(--ptv-accent); }
   .f1-button--primary:hover { background: var(--ptv-action-hover); }
 }

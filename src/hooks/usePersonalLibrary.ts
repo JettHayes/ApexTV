@@ -1,13 +1,15 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
+
+import { formatAppError, reportAppError } from '@/lib/app-error';
+import type { Favorite, PlayRecord } from '@/lib/db.client';
 import {
   getAllFavorites,
   getAllPlayRecords,
   getCachedPlayRecordsSnapshot,
   subscribeToDataUpdates,
 } from '@/lib/db.client';
-import type { Favorite, PlayRecord } from '@/lib/db.client';
 import { emptyPersonalLibrary } from '@/lib/personal-library';
 import {
   loadPersonalLibrary,
@@ -41,8 +43,8 @@ export function usePersonalLibrary() {
     );
     window.addEventListener(PERSONAL_LIBRARY_UPDATED, onLibrary);
     const storage = () => {
-      loadPersonalLibrary().catch(() => {
-        if (active) setError('整理数据读取失败，请重试');
+      loadPersonalLibrary().catch((reason) => {
+        if (active) { reportAppError(reason, '读取个人资料库'); setError(formatAppError(reason, '读取个人资料库')); }
       });
     };
     window.addEventListener('storage', storage);
@@ -65,12 +67,10 @@ export function usePersonalLibrary() {
           (result): result is PromiseRejectedResult =>
             result.status === 'rejected'
         );
-        if (active && failed)
-          setError(
-            failed.reason instanceof Error
-              ? failed.reason.message
-              : '部分内容加载失败，请重试'
-          );
+        if (active && failed) {
+          reportAppError(failed.reason, '加载个人资料库');
+          setError(formatAppError(failed.reason, '加载个人资料库'));
+        }
       })
       .finally(() => {
         if (active) setLoading(false);

@@ -135,7 +135,7 @@ export default function ContinueWatching({ className }: ContinueWatchingProps) {
             {Array.from({ length: 8 }).map((_, index) => (
               <div
                 key={index}
-                className='min-w-[180px] w-48 sm:min-w-[200px] sm:w-52'
+                className='f1-continue-item min-w-[180px] w-48 sm:min-w-[200px] sm:w-52'
               >
                 <div className='relative aspect-[3/2] w-full overflow-hidden rounded-lg bg-gray-200 animate-pulse dark:bg-gray-800'>
                   <div className='absolute inset-0 bg-gray-300 dark:bg-gray-700' />
@@ -153,7 +153,7 @@ export default function ContinueWatching({ className }: ContinueWatchingProps) {
                 return (
                   <div
                     key={record.key}
-                    className='min-w-[180px] w-48 sm:min-w-[200px] sm:w-52'
+                    className='f1-continue-item min-w-[180px] w-48 sm:min-w-[200px] sm:w-52'
                     style={{ position: 'relative' }}
                   >
                     <VideoCard
@@ -199,7 +199,7 @@ export default function ContinueWatching({ className }: ContinueWatchingProps) {
                             position: 'absolute',
                             inset: '0',
                             borderRadius: '9999px',
-                            backgroundColor: 'rgb(14 165 233)',
+                            backgroundColor: "var(--ptv-action)",
                           }}
                         />
                         <div
@@ -208,15 +208,15 @@ export default function ContinueWatching({ className }: ContinueWatchingProps) {
                             inset: '0',
                             borderRadius: '9999px',
                             background:
-                              'linear-gradient(to bottom right, rgb(14 165 233), rgb(2 132 199))',
-                            color: 'white',
+                              "linear-gradient(to bottom right, var(--ptv-action), var(--ptv-action))",
+                            color: "var(--ptv-media-text)",
                             fontSize: '11px',
                             fontWeight: 'bold',
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
                             boxShadow:
-                              '0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1)',
+                              "0 10px 15px -3px var(--ptv-media-bg-alpha-10), 0 4px 6px -4px var(--ptv-media-bg-alpha-10)",
                           }}
                         >
                           +{record.new_episodes}

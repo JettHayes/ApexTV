@@ -1,3 +1,4 @@
+import { formatAppError, reportAppError } from '@/lib/app-error';
 /* eslint-disable @typescript-eslint/no-explicit-any,no-console */
 
 import { NextResponse } from 'next/server';
@@ -28,12 +29,12 @@ export async function GET() {
       }
     );
   } catch (error) {
-    console.error('获取短剧视频源失败:', error);
+    reportAppError(error, '获取短剧视频源');
     return NextResponse.json(
       {
         code: 500,
         message: '获取短剧视频源失败',
-        error: (error as Error).message,
+        error: formatAppError(error, '获取短剧视频源'),
       },
       { status: 500 }
     );

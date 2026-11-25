@@ -1,6 +1,9 @@
+'use client';
+
+import { readJsonResponse, reportAppError } from '@/lib/app-error';
 /* eslint-disable @typescript-eslint/no-explicit-any, no-console */
 
-'use client';
+
 
 import { Search, X } from 'lucide-react';
 import Image from 'next/image';
@@ -146,7 +149,7 @@ export default function CorrectDialog({
         throw new Error('搜索失败');
       }
 
-      const data = await response.json();
+      const data = await readJsonResponse<any>(response, "内容操作");
 
       if (data.success && data.results) {
         setResults(data.results);
@@ -157,7 +160,7 @@ export default function CorrectDialog({
         setError('搜索失败');
       }
     } catch (err) {
-      console.error('搜索失败:', err);
+      reportAppError(err, "搜索失败");
       setError('搜索失败，请重试');
     } finally {
       setSearching(false);
@@ -175,7 +178,7 @@ export default function CorrectDialog({
         throw new Error('获取季度列表失败');
       }
 
-      const data = await response.json();
+      const data = await readJsonResponse<any>(response, "内容操作");
 
       if (data.success && data.seasons) {
         return data.seasons as TMDBSeason[];
@@ -184,7 +187,7 @@ export default function CorrectDialog({
         return [];
       }
     } catch (err) {
-      console.error('获取季度列表失败:', err);
+      reportAppError(err, "获取季度列表失败");
       setError('获取季度列表失败，请重试');
       return [];
     } finally {
@@ -282,7 +285,7 @@ export default function CorrectDialog({
       onCorrect();
       onClose();
     } catch (err) {
-      console.error('纠错失败:', err);
+      reportAppError(err, "纠错失败");
       setError('纠错失败，请重试');
     } finally {
       setCorrecting(false);
@@ -392,7 +395,7 @@ export default function CorrectDialog({
       onCorrect();
       onClose();
     } catch (err) {
-      console.error('纠错失败:', err);
+      reportAppError(err, "纠错失败");
       setError('纠错失败，请重试');
     } finally {
       setCorrecting(false);
@@ -430,7 +433,7 @@ export default function CorrectDialog({
                   }
                 }}
                 placeholder='输入搜索关键词'
-                className='flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent'
+                className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-apex-accent focus:border-transparent"
               />
               <button
                 onClick={handleSearch}
@@ -473,7 +476,7 @@ export default function CorrectDialog({
                     value={manualData.title}
                     onChange={(e) => setManualData({ ...manualData, title: e.target.value })}
                     placeholder='请输入影片标题'
-                    className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent'
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-apex-accent focus:border-transparent"
                   />
                 </div>
 
@@ -487,7 +490,7 @@ export default function CorrectDialog({
                     value={manualData.tmdbId}
                     onChange={(e) => setManualData({ ...manualData, tmdbId: e.target.value })}
                     placeholder='例如：550'
-                    className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent'
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-apex-accent focus:border-transparent"
                   />
                   <p className='mt-1 text-xs text-gray-500 dark:text-gray-400'>
                     可在 TMDB 网站查找影片对应的 ID
@@ -504,7 +507,7 @@ export default function CorrectDialog({
                     value={manualData.doubanId}
                     onChange={(e) => setManualData({ ...manualData, doubanId: e.target.value })}
                     placeholder='例如：1292052'
-                    className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent'
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-apex-accent focus:border-transparent"
                   />
                   <p className='mt-1 text-xs text-gray-500 dark:text-gray-400'>
                     可在豆瓣网站查找影片对应的 ID
@@ -552,7 +555,7 @@ export default function CorrectDialog({
                         value={manualData.seasonNumber}
                         onChange={(e) => setManualData({ ...manualData, seasonNumber: e.target.value })}
                         placeholder='例如：1'
-                        className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent'
+                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-apex-accent focus:border-transparent"
                       />
                     </div>
                     <div>
@@ -564,7 +567,7 @@ export default function CorrectDialog({
                         value={manualData.seasonName}
                         onChange={(e) => setManualData({ ...manualData, seasonName: e.target.value })}
                         placeholder='例如：第 1 季'
-                        className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent'
+                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-apex-accent focus:border-transparent"
                       />
                     </div>
                   </>
@@ -580,7 +583,7 @@ export default function CorrectDialog({
                     value={manualData.posterPath}
                     onChange={(e) => setManualData({ ...manualData, posterPath: e.target.value })}
                     placeholder='请输入图片链接'
-                    className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent'
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-apex-accent focus:border-transparent"
                   />
                 </div>
 
@@ -593,7 +596,7 @@ export default function CorrectDialog({
                     type='date'
                     value={manualData.releaseDate}
                     onChange={(e) => setManualData({ ...manualData, releaseDate: e.target.value })}
-                    className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent'
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-apex-accent focus:border-transparent"
                   />
                 </div>
 
@@ -607,7 +610,7 @@ export default function CorrectDialog({
                     value={manualData.voteAverage}
                     onChange={(e) => setManualData({ ...manualData, voteAverage: e.target.value })}
                     placeholder='例如：8.5'
-                    className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent'
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-apex-accent focus:border-transparent"
                   />
                 </div>
 
@@ -621,7 +624,7 @@ export default function CorrectDialog({
                     onChange={(e) => setManualData({ ...manualData, overview: e.target.value })}
                     placeholder='请输入影片简介'
                     rows={3}
-                    className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent'
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-apex-accent focus:border-transparent"
                   />
                 </div>
 

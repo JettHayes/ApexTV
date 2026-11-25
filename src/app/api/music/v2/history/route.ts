@@ -57,7 +57,7 @@ export async function GET(request: NextRequest) {
     const records = await ensureSortOrder(username, await db.listMusicV2History(username));
     return NextResponse.json({ success: true, data: { records } });
   } catch (error) {
-    return internalError('获取播放历史失败', (error as Error).message);
+    return internalError('获取播放历史失败', error);
   }
 }
 
@@ -98,7 +98,7 @@ export async function POST(request: NextRequest) {
     await db.upsertMusicV2History(username, record);
     return NextResponse.json({ success: true, data: { record } });
   } catch (error) {
-    return internalError('保存播放历史失败', (error as Error).message);
+    return internalError('保存播放历史失败', error);
   }
 }
 
@@ -143,7 +143,7 @@ export async function PATCH(request: NextRequest) {
     );
     return NextResponse.json({ success: true, data: { records } });
   } catch (error) {
-    return internalError('调整播放顺序失败', (error as Error).message);
+    return internalError('调整播放顺序失败', error);
   }
 }
 
@@ -161,6 +161,6 @@ export async function DELETE(request: NextRequest) {
     }
     return NextResponse.json({ success: true });
   } catch (error) {
-    return internalError('删除播放历史失败', (error as Error).message);
+    return internalError('删除播放历史失败', error);
   }
 }

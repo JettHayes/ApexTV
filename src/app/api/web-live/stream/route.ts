@@ -1,3 +1,4 @@
+import { reportAppError } from '@/lib/app-error';
 import { NextRequest, NextResponse } from 'next/server';
 
 import { getConfig } from '@/lib/config';
@@ -183,6 +184,7 @@ export async function GET(request: NextRequest) {
     });
   } catch (error) {
     if (request.signal.aborted) return new NextResponse(null, { status: 499 });
+    const info = reportAppError(error, '获取直播流');
     const message = error instanceof Error ? error.message : '';
     const safeMessage =
       /[\u4e00-\u9fff]/.test(message) && !/https?:\/\//i.test(message)
@@ -193,7 +195,7 @@ export async function GET(request: NextRequest) {
     const retryable =
       error instanceof WebLiveResolveError ? error.retryable : true;
     return NextResponse.json(
-      { error: safeMessage, code, retryable },
+      { error: safeMessage, code, retryable, upstreamStatus: info.upstreamStatus },
       {
         status: code === 'PLATFORM_RESTRICTED' ? 503 : 502,
         headers: { 'Cache-Control': 'no-store' },

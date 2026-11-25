@@ -248,13 +248,13 @@ export default function AddToPlaylistModal({
                 placeholder="歌单名称"
                 value={newPlaylistName}
                 onChange={(e) => setNewPlaylistName(e.target.value)}
-                className="w-full px-3 py-2 bg-zinc-800 text-white rounded-lg border border-white/10 focus:border-green-500 focus:outline-none mb-2"
+                className="w-full px-3 py-2 bg-zinc-800 text-white rounded-lg border border-white/10 focus:border-apex-accent focus:outline-none mb-2"
               />
               <textarea
                 placeholder="歌单描述（可选）"
                 value={newPlaylistDescription}
                 onChange={(e) => setNewPlaylistDescription(e.target.value)}
-                className="w-full px-3 py-2 bg-zinc-800 text-white rounded-lg border border-white/10 focus:border-green-500 focus:outline-none resize-none"
+                className="w-full px-3 py-2 bg-zinc-800 text-white rounded-lg border border-white/10 focus:border-apex-accent focus:outline-none resize-none"
                 rows={2}
               />
               <div className="flex gap-2 mt-2">

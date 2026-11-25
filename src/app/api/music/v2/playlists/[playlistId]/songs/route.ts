@@ -19,7 +19,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     const songs = await db.listMusicV2PlaylistItems(playlistId);
     return NextResponse.json({ success: true, data: { songs } });
   } catch (error) {
-    return internalError('获取歌单歌曲失败', (error as Error).message);
+    return internalError('获取歌单歌曲失败', error);
   }
 }
 
@@ -49,7 +49,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     await db.addMusicV2PlaylistItem(playlistId, item);
     return NextResponse.json({ success: true });
   } catch (error) {
-    return internalError('添加歌曲失败', (error as Error).message);
+    return internalError('添加歌曲失败', error);
   }
 }
 
@@ -70,6 +70,6 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
     await db.removeMusicV2PlaylistItem(playlistId, songId);
     return NextResponse.json({ success: true });
   } catch (error) {
-    return internalError('删除歌曲失败', (error as Error).message);
+    return internalError('删除歌曲失败', error);
   }
 }

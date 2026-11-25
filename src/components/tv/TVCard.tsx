@@ -7,7 +7,7 @@ import { processImageUrl } from '@/lib/utils';
 
 import { TVItem } from './types';
 
-export default function TVCard({ item }: { item: TVItem }) {
+export default function TVCard({ item, landscape = false }: { item: TVItem; landscape?: boolean }) {
   const router = useRouter();
   const poster = item.poster ? processImageUrl(item.poster) : '';
   const playUrl = item.href || `/tv/detail?title=${encodeURIComponent(item.title)}${
@@ -17,6 +17,7 @@ export default function TVCard({ item }: { item: TVItem }) {
   return (
     <button
       type='button'
+      data-landscape={landscape || undefined}
       onClick={() => router.push(playUrl)}
       className='f1-tv-card group shrink-0 cursor-pointer text-left outline-none transition duration-200 tv-focusable'
     >
@@ -28,15 +29,19 @@ export default function TVCard({ item }: { item: TVItem }) {
             <Play className='h-14 w-14' />
           </div>
         )}
-        <div className='absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/90 to-transparent p-3'>
-          <div className='inline-flex items-center gap-1 rounded-full bg-black/60 px-2 py-1 text-sm text-amber-300 backdrop-blur'>
-            <Star className='h-4 w-4 fill-current' />
-            {item.rate || '推荐'}
+        {typeof item.progress === 'number' ? (
+          <div className='f1-tv-card-resume'><Play aria-hidden='true' /><span>{item.progress}%</span>
+            <div className='f1-tv-card-progress' role='progressbar' aria-label='观看进度' aria-valuemin={0} aria-valuemax={100} aria-valuenow={item.progress}>
+              <span style={{ transform: 'scaleX(' + item.progress / 100 + ')' }} />
+            </div>
           </div>
-        </div>
+        ) : <div className='f1-tv-card-badge'>
+          {item.rate && /^\d+(\.\d+)?$/.test(item.rate) ? <Star aria-hidden='true' /> : null}
+          {item.rate || '推荐'}
+        </div>}
       </div>
       <h3 className='f1-tv-card-title mt-3 line-clamp-1 font-bold'>{item.title}</h3>
-      <p className='f1-tv-card-meta mt-1'>{item.year || '即刻播放'}</p>
+      <p className='f1-tv-card-meta mt-1'>{item.subtitle || item.year || '即刻播放'}</p>
     </button>
   );
 }

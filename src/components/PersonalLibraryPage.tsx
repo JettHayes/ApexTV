@@ -1,4 +1,7 @@
 'use client';
+
+import { formatAppError } from '@/lib/app-error';
+
 import {
   Dialog,
   DialogBackdrop,
@@ -16,6 +19,7 @@ import {
   MoreHorizontal,
   Play,
   Search,
+  SlidersHorizontal,
   X,
 } from 'lucide-react';
 import Link from 'next/link';
@@ -64,9 +68,9 @@ const views = [
   },
   {
     id: 'watch-later',
-    title: '稍后观看',
+    title: '观看计划',
     icon: Bookmark,
-    intro: '先存下来，留给下一次放松的时间。',
+    intro: '想看、正在看、看完或暂时搁置的影片，都在这里。',
   },
 ] as const;
 type Item = LibraryVideo & { key: string; time: number; record?: PlayRecord };
@@ -138,13 +142,20 @@ export default function PersonalLibraryPage({ view }: { view: string }) {
           })
         : Object.values(all).filter((item) =>
             current.id === 'watch-later'
-              ? library.entries[item.key]?.status === 'later'
+              ? Boolean(library.entries[item.key]?.status)
               : list
               ? library.entries[item.key]?.lists.includes(list)
               : Boolean(favorites[item.key])
           );
     return base.sort((a, b) => b.time - a.time || a.key.localeCompare(b.key));
   }, [current.id, records, all, library.entries, list, favorites]);
+  const planCounts = useMemo(() => {
+    const counts: Record<string, number> = { later: 0, watching: 0, completed: 0, paused: 0 };
+    for (const entry of Object.values(library.entries)) {
+      if (entry.status) counts[entry.status] += 1;
+    }
+    return counts;
+  }, [library.entries]);
   const sources = Array.from(new Set(items.map((item) => item.source_name)))
     .filter(Boolean)
     .sort();
@@ -183,7 +194,7 @@ export default function PersonalLibraryPage({ view }: { view: string }) {
       setNotice(success);
       setConfirm(null);
     } catch (error) {
-      setNotice(error instanceof Error ? error.message : '操作失败，请重试');
+      setNotice(formatAppError(error, "影片整理"));
     } finally {
       setBusy(false);
     }
@@ -191,7 +202,7 @@ export default function PersonalLibraryPage({ view }: { view: string }) {
   const activeList = library.lists.find((item) => item.id === list);
   return (
     <PageLayout activePath={'/my/' + current.id}>
-      <div className='my-page f1-personal-library'>
+      <div className='my-page f1-personal-library' data-view={current.id}>
         <header className='my-heading f1-media-heading'>
           <div>
             <p className='my-eyebrow'>个人媒体库</p>
@@ -212,7 +223,7 @@ export default function PersonalLibraryPage({ view }: { view: string }) {
             </button>
           )}
         </header>
-        {current.id === 'favorites' && (
+        {current.id === 'favorites' && library.lists.length > 0 && (
           <div className='my-collections'>
             <button aria-pressed={!list} onClick={() => setList('')}>
               全部收藏 <span>{Object.keys(favorites).length}</span>
@@ -247,7 +258,7 @@ export default function PersonalLibraryPage({ view }: { view: string }) {
                   title: '重命名片单',
                   copy: '输入新的片单名称。',
                   renameId: activeList.id,
-                  action: async () => {},
+                  action: () => Promise.resolve(),
                 });
               }}
             >
@@ -266,6 +277,18 @@ export default function PersonalLibraryPage({ view }: { view: string }) {
               删除片单
             </button>
           </div>
+        )}
+        {current.id === 'watch-later' && (
+          <nav className='my-plan-states' aria-label='观看计划状态'>
+            <button type='button' aria-pressed={!state} onClick={() => setState('')}>
+              全部计划 <span>{items.length}</span>
+            </button>
+            {Object.entries(WATCH_STATES).map(([value, label]) => (
+              <button key={value} type='button' aria-pressed={state === value} onClick={() => setState(value)}>
+                {label}<span>{planCounts[value]}</span>
+              </button>
+            ))}
+          </nav>
         )}
         <div className='my-toolbar'>
           <label className='my-search'>
@@ -381,7 +404,7 @@ export default function PersonalLibraryPage({ view }: { view: string }) {
                 : current.id === 'history'
                 ? '下一次观看，会留在这里'
                 : current.id === 'watch-later'
-                ? '给下一次观影留个位置'
+                ? '还没有观看计划'
                 : activeList
                 ? '片单还空着'
                 : '收藏你喜欢的内容'}
@@ -390,7 +413,7 @@ export default function PersonalLibraryPage({ view }: { view: string }) {
               {query || source || state
                 ? '试试其他片名，或清除筛选条件。'
                 : current.id === 'watch-later' || activeList
-                ? '在影片卡片的更多菜单或播放页中，选择“整理影片”即可加入。'
+                ? '在影片卡片或播放页中选择“整理影片”，设置观看状态或加入片单。'
                 : '搜索影片，开始播放或添加收藏。'}
             </p>
             <Link
@@ -456,7 +479,7 @@ export default function PersonalLibraryPage({ view }: { view: string }) {
                           aria-label={'整理 ' + item.title}
                           onClick={() => setEditing(item)}
                         >
-                          <MoreHorizontal size={19} />
+                          {current.id === 'history' ? <><SlidersHorizontal size={15} /><span>整理</span></> : <MoreHorizontal size={19} />}
                         </button>
                       </div>
                       <p className='my-video-meta'>
@@ -478,6 +501,10 @@ export default function PersonalLibraryPage({ view }: { view: string }) {
                               ' 分钟'}
                         </p>
                       )}
+                      {current.id === 'history' && item.record && item.record.origin !== 'live' && (
+                        <div className='my-history-progress'><span><i style={{ width: progress + '%' }} /></span><small>{Math.round(progress)}%</small></div>
+                      )}
+                      {current.id === 'history' && <Link className='my-history-resume' href={libraryPlaybackUrl(item, item.record)} prefetch={false} aria-label={'继续播放 ' + item.title}><Play size={17} fill='currentColor' /></Link>}
                       <div className='my-card-actions'>
                         <button
                           className='my-text-button'
@@ -575,7 +602,7 @@ export default function PersonalLibraryPage({ view }: { view: string }) {
         )}
         <p className='my-storage-note'>
           <Check size={13} />
-          {libraryUsesCloud()
+          {loading ? '正在读取收藏与记录…' : libraryUsesCloud()
             ? '收藏、记录和整理信息按当前账号保存'
             : '内容保存在当前浏览器'}{' '}
           · 观看状态由你手动管理
@@ -626,7 +653,7 @@ export default function PersonalLibraryPage({ view }: { view: string }) {
                   setNotice('片单已创建');
                 } catch (error) {
                   setListError(
-                    error instanceof Error ? error.message : '创建失败，请重试'
+                    formatAppError(error, "影片整理")
                   );
                 } finally {
                   setBusy(false);

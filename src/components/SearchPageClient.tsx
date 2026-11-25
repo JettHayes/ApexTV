@@ -1,14 +1,18 @@
 /* eslint-disable react-hooks/exhaustive-deps, @typescript-eslint/no-explicit-any,@typescript-eslint/no-non-null-assertion,no-empty */
 'use client';
 
+import { formatAppError, readJsonResponse, reportAppError } from '@/lib/app-error';
+
 import {
   ChevronUp,
   Film,
   Grid2x2,
   HardDrive,
+  History,
   List,
   ListVideo,
   Magnet,
+  Play,
   RefreshCw,
   Search,
   X,
@@ -17,6 +21,7 @@ import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import React, {
   startTransition,
+  useCallback,
   useEffect,
   useMemo,
   useRef,
@@ -118,10 +123,29 @@ export function SearchPageClient({ searchBase = '/search' }: { searchBase?: stri
   const currentQueryRef = useRef<string>('');
   const [searchQuery, setSearchQuery] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [searchError, setSearchError] = useState('');
   const [showResults, setShowResults] = useState(false);
   const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [showAllHistory, setShowAllHistory] = useState(false);
+  const [showHistoryDropdown, setShowHistoryDropdown] = useState(false);
+  const searchFieldRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!showHistoryDropdown) return;
+    const closeOutside = (event: PointerEvent) => {
+      if (!searchFieldRef.current?.contains(event.target as Node)) setShowHistoryDropdown(false);
+    };
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setShowHistoryDropdown(false);
+    };
+    document.addEventListener('pointerdown', closeOutside);
+    document.addEventListener('keydown', closeOnEscape);
+    return () => {
+      document.removeEventListener('pointerdown', closeOutside);
+      document.removeEventListener('keydown', closeOnEscape);
+    };
+  }, [showHistoryDropdown]);
   const eventSourceRef = useRef<EventSource | null>(null);
   const [totalSources, setTotalSources] = useState(0);
   const [completedSources, setCompletedSources] = useState(0);
@@ -958,23 +982,17 @@ export function SearchPageClient({ searchBase = '/search' }: { searchBase?: stri
     });
 
     return (
-      <button
-        key={item.key}
-        type='button'
-        onClick={() => {
-          savePartialCacheForPlayback();
-          router.push(itemUrl);
-        }}
-        className='group w-full rounded-2xl border border-gray-200/80 bg-white/90 p-3 text-left shadow-sm transition-all hover:border-green-300 hover:shadow-md dark:border-gray-700 dark:bg-gray-900/70 dark:hover:border-green-700'
-      >
-        <div className='flex items-start gap-4'>
-          <div className='relative h-32 w-24 shrink-0 overflow-hidden rounded-xl bg-gray-100 dark:bg-gray-800'>
+      <article key={item.key} className='f1-search-list-row group'>
+        <Link href={itemUrl} prefetch={false} onClick={() => savePartialCacheForPlayback()} className='f1-search-list-main'>
+        <div className='f1-search-list-content flex items-start gap-4'>
+          <div className='f1-search-list-poster relative h-32 w-24 shrink-0 overflow-hidden rounded-xl bg-gray-100 dark:bg-gray-800'>
             <ProxyImage
               originalSrc={item.poster}
               alt={item.title}
               className='h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.04]'
               loading='lazy'
               onClick={(e) => {
+                e.preventDefault();
                 e.stopPropagation();
                 setPreviewImage({
                   url: processImageUrl(item.poster),
@@ -1015,7 +1033,7 @@ export function SearchPageClient({ searchBase = '/search' }: { searchBase?: stri
                     item.doubanId > 0 &&
                     renderTag(
                       '豆瓣',
-                      'bg-emerald-50 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300'
+                      "bg-apex-selected text-apex-accent-on-soft dark:bg-apex-selected/30 dark:text-apex-accent-on-soft"
                     )}
                 </div>
               </div>
@@ -1028,6 +1046,8 @@ export function SearchPageClient({ searchBase = '/search' }: { searchBase?: stri
             )}
           </div>
         </div>
+        <span className='f1-search-list-play'><Play size={14} aria-hidden />立即播放</span>
+        </Link>
 
         {sourceTags.length > 0 && (
           <div
@@ -1062,7 +1082,7 @@ export function SearchPageClient({ searchBase = '/search' }: { searchBase?: stri
             )}
           </div>
         )}
-      </button>
+      </article>
     );
   };
 
@@ -1198,15 +1218,43 @@ export function SearchPageClient({ searchBase = '/search' }: { searchBase?: stri
       setActiveTab('video');
     }
 
-    if (!query) {
-      document.getElementById('searchInput')?.focus();
-    }
+
   }, [
     searchParams,
     netdiskSearchEnabled,
     magnetSearchEnabled,
     featureFlagsReady,
   ]);
+
+  const resetSearchState = useCallback(() => {
+    currentQueryRef.current = '';
+    eventSourceRef.current?.close();
+    eventSourceRef.current = null;
+    if (flushTimerRef.current) clearTimeout(flushTimerRef.current);
+    flushTimerRef.current = null;
+    pendingResultsRef.current = [];
+    groupRefs.current.clear();
+    groupStatsRef.current.clear();
+    setSearchQuery('');
+    setSearchResults([]);
+    setShowResults(false);
+    setShowSuggestions(false);
+    setShowHistoryDropdown(false);
+    setIsLoading(false);
+    setIsFromCache(false);
+    setTotalSources(0);
+    setCompletedSources(0);
+    setForceRefresh(false);
+    setAdvancedOpen(false);
+    setExpandedSourceTags({});
+  }, []);
+
+  const clearSearch = () => {
+    resetSearchState();
+    router.replace(activeTab === 'video' ? searchBase : searchBase + '?type=' + activeTab, { scroll: false });
+    document.getElementById('searchInput')?.focus();
+    setShowHistoryDropdown(true);
+  };
 
   useEffect(() => {
     // 等待转换器和私人影库搜索设置初始化完成
@@ -1323,6 +1371,7 @@ export function SearchPageClient({ searchBase = '/search' }: { searchBase?: stri
         } catch {}
         eventSourceRef.current = null;
       }
+      setSearchError('');
       // 先设置加载状态，再清空结果，避免短暂显示"暂无搜索结果"
       setIsLoading(true);
       setShowResults(true);
@@ -1362,6 +1411,7 @@ export function SearchPageClient({ searchBase = '/search' }: { searchBase?: stri
         const es = new EventSource(appendSpecialSourceParam(searchUrl));
         eventSourceRef.current = es;
 
+        let sourceFailures = 0;
         es.onmessage = (event) => {
           if (!event.data) return;
           try {
@@ -1402,6 +1452,9 @@ export function SearchPageClient({ searchBase = '/search' }: { searchBase?: stri
                 break;
               }
               case 'source_error':
+                sourceFailures += 1;
+                reportAppError(new Error('视频源请求失败'), '搜索视频源');
+                setSearchError(formatAppError(new Error('部分视频源请求失败，请重试或更换视频源'), '搜索视频源'));
                 setCompletedSources((prev) => prev + 1);
                 break;
               case 'complete':
@@ -1418,14 +1471,14 @@ export function SearchPageClient({ searchBase = '/search' }: { searchBase?: stri
                     setSearchResults((prev) => {
                       const newResults = prev.concat(toAppend);
                       // 缓存完整的搜索结果
-                      setCachedResults(trimmed, newResults);
+                      if (!sourceFailures) setCachedResults(trimmed, newResults);
                       return newResults;
                     });
                   });
                 } else {
                   // 即使没有待写入的缓冲，也缓存当前结果
                   setSearchResults((prev) => {
-                    setCachedResults(trimmed, prev);
+                    if (!sourceFailures) setCachedResults(trimmed, prev);
                     return prev;
                   });
                 }
@@ -1442,6 +1495,10 @@ export function SearchPageClient({ searchBase = '/search' }: { searchBase?: stri
         };
 
         es.onerror = () => {
+          if (currentQueryRef.current !== trimmed || eventSourceRef.current !== es) return;
+          const error = new Error('NetworkError');
+          reportAppError(error, '搜索视频');
+          setSearchError(formatAppError(error, '搜索视频'));
           setIsLoading(false);
           // 错误时也清空缓冲
           if (pendingResultsRef.current.length > 0) {
@@ -1468,7 +1525,7 @@ export function SearchPageClient({ searchBase = '/search' }: { searchBase?: stri
           privateLibraryOnly ? '&privateOnly=1' : ''
         }`;
         fetch(appendSpecialSourceParam(searchUrl))
-          .then((response) => response.json())
+          .then((response) => readJsonResponse<any>(response, '搜索视频'))
           .then((data) => {
             if (currentQueryRef.current !== trimmed) return;
 
@@ -1488,8 +1545,12 @@ export function SearchPageClient({ searchBase = '/search' }: { searchBase?: stri
             }
             setIsLoading(false);
           })
-          .catch(() => {
-            setIsLoading(false);
+          .catch((error) => {
+            if (currentQueryRef.current === trimmed) {
+              reportAppError(error, '搜索视频');
+              setSearchError(formatAppError(error, '搜索视频'));
+              setIsLoading(false);
+            }
           });
       }
       setShowSuggestions(false);
@@ -1497,8 +1558,7 @@ export function SearchPageClient({ searchBase = '/search' }: { searchBase?: stri
       // 保存到搜索历史 (事件监听会自动更新界面)
       addSearchHistory(query);
     } else {
-      setShowResults(false);
-      setShowSuggestions(false);
+      resetSearchState();
     }
   }, [
     searchParams,
@@ -1555,7 +1615,12 @@ export function SearchPageClient({ searchBase = '/search' }: { searchBase?: stri
   // 输入框内容变化时触发，显示搜索建议
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
+    if (!value.trim()) {
+      clearSearch();
+      return;
+    }
     setSearchQuery(value);
+    setShowHistoryDropdown(false);
 
     if (value.trim()) {
       setShowSuggestions(true);
@@ -1566,14 +1631,14 @@ export function SearchPageClient({ searchBase = '/search' }: { searchBase?: stri
 
   // 搜索框聚焦时触发，显示搜索建议
   const handleInputFocus = () => {
-    if (searchQuery.trim()) {
-      setShowSuggestions(true);
-    }
+    setShowHistoryDropdown(true);
+    setShowSuggestions(false);
   };
 
   // 搜索表单提交时触发，处理搜索逻辑
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
+    setShowHistoryDropdown(false);
     let trimmed = searchQuery.trim().replace(/\s+/g, ' ');
     if (!trimmed) return;
 
@@ -1615,6 +1680,7 @@ export function SearchPageClient({ searchBase = '/search' }: { searchBase?: stri
   };
 
   const handleSuggestionSelect = (suggestion: string) => {
+    setShowHistoryDropdown(false);
     let processedSuggestion = suggestion;
 
     // 如果开启了繁体转简体，进行转换
@@ -1800,14 +1866,15 @@ export function SearchPageClient({ searchBase = '/search' }: { searchBase?: stri
   return (
     <PageLayout activePath={searchBase}>
       <div className='ptv-search-page f1-search-page overflow-visible' data-search-state={showResults ? 'results' : 'idle'}>
+        {searchError && <p role='alert' className='text-red-500'>{searchError}</p>}
         {/* 搜索框 */}
         <div className='apex-search-controls f1-search-console'>
-          <div className='f1-search-intro'>
-            <h1>找到下一部想看的</h1>
-            <p>搜索影片、剧集，或继续探索你的收藏。</p>
-          </div>
+          <h1 className='sr-only'>搜索影片</h1>
           <form onSubmit={handleSearch} role='search' aria-label='搜索影片' className='ptv-search-form mx-auto'>
-            <div className='relative'>
+            <div className='f1-search-field relative' ref={searchFieldRef}
+              onBlur={(event) => {
+                if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setShowHistoryDropdown(false);
+              }}>
               <Search className='absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400 dark:text-gray-500' />
               <input
                 id='searchInput'
@@ -1815,21 +1882,20 @@ export function SearchPageClient({ searchBase = '/search' }: { searchBase?: stri
                 value={searchQuery}
                 onChange={handleInputChange}
                 onFocus={handleInputFocus}
+                onClick={handleInputFocus}
+                aria-expanded={showHistoryDropdown || showSuggestions}
+                aria-controls={showHistoryDropdown ? 'search-history-dropdown' : undefined}
                 placeholder='搜索电影、电视剧...'
                 aria-label='搜索片名、剧集或演唱会'
                 autoComplete='off'
-                className='w-full h-12 rounded-lg bg-gray-50/80 py-3 pl-10 pr-12 text-sm text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-green-400 focus:bg-white border border-gray-200/50 shadow-sm dark:bg-gray-800 dark:text-gray-300 dark:placeholder-gray-500 dark:focus:bg-gray-700 dark:border-gray-700'
+                className="w-full h-12 rounded-lg bg-gray-50/80 py-3 pl-10 pr-12 text-sm text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-apex-accent focus:bg-white border border-gray-200/50 shadow-sm dark:bg-gray-800 dark:text-gray-300 dark:placeholder-gray-500 dark:focus:bg-gray-700 dark:border-gray-700"
               />
 
               {/* 清除按钮 */}
               {searchQuery && (
                 <button
                   type='button'
-                  onClick={() => {
-                    setSearchQuery('');
-                    setShowSuggestions(false);
-                    document.getElementById('searchInput')?.focus();
-                  }}
+                  onClick={clearSearch}
                   className='ptv-search-clear absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors dark:text-gray-500 dark:hover:text-gray-300'
                   aria-label='清除搜索内容'
                 >
@@ -1840,7 +1906,7 @@ export function SearchPageClient({ searchBase = '/search' }: { searchBase?: stri
               {/* 搜索建议 */}
               <SearchSuggestions
                 query={searchQuery}
-                isVisible={showSuggestions}
+                isVisible={showSuggestions && !showHistoryDropdown}
                 onSelect={handleSuggestionSelect}
                 onClose={() => setShowSuggestions(false)}
                 onEnterKey={() => {
@@ -1862,13 +1928,34 @@ export function SearchPageClient({ searchBase = '/search' }: { searchBase?: stri
                   }
                 }}
               />
+              {showHistoryDropdown && (
+                <section id='search-history-dropdown' className='f1-search-history-dropdown ptv-pop-in' aria-label='搜索历史'>
+                  <header>
+                    <h2><History size={16} aria-hidden />搜索历史</h2>
+                    {searchHistory.length > 0 && <button type='button' onClick={() => { clearSearchHistory(); setShowAllHistory(false); }}>清空历史</button>}
+                  </header>
+                  {searchHistory.length === 0 ? <p className='f1-search-history-empty'>暂无搜索记录，搜索后会自动保存在这里。</p> : (
+                    <ul>
+                      {(showAllHistory ? searchHistory : searchHistory.slice(0, 8)).map((item) => (
+                        <li key={item}>
+                          <button type='button' className='f1-history-query' onClick={() => handleSuggestionSelect(item)}>
+                            <History size={14} aria-hidden /><span>{item}</span>
+                          </button>
+                          <button type='button' className='f1-history-remove' aria-label={`删除历史：${item}`} onClick={() => deleteSearchHistory(item)}><X size={14} aria-hidden /></button>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                  {searchHistory.length > 8 && <button type='button' className='f1-history-expand' aria-expanded={showAllHistory} onClick={() => setShowAllHistory((value) => !value)}>{showAllHistory ? '收起历史' : `查看全部 ${searchHistory.length} 条历史`}</button>}
+                </section>
+              )}
             </div>
-            <button type='submit' className='ptv-search-submit'>搜索</button>
+            <button type='submit' className='ptv-search-submit'><Search size={17} aria-hidden /><span>搜索</span></button>
           </form>
 
           {/* 选项卡：特殊源入口（/under）只有影视搜索，整块隐藏 */}
           {!isSpecialEntry && (
-            <div className='flex justify-center mt-6'>
+            <div className='f1-search-source-tabs flex justify-center mt-6'>
               <CapsuleSwitch
                 options={[
                   {
@@ -1996,39 +2083,7 @@ export function SearchPageClient({ searchBase = '/search' }: { searchBase?: stri
                         </div>
                       </label>
                     )}
-                    <div className='mt-2 border-t border-gray-200 pt-2 dark:border-gray-700'>
-                      <span className='px-1 text-sm text-gray-700 dark:text-gray-300'>
-                        显示方式
-                      </span>
-                      <div className='mt-2 grid grid-cols-2 gap-1 rounded-lg bg-gray-100 p-1 dark:bg-gray-800'>
-                        <button
-                          type='button'
-                          onClick={() => setResultDisplayMode('card')}
-                          className={`inline-flex items-center justify-center gap-1 rounded-md px-2 py-1.5 text-sm transition-colors ${
-                            resultDisplayMode === 'card'
-                              ? 'bg-green-500 text-white'
-                              : 'text-gray-600 hover:bg-white dark:text-gray-300 dark:hover:bg-gray-700'
-                          }`}
-                          aria-label='切换为卡片视图'
-                        >
-                          <Grid2x2 className='h-4 w-4' />
-                          <span>卡片</span>
-                        </button>
-                        <button
-                          type='button'
-                          onClick={() => setResultDisplayMode('list')}
-                          className={`inline-flex items-center justify-center gap-1 rounded-md px-2 py-1.5 text-sm transition-colors ${
-                            resultDisplayMode === 'list'
-                              ? 'bg-green-500 text-white'
-                              : 'text-gray-600 hover:bg-white dark:text-gray-300 dark:hover:bg-gray-700'
-                          }`}
-                          aria-label='切换为列表视图'
-                        >
-                          <List className='h-4 w-4' />
-                          <span>列表</span>
-                        </button>
-                      </div>
-                    </div>
+                    
                   </div>
                 )}
               </div>
@@ -2036,6 +2091,8 @@ export function SearchPageClient({ searchBase = '/search' }: { searchBase?: stri
           )}
 
         </div>
+
+
 
         {pansouCloudFilterOpen &&
           createPortal(
@@ -2095,7 +2152,7 @@ export function SearchPageClient({ searchBase = '/search' }: { searchBase?: stri
           }`}
         >
           {showResults ? (
-            <section key={activeTab} className='ptv-search-history ptv-content-in mb-12'>
+            <section key={activeTab} className='ptv-content-in mb-12'>
               {activeTab === 'video' ? (
                 <>
                   {/* 影视搜索结果 */}
@@ -2135,7 +2192,11 @@ export function SearchPageClient({ searchBase = '/search' }: { searchBase?: stri
                         </span>
                       </h2>
                     </div>
-                    <div className='flex shrink-0 items-center gap-2'>
+                    <div className='f1-search-result-actions flex shrink-0 items-center gap-2'>
+                      <div className='f1-search-view-switch' role='group' aria-label='结果显示方式'>
+                        <button type='button' onClick={() => setResultDisplayMode('card')} aria-pressed={resultDisplayMode === 'card'} aria-label='切换为卡片视图'><Grid2x2 size={17} aria-hidden /><span>卡片</span></button>
+                        <button type='button' onClick={() => setResultDisplayMode('list')} aria-pressed={resultDisplayMode === 'list'} aria-label='切换为列表视图'><List size={17} aria-hidden /><span>列表</span></button>
+                      </div>
                       {searchQuery && (
                         <button
                           onClick={() => {
@@ -2235,39 +2296,7 @@ export function SearchPageClient({ searchBase = '/search' }: { searchBase?: stri
                               </div>
                             </label>
                           )}
-                          <div className='mt-2 border-t border-gray-200 pt-2 dark:border-gray-700'>
-                            <span className='px-1 text-sm text-gray-700 dark:text-gray-300'>
-                              显示方式
-                            </span>
-                            <div className='mt-2 grid grid-cols-2 gap-1 rounded-lg bg-gray-100 p-1 dark:bg-gray-800'>
-                              <button
-                                type='button'
-                                onClick={() => setResultDisplayMode('card')}
-                                className={`inline-flex items-center justify-center gap-1 rounded-md px-2 py-1.5 text-sm transition-colors ${
-                                  resultDisplayMode === 'card'
-                                    ? 'bg-green-500 text-white'
-                                    : 'text-gray-600 hover:bg-white dark:text-gray-300 dark:hover:bg-gray-700'
-                                }`}
-                                aria-label='切换为卡片视图'
-                              >
-                                <Grid2x2 className='h-4 w-4' />
-                                <span>卡片</span>
-                              </button>
-                              <button
-                                type='button'
-                                onClick={() => setResultDisplayMode('list')}
-                                className={`inline-flex items-center justify-center gap-1 rounded-md px-2 py-1.5 text-sm transition-colors ${
-                                  resultDisplayMode === 'list'
-                                    ? 'bg-green-500 text-white'
-                                    : 'text-gray-600 hover:bg-white dark:text-gray-300 dark:hover:bg-gray-700'
-                                }`}
-                                aria-label='切换为列表视图'
-                              >
-                                <List className='h-4 w-4' />
-                                <span>列表</span>
-                              </button>
-                            </div>
-                          </div>
+                          
                         </div>
                       )}
                     </div>
@@ -2279,7 +2308,7 @@ export function SearchPageClient({ searchBase = '/search' }: { searchBase?: stri
                       </div>
                     ) : (
                       <div className='text-center text-gray-500 py-8 dark:text-gray-400'>
-                        未找到相关结果
+                        {searchError || '未找到相关结果'}
                       </div>
                     )
                   ) : (
@@ -2502,80 +2531,7 @@ export function SearchPageClient({ searchBase = '/search' }: { searchBase?: stri
               {searchBase === SPECIAL_SOURCE_PATH && activeTab === 'video' && (
                 <ContinueWatching />
               )}
-              {searchHistory.length > 0 && (
-            // 搜索历史
-            <section className='mb-12'>
-              <h2 className='mb-4 text-xl font-bold text-gray-800 text-left dark:text-gray-200'>
-                搜索历史
-                {searchHistory.length > 0 && (
-                  <button
-                    onClick={() => {
-                      clearSearchHistory(); // 事件监听会自动更新界面
-                    }}
-                    className='ml-3 text-sm text-gray-500 hover:text-red-500 transition-colors dark:text-gray-400 dark:hover:text-red-500'
-                  >
-                    清空
-                  </button>
-                )}
-              </h2>
-              <div className='flex flex-wrap gap-2'>
-                {(showAllHistory ? searchHistory : searchHistory.slice(0, 8)).map((item) => (
-                  <div key={item} className='relative group'>
-                    <button
-                      onClick={() => {
-                        setSearchQuery(item);
-                        setShowResults(true);
-                        // 立即设置加载状态，避免显示"未找到相关结果"
-                        setIsLoading(true);
 
-                        // 根据当前选项卡执行不同的搜索
-                        if (activeTab === 'video') {
-                          // 影视搜索
-                          router.push(
-                            `${searchBase}?q=${encodeURIComponent(
-                              item.trim()
-                            )}&type=video`
-                          );
-                        } else if (activeTab === 'pansou') {
-                          // 网盘搜索
-                          router.push(
-                            `${searchBase}?q=${encodeURIComponent(
-                              item.trim()
-                            )}&type=pansou`
-                          );
-                          setTriggerPansouSearch((prev) => !prev);
-                        } else if (activeTab === 'acg') {
-                          // ACG 磁力搜索
-                          router.push(
-                            `${searchBase}?q=${encodeURIComponent(
-                              item.trim()
-                            )}&type=acg`
-                          );
-                          setTriggerAcgSearch((prev) => !prev);
-                        }
-                      }}
-                      className='px-4 py-2 bg-gray-500/10 hover:bg-gray-300 rounded-full text-sm text-gray-700 transition-colors duration-200 dark:bg-gray-700/50 dark:hover:bg-gray-600 dark:text-gray-300'
-                    >
-                      {item}
-                    </button>
-                    {/* 删除按钮 */}
-                    <button
-                      aria-label='删除搜索历史'
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        e.preventDefault();
-                        deleteSearchHistory(item); // 事件监听会自动更新界面
-                      }}
-                      className='ptv-history-delete absolute -top-1 -right-1 h-6 w-6 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 bg-gray-400 hover:bg-red-500 text-white rounded-full flex items-center justify-center text-[10px] transition-[opacity,background-color]'
-                    >
-                      <X className='w-3 h-3' />
-                    </button>
-                  </div>
-                ))}
-              </div>
-              {searchHistory.length > 8 && <button type='button' className='ptv-search-history-more' aria-expanded={showAllHistory} onClick={() => setShowAllHistory((value) => !value)}>{showAllHistory ? '收起历史' : `展开全部 ${searchHistory.length} 条历史`}</button>}
-            </section>
-              )}
             </>
           )}
         </div>

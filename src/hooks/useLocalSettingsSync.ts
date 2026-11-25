@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 
+import { formatAppError, readJsonResponse, reportAppError } from '@/lib/app-error';
 import { getAuthInfoFromBrowserCookie } from '@/lib/auth';
 import {
   applyLocalSettingsSnapshot,
@@ -32,8 +33,10 @@ async function cloudRequest(init?: RequestInit) {
       cache: 'no-store',
       signal: controller.signal,
     });
-    if (!response.ok) throw new Error('云同步失败，请检查登录状态和网络后重试');
-    return await response.json();
+    return await readJsonResponse<{ payload?: unknown; updatedAt?: number; changed?: boolean }>(response, '同步云端设置');
+  } catch (error) {
+    if (controller.signal.aborted) throw new Error('TimeoutError');
+    throw error;
   } finally {
     clearTimeout(timeout);
   }
@@ -81,11 +84,8 @@ export function useLocalSettingsSync(open: boolean) {
         setError(false);
       }
     } catch (reason) {
-      setMessage(
-        reason instanceof Error
-          ? reason.message
-          : '云同步失败，本机设置保持不变'
-      );
+      reportAppError(reason, '恢复云端设置');
+      setMessage(formatAppError(reason, '恢复云端设置'));
       setError(true);
     } finally {
       if (manual) setBusy(false);
@@ -114,9 +114,8 @@ export function useLocalSettingsSync(open: boolean) {
       );
       setError(false);
     } catch (reason) {
-      setMessage(
-        reason instanceof Error ? reason.message : '云同步失败，本机设置已保留'
-      );
+      reportAppError(reason, '备份云端设置');
+      setMessage(formatAppError(reason, '备份云端设置'));
       setError(true);
     } finally {
       setBusy(false);

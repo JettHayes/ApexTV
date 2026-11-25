@@ -1,4 +1,7 @@
 'use client';
+
+import { formatAppError } from '@/lib/app-error';
+
 import dynamic from 'next/dynamic';
 import { Bookmark, Check, FolderPlus } from 'lucide-react';
 import { useEffect, useState } from 'react';
@@ -60,7 +63,7 @@ export default function PlayerLibraryActions({
       setPlanned(!wasPlanned);
       setMessage(wasPlanned ? '已移出稍后观看' : '已加入稍后观看');
     } catch (error) {
-      setError(error instanceof Error ? error.message : '保存失败，请重试');
+      setError(formatAppError(error, "影片整理"));
     } finally {
       setBusy(false);
     }

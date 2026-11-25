@@ -5,13 +5,27 @@ import localFont from 'next/font/local';
 import { cookies } from 'next/headers';
 
 import './globals.css';
+import '../styles/theme-tokens.css';
+import '../styles/app-error.css';
 import '../styles/petronas.css';
 import '../styles/apex-layout.css';
 import '../styles/f1-system.css';
+import '../styles/f1-navigation.css';
 import '../styles/f1-media.css';
+import '../styles/f1-home.css';
+import '../styles/f1-search.css';
+import '../styles/f1-discovery-reference.css';
+import '../styles/f1-collections.css';
+import '../styles/f1-broadcast.css';
 import '../styles/f1-account.css';
 import '../styles/f1-reading-music.css';
+import '../styles/f1-reader-reference.css';
+import '../styles/f1-manga-live-reference.css';
+import '../styles/f1-duanju-reference.css';
+import '../styles/f1-dialog-reference.css';
 import '../styles/f1-room.css';
+import '../styles/f1-screen-reference.css';
+import '../styles/f1-listening.css';
 import '../styles/f1-tv.css';
 
 import { parseAuthInfo } from '@/lib/auth';
@@ -20,6 +34,7 @@ import { getUserFeatureAccess } from '@/lib/permissions';
 import { resolveSiteName } from '@/lib/site-brand';
 import { listEnabledSourceScripts } from '@/lib/source-script';
 import { THEME_STYLESHEET_REVISION } from '@/styles/themes';
+import { INITIAL_THEME_COLOR } from '@/styles/theme-meta';
 
 import { StartupCacheCleanup } from '../components/DanmakuCacheCleanup';
 import { DownloadBubble } from '../components/DownloadBubble';
@@ -404,11 +419,11 @@ export default async function RootLayout({
       suppressHydrationWarning
     >
       <head>
-        <meta name='theme-color' content='#f3f6f6' />
+        <meta name='theme-color' content={INITIAL_THEME_COLOR} />
         {/* 首屏直接采用系统外观，不读取浏览器中保存的主题。 */}
         <script
           dangerouslySetInnerHTML={{
-            __html: `(()=>{const dark=window.matchMedia('(prefers-color-scheme: dark)').matches;const root=document.documentElement;root.classList.toggle('dark',dark);root.classList.toggle('light',!dark);root.style.colorScheme=dark?'dark':'light';document.querySelector('meta[name="theme-color"]')?.setAttribute('content',dark?'#101619':'#f3f6f6')})()`,
+            __html: `(()=>{const root=document.documentElement;root.classList.remove('dark');root.classList.add('light');root.style.colorScheme='light';document.querySelector('meta[name="theme-color"]')?.setAttribute('content',${JSON.stringify(INITIAL_THEME_COLOR)})})()`,
           }}
         />
         {/* 配套 moontvplus-extension 识别指纹；仅本项目部署站应带此标记 */}

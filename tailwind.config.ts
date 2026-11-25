@@ -47,8 +47,24 @@ const config: Config = {
         ],
       },
       colors: {
+        apex: {
+          action: 'rgb(var(--apex-action-rgb) / <alpha-value>)',
+          'action-ink': 'rgb(var(--apex-action-ink-rgb) / <alpha-value>)',
+          accent: 'rgb(var(--apex-accent-rgb) / <alpha-value>)',
+          'accent-on-soft':
+            'rgb(var(--apex-accent-on-soft-rgb) / <alpha-value>)',
+          selected: 'rgb(var(--apex-selected-rgb) / <alpha-value>)',
+          line: 'rgb(var(--apex-line-rgb) / <alpha-value>)',
+          text: 'rgb(var(--apex-text-rgb) / <alpha-value>)',
+          'media-panel': 'rgb(var(--apex-media-panel-rgb) / <alpha-value>)',
+          'media-high': 'rgb(var(--apex-media-high-rgb) / <alpha-value>)',
+          'media-accent': 'rgb(var(--apex-action-rgb) / <alpha-value>)',
+          'media-muted': 'rgb(var(--apex-media-muted-rgb) / <alpha-value>)',
+        },
         // 阅读界面复用 ApexTV 语义色，封面覆盖文字单独保留。
         library: {
+          action: 'rgb(var(--apex-action-rgb) / <alpha-value>)',
+          'action-ink': 'rgb(var(--apex-action-ink-rgb) / <alpha-value>)',
           paper: 'rgb(var(--apex-page-rgb) / <alpha-value>)',
           card: 'rgb(var(--apex-panel-rgb) / <alpha-value>)',
           edge: 'rgb(var(--apex-line-rgb) / <alpha-value>)',
@@ -57,7 +73,7 @@ const config: Config = {
           // 封面覆盖层上的纯白（角标文字、图标）。永远是纯白，不随明暗模式走——
           // 它压在封面图上，换成墨色反而会糊进画面。必须是自有令牌而非 bg-white /
           // text-white，否则会被管理端主题层的 [class*="bg-white"] !important 染掉。
-          chip: '#ffffff',
+          chip: 'rgb(var(--apex-media-text-rgb) / <alpha-value>)',
           ochre: 'rgb(var(--apex-accent-rgb) / <alpha-value>)',
           'ochre-hover': 'rgb(var(--apex-action-hover-rgb) / <alpha-value>)',
           'ochre-tint': 'rgb(var(--apex-selected-rgb) / <alpha-value>)',
@@ -76,7 +92,7 @@ const config: Config = {
           'card-2': 'rgb(var(--apex-soft-rgb) / <alpha-value>)',
           edge: 'rgb(var(--apex-line-rgb) / <alpha-value>)',
           ink: 'rgb(var(--apex-text-rgb) / <alpha-value>)',
-          'ink-soft': 'rgb(var(--apex-muted-rgb) / <alpha-value>)',
+          'ink-soft': 'rgb(var(--apex-muted-on-soft-rgb) / <alpha-value>)',
           muted: 'rgb(var(--apex-muted-rgb) / <alpha-value>)',
           // 无封面时的卡纸色：比套面深一档，让"这里本该有张图"读得出来。
           art: 'rgb(var(--apex-soft-rgb) / <alpha-value>)',
@@ -88,11 +104,12 @@ const config: Config = {
           accent: 'rgb(var(--apex-accent-rgb) / <alpha-value>)',
           // 主题色（可操作控件）。见上方注释，兜底不可省。
           theme: 'rgb(var(--apex-action-rgb) / <alpha-value>)',
+          'action-ink': 'rgb(var(--apex-action-ink-rgb) / <alpha-value>)',
           'theme-hover': 'rgb(var(--apex-action-hover-rgb) / <alpha-value>)',
           // 压在图上的纯白（图标、封面上的字）。永远是纯白，不随明暗走——
           // 它压在封面图上，换成墨色反而糊进画面。必须是自有令牌，否则会被
           // 管理端主题层的 [class*="bg-white"] !important 染掉。
-          chip: '#ffffff',
+          chip: 'rgb(var(--apex-media-text-rgb) / <alpha-value>)',
           night: 'rgb(var(--apex-page-rgb) / <alpha-value>)',
           'night-card': 'rgb(var(--apex-panel-rgb) / <alpha-value>)',
           'night-card-2': 'rgb(var(--apex-soft-rgb) / <alpha-value>)',
@@ -104,28 +121,28 @@ const config: Config = {
           'night-graphite': 'rgb(var(--apex-muted-rgb) / <alpha-value>)',
           'night-accent': 'rgb(var(--apex-accent-rgb) / <alpha-value>)',
           'night-theme': 'rgb(var(--apex-action-rgb) / <alpha-value>)',
-          'night-theme-hover': 'rgb(var(--apex-action-hover-rgb) / <alpha-value>)',
+          'night-theme-hover':
+            'rgb(var(--apex-action-hover-rgb) / <alpha-value>)',
         },
         primary: {
-          50: '#f0f9ff',
-          100: '#e0f2fe',
-          200: '#bae6fd',
-          300: '#7dd3fc',
-          400: '#38bdf8',
-          500: '#0ea5e9',
-          600: '#0284c7',
-          700: '#0369a1',
-          800: '#075985',
-          900: '#0c4a6e',
+          50: 'rgb(var(--apex-selected-rgb) / <alpha-value>)',
+          100: 'rgb(var(--apex-selected-rgb) / <alpha-value>)',
+          200: 'rgb(var(--apex-line-rgb) / <alpha-value>)',
+          300: 'rgb(var(--apex-action-rgb) / <alpha-value>)',
+          400: 'rgb(var(--apex-action-rgb) / <alpha-value>)',
+          500: 'rgb(var(--apex-accent-rgb) / <alpha-value>)',
+          600: 'rgb(var(--apex-accent-rgb) / <alpha-value>)',
+          700: 'rgb(var(--apex-accent-rgb) / <alpha-value>)',
+          800: 'rgb(var(--apex-media-panel-rgb) / <alpha-value>)',
+          900: 'rgb(var(--apex-media-bg-rgb) / <alpha-value>)',
         },
-        dark: '#222222',
+        dark: 'rgb(var(--apex-media-bg-rgb) / <alpha-value>)',
       },
       keyframes: {
         flicker: {
           '0%, 19.999%, 22%, 62.999%, 64%, 64.999%, 70%, 100%': {
             opacity: '0.99',
-            filter:
-              'drop-shadow(0 0 1px rgba(252, 211, 77)) drop-shadow(0 0 15px rgba(245, 158, 11)) drop-shadow(0 0 1px rgba(252, 211, 77))',
+            filter: 'var(--ptv-loading-glow)',
           },
           '20%, 21.999%, 63%, 63.999%, 65%, 69.999%': {
             opacity: '0.4',
@@ -175,8 +192,7 @@ const config: Config = {
         //
         // 盘面是烧焦的深棕而不是纯黑：压在暖色的套面旁边，纯黑会读成"一块洞"。
         // 两档取自乙的 --app-disc-lo / --app-disc-hi。
-        'music-vinyl':
-          'repeating-radial-gradient(circle, transparent 0 2px, rgba(255,255,255,0.05) 2px 3px), conic-gradient(from 40deg, #091214 0%, #253b3c 12%, #101c1e 24%, #071012 40%, #243a3a 56%, #0d191a 72%, #294143 88%, #091214 100%)',
+        'music-vinyl': 'var(--ptv-vinyl-texture)',
       },
     },
   },

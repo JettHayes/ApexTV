@@ -1,5 +1,8 @@
 'use client';
 
+import { readJsonResponse, reportAppError } from '@/lib/app-error';
+
+
 import { AlertCircle, CheckCircle } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useEffect,useState } from 'react';
@@ -69,7 +72,7 @@ export default function MovieRequestPage() {
     setIsSearching(true);
     try {
       const response = await fetch(`/api/tmdb/search?query=${encodeURIComponent(searchKeyword)}`);
-      const data = await response.json();
+      const data = await readJsonResponse<any>(response, "内容操作");
 
       if (data.results) {
         setSearchResults(data.results.slice(0, 20));
@@ -77,7 +80,7 @@ export default function MovieRequestPage() {
         setSearchResults([]);
       }
     } catch (err) {
-      console.error('搜索失败:', err);
+      reportAppError(err, "搜索失败");
       setAlertModal({ isOpen: true, type: 'error', title: '搜索失败', message: '请稍后重试' });
     } finally {
       setIsSearching(false);
@@ -93,7 +96,7 @@ export default function MovieRequestPage() {
 
       try {
         const response = await fetch(`/api/tmdb/seasons?tvId=${item.id}`);
-        const data = await response.json();
+        const data = await readJsonResponse<any>(response, "内容操作");
         if (data.seasons) {
           const validSeasons = data.seasons.filter((s: any) => s.season_number > 0);
           setSeasons(validSeasons);
@@ -107,7 +110,7 @@ export default function MovieRequestPage() {
           }
         }
       } catch (err) {
-        console.error('加载季度失败:', err);
+        reportAppError(err, "加载季度失败");
       } finally {
         setLoadingSeasons(false);
       }
@@ -146,7 +149,7 @@ export default function MovieRequestPage() {
         }),
       });
 
-      const data = await response.json();
+      const data = await readJsonResponse<any>(response, "内容操作");
 
       if (response.ok) {
         setShowSeasonDialog(false);
@@ -156,7 +159,7 @@ export default function MovieRequestPage() {
         setAlertModal({ isOpen: true, type: 'error', title: '求片失败', message: data.error || '请稍后重试' });
       }
     } catch (err) {
-      console.error('求片失败:', err);
+      reportAppError(err, "求片失败");
       setAlertModal({ isOpen: true, type: 'error', title: '求片失败', message: '请稍后重试' });
     } finally {
       setSubmitting(false);
@@ -176,12 +179,12 @@ export default function MovieRequestPage() {
     const fetchMyRequests = async () => {
       try {
         const response = await fetch('/api/movie-requests?my=true');
-        const data = await response.json();
+        const data = await readJsonResponse<any>(response, "内容操作");
         if (data.requests) {
           setMyRequests(data.requests);
         }
       } catch (err) {
-        console.error('加载求片列表失败:', err);
+        reportAppError(err, "加载求片列表失败");
       } finally {
         setLoadingMyRequests(false);
       }
@@ -194,12 +197,12 @@ export default function MovieRequestPage() {
   const refreshMyRequests = async () => {
     try {
       const response = await fetch('/api/movie-requests?my=true');
-      const data = await response.json();
+      const data = await readJsonResponse<any>(response, "内容操作");
       if (data.requests) {
         setMyRequests(data.requests);
       }
     } catch (err) {
-      console.error('刷新求片列表失败:', err);
+      reportAppError(err, "刷新求片列表失败");
     }
   };
 
@@ -236,7 +239,7 @@ export default function MovieRequestPage() {
                 onKeyDown={(e) => {
                   if (e.key === 'Enter') handleSearch();
                 }}
-                className='flex-1 px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500'
+                className="flex-1 px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-apex-accent"
               />
               <button
                 onClick={handleSearch}

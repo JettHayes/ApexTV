@@ -13,6 +13,7 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
 
+import { formatAppError, reportAppError } from '@/lib/app-error';
 import {
   deleteBookReadRecord,
   getAllBookReadRecords,
@@ -34,12 +35,12 @@ import { cn } from '@/lib/cn';
 import { subscribeToDataUpdates } from '@/lib/db.client';
 import { processImageUrl } from '@/lib/utils';
 
-import EmptyState from '@/components/media/EmptyState';
 import BooksPagination from '@/components/books/BooksPagination';
+import EmptyState from '@/components/media/EmptyState';
 import {
   LIBRARY_ACCENT_ICON,
-  LIBRARY_FOCUS,
   LIBRARY_FIELD,
+  LIBRARY_FOCUS,
   LIBRARY_GHOST_BUTTON,
   LIBRARY_ICON_BUTTON,
   LIBRARY_ICON_BUTTON_DANGER,
@@ -113,11 +114,11 @@ export default function BookHistoryPage() {
 
     getAllBookReadRecords()
       .then(setRecords)
-      .catch(() => setLoadError('阅读记录同步失败，当前保留已有记录'))
+      .catch((err) => { reportAppError(err, '同步电子书阅读记录'); setLoadError(formatAppError(err, '同步电子书阅读记录')); })
       .finally(() => setLoading(false));
     getAllBookShelf()
       .then(setShelf)
-      .catch(() => undefined);
+      .catch((err) => { reportAppError(err, '加载电子书书架'); setLoadError(formatAppError(err, '加载电子书书架')); });
 
     const unsubscribeHistory = subscribeToDataUpdates<
       Record<string, BookReadRecord>
@@ -201,6 +202,7 @@ export default function BookHistoryPage() {
 
   return (
     <section className='f1-reading-collection f1-reading-history space-y-4'>
+      <div className='f1-collection-toolbar'><h2>阅读记录</h2><div className='f1-collection-tools'>
       <div className='flex items-center justify-between gap-3'>
         <div className={cn('flex items-center gap-2 text-sm', LIBRARY_MUTED)}>
           <Clock3 className={cn('h-4 w-4', LIBRARY_ACCENT_ICON)} />共{' '}
@@ -219,6 +221,7 @@ export default function BookHistoryPage() {
 
       <input aria-label='筛选阅读记录' placeholder='查找历史中的书名或作者' value={filter}
         onChange={(event) => { setFilter(event.target.value); setPage(1); }} className={cn(LIBRARY_FIELD, 'min-h-11 text-base sm:max-w-md')} />
+      </div></div>
       {loadError && <p role='alert' className='text-sm text-red-700 dark:text-red-300'>{loadError}</p>}
 
       {loading ? (
@@ -255,6 +258,7 @@ export default function BookHistoryPage() {
                   meta: item.sourceName,
                   subtitle: [
                     item.author,
+                    `已读 ${percent}%`,
                     item.sourceId
                       ? getReadableChapterLabel(item)
                       : '历史记录缺少书源信息',
@@ -281,7 +285,7 @@ export default function BookHistoryPage() {
                     id: 'delete',
                     label: '删除',
                     icon: <Trash2 size={20} />,
-                    onClick: () => void handleDelete(item),
+                    onClick: () => void handleDelete(item).catch((err) => { reportAppError(err, '删除电子书阅读记录'); setLoadError(formatAppError(err, '删除电子书阅读记录')); }),
                     color: 'danger' as const,
                   },
                 ]}

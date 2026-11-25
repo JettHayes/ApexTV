@@ -40,6 +40,12 @@ export default function ChatFloatingWindow() {
     members: watchRoom?.members || [],
   });
 
+  useEffect(() => {
+    const openTools = () => { setIsOpen(true); setIsMinimized(false); };
+    window.addEventListener('apex-open-room-tools', openTools);
+    return () => window.removeEventListener('apex-open-room-tools', openTools);
+  }, []);
+
   // 当房间变化时重置状态
   useEffect(() => {
     const roomId = watchRoom?.currentRoom?.id || null;
@@ -360,7 +366,7 @@ export default function ChatFloatingWindow() {
                       className='flex items-center justify-between bg-white dark:bg-gray-700 rounded-lg p-3 border border-gray-200 dark:border-gray-600'
                     >
                       <div className='flex items-center gap-3'>
-                        <div className='w-8 h-8 rounded-full bg-teal-600 flex items-center justify-center text-white font-bold text-sm'>
+                        <div className="w-8 h-8 rounded-full bg-apex-action flex items-center justify-center text-apex-action-ink font-bold text-sm">
                           {member.name.charAt(0).toUpperCase()}
                         </div>
                         <span className='text-sm font-medium text-gray-900 dark:text-gray-100'>{member.name}</span>
@@ -465,7 +471,7 @@ export default function ChatFloatingWindow() {
         <button
           onClick={handleReconnect}
           disabled={isReconnecting}
-          className="fixed bottom-[32.5rem] right-4 z-[700] group relative flex h-12 w-12 items-center justify-center rounded-full bg-red-500 text-white shadow-2xl transition-all hover:scale-110 active:scale-95 hover:bg-red-600 disabled:opacity-50 disabled:cursor-not-allowed motion-safe:animate-pulse md:bottom-[30rem]"
+          className="fixed bottom-[32.5rem] right-4 z-[700] group relative flex h-12 w-12 items-center justify-center rounded-full bg-red-500 text-[var(--ptv-text)] shadow-2xl transition-all hover:scale-110 active:scale-95 hover:bg-red-600 disabled:opacity-50 disabled:cursor-not-allowed motion-safe:animate-pulse md:bottom-[30rem]"
           aria-label="连接失败，点击重连"
           title="连接失败，点击重连"
         >
@@ -481,36 +487,36 @@ export default function ChatFloatingWindow() {
       {/* 房间信息按钮 */}
       <button
         onClick={() => setShowRoomInfo(true)}
-        className="fixed bottom-[30rem] right-4 z-[700] flex h-12 w-12 items-center justify-center rounded-full bg-blue-500 text-white shadow-2xl transition-all hover:scale-110 active:scale-95 hover:bg-blue-600 md:bottom-[28rem]"
+        className="fixed bottom-[30rem] right-4 z-[700] flex h-12 w-12 items-center justify-center rounded-full bg-blue-500 text-[var(--ptv-text)] shadow-2xl transition-all hover:scale-110 active:scale-95 hover:bg-blue-600 md:bottom-[28rem]"
         aria-label="房间信息"
       >
         <Info className="h-5 w-5" />
       </button>
 
       {/* 聊天窗口 */}
-      <div className="f1-room-chat ptv-modal-in origin-bottom-right fixed bottom-20 right-4 z-[700] flex w-[min(20rem,calc(100vw-2rem))] flex-col rounded-2xl bg-gray-800 shadow-2xl md:bottom-4 md:w-96">
+      <div className="f1-room-chat ptv-modal-in origin-bottom-right fixed bottom-20 right-4 z-[700] flex w-[min(20rem,calc(100vw-2rem))] flex-col rounded-2xl bg-[var(--ptv-panel)] shadow-2xl md:bottom-4 md:w-96">
       {/* 头部 */}
-      <div className="rounded-t-2xl bg-teal-700">
+      <div className="f1-room-chat-heading rounded-t-2xl">
         {/* 第一行: 标题和窗口控制 */}
         <div className="flex items-center justify-between px-4 py-3">
           <div className="flex items-center gap-2">
-            <MessageCircle className="h-5 w-5 text-white" />
+            <MessageCircle className="h-5 w-5 text-[var(--ptv-text)]" />
             <div>
-              <h3 className="text-sm font-bold text-white">聊天室</h3>
-              <p className="text-xs text-white/80">{members.length} 人在线</p>
+              <h3 className="text-sm font-bold text-[var(--ptv-text)]">聊天室</h3>
+              <p className="text-xs text-[var(--ptv-muted)]">{members.length} 人在线</p>
             </div>
           </div>
           <div className="flex gap-1">
             <button
               onClick={() => setIsMinimized(true)}
-              className="rounded p-1 text-white/80 transition-colors hover:bg-white/20 hover:text-white"
+              className="rounded p-1 text-[var(--ptv-muted)] transition-colors hover:bg-white/20 hover:text-[var(--ptv-text)]"
               aria-label="最小化"
             >
               <Minimize2 className="h-4 w-4" />
             </button>
             <button
               onClick={() => setIsOpen(false)}
-              className="rounded p-1 text-white/80 transition-colors hover:bg-white/20 hover:text-white"
+              className="rounded p-1 text-[var(--ptv-muted)] transition-colors hover:bg-white/20 hover:text-[var(--ptv-text)]"
               aria-label="关闭"
             >
               <X className="h-4 w-4" />
@@ -519,7 +525,7 @@ export default function ChatFloatingWindow() {
         </div>
 
         {/* 第二行: 语音控制按钮 */}
-        <div className="border-t border-white/10 px-4 py-2">
+        <div className="f1-room-chat-toolbar border-t">
           <div className="flex items-center justify-center gap-3 mb-1">
             {/* 麦克风按钮 */}
             <button
@@ -528,7 +534,7 @@ export default function ChatFloatingWindow() {
               className={`flex items-center gap-2 rounded-lg px-3 py-1.5 text-xs font-medium transition-all ${
                 isMicEnabled
                   ? 'bg-white text-green-600 hover:bg-white/90'
-                  : 'bg-white/10 text-white/80 hover:bg-white/20'
+                  : 'bg-white/10 text-[var(--ptv-muted)] hover:bg-white/20'
               } disabled:opacity-50 disabled:cursor-not-allowed`}
               aria-label={isMicEnabled ? '关闭麦克风' : '开启麦克风'}
             >
@@ -546,7 +552,7 @@ export default function ChatFloatingWindow() {
               className={`flex items-center gap-2 rounded-lg px-3 py-1.5 text-xs font-medium transition-all ${
                 isSpeakerEnabled
                   ? 'bg-white text-green-600 hover:bg-white/90'
-                  : 'bg-white/10 text-white/80 hover:bg-white/20'
+                  : 'bg-white/10 text-[var(--ptv-muted)] hover:bg-white/20'
               }`}
               aria-label={isSpeakerEnabled ? '关闭喇叭' : '开启喇叭'}
             >
@@ -560,7 +566,7 @@ export default function ChatFloatingWindow() {
           </div>
 
           {/* 状态指示 */}
-          <div className="text-center text-xs text-white/60">
+          <div className="text-center text-xs text-[var(--ptv-muted)]">
             {voiceChat.isConnecting && '正在连接...'}
             {voiceChat.error && (
               <span className="text-red-300">{voiceChat.error}</span>
@@ -575,13 +581,13 @@ export default function ChatFloatingWindow() {
       </div>
 
       {/* 消息列表 */}
-      <div className="flex-1 space-y-3 overflow-y-auto p-4" style={{ maxHeight: '400px' }}>
+      <div className="f1-room-messages flex-1 space-y-3 overflow-y-auto p-4">
         {chatMessages.length === 0 ? (
           <div className="flex h-full items-center justify-center text-center">
             <div>
-              <MessageCircle className="mx-auto mb-2 h-12 w-12 text-gray-600" />
-              <p className="text-sm text-gray-400">还没有消息</p>
-              <p className="text-xs text-gray-500">发送第一条消息吧</p>
+              <MessageCircle className="mx-auto mb-2 h-12 w-12 text-[var(--ptv-muted)]" />
+              <p className="text-sm text-[var(--ptv-muted)]">还没有消息</p>
+              <p className="text-xs text-[var(--ptv-muted)]">发送第一条消息吧</p>
             </div>
           </div>
         ) : (
@@ -590,13 +596,13 @@ export default function ChatFloatingWindow() {
               <div key={msg.id} className="ptv-fade-in flex flex-col gap-1">
                 <div className="flex items-baseline gap-2">
                   <span className="text-xs font-medium text-green-400">{msg.userName}</span>
-                  <span className="text-xs text-gray-500">{formatTime(msg.timestamp)}</span>
+                  <span className="text-xs text-[var(--ptv-muted)]">{formatTime(msg.timestamp)}</span>
                 </div>
                 <div
                   className={`max-w-[80%] rounded-lg px-3 py-2 ${
                     msg.type === 'emoji'
                       ? 'text-3xl'
-                      : 'bg-gray-700 text-white'
+                      : 'bg-[var(--ptv-soft)] text-[var(--ptv-text)]'
                   }`}
                 >
                   {msg.content}
@@ -609,10 +615,10 @@ export default function ChatFloatingWindow() {
       </div>
 
       {/* 输入区域 */}
-      <div className="border-t border-gray-700 p-3">
+      <div className="border-t border-[var(--ptv-line)] p-3">
         {/* 表情选择器 */}
         {showEmojiPicker && (
-          <div className="ptv-pop-in origin-bottom mb-2 grid grid-cols-6 gap-2 rounded-lg bg-gray-700 p-2">
+          <div className="ptv-pop-in origin-bottom mb-2 grid grid-cols-6 gap-2 rounded-lg bg-[var(--ptv-soft)] p-2">
             {EMOJI_LIST.map((emoji) => (
               <button
                 key={emoji}
@@ -628,7 +634,7 @@ export default function ChatFloatingWindow() {
         <div className="flex gap-2">
           <button
             onClick={() => setShowEmojiPicker(!showEmojiPicker)}
-            className="rounded-lg bg-gray-700 p-2 text-gray-300 transition-colors hover:bg-gray-600 hover:text-white"
+            className="rounded-lg bg-[var(--ptv-soft)] p-2 text-gray-300 transition-colors hover:bg-gray-600 hover:text-[var(--ptv-text)]"
             aria-label="表情"
           >
             <Smile className="h-5 w-5" />
@@ -639,13 +645,13 @@ export default function ChatFloatingWindow() {
             onChange={(e) => setMessage(e.target.value)}
             onKeyDown={handleKeyDown}
             placeholder="输入消息..."
-            className="flex-1 rounded-lg bg-gray-700 px-3 py-2 text-sm text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-green-500"
+            className="flex-1 rounded-lg bg-[var(--ptv-soft)] px-3 py-2 text-sm text-[var(--ptv-text)] placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-apex-accent"
             maxLength={200}
           />
           <button
             onClick={handleSendMessage}
             disabled={!message.trim()}
-            className="rounded-lg bg-green-500 p-2 text-white transition-colors hover:bg-green-600 disabled:opacity-50"
+            className="rounded-lg bg-green-500 p-2 text-[var(--ptv-text)] transition-colors hover:bg-green-600 disabled:opacity-50"
             aria-label="发送"
           >
             <Send className="h-5 w-5" />
@@ -654,7 +660,7 @@ export default function ChatFloatingWindow() {
       </div>
 
       {/* 房间信息提示 */}
-      <div className="rounded-b-2xl bg-gray-900/50 px-4 py-2 text-center text-xs text-gray-400">
+      <div className="rounded-b-2xl bg-gray-900/50 px-4 py-2 text-center text-xs text-[var(--ptv-muted)]">
         {isOwner ? (
           <span className="text-yellow-400">👑 您是房主</span>
         ) : (

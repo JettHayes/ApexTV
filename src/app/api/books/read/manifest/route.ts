@@ -1,12 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 
+import { reportAppError } from '@/lib/app-error';
 import { BookAcquisitionLink } from '@/lib/book.types';
-import { db } from '@/lib/db';
 import { bookProvider } from '@/lib/book-provider';
 import {
   BookRuleParseError,
   BookSourceRequestError,
 } from '@/lib/book-source-error';
+import { db } from '@/lib/db';
 
 import { getAuthorizedBooksUsername } from '../../_utils';
 
@@ -149,7 +150,7 @@ async function resolveManifest(username: string, payload: ManifestPayload) {
     });
   } catch (error) {
     return NextResponse.json(
-      { error: (error as Error).message },
+      (({ code, message, status, upstreamStatus }) => ({ error: message, code, status, upstreamStatus }))(reportAppError(error, '电子书服务')),
       {
         status:
           error instanceof BookRuleParseError
@@ -183,7 +184,7 @@ export async function POST(request: NextRequest) {
     return await resolveManifest(username, payload);
   } catch (error) {
     return NextResponse.json(
-      { error: (error as Error).message },
+      (({ code, message, status, upstreamStatus }) => ({ error: message, code, status, upstreamStatus }))(reportAppError(error, '电子书服务')),
       { status: 500 }
     );
   }

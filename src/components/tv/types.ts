@@ -6,6 +6,8 @@ export interface TVItem {
   year?: string;
   type?: 'movie' | 'tv';
   href?: string;
+  progress?: number;
+  subtitle?: string;
 }
 
 
@@ -14,4 +16,5 @@ export interface TVSection {
   subtitle?: string;
   href?: string;
   items: TVItem[];
+  layout?: 'poster' | 'continue';
 }

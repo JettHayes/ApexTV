@@ -46,7 +46,7 @@ export function DeviceManagementPanel({
         style={{ touchAction: 'none' }}
       />
 
-      <div className='ptv-dialog ptv-modal-in fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[calc(100%-2rem)] max-w-lg bg-white dark:bg-gray-900 rounded-xl shadow-xl z-[1001] overflow-hidden'>
+      <div className='ptv-dialog ptv-device-panel ptv-modal-in fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[calc(100%-2rem)] max-w-lg bg-white dark:bg-gray-900 rounded-xl shadow-xl z-[1001] overflow-hidden'>
         <div
           className='max-h-[calc(100dvh-2rem)] flex flex-col'
           data-panel-content
@@ -54,7 +54,7 @@ export function DeviceManagementPanel({
           style={{ touchAction: 'auto' }}
         >
           <div className='flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700'>
-            <h3 className='text-xl font-bold text-gray-800 dark:text-gray-200'>
+            <h3 className='flex items-center gap-2 text-xl font-bold text-gray-800 dark:text-gray-200'><Monitor className='h-5 w-5' aria-hidden='true' />
               设备管理
             </h3>
             <button
@@ -97,16 +97,16 @@ export function DeviceManagementPanel({
                     return (
                       <div
                         key={device.tokenId}
-                        className={`p-4 bg-gray-50 dark:bg-gray-800 rounded-lg border ${
+                        className={`ptv-device-row p-4 bg-gray-50 dark:bg-gray-800 rounded-lg border ${
                           device.isCurrent
                             ? 'border-yellow-400 dark:border-yellow-500'
                             : 'border-gray-200 dark:border-gray-700'
                         }`}
                       >
-                        <div className='flex items-start justify-between'>
-                          <div className='flex-1'>
-                            <div className='flex items-center gap-2 mb-2'>
-                              <DeviceIcon className='w-4 h-4 text-gray-600 dark:text-gray-400' />
+                        <div className='flex items-center gap-3'>
+                          <span className='ptv-device-icon' aria-hidden='true'><DeviceIcon className='h-5 w-5' /></span>
+                          <div className='min-w-0 flex-1'>
+                            <div className='flex flex-wrap items-center gap-2 mb-2'>
                               <span className='text-sm font-medium text-gray-900 dark:text-gray-100'>
                                 {device.deviceInfo}
                               </span>

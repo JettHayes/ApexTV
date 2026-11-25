@@ -5,6 +5,7 @@ import { useEffect, useRef } from 'react';
 import ReactDOM from 'react-dom/client';
 
 import { smoothScrollBehavior } from '@/lib/motion';
+import { readThemeColor } from '@/lib/theme-colors';
 
 interface Song {
   id: string;
@@ -80,12 +81,12 @@ const PiPLyricsContent = ({
     <div
       className="pip-container"
       style={{
-        backgroundColor: `rgba(0, 0, 0, ${opacity})`,
+        backgroundColor: `rgb(${readThemeColor('--apex-media-bg-rgb')} / ${opacity})`,
         height: '100vh',
         display: 'flex',
         flexDirection: 'column',
         padding: '16px',
-        color: 'white',
+        color: "var(--ptv-media-text)",
         fontFamily: 'system-ui, -apple-system, sans-serif',
       }}
     >
@@ -98,7 +99,7 @@ const PiPLyricsContent = ({
           alignItems: 'center',
           marginBottom: '12px',
           paddingBottom: '8px',
-          borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
+          borderBottom: "1px solid var(--ptv-media-text-alpha-10)",
           gap: '8px',
         }}
       >
@@ -130,20 +131,20 @@ const PiPLyricsContent = ({
           <button
             onClick={() => onMinimizedChange(!minimized)}
             style={{
-              background: 'rgba(255, 255, 255, 0.1)',
+              background: "var(--ptv-media-text-alpha-10)",
               border: 'none',
               borderRadius: '4px',
               padding: '4px 8px',
-              color: 'white',
+              color: "var(--ptv-media-text)",
               cursor: 'pointer',
               fontSize: '11px',
               transition: 'background 0.2s',
             }}
             onMouseEnter={(e) => {
-              e.currentTarget.style.background = 'rgba(255, 255, 255, 0.2)';
+              e.currentTarget.style.background = "var(--ptv-media-text-alpha-20)";
             }}
             onMouseLeave={(e) => {
-              e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)';
+              e.currentTarget.style.background = "var(--ptv-media-text-alpha-10)";
             }}
             title={minimized ? '展开' : '最小化'}
           >
@@ -153,11 +154,11 @@ const PiPLyricsContent = ({
           <button
             onClick={onClose}
             style={{
-              background: 'rgba(239, 68, 68, 0.8)',
+              background: "var(--ptv-media-bg-alpha-80)",
               border: 'none',
               borderRadius: '4px',
               padding: '4px 8px',
-              color: 'white',
+              color: "var(--ptv-media-text)",
               cursor: 'pointer',
               fontSize: '14px',
               fontWeight: 'bold',
@@ -165,10 +166,10 @@ const PiPLyricsContent = ({
               lineHeight: 1,
             }}
             onMouseEnter={(e) => {
-              e.currentTarget.style.background = 'rgba(239, 68, 68, 1)';
+              e.currentTarget.style.background = "var(--ptv-media-bg)";
             }}
             onMouseLeave={(e) => {
-              e.currentTarget.style.background = 'rgba(239, 68, 68, 0.8)';
+              e.currentTarget.style.background = "var(--ptv-media-bg-alpha-80)";
             }}
             title="关闭"
           >
@@ -229,7 +230,7 @@ const PiPLyricsContent = ({
                   textAlign: 'center',
                   fontSize: '14px',
                   opacity: index === currentLyricIndex ? 1 : 0.5,
-                  color: index === currentLyricIndex ? '#22c55e' : 'white',
+                  color: index === currentLyricIndex ? 'var(--ptv-media-accent)' : 'var(--ptv-media-text)',
                   // 字号固定，高亮用 scale 避免触发布局重排
                   transform: index === currentLyricIndex ? 'scale(1.12)' : 'scale(1)',
                   transformOrigin: 'center',
@@ -279,6 +280,8 @@ const PiPLyricsContent = ({
 
 // 复制样式表到 PiP 窗口
 const copyStylesToPiPWindow = (pipWin: Window) => {
+  pipWin.document.documentElement.setAttribute('data-moontvplus', '');
+  pipWin.document.documentElement.className = document.documentElement.className;
   const styleSheets = Array.from(document.styleSheets);
   styleSheets.forEach((styleSheet) => {
     try {
@@ -340,14 +343,14 @@ export default function LyricsPiPWindow({
         opacity={opacity}
         minimized={minimized}
         onOpacityChange={(newOpacity) => {
-          window.postMessage({ type: 'PIP_OPACITY_CHANGE', opacity: newOpacity }, '*');
+          window.postMessage({ type: 'PIP_OPACITY_CHANGE', opacity: newOpacity }, window.location.origin);
         }}
         onMinimizedChange={(newMinimized) => {
-          window.postMessage({ type: 'PIP_MINIMIZED_CHANGE', minimized: newMinimized }, '*');
+          window.postMessage({ type: 'PIP_MINIMIZED_CHANGE', minimized: newMinimized }, window.location.origin);
         }}
         onLyricSeek={onLyricSeek}
         onClose={() => {
-          window.postMessage({ type: 'PIP_CLOSE' }, '*');
+          window.postMessage({ type: 'PIP_CLOSE' }, window.location.origin);
         }}
       />
     );
@@ -364,14 +367,14 @@ export default function LyricsPiPWindow({
           opacity={opacity}
           minimized={minimized}
           onOpacityChange={(newOpacity) => {
-            window.postMessage({ type: 'PIP_OPACITY_CHANGE', opacity: newOpacity }, '*');
+            window.postMessage({ type: 'PIP_OPACITY_CHANGE', opacity: newOpacity }, window.location.origin);
           }}
           onMinimizedChange={(newMinimized) => {
-            window.postMessage({ type: 'PIP_MINIMIZED_CHANGE', minimized: newMinimized }, '*');
+            window.postMessage({ type: 'PIP_MINIMIZED_CHANGE', minimized: newMinimized }, window.location.origin);
           }}
           onLyricSeek={onLyricSeek}
           onClose={() => {
-            window.postMessage({ type: 'PIP_CLOSE' }, '*');
+            window.postMessage({ type: 'PIP_CLOSE' }, window.location.origin);
           }}
         />
       );

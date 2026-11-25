@@ -160,13 +160,13 @@ const EpisodeButton: React.FC<EpisodeButtonProps> = ({
           : undefined
       }
       {...(canShowOriginalName ? longPressProps : {})}
-      className={`relative h-10 min-w-10 px-3 py-2 flex items-center justify-center text-sm font-medium rounded-md active:scale-[0.97] transition-[transform,background-color,color,border-color] duration-150 whitespace-nowrap font-mono border ${
+      className={`relative h-10 min-w-10 px-3 py-2 flex items-center justify-center text-sm font-medium rounded-md active:scale-[0.97] transition-[transform,background-color,color,border-color] duration-150 whitespace-nowrap tabular-nums border ${
         canShowOriginalName ? 'select-none' : ''
       }
         ${isActive
           ? 'bg-[var(--ptv-action)] text-[color:var(--ptv-action-ink)] border-transparent cursor-default'
           : isWatched
-            ? 'bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100 hover:scale-105 dark:bg-emerald-900/20 dark:text-emerald-300 dark:border-emerald-700/60 dark:hover:bg-emerald-900/30'
+            ? "bg-apex-selected text-apex-accent-on-soft border-apex-line hover:bg-apex-selected hover:scale-105 dark:bg-apex-selected/20 dark:text-apex-accent-on-soft dark:border-apex-accent/60 dark:hover:bg-apex-selected/30"
             : inactiveEpisodeClass
         }`.trim()}
       style={
@@ -181,7 +181,7 @@ const EpisodeButton: React.FC<EpisodeButtonProps> = ({
       title={isWatched && !isActive ? '已观看过' : undefined}
     >
       {isWatched && !isActive && (
-        <span className='absolute top-1 right-1 h-1.5 w-1.5 rounded-full bg-emerald-500 dark:bg-emerald-400' />
+        <span className="absolute top-1 right-1 h-1.5 w-1.5 rounded-full bg-apex-action dark:bg-apex-action" />
       )}
       {displayLabel}
     </button>
@@ -222,16 +222,16 @@ const EpisodeListItem: React.FC<EpisodeListItemProps> = ({
         isActive
           ? 'bg-[var(--ptv-action)] text-[color:var(--ptv-action-ink)] border-transparent cursor-default'
           : isWatched
-            ? 'bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100 dark:bg-emerald-900/20 dark:text-emerald-300 dark:border-emerald-700/60 dark:hover:bg-emerald-900/30'
+            ? "bg-apex-selected text-apex-accent-on-soft border-apex-line hover:bg-apex-selected dark:bg-apex-selected/20 dark:text-apex-accent-on-soft dark:border-apex-accent/60 dark:hover:bg-apex-selected/30"
             : inactiveRowClass
       }`.trim()}
     >
       <span
-        className={`flex-shrink-0 h-7 min-w-[1.75rem] px-1.5 flex items-center justify-center rounded-md text-xs font-mono font-semibold ${
+        className={`flex-shrink-0 h-7 min-w-[1.75rem] px-1.5 flex items-center justify-center rounded-md text-xs tabular-nums font-semibold ${
           isActive
-            ? 'bg-[color:color-mix(in_srgb,currentColor_15%,transparent)] text-inherit'
+            ? "bg-[var(--ptv-selected)] text-inherit"
             : isWatched
-              ? 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-300'
+              ? "bg-apex-selected/15 text-apex-accent-on-soft dark:text-apex-accent-on-soft"
               : 'bg-black/5 dark:bg-white/10'
         }`}
       >
@@ -239,7 +239,7 @@ const EpisodeListItem: React.FC<EpisodeListItemProps> = ({
       </span>
       <span className='flex-1 truncate text-sm font-medium'>{name}</span>
       {isWatched && !isActive && (
-        <span className='flex-shrink-0 h-1.5 w-1.5 rounded-full bg-emerald-500 dark:bg-emerald-400' />
+        <span className="flex-shrink-0 h-1.5 w-1.5 rounded-full bg-apex-action dark:bg-apex-action" />
       )}
     </button>
   );
@@ -1008,8 +1008,7 @@ const EpisodeSelector: React.FC<EpisodeSelectorProps> = ({
     <div className='f1-episode-workspace px-4 py-0 h-full min-h-0 flex flex-col overflow-hidden'>
       {/* 主要的 Tab 切换 - 无缝融入设计 */}
       <div className='f1-episode-tabs flex mb-1 -mx-4 flex-shrink-0'>
-        {/* 选集选项卡 - 仅在多集时显示 */}
-        {totalEpisodes > 1 && (
+        {/* 单集影片同样保留选集入口，允许从换源或弹幕返回 */}
           <button
             type='button'
             disabled={isRoomMember}
@@ -1026,7 +1025,6 @@ const EpisodeSelector: React.FC<EpisodeSelectorProps> = ({
             选集
             {isRoomMember && <span className="ml-1 text-xs">🔒</span>}
           </button>
-        )}
 
         {/* 换源选项卡 */}
         <button
@@ -1080,7 +1078,7 @@ const EpisodeSelector: React.FC<EpisodeSelectorProps> = ({
       {activeTab === 'episodes' && (
         <div className='ptv-content-in flex flex-col flex-1 min-h-0'>
           {/* 分类标签 */}
-          <div className='relative z-30 flex items-center gap-4 mb-4 border-b border-gray-300 dark:border-gray-700 -mx-4 px-4 flex-shrink-0'>
+          <div className='f1-episode-range relative z-30 flex items-center gap-2 flex-shrink-0'>
             <div
               className='flex-1 overflow-x-auto'
               ref={categoryContainerRef}
@@ -1113,7 +1111,8 @@ const EpisodeSelector: React.FC<EpisodeSelectorProps> = ({
             </div>
             {/* 向上/向下按钮 */}
             <button
-              className={`flex-shrink-0 w-8 h-8 rounded-md flex items-center justify-center ${iconButtonClass} transition-colors transform translate-y-[-4px]`}
+              aria-label={descending ? '切换为正序' : '切换为倒序'}
+              className={`f1-episode-icon flex-shrink-0 flex items-center justify-center ${iconButtonClass} transition-colors`}
               onClick={() => {
                 // 切换集数排序（正序/倒序）
                 setDescending((prev) => !prev);
@@ -1135,11 +1134,11 @@ const EpisodeSelector: React.FC<EpisodeSelectorProps> = ({
             </button>
             {/* 更多菜单（集数视图切换 / 集数屏蔽 / 手动矫正标题） */}
             <div
-              className='relative flex-shrink-0 transform translate-y-[-4px]'
+              className='relative flex-shrink-0'
               ref={episodeMenuRef}
             >
               <button
-                className={`w-8 h-8 rounded-md flex items-center justify-center ${iconButtonClass} transition-colors`}
+                className={`f1-episode-icon flex items-center justify-center ${iconButtonClass} transition-colors`}
                 onClick={() => setShowEpisodeMenu((v) => !v)}
                 title='更多'
                 aria-haspopup='menu'
@@ -1415,7 +1414,7 @@ const EpisodeSelector: React.FC<EpisodeSelectorProps> = ({
                                     videoInfo.quality
                                   );
                                   const textColorClasses = isUltraHigh
-                                    ? 'text-purple-600 dark:text-purple-400'
+                                    ? "text-apex-accent-on-soft dark:text-apex-accent-on-soft"
                                     : isHigh
                                       ? 'text-green-600 dark:text-green-400'
                                       : 'text-yellow-600 dark:text-yellow-400';
@@ -1437,7 +1436,7 @@ const EpisodeSelector: React.FC<EpisodeSelectorProps> = ({
                           {/* 源名称和集数信息 - 垂直居中 */}
                           <div className='flex items-center justify-between'>
                             <span className={`text-xs px-2 py-1 border rounded ${sourcePillTextClass} ${
-                              source.source === 'xiaoya' ? 'border-blue-500' : isNetdiskSource(source.source) ? 'border-purple-500' : source.source === 'openlist' || source.source === 'emby' || source.source?.startsWith('emby_')
+                              source.source === 'xiaoya' ? 'border-blue-500' : isNetdiskSource(source.source) ? "border-apex-accent" : source.source === 'openlist' || source.source === 'emby' || source.source?.startsWith('emby_')
                            ? 'border-yellow-500'
                                 : 'border-gray-500/60'
                       }`}>
@@ -1467,7 +1466,7 @@ const EpisodeSelector: React.FC<EpisodeSelectorProps> = ({
                                           {videoInfo.pingTime}ms
                                         </div>
                                         {videoInfo.bitrate && videoInfo.bitrate !== '未知' && (
-                                          <div className='text-purple-600 dark:text-purple-400 font-medium text-xs'>
+                                          <div className="text-apex-accent-on-soft dark:text-apex-accent-on-soft font-medium text-xs">
                                             {videoInfo.bitrate}
                                           </div>
                                         )}

@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-import { getAuthorizedUsername } from '../_utils';
+import { reportAppError } from '@/lib/app-error';
 import { getSuwayomiConfig, loginWithSimpleAuth } from '@/lib/suwayomi.client';
+
+import { getAuthorizedUsername } from '../_utils';
 
 export const runtime = 'nodejs';
 
@@ -87,7 +89,7 @@ export async function GET(request: NextRequest) {
     });
   } catch (error) {
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : '图片代理失败' },
+      (({ code, message, status, upstreamStatus }) => ({ error: message, code, status, upstreamStatus }))(reportAppError(error, '加载漫画图片')),
       { status: 500 }
     );
   }

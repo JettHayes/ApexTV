@@ -22,9 +22,19 @@ const PageLayout = ({ children, activePath = '/', hideNavigation = false, naviga
   const router = useRouter();
   const pathname = usePathname();
   const [backgroundImage, setBackgroundImage] = useState('');
-  const shouldShowSharedBackground = !hideNavigation && activePath !== '/play';
-  const page = pathname === '/' ? 'home' : pathname.startsWith('/search') ? 'search' : pathname.startsWith('/music') ? 'music' : pathname.startsWith('/books') || pathname.startsWith('/manga') ? 'reading' : pathname.startsWith('/private-library') || pathname.startsWith('/my/') ? 'library' : pathname.startsWith('/play') ? 'play' : pathname.startsWith('/live') || pathname.startsWith('/web-live') ? 'live' : pathname.startsWith('/admin') ? 'admin' : 'other';
+  const shouldShowSharedBackground = !hideNavigation && activePath !== '/play' && !pathname.startsWith('/watch-room/screen');
+  const page = pathname === '/' ? 'home' : pathname.startsWith('/search') ? 'search' : pathname.startsWith('/music') ? 'music' : pathname.startsWith('/books') || pathname.startsWith('/manga') ? 'reading' : pathname.startsWith('/private-library') || pathname.startsWith('/my/') ? 'library' : pathname.startsWith('/watch-room/screen') ? 'screen-room' : pathname.startsWith('/play') ? 'play' : pathname.startsWith('/live') || pathname.startsWith('/web-live') ? 'live' : pathname.startsWith('/admin') ? 'admin' : 'other';
+  const hasSidebar = !hideNavigation && !['/play', '/live', '/web-live', '/duanju/play', '/watch-room/screen', '/watch-room/music', '/admin'].some((path) => pathname === path || pathname.startsWith(path + '/'));
   const showBackButton = ['/play', '/live', '/web-live'].some((path) => pathname === path || pathname.startsWith(path + '/'));
+
+  useEffect(() => {
+    document.documentElement.dataset.navigationLayout = hasSidebar ? 'sidebar' : 'top';
+    if (!hasSidebar) {
+      delete document.documentElement.dataset.sidebarCollapsed;
+      window.__sidebarCollapsed = false;
+    }
+    return () => { delete document.documentElement.dataset.navigationLayout; };
+  }, [hasSidebar]);
 
   useEffect(() => {
     recordNavigation(pathname);
@@ -70,7 +80,7 @@ const PageLayout = ({ children, activePath = '/', hideNavigation = false, naviga
 
   return (
     <>
-      <div className='ptv-page relative w-full min-h-dvh overflow-hidden' data-page={page} data-navigation={navigationMode}>
+      <div className='ptv-page relative w-full min-h-dvh overflow-x-clip' data-page={page} data-navigation={navigationMode} data-layout={hasSidebar ? 'sidebar' : 'top'}>
         {shouldShowSharedBackground && backgroundImage && createPortal(
           <>
             <div
@@ -89,17 +99,11 @@ const PageLayout = ({ children, activePath = '/', hideNavigation = false, naviga
         )}
 
         {/* 主要布局容器 */}
-        <div className={`relative z-10 flex ${navigationMode === 'default' && !hideNavigation ? 'md:grid md:grid-cols-[auto_1fr]' : ''} w-full min-h-screen md:min-h-auto`}>
-          {/* 侧边栏 - 桌面端显示，移动端隐藏 */}
-          {!hideNavigation && navigationMode === 'default' && (
-            <div className='hidden md:block'>
-              <Sidebar activePath={activePath} />
-            </div>
-          )}
-
+        <div className={'relative z-10 flex w-full min-h-screen flex-col' + (hasSidebar ? ' md:flex-row' : '')}>
+          {hasSidebar && <Sidebar activePath={activePath} />}
           {/* 主内容区域 */}
           <div className='relative min-w-0 flex-1'>
-            {!hideNavigation && <ChannelToolbar />}
+            {!hideNavigation && <ChannelToolbar sidebar={hasSidebar} />}
 
             {/* 主内容 */}
             <main

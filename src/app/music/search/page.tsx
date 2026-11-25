@@ -4,6 +4,13 @@ import { Play, RefreshCw, Search } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
+import { isRequestCancelled,reportAppError, requestJson } from '@/lib/app-error';
+import { cn } from '@/lib/cn';
+import { playMusicList } from '@/lib/music/actions';
+import { mapSong, musicSources, normalizeSource } from '@/lib/music/shared';
+import type { Song } from '@/lib/music/types';
+
+import ErrorNotice from '@/components/ErrorNotice';
 import CoverCard from '@/components/music/CoverCard';
 import MusicEmpty, {
   MusicCardGridSkeleton,
@@ -35,10 +42,6 @@ import {
   MUSIC_SINGER_NAME,
   MUSIC_SINGER_PIC,
 } from '@/components/music/tokens';
-import { cn } from '@/lib/cn';
-import { playMusicList } from '@/lib/music/actions';
-import { mapSong, musicSources, normalizeSource } from '@/lib/music/shared';
-import type { Song } from '@/lib/music/types';
 
 type HotSearchItem = { keyword: string; artist?: string };
 type SearchType = 'song' | 'singer' | 'album';
@@ -202,6 +205,9 @@ export default function MusicSearchPage() {
   // 首屏直接是热搜面板，不会闪一下骨架。
   const [loading, setLoading] = useState(!!q);
   const [loadingMore, setLoadingMore] = useState(false);
+  const [searchError, setSearchError] = useState<unknown>(null);
+  const [hotError, setHotError] = useState<unknown>(null);
+  const [retrySearch, setRetrySearch] = useState<(() => void) | null>(null);
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(false);
   const [detailTitle, setDetailTitle] = useState('');
@@ -210,6 +216,8 @@ export default function MusicSearchPage() {
   const userScrolledRef = useRef(false);
 
   const loadHotSearch = async (forceRefresh = false) => {
+    setHotError(null);
+    setHotError(null);
     const cacheKey = getHotSearchCacheKey(source);
     let cachedData: HotSearchItem[] | null = null;
     let cacheExpired = true;
@@ -239,8 +247,7 @@ export default function MusicSearchPage() {
 
     if (!cachedData || cacheExpired || forceRefresh) {
       try {
-        const res = await fetch(`/api/music/v2/discovery/hot-search?source=${source}`);
-        const data = await res.json();
+        const data = await requestJson<any>(`/api/music/v2/discovery/hot-search?source=${source}`, undefined, '获取热搜');
         if (data.success) {
           const nextHotSearches = (data.data?.list || []).slice(0, HOT_SEARCH_LIMIT);
           setHotSearches(nextHotSearches);
@@ -252,8 +259,9 @@ export default function MusicSearchPage() {
         } else if (!cachedData) {
           setHotSearches([]);
         }
-      } catch {
-        if (!cachedData) setHotSearches([]);
+      } catch (error) {
+        reportAppError(error, '获取热搜');
+        if (!cachedData) setHotError(error);
       } finally {
         setHotLoading(false);
       }
@@ -270,9 +278,9 @@ export default function MusicSearchPage() {
       setLoading(true);
     }
 
+    setSearchError(null);
     try {
-      const res = await fetch(`/api/music/v2/search?source=${source}&q=${encodeURIComponent(q)}&type=${searchType}&page=${pageNum}&limit=20`, { signal });
-      const data = await res.json();
+      const data = await requestJson<any>(`/api/music/v2/search?source=${source}&q=${encodeURIComponent(q)}&type=${searchType}&page=${pageNum}&limit=20`, { signal }, '搜索音乐');
       const list = data.data?.list || [];
       const nextHasMore = Boolean(data.data?.hasMore);
 
@@ -300,7 +308,10 @@ export default function MusicSearchPage() {
       setPage(pageNum);
       setHasMore(nextHasMore);
     } catch (error: any) {
-      if (error?.name !== 'AbortError') {
+      if (!isRequestCancelled(error)) {
+        reportAppError(error, '搜索音乐');
+        setSearchError(error);
+        setRetrySearch(() => () => { void loadSearchPage(pageNum, append); });
         if (!append) {
           setSongs([]);
           setSingers([]);
@@ -325,6 +336,7 @@ export default function MusicSearchPage() {
     void loadHotSearch();
 
     if (!q) {
+      setSearchError(null);
       setSongs([]);
       setSingers([]);
       setAlbums([]);
@@ -423,14 +435,16 @@ export default function MusicSearchPage() {
     setSongs([]);
     setHasMore(false);
     setLoading(true);
+    setSearchError(null);
     try {
       const itemSource = normalizeSource(singer.source || selectedSource);
-      const res = await fetch(`/api/music/v2/discovery/artist-songs?source=${itemSource}&id=${encodeURIComponent(String(singer.id))}`);
-      const data = await res.json();
+      const data = await requestJson<any>(`/api/music/v2/discovery/artist-songs?source=${itemSource}&id=${encodeURIComponent(String(singer.id))}`, undefined, '获取歌手歌曲');
       const nextSongs = (data.data?.list || []).map(mapSong);
       setSongs(nextSongs);
-    } catch {
-      setSongs([]);
+    } catch (error) {
+      reportAppError(error, '获取歌手歌曲');
+      setSearchError(error);
+      setRetrySearch(() => () => { void openSinger(singer); });
     } finally {
       setLoading(false);
     }
@@ -443,14 +457,16 @@ export default function MusicSearchPage() {
     setSongs([]);
     setHasMore(false);
     setLoading(true);
+    setSearchError(null);
     try {
       const itemSource = normalizeSource(album.source || selectedSource);
-      const res = await fetch(`/api/music/v2/discovery/album-songs?source=${itemSource}&id=${encodeURIComponent(String(album.id))}`);
-      const data = await res.json();
+      const data = await requestJson<any>(`/api/music/v2/discovery/album-songs?source=${itemSource}&id=${encodeURIComponent(String(album.id))}`, undefined, '获取专辑歌曲');
       const nextSongs = (data.data?.list || []).map(mapSong);
       setSongs(nextSongs);
-    } catch {
-      setSongs([]);
+    } catch (error) {
+      reportAppError(error, '获取专辑歌曲');
+      setSearchError(error);
+      setRetrySearch(() => () => { void openAlbum(album); });
     } finally {
       setLoading(false);
     }
@@ -484,12 +500,6 @@ export default function MusicSearchPage() {
             value={selectedSource}
             options={sourceOptions}
             onChange={changeSource}
-          />
-          <MusicSwitch
-            field='类型'
-            value={selectedType}
-            options={searchTypeOptions}
-            onChange={changeType}
           />
           {showPlayAll ? (
             <button
@@ -528,12 +538,21 @@ export default function MusicSearchPage() {
         <button type='submit' className='f1-music-search-submit'>搜索</button>
       </form>
 
+      <div className='f1-music-search-types' role='group' aria-label='搜索类型'>
+        {searchTypeOptions.map((option) => (
+          <button key={option.key} type='button' aria-pressed={selectedType === option.key}
+            onClick={() => changeType(option.key)}>{option.label}</button>
+        ))}
+      </div>
+
       {loading ? (
         selectedType === 'song' || detailTitle ? (
           <MusicRowListSkeleton count={8} />
         ) : (
           <MusicCardGridSkeleton count={10} />
         )
+      ) : searchError && !loadingMore ? (
+        <ErrorNotice error={searchError} context='搜索音乐' onRetry={retrySearch || undefined} />
       ) : q ? (
         selectedType === 'singer' ? (
           detailTitle ? (
@@ -573,6 +592,8 @@ export default function MusicSearchPage() {
 
           {hotLoading ? (
             <MusicLoadingIndicator className='py-10' />
+          ) : hotError ? (
+            <ErrorNotice error={hotError} context='获取热搜' onRetry={() => void loadHotSearch(true)} />
           ) : hotSearches.length > 0 ? (
             <div className={MUSIC_HOT_GRID}>
               {hotSearches.map((item, index) => (

@@ -95,7 +95,7 @@ export function PersonalCenterPanel({
                 onClick={onOpenDeviceManagement}
                 className='flex w-full items-center gap-3 rounded-2xl border border-gray-200 bg-gray-50 px-4 py-4 text-left transition-colors hover:bg-gray-100 dark:border-gray-700 dark:bg-gray-800 dark:hover:bg-gray-750'
               >
-                <div className='flex h-12 w-12 items-center justify-center rounded-xl bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-300'>
+                <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-apex-selected text-apex-accent-on-soft dark:bg-apex-selected/30 dark:text-apex-accent-on-soft">
                   <Monitor className='w-6 h-6' />
                 </div>
                 <div>

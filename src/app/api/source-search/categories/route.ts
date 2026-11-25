@@ -1,3 +1,4 @@
+import { reportAppError } from '@/lib/app-error';
 import { NextRequest, NextResponse } from 'next/server';
 
 import { getAuthInfoFromCookie } from '@/lib/auth';
@@ -21,7 +22,7 @@ interface CmsClassResponse {
 export async function GET(request: NextRequest) {
   const authInfo = getAuthInfoFromCookie(request);
   if (!authInfo || !authInfo.username) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    return NextResponse.json({ error: '请先登录后重试' }, { status: 401 });
   }
 
   const { searchParams } = new URL(request.url);
@@ -62,10 +63,8 @@ export async function GET(request: NextRequest) {
       await classResponse.text()
     );
 
-    if (!classData.class || !Array.isArray(classData.class)) {
-      return NextResponse.json({
-        categories: [],
-      });
+    if (!Array.isArray(classData.class)) {
+      return NextResponse.json({ error: '视频源返回的数据格式无效，请稍后重试或更换视频源' }, { status: 502 });
     }
 
     // 应用黄色过滤器规则
@@ -86,7 +85,7 @@ export async function GET(request: NextRequest) {
       })),
     });
   } catch (error) {
-    console.error('Failed to get categories:', error);
+    reportAppError(error, '获取视频分类');
     return NextResponse.json(
       { error: '获取分类列表失败' },
       { status: 500 }

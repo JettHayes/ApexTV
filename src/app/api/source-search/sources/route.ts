@@ -1,3 +1,4 @@
+import { reportAppError } from '@/lib/app-error';
 import { NextRequest, NextResponse } from 'next/server';
 
 import { getAuthInfoFromCookie } from '@/lib/auth';
@@ -8,7 +9,7 @@ export const runtime = 'nodejs';
 export async function GET(request: NextRequest) {
   const authInfo = getAuthInfoFromCookie(request);
   if (!authInfo || !authInfo.username) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    return NextResponse.json({ error: '请先登录后重试' }, { status: 401 });
   }
 
   try {
@@ -23,9 +24,9 @@ export async function GET(request: NextRequest) {
       })),
     });
   } catch (error) {
-    console.error('Failed to get available API sites:', error);
+    reportAppError(error, '获取视频源');
     return NextResponse.json(
-      { error: 'Failed to load sources' },
+      { error: '获取视频源失败，请稍后重试' },
       { status: 500 }
     );
   }

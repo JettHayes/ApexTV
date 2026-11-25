@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 
+import { formatAppError, reportAppError } from '@/lib/app-error';
 import { suwayomiClient } from '@/lib/suwayomi.client';
 
 import { getAuthorizedUsername } from '../../_utils';
@@ -60,7 +61,8 @@ export async function GET(request: NextRequest) {
                 totalSources: sources.length,
               });
             } catch (error) {
-              const message = error instanceof Error ? error.message : '未知错误';
+              reportAppError(error, '搜索漫画源');
+              const message = formatAppError(error, '搜索漫画源');
               completedSources += 1;
               const failure = {
                 sourceId: String(source.id),
@@ -86,9 +88,10 @@ export async function GET(request: NextRequest) {
           failedSources,
         });
       } catch (error) {
+        reportAppError(error, '搜索漫画');
         send({
           type: 'error',
-          error: error instanceof Error ? error.message : '搜索失败',
+          error: formatAppError(error, '搜索漫画'),
         });
       } finally {
         closed = true;

@@ -1,3 +1,4 @@
+import { formatAppError, reportAppError } from '@/lib/app-error';
 /* eslint-disable @typescript-eslint/no-explicit-any,no-console */
 
 import { NextResponse } from 'next/server';
@@ -44,11 +45,11 @@ const fetchVideoList = async (api: string, typeId: string | number) => {
   const response = await fetch(`${api}?ac=videolist&t=${typeId}&pg=1`, {
     headers: API_CONFIG.search.headers,
   });
-  if (!response.ok) return null;
+  if (!response.ok) throw new Error(`短剧源请求失败（HTTP ${response.status}）`);
   const data = parseJsonLosslessIntegers<{ list?: ApiSearchItem[] }>(
     await response.text()
   );
-  if (!data?.list || !Array.isArray(data.list)) return null;
+  if (!Array.isArray(data?.list)) throw new Error('短剧源返回的数据格式无效');
   return data.list as ApiSearchItem[];
 };
 
@@ -107,6 +108,10 @@ export async function GET() {
       await classResponse.text()
     );
 
+    if (!Array.isArray(classData.class)) {
+      throw new Error('短剧源返回的分类数据格式无效');
+    }
+
     // 找到短剧分类的ID
     let duanjuClass: CmsClassItem | null = null;
     if (classData.class && Array.isArray(classData.class)) {
@@ -140,14 +145,20 @@ export async function GET() {
       .map((item) => item.type_id);
 
     let videoList: ApiSearchItem[] | null = null;
+    let sourceError: unknown;
     for (const typeId of [duanjuClass.type_id, ...childTypeIds]) {
-      const list = await fetchVideoList(firstSource.api, typeId);
-      if (list && list.length > 0) {
-        videoList = list;
-        break;
+      try {
+        const list = await fetchVideoList(firstSource.api, typeId);
+        if (list.length > 0) {
+          videoList = list;
+          break;
+        }
+      } catch (error) {
+        sourceError = error;
       }
     }
 
+    if (!videoList && sourceError) throw sourceError;
     if (!videoList || videoList.length === 0) {
       return NextResponse.json({
         code: 200,
@@ -230,12 +241,12 @@ export async function GET() {
       }
     );
   } catch (error) {
-    console.error('获取热播短剧推荐失败:', error);
+    reportAppError(error, '获取热播短剧推荐');
     return NextResponse.json(
       {
         code: 500,
         message: '获取热播短剧推荐失败',
-        error: (error as Error).message,
+        error: formatAppError(error, '获取热播短剧推荐'),
       },
       { status: 500 }
     );

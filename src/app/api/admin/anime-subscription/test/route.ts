@@ -1,3 +1,4 @@
+import { appErrorPayload, reportAppError } from '@/lib/app-error';
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { NextRequest, NextResponse } from 'next/server';
 
@@ -82,9 +83,9 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json(result);
   } catch (error: any) {
-    console.error('追番订阅集数测试失败:', error);
+    reportAppError(error, "追番订阅集数测试失败");
     return NextResponse.json(
-      { error: error.message || '测试失败' },
+      {...{ error: error.message || '测试失败' }, ...appErrorPayload(error, "后台配置服务", 500)},
       { status: 500 }
     );
   }

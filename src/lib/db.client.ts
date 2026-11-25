@@ -14,6 +14,7 @@
  * 如后续需要在客户端读取收藏等其它数据，可按同样方式在此文件中补充实现。
  */
 
+import { reportAppError, readJsonResponse } from './app-error';
 import { getAuthInfoFromBrowserCookie, clearAuthCookie } from './auth';
 import { normalizeEpisodeFilterConfig } from './episode-filter';
 import { MangaReadRecord, MangaShelfItem } from './manga.types';
@@ -25,11 +26,11 @@ import { isLoginPathname, resolveLoginPath } from './tv-mode';
 import { DanmakuFilterConfig, EpisodeFilterConfig, SkipConfig } from './types';
 
 // 全局错误触发函数
-function triggerGlobalError(message: string) {
+function triggerGlobalError(error: unknown, context = '数据同步') {
   if (typeof window !== 'undefined') {
     window.dispatchEvent(
       new CustomEvent('globalError', {
-        detail: { message },
+        detail: { error, context },
       })
     );
   }
@@ -249,7 +250,7 @@ class HybridCacheManager {
           const cacheKey = this.getUserCacheKey(username);
           localStorage.setItem(cacheKey, JSON.stringify(cache));
         } catch (retryError) {
-          console.error('重试保存缓存仍然失败:', retryError);
+          reportAppError(retryError, '数据同步');
         }
       }
     }
@@ -603,8 +604,8 @@ async function handleDatabaseOperationFailure(
     | 'mangaHistory',
   error: any
 ): Promise<void> {
-  console.error(`数据库操作失败 (${dataType}):`, error);
-  triggerGlobalError(`数据库操作失败`);
+  reportAppError(error, '数据同步');
+  triggerGlobalError(error, '数据库操作（' + dataType + '）');
 
   try {
     // 使用 Promise 缓存防止并发重复请求
@@ -656,7 +657,7 @@ async function handleDatabaseOperationFailure(
       );
     });
   } catch (refreshErr) {
-    console.error(`刷新${dataType}缓存失败:`, refreshErr);
+    reportAppError(refreshErr, '数据同步');
     triggerGlobalError(`刷新${dataType}缓存失败`);
   }
 }
@@ -744,7 +745,7 @@ export async function fetchWithAuth(
               headers: { 'Content-Type': 'application/json' },
             });
           } catch (error) {
-            console.error('注销请求失败:', error);
+            reportAppError(error, '数据同步');
             // 登出失败时清除前端cookie
             clearAuthCookie();
           }
@@ -770,7 +771,7 @@ export async function fetchWithAuth(
 
 async function fetchFromApi<T>(path: string): Promise<T> {
   const res = await fetchWithAuth(path);
-  return (await res.json()) as T;
+  return (await readJsonResponse<any>(res, '数据同步')) as T;
 }
 
 /**
@@ -827,7 +828,7 @@ async function getAllPlayRecordsRaw(): Promise<Record<string, PlayRecord>> {
         cacheManager.cachePlayRecords(freshData);
         return freshData;
       } catch (err) {
-        console.error('获取播放记录失败:', err);
+        reportAppError(err, '数据同步');
         triggerGlobalError('获取播放记录失败');
         return {};
       }
@@ -840,7 +841,7 @@ async function getAllPlayRecordsRaw(): Promise<Record<string, PlayRecord>> {
     if (!raw) return {};
     return JSON.parse(raw) as Record<string, PlayRecord>;
   } catch (err) {
-    console.error('读取播放记录失败:', err);
+    reportAppError(err, '数据同步');
     triggerGlobalError('读取播放记录失败');
     return {};
   }
@@ -882,7 +883,7 @@ function getCachedPlayRecordsSnapshotRaw(): Record<string, PlayRecord> {
       const userCache = JSON.parse(raw) as UserCacheStore;
       return userCache.playRecords?.data || {};
     } catch (err) {
-      console.error('读取用户播放记录快照失败:', err);
+      reportAppError(err, '数据同步');
       return {};
     }
   }
@@ -892,7 +893,7 @@ function getCachedPlayRecordsSnapshotRaw(): Record<string, PlayRecord> {
     if (!raw) return {};
     return JSON.parse(raw) as Record<string, PlayRecord>;
   } catch (err) {
-    console.error('读取本地播放记录快照失败:', err);
+    reportAppError(err, '数据同步');
     return {};
   }
 }
@@ -921,7 +922,7 @@ export function getCachedMangaReadRecordsSnapshot(): Record<
       const userCache = JSON.parse(raw) as UserCacheStore;
       return userCache.mangaReadRecords?.data || {};
     } catch (err) {
-      console.error('读取用户漫画历史快照失败:', err);
+      reportAppError(err, '数据同步');
       return {};
     }
   }
@@ -931,7 +932,7 @@ export function getCachedMangaReadRecordsSnapshot(): Record<
     if (!raw) return {};
     return JSON.parse(raw) as Record<string, MangaReadRecord>;
   } catch (err) {
-    console.error('读取本地漫画历史快照失败:', err);
+    reportAppError(err, '数据同步');
     return {};
   }
 }
@@ -1006,7 +1007,7 @@ export async function savePlayRecord(
       })
     );
   } catch (err) {
-    console.error('保存播放记录失败:', err);
+    reportAppError(err, '数据同步');
     triggerGlobalError('保存播放记录失败');
     throw err;
   }
@@ -1065,7 +1066,7 @@ export async function deletePlayRecord(
       })
     );
   } catch (err) {
-    console.error('删除播放记录失败:', err);
+    reportAppError(err, '数据同步');
     triggerGlobalError('删除播放记录失败');
     throw err;
   }
@@ -1125,7 +1126,7 @@ export async function deletePlayRecords(keys: string[]): Promise<void> {
       })
     );
   } catch (err) {
-    console.error('批量删除播放记录失败:', err);
+    reportAppError(err, '数据同步');
     triggerGlobalError('删除播放记录失败');
     throw err;
   }
@@ -1210,7 +1211,7 @@ export async function migratePlayRecord(
       })
     );
   } catch (err) {
-    console.error('迁移播放记录失败:', err);
+    reportAppError(err, '数据同步');
     triggerGlobalError('迁移播放记录失败');
     throw err;
   }
@@ -1232,7 +1233,7 @@ function getSpecialSearchHistoryLocal(): string[] {
     const arr = JSON.parse(raw) as string[];
     return Array.isArray(arr) ? Array.from(new Set(arr)) : [];
   } catch (err) {
-    console.error('读取特殊源搜索历史失败:', err);
+    reportAppError(err, '数据同步');
     return [];
   }
 }
@@ -1243,7 +1244,7 @@ function setSpecialSearchHistoryLocal(history: string[]): void {
   try {
     localStorage.setItem(SEARCH_HISTORY_SPECIAL_KEY, JSON.stringify(history));
   } catch (err) {
-    console.error('保存特殊源搜索历史失败:', err);
+    reportAppError(err, '数据同步');
   }
   window.dispatchEvent(
     new CustomEvent('searchHistoryUpdated', { detail: history })
@@ -1302,7 +1303,7 @@ export async function getSearchHistory(): Promise<string[]> {
         cacheManager.cacheSearchHistory(uniqueData);
         return uniqueData;
       } catch (err) {
-        console.error('获取搜索历史失败:', err);
+        reportAppError(err, '数据同步');
         triggerGlobalError('获取搜索历史失败');
         return [];
       }
@@ -1318,7 +1319,7 @@ export async function getSearchHistory(): Promise<string[]> {
     const validArray = Array.isArray(arr) ? arr : [];
     return Array.from(new Set(validArray));
   } catch (err) {
-    console.error('读取搜索历史失败:', err);
+    reportAppError(err, '数据同步');
     triggerGlobalError('读取搜索历史失败');
     return [];
   }
@@ -1393,7 +1394,7 @@ export async function addSearchHistory(keyword: string): Promise<void> {
       })
     );
   } catch (err) {
-    console.error('保存搜索历史失败:', err);
+    reportAppError(err, '数据同步');
     triggerGlobalError('保存搜索历史失败');
   }
 }
@@ -1498,7 +1499,7 @@ export async function deleteSearchHistory(keyword: string): Promise<void> {
       })
     );
   } catch (err) {
-    console.error('删除搜索历史失败:', err);
+    reportAppError(err, '数据同步');
     triggerGlobalError('删除搜索历史失败');
   }
 }
@@ -1576,7 +1577,7 @@ async function getAllFavoritesRaw(): Promise<Record<string, Favorite>> {
           cacheManager.cacheFavorites(freshData);
           return freshData;
         } catch (err) {
-          console.error('获取收藏失败:', err);
+          reportAppError(err, '数据同步');
           triggerGlobalError('获取收藏失败');
           return {};
         } finally {
@@ -1594,7 +1595,7 @@ async function getAllFavoritesRaw(): Promise<Record<string, Favorite>> {
     if (!raw) return {};
     return JSON.parse(raw) as Record<string, Favorite>;
   } catch (err) {
-    console.error('读取收藏失败:', err);
+    reportAppError(err, '数据同步');
     triggerGlobalError('读取收藏失败');
     return {};
   }
@@ -1665,7 +1666,7 @@ export async function saveFavorite(
       })
     );
   } catch (err) {
-    console.error('保存收藏失败:', err);
+    reportAppError(err, '数据同步');
     triggerGlobalError('保存收藏失败');
     throw err;
   }
@@ -1724,7 +1725,7 @@ export async function deleteFavorite(
       })
     );
   } catch (err) {
-    console.error('删除收藏失败:', err);
+    reportAppError(err, '数据同步');
     triggerGlobalError('删除收藏失败');
     throw err;
   }
@@ -1828,7 +1829,7 @@ export async function deleteFavorites(keys: string[]): Promise<void> {
       })
     );
   } catch (err) {
-    console.error('批量删除收藏失败:', err);
+    reportAppError(err, '数据同步');
     triggerGlobalError('删除收藏失败');
     throw err;
   }
@@ -1878,7 +1879,7 @@ export async function getAllMangaShelf(): Promise<
       cacheManager.cacheMangaShelf(freshData);
       return freshData;
     } catch (err) {
-      console.error('获取漫画书架失败:', err);
+      reportAppError(err, '数据同步');
       triggerGlobalError('获取漫画书架失败');
       return {};
     }
@@ -1889,7 +1890,7 @@ export async function getAllMangaShelf(): Promise<
     if (!raw) return {};
     return JSON.parse(raw) as Record<string, MangaShelfItem>;
   } catch (err) {
-    console.error('读取漫画书架失败:', err);
+    reportAppError(err, '数据同步');
     triggerGlobalError('读取漫画书架失败');
     return {};
   }
@@ -2024,7 +2025,7 @@ export async function getAllMangaReadRecords(): Promise<
       cacheManager.cacheMangaReadRecords(freshData);
       return freshData;
     } catch (err) {
-      console.error('获取漫画历史失败:', err);
+      reportAppError(err, '数据同步');
       triggerGlobalError('获取漫画历史失败');
       return {};
     }
@@ -2035,7 +2036,7 @@ export async function getAllMangaReadRecords(): Promise<
     if (!raw) return {};
     return JSON.parse(raw) as Record<string, MangaReadRecord>;
   } catch (err) {
-    console.error('读取漫画历史失败:', err);
+    reportAppError(err, '数据同步');
     triggerGlobalError('读取漫画历史失败');
     return {};
   }
@@ -2225,7 +2226,7 @@ export async function refreshAllCache(): Promise<void> {
       }
     });
   } catch (err) {
-    console.error('刷新缓存失败:', err);
+    reportAppError(err, '数据同步');
     triggerGlobalError('刷新缓存失败');
   }
 }
@@ -2398,7 +2399,7 @@ export async function getSkipConfig(
         cacheManager.cacheSkipConfigs(freshData);
         return freshData[key] || null;
       } catch (err) {
-        console.error('获取跳过片头片尾配置失败:', err);
+        reportAppError(err, '数据同步');
         triggerGlobalError('获取跳过片头片尾配置失败');
         return null;
       }
@@ -2412,7 +2413,7 @@ export async function getSkipConfig(
     const configs = JSON.parse(raw) as Record<string, SkipConfig>;
     return configs[key] || null;
   } catch (err) {
-    console.error('读取跳过片头片尾配置失败:', err);
+    reportAppError(err, '数据同步');
     triggerGlobalError('读取跳过片头片尾配置失败');
     return null;
   }
@@ -2453,7 +2454,7 @@ export async function saveSkipConfig(
         body: JSON.stringify({ key, config }),
       });
     } catch (err) {
-      console.error('保存跳过片头片尾配置失败:', err);
+      reportAppError(err, '数据同步');
       triggerGlobalError('保存跳过片头片尾配置失败');
     }
     return;
@@ -2476,7 +2477,7 @@ export async function saveSkipConfig(
       })
     );
   } catch (err) {
-    console.error('保存跳过片头片尾配置失败:', err);
+    reportAppError(err, '数据同步');
     triggerGlobalError('保存跳过片头片尾配置失败');
     throw err;
   }
@@ -2527,7 +2528,7 @@ export async function getAllSkipConfigs(): Promise<Record<string, SkipConfig>> {
         cacheManager.cacheSkipConfigs(freshData);
         return freshData;
       } catch (err) {
-        console.error('获取跳过片头片尾配置失败:', err);
+        reportAppError(err, '数据同步');
         triggerGlobalError('获取跳过片头片尾配置失败');
         return {};
       }
@@ -2540,7 +2541,7 @@ export async function getAllSkipConfigs(): Promise<Record<string, SkipConfig>> {
     if (!raw) return {};
     return JSON.parse(raw) as Record<string, SkipConfig>;
   } catch (err) {
-    console.error('读取跳过片头片尾配置失败:', err);
+    reportAppError(err, '数据同步');
     triggerGlobalError('读取跳过片头片尾配置失败');
     return {};
   }
@@ -2576,7 +2577,7 @@ export async function deleteSkipConfig(
         method: 'DELETE',
       });
     } catch (err) {
-      console.error('删除跳过片头片尾配置失败:', err);
+      reportAppError(err, '数据同步');
       triggerGlobalError('删除跳过片头片尾配置失败');
     }
     return;
@@ -2601,7 +2602,7 @@ export async function deleteSkipConfig(
       );
     }
   } catch (err) {
-    console.error('删除跳过片头片尾配置失败:', err);
+    reportAppError(err, '数据同步');
     triggerGlobalError('删除跳过片头片尾配置失败');
     throw err;
   }
@@ -2653,7 +2654,7 @@ export async function getDanmakuFilterConfig(): Promise<DanmakuFilterConfig | nu
         cacheManager.cacheDanmakuFilterConfig(freshData);
         return freshData;
       } catch (err) {
-        console.error('获取弹幕过滤配置失败:', err);
+        reportAppError(err, '数据同步');
         return null;
       }
     }
@@ -2665,7 +2666,7 @@ export async function getDanmakuFilterConfig(): Promise<DanmakuFilterConfig | nu
     if (!raw) return null;
     return JSON.parse(raw) as DanmakuFilterConfig;
   } catch (err) {
-    console.error('读取弹幕过滤配置失败:', err);
+    reportAppError(err, '数据同步');
     triggerGlobalError('读取弹幕过滤配置失败');
     return null;
   }
@@ -2700,7 +2701,7 @@ export async function saveDanmakuFilterConfig(
         body: JSON.stringify(config),
       });
     } catch (err) {
-      console.error('保存弹幕过滤配置失败:', err);
+      reportAppError(err, '数据同步');
       triggerGlobalError('保存弹幕过滤配置失败');
     }
     return;
@@ -2723,7 +2724,7 @@ export async function saveDanmakuFilterConfig(
       })
     );
   } catch (err) {
-    console.error('保存弹幕过滤配置失败:', err);
+    reportAppError(err, '数据同步');
     triggerGlobalError('保存弹幕过滤配置失败');
     throw err;
   }
@@ -2778,7 +2779,7 @@ export async function getAllMusicPlayRecords(): Promise<
         cacheManager.cacheMusicPlayRecords(freshData);
         return freshData;
       } catch (err) {
-        console.error('获取音乐播放记录失败:', err);
+        reportAppError(err, '数据同步');
         triggerGlobalError('获取音乐播放记录失败');
         return {};
       }
@@ -2791,7 +2792,7 @@ export async function getAllMusicPlayRecords(): Promise<
     if (!raw) return {};
     return JSON.parse(raw) as Record<string, MusicPlayRecord>;
   } catch (err) {
-    console.error('读取音乐播放记录失败:', err);
+    reportAppError(err, '数据同步');
     triggerGlobalError('读取音乐播放记录失败');
     return {};
   }
@@ -2832,7 +2833,7 @@ export async function saveMusicPlayRecord(
         body: JSON.stringify({ key, record }),
       });
     } catch (err) {
-      console.error('保存音乐播放记录失败:', err);
+      reportAppError(err, '数据同步');
       triggerGlobalError('保存音乐播放记录失败');
       throw err;
     }
@@ -2855,7 +2856,7 @@ export async function saveMusicPlayRecord(
       })
     );
   } catch (err) {
-    console.error('保存音乐播放记录失败:', err);
+    reportAppError(err, '数据同步');
     triggerGlobalError('保存音乐播放记录失败');
     throw err;
   }
@@ -2894,7 +2895,7 @@ export async function deleteMusicPlayRecord(
         }
       );
     } catch (err) {
-      console.error('删除音乐播放记录失败:', err);
+      reportAppError(err, '数据同步');
       triggerGlobalError('删除音乐播放记录失败');
       throw err;
     }
@@ -2917,7 +2918,7 @@ export async function deleteMusicPlayRecord(
       })
     );
   } catch (err) {
-    console.error('删除音乐播放记录失败:', err);
+    reportAppError(err, '数据同步');
     triggerGlobalError('删除音乐播放记录失败');
     throw err;
   }
@@ -2947,7 +2948,7 @@ export async function clearAllMusicPlayRecords(): Promise<void> {
         headers: { 'Content-Type': 'application/json' },
       });
     } catch (err) {
-      console.error('清空音乐播放记录失败:', err);
+      reportAppError(err, '数据同步');
       triggerGlobalError('清空音乐播放记录失败');
       throw err;
     }
@@ -2979,7 +2980,7 @@ export async function getEpisodeFilterConfig(): Promise<EpisodeFilterConfig | nu
     if (!raw) return null;
     return normalizeEpisodeFilterConfig(JSON.parse(raw) as EpisodeFilterConfig);
   } catch (err) {
-    console.error('读取集数过滤配置失败:', err);
+    reportAppError(err, '数据同步');
     return null;
   }
 }
@@ -3007,7 +3008,7 @@ export async function saveEpisodeFilterConfig(
       })
     );
   } catch (err) {
-    console.error('保存集数过滤配置失败:', err);
+    reportAppError(err, '数据同步');
     throw err;
   }
 }

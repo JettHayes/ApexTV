@@ -1,12 +1,12 @@
 /* eslint-disable no-console */
-
 import { NextRequest, NextResponse } from 'next/server';
 
+import { reportAppError } from '@/lib/app-error';
 import { getAuthInfoFromCookie } from '@/lib/auth';
 import { db } from '@/lib/db';
-import { requireFeaturePermission } from '@/lib/permissions';
 import { MusicPlayRecord } from '@/lib/db.client';
 import { getCachedSongs, setCachedSong } from '@/lib/music-song-cache';
+import { requireFeaturePermission } from '@/lib/permissions';
 
 export const runtime = 'nodejs';
 
@@ -17,7 +17,7 @@ export async function GET(request: NextRequest) {
     // 从 cookie 获取用户信息
     const authInfo = getAuthInfoFromCookie(request);
     if (!authInfo || !authInfo.username) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return NextResponse.json({ error: '请先登录' }, { status: 401 });
     }
 
     // 检查用户状态
@@ -56,9 +56,9 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json(enrichedRecords, { status: 200 });
   } catch (err) {
-    console.error('获取音乐播放记录失败', err);
+    reportAppError(err, '音乐接口');
     return NextResponse.json(
-      { error: 'Internal Server Error' },
+      { error: '服务内部错误，请稍后重试' },
       { status: 500 }
     );
   }
@@ -71,7 +71,7 @@ export async function POST(request: NextRequest) {
     // 从 cookie 获取用户信息
     const authInfo = getAuthInfoFromCookie(request);
     if (!authInfo || !authInfo.username) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return NextResponse.json({ error: '请先登录' }, { status: 401 });
     }
 
     if (authInfo.username !== process.env.USERNAME) {
@@ -96,7 +96,7 @@ export async function POST(request: NextRequest) {
         const { key, record } = item;
         if (!key || !record) {
           return NextResponse.json(
-            { error: 'Missing key or record in batch item' },
+            { error: '批量记录缺少必要字段' },
             { status: 400 }
           );
         }
@@ -104,7 +104,7 @@ export async function POST(request: NextRequest) {
         // 验证音乐播放记录数据
         if (!record.platform || !record.id || !record.name || !record.artist) {
           return NextResponse.json(
-            { error: 'Invalid record data in batch item' },
+            { error: '批量记录数据无效' },
             { status: 400 }
           );
         }
@@ -113,7 +113,7 @@ export async function POST(request: NextRequest) {
         const [platform, id] = key.split('+');
         if (!platform || !id) {
           return NextResponse.json(
-            { error: 'Invalid key format in batch item' },
+            { error: '批量记录键格式无效' },
             { status: 400 }
           );
         }
@@ -140,7 +140,7 @@ export async function POST(request: NextRequest) {
 
       if (!key || !record) {
         return NextResponse.json(
-          { error: 'Missing key or record' },
+          { error: '缺少记录或记录键' },
           { status: 400 }
         );
       }
@@ -148,7 +148,7 @@ export async function POST(request: NextRequest) {
       // 验证音乐播放记录数据
       if (!record.platform || !record.id || !record.name || !record.artist) {
         return NextResponse.json(
-          { error: 'Invalid record data' },
+          { error: '记录数据无效' },
           { status: 400 }
         );
       }
@@ -157,7 +157,7 @@ export async function POST(request: NextRequest) {
       const [platform, id] = key.split('+');
       if (!platform || !id) {
         return NextResponse.json(
-          { error: 'Invalid key format' },
+          { error: '记录键格式无效' },
           { status: 400 }
         );
       }
@@ -176,9 +176,9 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: true }, { status: 200 });
     }
   } catch (err) {
-    console.error('保存音乐播放记录失败', err);
+    reportAppError(err, '音乐接口');
     return NextResponse.json(
-      { error: 'Internal Server Error' },
+      { error: '服务内部错误，请稍后重试' },
       { status: 500 }
     );
   }
@@ -191,7 +191,7 @@ export async function DELETE(request: NextRequest) {
     // 从 cookie 获取用户信息
     const authInfo = getAuthInfoFromCookie(request);
     if (!authInfo || !authInfo.username) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return NextResponse.json({ error: '请先登录' }, { status: 401 });
     }
 
     if (authInfo.username !== process.env.USERNAME) {
@@ -213,7 +213,7 @@ export async function DELETE(request: NextRequest) {
       const [platform, id] = key.split('+');
       if (!platform || !id) {
         return NextResponse.json(
-          { error: 'Invalid key format' },
+          { error: '记录键格式无效' },
           { status: 400 }
         );
       }
@@ -225,9 +225,9 @@ export async function DELETE(request: NextRequest) {
 
     return NextResponse.json({ success: true }, { status: 200 });
   } catch (err) {
-    console.error('删除音乐播放记录失败', err);
+    reportAppError(err, '音乐接口');
     return NextResponse.json(
-      { error: 'Internal Server Error' },
+      { error: '服务内部错误，请稍后重试' },
       { status: 500 }
     );
   }

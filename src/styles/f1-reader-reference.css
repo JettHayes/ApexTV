@@ -1,0 +1,31 @@
+
+/* Book and manga layouts for reading on large and small screens. */
+.f1-reading-discover .f1-reading-welcome { min-height: 150px; align-items: center; }
+.f1-comic-detail .f1-reading-detail-hero { grid-template-columns: minmax(120px, 180px) minmax(0, 1fr); gap: 24px; padding: 20px; }
+.f1-comic-detail .f1-reading-detail-copy { min-width: 0; }
+.f1-comic-detail .f1-reading-detail-copy > p { display: -webkit-box; overflow: hidden; -webkit-line-clamp: 3; -webkit-box-orient: vertical; line-height: 1.6; }
+.f1-comic-detail .f1-reading-detail-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.f1-comic-detail .f1-reading-detail-actions > * { flex: 1 1 auto; justify-content: center; }
+.f1-manga-detail-tabs { display: flex; align-items: center; gap: 20px; border-bottom: 1px solid var(--ptv-line); }
+.f1-manga-detail-tabs button { min-height: 44px; border-bottom: 2px solid transparent; color: var(--ptv-muted); font-size: 13px; font-weight: 600; }
+.f1-manga-detail-tabs button[aria-selected='true'] { color: var(--ptv-accent); border-color: var(--ptv-accent); }
+.f1-manga-detail-tabs span { margin-left: auto; color: var(--ptv-muted); font-size: 12px; }
+.f1-comic-detail .f1-reading-chapters { margin-top: 0; padding: 0; border: 0; background: transparent; }
+.f1-comic-detail .f1-reading-chapters[hidden] { display: none; }
+.f1-comic-detail .f1-reading-chapters > div:first-child { margin: 0; padding: 8px 0; }
+.f1-comic-detail .f1-chapter-grid { gap: 0; }
+.f1-comic-detail .f1-chapter-grid > a { border-radius: 0; border-width: 0 0 1px; border-color: var(--ptv-line); }
+.f1-manga-description { padding: 18px 0; color: var(--ptv-text); }
+.f1-manga-description h2 { margin-bottom: 10px; font-weight: 700; }
+.f1-manga-description p { color: var(--ptv-muted); line-height: 1.8; white-space: pre-wrap; }
+.f1-reader-settings-header { position: relative; padding-right: 36px; }
+.f1-reader-settings-close { position: absolute; top: -4px; right: 0; display: grid; place-items: center; min-width: 36px; min-height: 36px; border-radius: 6px; }
+.f1-reader-settings-close:hover { background: var(--ptv-soft); --ptv-muted: var(--ptv-muted-on-soft); --apex-muted-rgb: var(--apex-muted-on-soft-rgb); --ptv-accent: var(--ptv-accent-on-soft); --apex-accent-rgb: var(--apex-accent-on-soft-rgb); }
+.f1-comic-mode-bar { position: fixed; z-index: 30; top: calc(4.25rem + env(safe-area-inset-top)); left: 50%; transform: translateX(-50%); display: flex; max-width: calc(100% - 24px); padding: 4px; overflow-x: auto; border: 1px solid var(--ptv-line); border-radius: 10px; background: var(--ptv-panel); color: var(--ptv-text); }
+.f1-comic-mode-bar button { min-height: 36px; padding: 6px 14px; border-radius: 7px; white-space: nowrap; font-size: 12px; }
+.f1-comic-mode-bar button[aria-pressed='true'] { background: var(--ptv-action); color: var(--ptv-action-ink); }
+@media (max-width: 640px) {
+ .f1-comic-detail .f1-reading-detail-hero { grid-template-columns: 100px minmax(0,1fr); gap: 14px; padding: 14px; }
+ .f1-comic-detail .f1-reading-detail-copy h1 { font-size: 20px; }
+ .f1-comic-mode-bar button { padding-inline: 10px; }
+}

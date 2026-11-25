@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 
+import { reportAppError } from '@/lib/app-error';
 import { getBookTtsConfig, listBookTtsVoices } from '@/lib/book-tts';
 
 import { getAuthorizedBooksUsername } from '../../_utils';
@@ -26,6 +27,6 @@ export async function GET(request: NextRequest) {
       },
     });
   } catch (error) {
-    return NextResponse.json({ error: (error as Error).message || '获取音色列表失败' }, { status: 500 });
+    return NextResponse.json((({ code, message, status, upstreamStatus }) => ({ error: message, code, status, upstreamStatus }))(reportAppError(error, '获取朗读音色')), { status: 500 });
   }
 }

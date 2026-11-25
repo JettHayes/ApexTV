@@ -9,9 +9,13 @@ interface HashStorage {
 export function personalLibraryStorage(): HashStorage {
   const storage = getStorage() as unknown as HashStorage & {
     client?: HashStorage;
+    adapter?: HashStorage;
   };
-  const hash = storage.client || storage;
-  if (!hash.hGetAll || !hash.hSet || !hash.hDel)
+  const hash = [storage.client, storage.adapter, storage].find((candidate) =>
+    candidate && typeof candidate.hGetAll === 'function' &&
+    typeof candidate.hSet === 'function' && typeof candidate.hDel === 'function'
+  );
+  if (!hash)
     throw new Error('当前存储不支持个人整理数据');
   return hash;
 }

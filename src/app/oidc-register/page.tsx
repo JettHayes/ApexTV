@@ -1,5 +1,8 @@
 'use client';
 
+import { formatAppError, readJsonResponse, reportAppError } from '@/lib/app-error';
+
+
 import AuthBrandPanel from '@/components/AuthBrandPanel';
 
 import { useRouter } from 'next/navigation';
@@ -24,14 +27,14 @@ function OIDCRegisterPageClient() {
       try {
         const res = await fetch('/api/auth/oidc/session-info');
         if (res.ok) {
-          const data = await res.json();
+          const data = await readJsonResponse<any>(res, "账户注册");
           setOidcInfo(data);
         } else {
           // session无效,跳转到登录页
           router.replace('/login?error=' + encodeURIComponent('OIDC会话已过期'));
         }
       } catch (error) {
-        console.error('检查session失败:', error);
+        reportAppError(error, "检查session失败");
         router.replace('/login');
       }
     };
@@ -60,11 +63,11 @@ function OIDCRegisterPageClient() {
         // 注册成功，接口已写入认证 cookie，这里用整页跳转确保权限配置和登录态完全重建
         window.location.replace('/');
       } else {
-        const data = await res.json().catch(() => ({}));
-        setError(data.error || '注册失败');
+        const data = await readJsonResponse<any>(res, "账户注册");
+        setError(formatAppError(data.error || '注册失败', "账户注册"));
       }
     } catch (error) {
-      setError('网络错误，请稍后重试');
+      setError(formatAppError(reportAppError(error, '账户请求'), '账户请求'));
     } finally {
       setLoading(false);
     }
@@ -126,7 +129,7 @@ function OIDCRegisterPageClient() {
               id='username'
               type='text'
               autoComplete='username'
-              className='block w-full rounded-lg border-0 py-3 px-4 text-gray-900 dark:text-gray-100 shadow-sm ring-1 ring-white/60 dark:ring-white/20 placeholder:text-gray-500 dark:placeholder:text-gray-400 focus:ring-2 focus:ring-green-500 focus:outline-none sm:text-base bg-white/60 dark:bg-zinc-800/60 backdrop-blur'
+              className="block w-full rounded-lg border-0 py-3 px-4 text-gray-900 dark:text-gray-100 shadow-sm ring-1 ring-white/60 dark:ring-white/20 placeholder:text-gray-500 dark:placeholder:text-gray-400 focus:ring-2 focus:ring-apex-accent focus:outline-none sm:text-base bg-white/60 dark:bg-zinc-800/60 backdrop-blur"
               placeholder='输入用户名（3-20位字母、数字、下划线）'
               value={username}
               onChange={(e) => setUsername(e.target.value)}
@@ -143,7 +146,7 @@ function OIDCRegisterPageClient() {
           <button
             type='submit'
             disabled={!username || loading}
-            className='inline-flex w-full justify-center rounded-lg bg-green-600 py-3 text-base font-semibold text-white shadow-lg transition-all duration-200 hover:from-green-600 hover:to-blue-600 disabled:cursor-not-allowed disabled:opacity-50'
+            className="inline-flex w-full justify-center rounded-lg bg-green-600 py-3 text-base font-semibold text-apex-action-ink shadow-lg transition-all duration-200 hover:from-apex-action hover:to-apex-action disabled:cursor-not-allowed disabled:opacity-50"
           >
             {loading ? '注册中...' : '完成注册'}
           </button>
