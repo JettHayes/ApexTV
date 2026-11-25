@@ -2,7 +2,7 @@ name: Upstream Sync
 
 permissions:
     contents: write
-    pull-requests: write
+    issues: write
 
 on:
   schedule:
@@ -16,9 +16,7 @@ concurrency:
 env:
     UPSTREAM_REPO: mtvpls/MoonTVPlus
     UPSTREAM_BRANCH: main
-    TARGET_BRANCH: main
-    SYNC_BRANCH: upstream-sync
-    SEEN_BRANCH: upstream-seen
+    SEEN_TAG: upstream-seen
 
 jobs:
     sync_with_upstream:
@@ -38,17 +36,16 @@ jobs:
                   git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
                   git remote add upstream "https://github.com/${UPSTREAM_REPO}.git"
                   git fetch upstream "${UPSTREAM_BRANCH}"
-                  git fetch origin "${TARGET_BRANCH}"
-                  git fetch origin "${SEEN_BRANCH}" || true
+                  git fetch origin "refs/tags/${SEEN_TAG}:refs/tags/${SEEN_TAG}" || true
 
             - name: Check for unseen upstream commits
               id: check
               run: |
-                  if git rev-parse --verify --quiet "origin/${SEEN_BRANCH}" >/dev/null; then
-                      SEEN="origin/${SEEN_BRANCH}"
+                  if git rev-parse --verify --quiet "refs/tags/${SEEN_TAG}" >/dev/null; then
+                      SEEN="refs/tags/${SEEN_TAG}"
                   else
-                      echo "尚未记录已审阅的上游提交，本次只建立指针，不改产品代码"
-                      git push origin "upstream/${UPSTREAM_BRANCH}:refs/heads/${SEEN_BRANCH}"
+                      echo "尚未记录已审阅的上游提交，本次只建立指针"
+                      git push origin "upstream/${UPSTREAM_BRANCH}:refs/tags/${SEEN_TAG}"
                       echo "has_updates=false" >> "$GITHUB_OUTPUT"
                       exit 0
                   fi
@@ -60,40 +57,26 @@ jobs:
                       git log --no-merges --pretty=format:'- %h %s' "${SEEN}..upstream/${UPSTREAM_BRANCH}" > /tmp/upstream-new.md
                   fi
 
-            - name: Publish a notice pull request
+            - name: Open or update an issue
               if: steps.check.outputs.has_updates == 'true'
               env:
                   GH_TOKEN: ${{ secrets.SYNC_TOKEN }}
               run: |
-                  git checkout -B "${SYNC_BRANCH}" "origin/${TARGET_BRANCH}"
-                  {
-                    echo "# 上游新提交"
-                    echo
-                    echo "这些提交来自 [${UPSTREAM_REPO}](https://github.com/${UPSTREAM_REPO})，只作审阅清单。"
-                    echo "ApexTV 不合并上游整棵代码。需要的修复请按提交号挑选进 main。"
-                    echo
-                    cat /tmp/upstream-new.md
-                    echo
-                  } > .github/upstream-pending.md
-                  git add .github/upstream-pending.md
-                  git commit -m "chore: 记录待审阅的上游提交"
-                  git push --force origin "${SYNC_BRANCH}"
-
-                  PR_NUMBER=$(gh pr list --repo "$GITHUB_REPOSITORY" --head "${SYNC_BRANCH}" --base "${TARGET_BRANCH}" --state open --json number --jq '.[0].number // empty')
                   BODY=$(cat <<EOF
-                  上游 [${UPSTREAM_REPO}](https://github.com/${UPSTREAM_REPO}) 有新提交。清单写在 \`.github/upstream-pending.md\`。
+                  上游 [${UPSTREAM_REPO}](https://github.com/${UPSTREAM_REPO}) 有新提交。这是审阅清单，不包含上游文件，也不需要合并。
 
-                  这个 PR 不包含上游文件。不要把它当成代码合并；看完后关掉即可。指针 \`upstream-seen\` 已前进，同一批提交不会再次出现。
+                  看完后直接关掉这个 Issue。需要的修复按提交号挑选进 main。
+
+                  $(cat /tmp/upstream-new.md)
                   EOF
                   )
-                  if [ -n "${PR_NUMBER}" ]; then
-                      gh pr edit "$PR_NUMBER" --title "chore: 审阅上游 ${UPSTREAM_REPO} 新提交" --body "$BODY"
+                  ISSUE_NUMBER=$(gh issue list --repo "$GITHUB_REPOSITORY" --state open --search "上游新提交 in:title" --json number --jq '.[0].number // empty')
+                  if [ -n "${ISSUE_NUMBER}" ]; then
+                      gh issue comment "$ISSUE_NUMBER" --repo "$GITHUB_REPOSITORY" --body "$BODY"
                   else
-                      gh pr create \
+                      gh issue create \
                           --repo "$GITHUB_REPOSITORY" \
-                          --base "${TARGET_BRANCH}" \
-                          --head "${SYNC_BRANCH}" \
-                          --title "chore: 审阅上游 ${UPSTREAM_REPO} 新提交" \
+                          --title "上游新提交" \
                           --body "$BODY"
                   fi
-                  git push origin "upstream/${UPSTREAM_BRANCH}:refs/heads/${SEEN_BRANCH}"
+                  git push --force origin "upstream/${UPSTREAM_BRANCH}:refs/tags/${SEEN_TAG}"
