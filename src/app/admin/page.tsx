@@ -95,7 +95,7 @@ import { WEB_LIVE_PLATFORMS, isWebLivePlatformEnabled, normalizeWebLiveRoomId, w
 import { getProgressThumbPreset, PROGRESS_THUMB_PRESETS } from '@/lib/progress-thumb-presets';
 import { isCustomCSSEnabled } from '@/styles/themes';
 
-import { searchAdminItems, splitAdminQuery } from './admin-search-index';
+import { searchAdminItems, splitAdminQuery, type AdminSearchHit } from './admin-search-index';
 import AnimeSubscriptionComponent from '@/components/AnimeSubscriptionComponent';
 import CorrectDialog from '@/components/CorrectDialog';
 import DataMigration from '@/components/DataMigration';
@@ -19253,8 +19253,23 @@ function AdminPageClient() {
   useEffect(() => {
     if (!finderOpen || loading) return;
     finderInputRef.current?.focus();
-    finderRef.current?.scrollIntoView({ block: 'start', behavior: smoothScrollBehavior() });
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = previousOverflow;
+    };
   }, [finderOpen, loading]);
+
+  useEffect(() => {
+    if (!finderOpen || !finderQuery.trim()) return;
+    const hit = document.getElementById(`admin-finder-hit-${finderIndex}`);
+    const list = document.getElementById('admin-finder-results');
+    if (!hit || !list) return;
+    const hitRect = hit.getBoundingClientRect();
+    const listRect = list.getBoundingClientRect();
+    if (hitRect.top < listRect.top) list.scrollTop -= listRect.top - hitRect.top;
+    else if (hitRect.bottom > listRect.bottom) list.scrollTop += hitRect.bottom - listRect.bottom;
+  }, [finderOpen, finderQuery, finderIndex]);
 
   useLayoutEffect(() => {
     const text = findRequest?.text;
@@ -19707,6 +19722,20 @@ function AdminPageClient() {
     group.items.some((item) => item.key === activeItem.key)
   );
   const finderHits = finderOpen ? searchAdminItems(navigationGroups, finderQuery) : [];
+  const closeFinder = () => {
+    setFinderOpen(false);
+    setFinderQuery('');
+    setFinderIndex(0);
+  };
+  const clearFinder = () => {
+    setFinderQuery('');
+    setFinderIndex(0);
+    finderInputRef.current?.focus();
+  };
+  const chooseFinderHit = (hit: AdminSearchHit) => {
+    selectSection(hit.key, hit.label);
+    closeFinder();
+  };
 
   return (
     <PageLayout activePath='/admin' navigationMode='workspace'>
@@ -19746,70 +19775,111 @@ function AdminPageClient() {
             )}
           </div>
 
-          {finderOpen && (
-            <div className='apex-admin-finder' ref={finderRef}>
-              <div className='apex-admin-finder-bar'>
-                <Search size={18} aria-hidden />
-                <input
-                  ref={finderInputRef}
-                  value={finderQuery}
-                  onChange={(event) => {
-                    setFinderQuery(event.target.value);
-                    setFinderIndex(0);
-                  }}
-                  onKeyDown={(event) => {
-                    if (event.key === 'ArrowDown') {
+          {finderOpen && typeof document !== 'undefined' && createPortal(
+            <div
+              className='apex-admin-finder-overlay ptv-scrim-in'
+              onMouseDown={(event) => {
+                if (event.target === event.currentTarget) closeFinder();
+              }}
+            >
+              <div
+                className='apex-admin-finder ptv-modal-in'
+                ref={finderRef}
+                role='dialog'
+                aria-modal='true'
+                aria-labelledby='admin-finder-title'
+                onKeyDown={(event) => {
+                  if (event.key === 'ArrowDown') {
+                    event.preventDefault();
+                    setFinderIndex((current) => Math.min(current + 1, Math.max(finderHits.length - 1, 0)));
+                  } else if (event.key === 'ArrowUp') {
+                    event.preventDefault();
+                    setFinderIndex((current) => Math.max(current - 1, 0));
+                  } else if (event.key === 'Enter' && event.target === finderInputRef.current && finderHits[finderIndex]) {
+                    event.preventDefault();
+                    chooseFinderHit(finderHits[finderIndex]);
+                  } else if (event.key === 'Escape') {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    closeFinder();
+                  } else if (event.key === 'Tab' && finderRef.current) {
+                    const nodes = [...finderRef.current.querySelectorAll<HTMLElement>('button, input')].filter((node) => !node.hidden);
+                    const first = nodes[0];
+                    const last = nodes[nodes.length - 1];
+                    if (!first || !last) return;
+                    if (event.shiftKey && document.activeElement === first) {
                       event.preventDefault();
-                      setFinderIndex((current) => Math.min(current + 1, Math.max(finderHits.length - 1, 0)));
-                    } else if (event.key === 'ArrowUp') {
+                      last.focus();
+                    } else if (!event.shiftKey && document.activeElement === last) {
                       event.preventDefault();
-                      setFinderIndex((current) => Math.max(current - 1, 0));
-                    } else if (event.key === 'Enter' && finderHits[finderIndex]) {
-                      event.preventDefault();
-                      selectSection(finderHits[finderIndex].key, finderHits[finderIndex].label);
-                      setFinderOpen(false);
-                    } else if (event.key === 'Escape') {
-                      event.preventDefault();
-                      setFinderOpen(false);
+                      first.focus();
                     }
-                  }}
-                  placeholder='搜索配置页，或页面里的具体项'
-                  aria-label='搜索管理项'
-                  aria-controls='admin-finder-results'
-                  aria-activedescendant={finderQuery.trim() ? `admin-finder-hit-${finderIndex}` : undefined}
-                />
-                <button type='button' className='apex-admin-finder-close' onClick={() => setFinderOpen(false)}>关闭</button>
-              </div>
-              <div id='admin-finder-results' className='apex-admin-finder-results' role='listbox' aria-label='管理项搜索结果'>
-                {finderQuery.trim() ? finderHits.length === 0 ? (
-                  <p className='apex-admin-finder-empty'>没有找到「{finderQuery.trim()}」</p>
-                ) : finderHits.map((hit, index) => {
-                  const parts = splitAdminQuery(hit.label, finderQuery);
-                  return (
+                  }
+                }}
+              >
+                <header className='apex-admin-finder-head'>
+                  <h2 id='admin-finder-title'>搜索配置</h2>
+                  <button type='button' className='apex-admin-finder-close' aria-label='关闭' onClick={closeFinder}>
+                    <X size={18} aria-hidden />
+                  </button>
+                </header>
+                <div className='apex-admin-finder-bar'>
+                  <Search size={18} aria-hidden />
+                  <input
+                    ref={finderInputRef}
+                    value={finderQuery}
+                    onChange={(event) => {
+                      setFinderQuery(event.target.value);
+                      setFinderIndex(0);
+                    }}
+                    placeholder='搜索配置页，或页面里的具体项'
+                    aria-label='搜索管理项'
+                    aria-controls='admin-finder-results'
+                    aria-activedescendant={finderQuery.trim() && finderHits.length ? `admin-finder-hit-${finderIndex}` : undefined}
+                    autoComplete='off'
+                    spellCheck={false}
+                  />
+                  {finderQuery && (
                     <button
                       type='button'
-                      role='option'
-                      id={`admin-finder-hit-${index}`}
-                      aria-selected={index === finderIndex}
-                      key={`${hit.kind}-${hit.key}-${hit.label}`}
-                      className='apex-admin-finder-hit'
-                      data-active={index === finderIndex ? 'true' : undefined}
-                      onMouseEnter={() => setFinderIndex(index)}
-                      onClick={() => {
-                        selectSection(hit.key, hit.label);
-                        setFinderOpen(false);
-                      }}
+                      className='apex-admin-finder-clear'
+                      aria-label='清空搜索'
+                      onMouseDown={(event) => event.preventDefault()}
+                      onClick={clearFinder}
                     >
-                      <span>{hit.kind === 'field' ? '具体项' : '配置页'}</span>
-                      <strong>{parts ? <>{parts.before}<mark>{parts.match}</mark>{parts.after}</> : hit.label}</strong>
-                      <small>{hit.kind === 'field' ? `${hit.group} / ${hit.section}` : hit.group}</small>
+                      <X size={16} aria-hidden />
                     </button>
-                  );
-                }) : (
-                  <p className='apex-admin-finder-empty'>可以搜「站点配置」，也可以搜里面的「TMDB API Key」「夸克网盘」</p>
-                )}
+                  )}
+                </div>
+                <div id='admin-finder-results' className='apex-admin-finder-results' role='listbox' aria-label='管理项搜索结果'>
+                  {finderQuery.trim() ? finderHits.length === 0 ? (
+                    <p className='apex-admin-finder-empty'>没有找到「{finderQuery.trim()}」</p>
+                  ) : finderHits.map((hit, index) => {
+                    const parts = splitAdminQuery(hit.label, finderQuery);
+                    return (
+                      <button
+                        type='button'
+                        role='option'
+                        id={`admin-finder-hit-${index}`}
+                        aria-selected={index === finderIndex}
+                        key={`${hit.kind}-${hit.key}-${hit.label}`}
+                        className='apex-admin-finder-hit'
+                        data-active={index === finderIndex ? 'true' : undefined}
+                        onMouseEnter={() => setFinderIndex(index)}
+                        onClick={() => chooseFinderHit(hit)}
+                      >
+                        <span>{hit.kind === 'field' ? '具体项' : '配置页'}</span>
+                        <strong>{parts ? <>{parts.before}<mark>{parts.match}</mark>{parts.after}</> : hit.label}</strong>
+                        <small>{hit.kind === 'field' ? `${hit.group} / ${hit.section}` : hit.group}</small>
+                      </button>
+                    );
+                  }) : (
+                    <p className='apex-admin-finder-empty'>可以搜「站点配置」，也可以搜里面的「TMDB API Key」「夸克网盘」</p>
+                  )}
+                </div>
               </div>
-            </div>
+            </div>,
+            document.body
           )}
 
           {/* TMDB 未配置提示 */}

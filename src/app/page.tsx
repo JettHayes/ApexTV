@@ -850,16 +850,17 @@ function HomeClient() {
     }
   };
 
-  const enabledModules = new Set(homeModules.filter((module) => module.enabled).map((module) => module.id));
+  const enabledHomeModules = homeModules.filter((module) => module.enabled).sort((a, b) => a.order - b.order);
+  const visibleHomeModule = enabledHomeModules.find((module) => module.id === activeHomeModule) || enabledHomeModules[0];
+  const enabledModules = new Set(enabledHomeModules.map((module) => module.id));
   const suggestedVideos = [
     ...(enabledModules.has('hotTvShows') ? hotTvShows.map((item) => ({ item, kind: 'tv' as const, module: 'hotTvShows' })) : []),
     ...(enabledModules.has('hotMovies') ? hotMovies.map((item) => ({ item, kind: 'movie' as const, module: 'hotMovies' })) : []),
     ...(enabledModules.has('hotVarietyShows') ? hotVarietyShows.map((item) => ({ item, kind: 'tv' as const, module: 'hotVarietyShows' })) : []),
   ];
-  const pickPool = suggestedVideos.filter((video) => video.module !== activeHomeModule);
-  const homePicks = (pickPool.length ? pickPool : suggestedVideos.slice(8)).filter((video, index, list) =>
+  const homePicks = suggestedVideos.filter((video) => video.module !== visibleHomeModule?.id).filter((video, index, list) =>
     list.findIndex((candidate) => candidate.item.title === video.item.title && candidate.item.year === video.item.year) === index
-  ).slice(0, 4);
+  );
 
   return (
     <PageLayout>
@@ -881,36 +882,31 @@ function HomeClient() {
             {homeContinueWatchingEnabled && <ContinueWatching />}
 
             {/* 根据配置动态渲染首页模块 */}
-            {(() => {
-              const modules = homeModules.filter((module) => module.enabled).sort((a, b) => a.order - b.order);
-              const selected = modules.find((module) => module.id === activeHomeModule) || modules[0];
-              if (!selected) return null;
-              return (
+            {visibleHomeModule && (
                 <div className='f1-home-recommendations'>
                   <div className='f1-home-recommendations-heading'>
                     <h2>正在热播</h2>
                     <div className='f1-home-tabs' role='group' aria-label='首页推荐分类'>
-                      {modules.map((module) => (
-                        <button key={module.id} type='button' aria-pressed={selected.id === module.id}
+                      {enabledHomeModules.map((module) => (
+                        <button key={module.id} type='button' aria-pressed={visibleHomeModule.id === module.id}
                           onClick={() => setActiveHomeModule(module.id)}>{module.name}</button>
                       ))}
                     </div>
                   </div>
-                  {renderModule(selected.id)}
+                  {renderModule(visibleHomeModule.id)}
                 </div>
-              );
-            })()}
+            )}
             {homePicks.length > 0 && (
-              <section className='f1-home-picks-section'>
+              <section className='f1-home-picks-section' aria-label='为你推荐'>
                 <h2>为你推荐</h2>
-                <div className='f1-home-picks'>
+                <ScrollableRow key={visibleHomeModule?.id ?? 'home-picks'} scrollDistance={640} bottomPadding='pb-1'>
                   {homePicks.map(({ item, kind }) => (
                     <Link key={item.id + kind} href={{ pathname: '/play', query: { title: item.title, year: item.year, stype: kind } }} prefetch={false} className='f1-home-pick'>
                       <img src={processImageUrl(item.poster)} alt='' loading='lazy' />
                       <span className='f1-home-pick-copy'><strong>{item.title}</strong><small>{kind === 'movie' ? '电影' : '剧集'}{item.year ? ' · ' + item.year : ''}</small>{Number(item.rate) > 0 && <span className='f1-home-pick-rating'>★ {item.rate}</span>}</span>
                     </Link>
                   ))}
-                </div>
+                </ScrollableRow>
               </section>
             )}
 

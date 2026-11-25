@@ -25,6 +25,19 @@
 .f1-site-workspace span { padding-left: 22px; border-left: 1px solid var(--ptv-line); font-weight: 650; }
 .f1-site-workspace a { margin-left: auto; color: var(--ptv-muted); font-size: 12px; }
 .f1-site-header .f1-channel-actions { margin-left: auto; gap: 2px; }
+.f1-channel-actions :is(.ptv-theme-toggle, .f1-icon-button) {
+  width: 44px; height: 44px; min-width: 44px; min-height: 44px; padding: 0;
+  border-radius: var(--f1-radius-sm, 8px); color: var(--ptv-muted);
+}
+.f1-channel-actions :is(.ptv-theme-toggle, .f1-icon-button) svg { width: 20px; height: 20px; stroke-width: 1.75; }
+.f1-channel-actions .ptv-theme-toggle:active { transform: none; }
+html.dark .f1-channel-actions .ptv-theme-toggle { color: var(--ptv-muted); }
+@media (hover: hover) and (pointer: fine) {
+  .f1-channel-actions .ptv-theme-toggle:hover,
+  html.dark .f1-channel-actions .ptv-theme-toggle:hover {
+    background: var(--ptv-soft); color: var(--ptv-text);
+  }
+}
 html[data-navigation-layout='top'] .mtv-load-overlay { left: 0; }
 @media (min-width:768px) {
   .f1-site-header { position: sticky; top: 0; z-index: 80; display: flex; min-height: 68px; padding: 10px var(--ptv-gutter); border-bottom: 1px solid var(--ptv-line); background: var(--ptv-panel); backdrop-filter: none; }

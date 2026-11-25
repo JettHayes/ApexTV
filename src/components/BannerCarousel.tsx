@@ -722,19 +722,11 @@ export default function BannerCarousel({
       </div>
 
       {/* 左右切换按钮 - 只在桌面端显示 */}
-      <button
-        onClick={goToPrevious}
-        className='hidden md:flex absolute left-4 top-1/2 -translate-y-1/2 w-12 h-12 bg-black/30 hover:bg-black/60 text-white rounded-full items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300'
-        aria-label='上一张'
-      >
-        <ChevronLeft className='w-8 h-8' />
+      <button type='button' onClick={goToPrevious} className='f1-hero-nav f1-hero-nav--prev' aria-label='上一张'>
+        <ChevronLeft aria-hidden />
       </button>
-      <button
-        onClick={goToNext}
-        className='hidden md:flex absolute right-4 top-1/2 -translate-y-1/2 w-12 h-12 bg-black/30 hover:bg-black/60 text-white rounded-full items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300'
-        aria-label='下一张'
-      >
-        <ChevronRight className='w-8 h-8' />
+      <button type='button' onClick={goToNext} className='f1-hero-nav f1-hero-nav--next' aria-label='下一张'>
+        <ChevronRight aria-hidden />
       </button>
 
       {/* 音量控制按钮 - 只在有豆瓣预告片时显示 */}
