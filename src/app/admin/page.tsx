@@ -19803,7 +19803,7 @@ function AdminPageClient() {
                     event.stopPropagation();
                     closeFinder();
                   } else if (event.key === 'Tab' && finderRef.current) {
-                    const nodes = [...finderRef.current.querySelectorAll<HTMLElement>('button, input')].filter((node) => !node.hidden);
+                    const nodes = Array.from(finderRef.current.querySelectorAll<HTMLElement>('button, input')).filter((node) => !node.hidden);
                     const first = nodes[0];
                     const last = nodes[nodes.length - 1];
                     if (!first || !last) return;
