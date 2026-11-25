@@ -5,9 +5,9 @@ permissions:
     pull-requests: write
 
 on:
-    schedule:
-        - cron: "0 18 * * *"  # UTC 18:00，即北京时间凌晨 2 点执行
-    workflow_dispatch:  # 允许手动触发
+  schedule:
+    - cron: '17 18 * * *'
+  workflow_dispatch:
 
 concurrency:
     group: upstream-sync
@@ -63,7 +63,7 @@ jobs:
               env:
                   GH_TOKEN: ${{ secrets.SYNC_TOKEN }}
               run: |
-                  PR_NUMBER=$(gh pr list --head "${SYNC_BRANCH}" --base "${TARGET_BRANCH}" --state open --json number --jq '.[0].number // empty')
+                  PR_NUMBER=$(gh pr list --repo "$GITHUB_REPOSITORY" --head "${SYNC_BRANCH}" --base "${TARGET_BRANCH}" --state open --json number --jq '.[0].number // empty')
                   echo "PR_NUMBER=${PR_NUMBER}" >> "$GITHUB_ENV"
 
                   MERGING=false
@@ -116,6 +116,7 @@ jobs:
                   GH_TOKEN: ${{ secrets.SYNC_TOKEN }}
               run: |
                   gh pr create \
+                      --repo "$GITHUB_REPOSITORY" \
                       --base "${TARGET_BRANCH}" \
                       --head "${SYNC_BRANCH}" \
                       --title "chore: 同步上游 ${UPSTREAM_REPO} 更新" \
