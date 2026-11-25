@@ -7,129 +7,93 @@
 <h1 align="center">Apex TV</h1>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/English-007c76?style=for-the-badge" alt="English">
+  <img src="https://img.shields.io/badge/English-007D78?style=for-the-badge" alt="English">
   &nbsp;
-  <a href="README.md"><img src="https://img.shields.io/badge/%E7%AE%80%E4%BD%93%E4%B8%AD%E6%96%87-102023?style=for-the-badge" alt="简体中文"></a>
+  <a href="README.md"><img src="https://img.shields.io/badge/%E7%AE%80%E4%BD%93%E4%B8%AD%E6%96%87-101619?style=for-the-badge" alt="简体中文"></a>
 </p>
 
 <p align="center">
-  <a href="https://nextjs.org/"><img src="https://img.shields.io/badge/Next.js-14-102023?style=flat-square&amp;logo=nextdotjs" alt="Next.js"></a>
-  <a href="https://react.dev/"><img src="https://img.shields.io/badge/React-18-007c76?style=flat-square&amp;logo=react" alt="React"></a>
-  <a href="https://www.typescriptlang.org/"><img src="https://img.shields.io/badge/TypeScript-4.9-102023?style=flat-square&amp;logo=typescript" alt="TypeScript"></a>
-  <a href="https://vercel.com/"><img src="https://img.shields.io/badge/Vercel-Deployment-007c76?style=flat-square&amp;logo=vercel" alt="Vercel"></a>
-  <a href="LICENSE"><img src="https://img.shields.io/badge/License-CC_BY--NC--SA_4.0-102023?style=flat-square" alt="CC BY-NC-SA 4.0"></a>
+  <a href="src/lib/version.ts"><img src="https://img.shields.io/badge/Apex_TV-2.0.0-007D78?style=flat-square" alt="Apex TV 2.0.0"></a>
+  <a href="https://nextjs.org/"><img src="https://img.shields.io/badge/Next.js-14-101619?style=flat-square&amp;logo=nextdotjs" alt="Next.js"></a>
+  <a href="https://react.dev/"><img src="https://img.shields.io/badge/React-18-007D78?style=flat-square&amp;logo=react" alt="React"></a>
+  <a href="https://www.typescriptlang.org/"><img src="https://img.shields.io/badge/TypeScript-4.9-101619?style=flat-square&amp;logo=typescript" alt="TypeScript"></a>
+  <a href="https://vercel.com/"><img src="https://img.shields.io/badge/Vercel-Deployment-007D78?style=flat-square&amp;logo=vercel" alt="Vercel"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/License-CC_BY--NC--SA_4.0-101619?style=flat-square" alt="CC BY-NC-SA 4.0"></a>
 </p>
 
 <p align="center">
   <a href="#features">Features</a> &nbsp;·&nbsp; <a href="#interface">Interface &amp; devices</a> &nbsp;·&nbsp; <a href="#deploy">Deployment</a> &nbsp;·&nbsp; <a href="#services">Services</a>
   <br>
-  <a href="#development">Development</a> &nbsp;·&nbsp; <a href="#updates">Updates</a> &nbsp;·&nbsp; <a href="#scope">Scope of use</a> &nbsp;·&nbsp; <a href="#license">License &amp; credits</a>
+  <a href="#development">Development</a> &nbsp;·&nbsp; <a href="#scope">Scope of use</a> &nbsp;·&nbsp; <a href="#license">License &amp; credits</a>
 </p>
 
 ---
 
-Apex TV is a self-hosted media aggregation player based on [MoonTVPlus](https://github.com/mtvpls/MoonTVPlus). It brings video search, private libraries, live streams, and music into one interface for your own media services and collections.
+Apex TV is a self-hosted media aggregation player based on [MoonTVPlus](https://github.com/mtvpls/MoonTVPlus). It brings video, private libraries, live streams, music, and reading into one interface, with favorites, personal lists, and viewing plans to organize your collection.
 
-This branch is maintained around deployment on Vercel. It customizes the branding, themes, navigation, and parts of the library, live-streaming, and music experience. The silver and teal interface adapts to desktops, phones, and tablets.
+The project primarily targets Vercel deployment. Its silver, graphite, and teal interface adapts to desktops, phones, tablets, and browser-based TV screens.
 
 > [!IMPORTANT]
-> This repository does not include video, live-streaming, or music content, nor does it provide third-party accounts or access credentials. After deployment, configure sources you are authorized to use.
+> This repository does not include media, third-party accounts, or access credentials. Configure sources and services you are authorized to use after deployment.
 
 <a id="features"></a>
 
 ## 🎬 Main features
 
-| Feature | Description |
+| Module | Description |
 | --- | --- |
-| Video search | Search configured sources, select episodes, and switch sources |
-| Home and history | Featured carousel, poster lists, favorites, and continue watching |
-| Browser playback | Common streaming formats, playback speed controls, progress tracking, and external player links |
-| Private library | Browse and search collections from OpenList, Emby, or Xiaoya |
-| TV channels | Configure M3U channel lists and program guides |
-| Live platforms | Configure sources by platform and room, with available room information |
-| Music | Connect a compatible backend for search, charts, playlists, lyrics, and a playback queue |
-| E-books | Connect OPDS libraries or compatible Legado sources to search books, browse chapters, and read accessible content |
-| Administration | Manage users, permissions, media sources, and site appearance |
-| Multiple devices | Desktop sidebar, mobile bottom navigation, compact tablet layouts, and PWA installation |
+| Video and short dramas | Aggregated search, categories, episode and source selection, and dedicated short-drama browsing and playback |
+| Browser player | Speed controls, progress tracking, danmaku, external subtitles, video upscaling, and external player links |
+| Personal collection | Favorites, recent history, custom lists, and viewing plans: watch later, watching, completed, or on hold |
+| Private library | Browse, search, and play your media through OpenList, Emby, or Xiaoya |
+| TV channels | M3U channel lists, categories, favorites, and program guides |
+| Live platforms | Platform rooms and custom streams, with available creator details, quality options, and playback routes |
+| Music | Search, charts, playlists, lyrics, a playback queue, and floating playback controls |
+| E-books | OPDS and compatible Legado sources, with search, chapters, reading, shelves, history, and read-aloud controls |
+| Manga | Recommendations, search, details, chapter reading, shelves, and reading history |
+| AI and watch rooms | An AI media assistant, shared viewing, music synchronization, and screen sharing through configured services |
+| Administration | Users, permissions, content sources, appearance, connected services, and notifications |
 
-A persistent database makes playback history, favorites, and other data available across devices. Visible entries depend on feature settings and account permissions. Playback support depends on the source, backend service, and browser.
-
-<details>
-<summary>🧩 Optional features</summary>
-
-The code also includes on-screen comments (danmaku), external subtitles, WebGPU video upscaling, an AI media assistant, manga and e-book reading, watch rooms, notifications, and browser-based TV pages. Some features require additional services or compatible browsers and devices.
-
-Source scripts are an experimental extension. See [SOURCE_SCRIPT.md](SOURCE_SCRIPT.md) for the interface documentation.
-
-This branch has removed the upstream native Android TV project and some platform deployment files. The browser-based TV pages remain available.
-
-</details>
+Entries depend on site settings and account permissions. Persistent storage makes account data such as favorites and playback history available across devices. Preferences and reading settings follow the storage scope of each feature.
 
 <a id="interface"></a>
 
 ## 🎨 Interface and devices
 
-The home page focuses on featured titles and continue watching, with search on a separate page. Phones use bottom navigation for the main sections. Tablet layouts adjust the sidebar and player according to available width.
+The home page focuses on recommendations and continue watching; search has its own page. Desktop layouts use side or top navigation to suit browsing and playback. Phones use bottom navigation, while tablets adapt lists, panels, and players to the available width. Web TV provides large-screen pages and remote-control navigation.
 
-Each visit or page refresh starts with the system's color scheme. Manual changes last only for the current visit and are not saved. Supported browsers use a circular reveal across the page; reduced-motion settings and unsupported browsers use an immediate switch.
+The main interface starts in light mode, with a manual dark-mode switch. Both themes share teal accents; the reader keeps its own paper colors and typography settings. Supported browsers use a full-page theme transition and respect reduced-motion preferences.
 
-The light theme uses silver-gray and soft ivory surfaces; the dark theme uses graphite blue-gray, with teal for primary actions. Music retains its record-inspired style, reading keeps paper tones and personal settings, and TV pages keep their cinema feel. Alerts and task statuses use colors that convey their meaning.
-
-Support for video codecs, autoplay, and opening external players varies between browsers. Installing the PWA does not download your media.
+Codec support, autoplay, picture-in-picture, upscaling, and external player links vary by device and browser. The PWA can be installed, but installation does not download media.
 
 <a id="deploy"></a>
 
 ## 🚀 Deploy to Vercel
 
-### 1. Prepare and import
-
-You will need a Vercel account and a persistent database. The steps below use the Upstash Redis REST API.
-
-Fork or copy this repository to your GitHub account, import it into Vercel, and select Next.js. You can also use the deployment button:
+Prepare a Vercel account and a persistent database, then fork or copy this repository to your GitHub account and import it into Vercel. You can also use the deployment button:
 
 [![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2FJettHayes%2FApexTV)
 
-| Project setting | Suggested value |
-| --- | --- |
-| Framework Preset | Next.js |
-| Node.js | 24.x |
-| Package manager | pnpm, with the version specified in `package.json` |
-| Install Command | `pnpm install --frozen-lockfile` |
-| Build Command | `pnpm build` |
-| Output Directory | Next.js default |
+Select **Next.js** and **Node.js 24.x**, keeping the default output directory. The package manager version is specified in `package.json`. Use `pnpm install --frozen-lockfile` to install and `pnpm build` to build.
 
-### 2. Configure environment variables
-
-Add these under **Settings → Environment Variables** in Vercel:
+For Upstash Redis, add these under **Settings → Environment Variables**:
 
 | Variable | Description |
 | --- | --- |
 | `USERNAME` | Site owner account |
-| `PASSWORD` | A strong, unique password; also used to sign login credentials |
-| `NEXT_PUBLIC_STORAGE_TYPE` | Set to `upstash` when using Upstash |
+| `PASSWORD` | A strong, unique password, also used to sign login credentials |
+| `NEXT_PUBLIC_STORAGE_TYPE` | Set to `upstash` |
 | `UPSTASH_URL` | Database REST URL |
 | `UPSTASH_TOKEN` | Database access token |
 
-Keep credentials in the deployment environment or admin settings, not in the repository. Redeploy after changing environment variables.
-
-### 3. Sign in and configure
-
-Once deployed, sign in with the owner account and open the admin panel from the user menu or at `/admin`. Configure the sources and services you need. Custom domains can be added under **Settings → Domains** in Vercel.
+After deployment, sign in with the owner account and open the admin panel from the user menu to configure sources and services. Add custom domains under **Settings → Domains** in Vercel. Environment variable changes require a redeployment.
 
 <details>
-<summary>🗃️ Other storage options and deployment limits</summary>
+<summary>🗃️ Storage and deployment limits</summary>
 
-The code retains adapters for Redis, Kvrocks, Postgres, Turso, and D1/SQLite. See [src/lib/db.ts](src/lib/db.ts). Check connection settings and database schemas before selecting another backend. This branch does not include the upstream database initialization scripts.
+The code retains storage adapters for Redis, Kvrocks, Postgres, Turso, and D1/SQLite. See the [storage implementation](src/lib/db.ts). Check runtime support, connection settings, and database initialization before choosing another backend.
 
-For Vercel deployments:
-
-- External services must be reachable from the deployment environment. Services on another server or a private network are not connected automatically.
-- Proxying audio and video consumes bandwidth and function resources.
-- Background work such as library scans is subject to instance lifetimes and function duration limits. Scan progress is not backed by a persistent job queue.
-- Server-side local downloads require long-running tasks and storage, so they are not suitable as a persistent download solution on Vercel.
-- The built-in realtime service relies on `server.js`, which a default Next.js deployment does not start. Watch rooms and similar features require an external service or additional deployment work.
-
-See the [Vercel documentation](https://vercel.com/docs/functions) for current platform capabilities and quotas.
+On Vercel, scans and proxies are subject to function duration, instance lifetime, and bandwidth limits. Server-side local downloads are not a persistent download solution. Watch-room synchronization requires an external realtime service; a default Next.js deployment does not start the built-in service in `server.js`.
 
 </details>
 
@@ -137,63 +101,29 @@ See the [Vercel documentation](https://vercel.com/docs/functions) for current pl
 
 ## 🔌 Connected services
 
-The person deploying the app configures each service. Confirm that content is accessible in its original service before connecting it to Apex TV.
-
 | Module | Connection |
 | --- | --- |
-| Video sources | Add compatible video APIs or import a configuration in the admin panel |
-| Title metadata | Configure metadata providers such as TMDB or Douban as needed |
-| Private library | Configure OpenList, Emby, or Xiaoya in the admin panel |
-| TV channels | Import an M3U channel list you are authorized to use, optionally with a program guide |
-| Live platforms | Adapters for Huya, Bilibili, and Douyin are included; availability depends on interface changes and access conditions |
-| Music | Configure a compatible LX music backend and its authentication |
-| E-books | Add an OPDS library or import a Legado JSON subscription in the admin panel; Legado support remains experimental |
-| Reading and other extensions | Configure the reading, model, notification, or realtime service required by each feature |
+| Video and short dramas | Add compatible video APIs or import a configuration; short-drama categories require corresponding source content |
+| Title metadata | Configure providers such as TMDB or Douban as needed |
+| Private library | Connect OpenList, Emby, or Xiaoya in the admin panel |
+| TV channels | Import an authorized M3U channel list, optionally with a program guide |
+| Live platforms | Adapters for Huya, Bilibili, Douyin, and Douyu; official player embeds for YouTube Live and Twitch; custom live streams |
+| Music | Connect a compatible LX music backend and configure authentication |
+| E-books | Add OPDS libraries or import Legado JSON subscriptions |
+| Manga | Connect a compatible manga service or use configured manga parsing sources |
+| AI and notifications | Configure model, email, Telegram, or other notification services as needed |
 
-Title metadata and playback URLs come from different services. A poster does not mean a playable source exists, and a listed file may use a codec your browser cannot decode.
+Metadata and playback URLs come from different services. A poster does not guarantee a playable source. Live quality options, embedded players, and media playback depend on source permissions, network access, and browser support.
 
-Third-party interfaces, permissions, and access rules can change. The project does not guarantee availability for every source, region, or device.
+Legado compatibility remains experimental and covers only some parsing rules. Sources requiring Android, WebView, or interactive sign-in may not work. Importing a subscription does not guarantee access to chapters, text, or covers.
 
-<details>
-<summary>📚 E-book compatibility</summary>
-
-OPDS libraries provide catalogs and e-book files. A Legado subscription contains webpage parsing rules. Importing it only saves those rules; search, details, chapter lists, and chapter text must each work separately.
-
-The current implementation supports some HTML/JSON rules, nested field replacements, and simple dynamic expressions, with batched search, progress, and failure reporting. Rules that depend on Android/WebView, interactive sign-in, or unimplemented scripting APIs may not work. Apex TV does not provide the full Legado runtime. Chapter parsing failures are reported, and finding a book does not guarantee access to its full text.
-
-Start with a few sources and confirm that chapters can be opened before adding larger subscriptions. Duplicate or unavailable sources increase waiting time. This repository does not supply or guarantee third-party book sources.
-
-</details>
-
-<details>
-<summary>⚙️ Common optional environment variables</summary>
-
-Most day-to-day settings are available in the admin panel. Common deployment variables are listed below; see the [configuration code](src/lib/config.ts) and [configuration types](src/lib/admin.types.ts) for details.
-
-| Variable | Purpose |
-| --- | --- |
-| `NEXT_PUBLIC_SITE_NAME` | Initial site name |
-| `NEXT_PUBLIC_SITE_URL` | Public site URL |
-| `ANNOUNCEMENT` | Initial announcement |
-| `INIT_CONFIG` | Initial JSON configuration |
-| `CONFIG_SUBSCRIPTION_URL` | Configuration subscription URL |
-| `TMDB_API_KEY` | TMDB API key |
-| `MUSIC_V2_BASE_URL`, `MUSIC_V2_TOKEN` | Music backend URL and token |
-| `DANMAKU_API_BASE`, `DANMAKU_API_TOKEN` | Danmaku backend settings |
-| `WATCH_ROOM_ENABLED`, `WATCH_ROOM_SERVER_TYPE` | Watch room switch and service type |
-| `WATCH_ROOM_EXTERNAL_SERVER_URL`, `WATCH_ROOM_EXTERNAL_SERVER_AUTH` | External watch room settings |
-| `ENABLE_TV_MODE` | Browser-based TV mode switch |
-| `CRON_PASSWORD` | Scheduled-task authentication; must match the scheduler path |
-
-Do not publish actual keys, database connection strings, or subscription URLs containing access tokens.
-
-</details>
+Most settings are available in the admin panel. See the [configuration code](src/lib/config.ts) and [configuration types](src/lib/admin.types.ts) for environment variables and fields. Source-script interfaces are documented in [SOURCE_SCRIPT.md](SOURCE_SCRIPT.md).
 
 <a id="development"></a>
 
 ## 🛠️ Local development
 
-Use **Node.js 24** and **pnpm 10.14.0**:
+Use a patched **Node.js 24** release and the **pnpm** version specified in `package.json`:
 
 ```bash
 git clone https://github.com/JettHayes/ApexTV.git
@@ -201,13 +131,7 @@ cd ApexTV
 pnpm install --frozen-lockfile
 ```
 
-Create an untracked `.env.local` file in the project root with account and development database settings, then run:
-
-```bash
-pnpm dev
-```
-
-Open `http://localhost:3000`. Local development connects to the services you configure, so use a separate development database.
+Create an untracked `.env.local` in the project root with login and development database settings. Run `pnpm dev`, then open `http://localhost:3000`. Use a separate database for development.
 
 | Command | Purpose |
 | --- | --- |
@@ -220,23 +144,15 @@ Open `http://localhost:3000`. Local development connects to the services you con
 
 Pages and APIs are in `src/app`, shared components in `src/components`, service and storage logic in `src/lib`, and theme styles in `src/styles`.
 
-<a id="updates"></a>
-
-## 🔄 Updates and maintenance
-
-The [Upstream Sync](.github/workflows/sync_fork.yml) workflow checks for MoonTVPlus updates and prepares a synchronization PR. It requires `SYNC_TOKEN` and the appropriate permissions. It does not merge directly into `main`.
-
-Review differences between upstream and this branch before merging, and use **Create a merge commit** as described in the workflow. Automatic deployment depends on the repository and production branch configured in Vercel.
-
-Back up important settings and data before updating or switching databases.
+An optional [upstream synchronization workflow](.github/workflows/sync_fork.yml) prepares sync PRs for review. Review the differences before merging, and back up important settings and data before updates or database changes.
 
 <a id="scope"></a>
 
 ## 📌 Scope of use
 
-This project provides a media search and playback interface. Third-party service names identify compatibility only and do not imply an official partnership, authorization, or endorsement.
+The project provides a media search and playback interface. Third-party service names describe compatibility and do not imply an official partnership, authorization, or endorsement.
 
-Use APIs, media, and related images in accordance with their terms and permissions. The repository license does not grant rights to third-party content or trademarks. Third-party dependencies and assets remain subject to their own licensing terms.
+Use APIs, media, and related assets in accordance with their terms and permissions. The repository license does not grant rights to third-party content or trademarks. Dependencies and assets retain their own licenses.
 
 <a id="license"></a>
 
