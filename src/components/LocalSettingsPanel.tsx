@@ -104,7 +104,7 @@ const imageOptions: Option[] = [
 const animeOptions: Option[] = [
   ['direct', '浏览器直连 Bangumi'],
   ['server-proxy', '服务器代理'],
-  ['sakura', '桜色镜像 · bangumi.lol'],
+  ['sakura', '桜色镜像 · bgm.lat'],
   ['custom-baseurl', '自定义 Base URL'],
 ];
 

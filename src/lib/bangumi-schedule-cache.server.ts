@@ -4,7 +4,8 @@ import { DbManager } from '@/lib/db';
 
 const MEMORY_CACHE_TTL_MS = 24 * 60 * 60 * 1000;
 const DATABASE_CACHE_TTL_MS = 30 * 24 * 60 * 60 * 1000;
-const DATABASE_CACHE_KEY_PREFIX = 'bangumi:schedule:';
+// 解析器升级后弃用旧缓存，避免旧版空时刻表持续命中 30 天。
+const DATABASE_CACHE_KEY_PREFIX = 'bangumi:schedule:v2:';
 
 export interface BangumiScheduleCacheEntry<T> {
   season: string;

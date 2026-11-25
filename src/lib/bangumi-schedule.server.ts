@@ -122,34 +122,53 @@ export async function fetchLiveChart(
 
 /**
  * 解析 LiveChart HTML，返回卡片列表。
- * 与参考实现 parse() 对齐：取 article.anime 的 data-* 属性与 .episode-countdown time[data-timestamp]。
+ * 兼容旧版 article.anime 与新版 article[data-anime-id] 的标题和倒计时属性。
+ * 仅使用集数倒计时，不把首播日期当作每周固定放送时间。
  */
 export function parseLiveChart(html: string): LiveChartCard[] {
   const $ = cheerio.load(html);
   const cards: LiveChartCard[] = [];
-  $('article.anime').each((_i, el) => {
+  $('article.anime, article[data-anime-id]').each((_i, el) => {
     const card = $(el);
     const d: LiveChartCard = {
       anime_id: card.attr('data-anime-id'),
-      native: (card.attr('data-native') || '').trim(),
-      english: (card.attr('data-english') || '').trim(),
-      romaji: (card.attr('data-romaji') || '').trim(),
+      native: (
+        card.attr('data-anime-item-native-title') ||
+        card.attr('data-native') ||
+        ''
+      ).trim(),
+      english: (
+        card.attr('data-anime-item-english-title') ||
+        card.attr('data-english') ||
+        ''
+      ).trim(),
+      romaji: (
+        card.attr('data-anime-item-romanized-native-title') ||
+        card.attr('data-romaji') ||
+        ''
+      ).trim(),
       next_ts: null,
       date_txt: '',
     };
-    const cnt = card.find('.episode-countdown').first();
-    if (cnt.length) {
-      const tm = cnt.find('time').first();
-      const ts = tm.attr('data-timestamp');
-      if (ts) {
-        const n = Number(ts);
-        if (Number.isFinite(n)) d.next_ts = n;
-      }
+    const ts = card
+      .find(
+        '.episode-countdown time[data-timestamp], time[data-controller~="countdown"][data-timestamp]'
+      )
+      .first()
+      .attr('data-timestamp');
+    if (ts) {
+      const n = Number(ts);
+      if (Number.isFinite(n) && n > 0) d.next_ts = n;
     }
-    const de = card.find('.anime-date').first();
+    const de = card
+      .find('.anime-date, .lc-anime-details-card__premiere')
+      .first();
     d.date_txt = de.text().replace(/\s+/g, ' ').trim();
     cards.push(d);
   });
+  if (cards.length === 0) {
+    throw new Error('LiveChart 页面未解析到番剧卡片，页面结构可能已变化');
+  }
   return cards;
 }
 

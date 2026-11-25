@@ -138,10 +138,10 @@ function isBangumiImageUrl(url: string): boolean {
     return (
       hostname === 'lain.bgm.tv' ||
       hostname === 'r.bgm.tv' ||
-      hostname === 'bangumi.lol' ||
+      hostname === 'bgm.lat' ||
       hostname.endsWith('.bgm.tv') ||
       hostname.endsWith('.bangumi.tv') ||
-      hostname.endsWith('.bangumi.lol')
+      hostname.endsWith('.bgm.lat')
     );
   } catch {
     return false;
@@ -166,17 +166,17 @@ function normalizeBaseUrl(baseUrl: string): string {
   return baseUrl.trim().replace(/\/+$/, '');
 }
 
-/** 官方域名 → 桜色镜像站（bgm.tv → bangumi.lol 等） */
+/** 官方域名 → 桜色镜像站（bgm.tv → bgm.lat 等） */
 function rewriteBangumiUrlToSakura(url: string): string {
   try {
     const parsed = new URL(url);
     const hostname = parsed.hostname.toLowerCase();
     if (hostname === 'bgm.tv' || hostname === 'bangumi.tv') {
-      parsed.hostname = 'bangumi.lol';
+      parsed.hostname = 'bgm.lat';
     } else if (hostname.endsWith('.bgm.tv')) {
-      parsed.hostname = `${hostname.slice(0, -'.bgm.tv'.length)}.bangumi.lol`;
+      parsed.hostname = `${hostname.slice(0, -'.bgm.tv'.length)}.bgm.lat`;
     } else if (hostname.endsWith('.bangumi.tv')) {
-      parsed.hostname = `${hostname.slice(0, -'.bangumi.tv'.length)}.bangumi.lol`;
+      parsed.hostname = `${hostname.slice(0, -'.bangumi.tv'.length)}.bgm.lat`;
     }
     return parsed.toString();
   } catch {
@@ -248,7 +248,7 @@ function getBangumiImageProbeSignature(): string {
 function getBangumiImageProbeOrigin(): string | null {
   const primary = getPrimaryBangumiImageSource();
   if (primary === 'server-proxy') return null;
-  if (primary === 'sakura') return 'https://lain.bangumi.lol';
+  if (primary === 'sakura') return 'https://lain.bgm.lat';
   if (primary === 'custom-baseurl') {
     const base = getBangumiImageBaseUrl();
     if (!base) return 'https://lain.bgm.tv';

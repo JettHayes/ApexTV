@@ -18,15 +18,7 @@ env:
     UPSTREAM_BRANCH: main
     TARGET_BRANCH: main
     SYNC_BRANCH: upstream-sync
-    # ApexTV 仅部署在 Vercel，这些上游文件已删除，同步时不再引入
-    REMOVED_PATHS: >-
-        Dockerfile Dockerfile.lite docker-entrypoint.sh .dockerignore start.js start.sh render.yaml
-        wrangler.toml open-next.config.ts cloudflare-worker.ts proxy.worker.js
-        edgeone.json .env.edgeone.example scripts/edgeone-build.mjs scripts/edgeone-local-preview.mjs
-        apps/android-tv custom-css .github/ISSUE_TEMPLATE migrations
-        scripts/init-sqlite.js scripts/init-postgres.js scripts/init-turso.js
-        public/screenshot1.png public/screenshot2.png public/screenshot3.png
-        public/music/effects/medium-room1.wav public/music/effects/s3_r1_bd.wav
+    SEEN_BRANCH: upstream-seen
 
 jobs:
     sync_with_upstream:
@@ -47,84 +39,61 @@ jobs:
                   git remote add upstream "https://github.com/${UPSTREAM_REPO}.git"
                   git fetch upstream "${UPSTREAM_BRANCH}"
                   git fetch origin "${TARGET_BRANCH}"
+                  git fetch origin "${SEEN_BRANCH}" || true
 
-            - name: Check for upstream updates
+            - name: Check for unseen upstream commits
               id: check
               run: |
-                  if git merge-base --is-ancestor "upstream/${UPSTREAM_BRANCH}" "origin/${TARGET_BRANCH}"; then
+                  if git rev-parse --verify --quiet "origin/${SEEN_BRANCH}" >/dev/null; then
+                      SEEN="origin/${SEEN_BRANCH}"
+                  else
+                      echo "尚未记录已审阅的上游提交，本次只建立指针，不改产品代码"
+                      git push origin "upstream/${UPSTREAM_BRANCH}:refs/heads/${SEEN_BRANCH}"
+                      echo "has_updates=false" >> "$GITHUB_OUTPUT"
+                      exit 0
+                  fi
+                  if git merge-base --is-ancestor "upstream/${UPSTREAM_BRANCH}" "${SEEN}"; then
                       echo "上游没有新提交，跳过同步"
                       echo "has_updates=false" >> "$GITHUB_OUTPUT"
                   else
                       echo "has_updates=true" >> "$GITHUB_OUTPUT"
+                      git log --no-merges --pretty=format:'- %h %s' "${SEEN}..upstream/${UPSTREAM_BRANCH}" > /tmp/upstream-new.md
                   fi
 
-            - name: Prepare sync branch
+            - name: Publish a notice pull request
               if: steps.check.outputs.has_updates == 'true'
               env:
                   GH_TOKEN: ${{ secrets.SYNC_TOKEN }}
               run: |
+                  git checkout -B "${SYNC_BRANCH}" "origin/${TARGET_BRANCH}"
+                  {
+                    echo "# 上游新提交"
+                    echo
+                    echo "这些提交来自 [${UPSTREAM_REPO}](https://github.com/${UPSTREAM_REPO})，只作审阅清单。"
+                    echo "ApexTV 不合并上游整棵代码。需要的修复请按提交号挑选进 main。"
+                    echo
+                    cat /tmp/upstream-new.md
+                    echo
+                  } > .github/upstream-pending.md
+                  git add .github/upstream-pending.md
+                  git commit -m "chore: 记录待审阅的上游提交"
+                  git push --force origin "${SYNC_BRANCH}"
+
                   PR_NUMBER=$(gh pr list --repo "$GITHUB_REPOSITORY" --head "${SYNC_BRANCH}" --base "${TARGET_BRANCH}" --state open --json number --jq '.[0].number // empty')
-                  echo "PR_NUMBER=${PR_NUMBER}" >> "$GITHUB_ENV"
+                  BODY=$(cat <<EOF
+                  上游 [${UPSTREAM_REPO}](https://github.com/${UPSTREAM_REPO}) 有新提交。清单写在 \`.github/upstream-pending.md\`。
 
-                  MERGING=false
-                  if [ -n "${PR_NUMBER}" ] && git fetch origin "${SYNC_BRANCH}"; then
-                      # 已有待合并的 PR 时在原分支上追加，保留在网页上解决过的冲突
-                      git checkout -B "${SYNC_BRANCH}" "origin/${SYNC_BRANCH}"
-                      if git merge-base --is-ancestor "upstream/${UPSTREAM_BRANCH}" HEAD; then
-                          echo "同步分支已包含上游最新提交"
-                          echo "SKIP_PUSH=true" >> "$GITHUB_ENV"
-                          exit 0
-                      fi
-                      MERGING=true
-                      git merge --no-edit --no-commit --no-ff "upstream/${UPSTREAM_BRANCH}" || true
-                  else
-                      git checkout -B "${SYNC_BRANCH}" "upstream/${UPSTREAM_BRANCH}"
-                  fi
-
-                  # 工作流目录始终沿用 ApexTV 的配置，避免上游改动工作流引起冲突
-                  git rm -r -q --cached --ignore-unmatch .github/workflows
-                  rm -rf .github/workflows
-                  git checkout "origin/${TARGET_BRANCH}" -- .github/workflows
-                  git add -A .github/workflows
-                  # shellcheck disable=SC2086
-                  git rm -r -q --ignore-unmatch -- ${REMOVED_PATHS}
-
-                  if [ -n "$(git diff --name-only --diff-filter=U)" ]; then
-                      echo "[Error] 同步分支与上游新提交存在冲突，请在本地处理 PR #${PR_NUMBER}"
-                      git diff --name-only --diff-filter=U
-                      exit 1
-                  fi
-
-                  if [ "${MERGING}" = "true" ]; then
-                      git commit --no-edit
-                  elif ! git diff --cached --quiet; then
-                      git commit -m "chore(ci): 保留 ApexTV 工作流配置并移除不部署的平台文件"
-                  fi
-
-            - name: Push sync branch
-              if: steps.check.outputs.has_updates == 'true' && env.SKIP_PUSH != 'true'
-              run: |
-                  if [ -n "${PR_NUMBER}" ]; then
-                      git push origin "${SYNC_BRANCH}"
-                  else
-                      git push --force origin "${SYNC_BRANCH}"
-                  fi
-
-            - name: Create pull request
-              if: steps.check.outputs.has_updates == 'true' && env.PR_NUMBER == ''
-              env:
-                  GH_TOKEN: ${{ secrets.SYNC_TOKEN }}
-              run: |
-                  gh pr create \
-                      --repo "$GITHUB_REPOSITORY" \
-                      --base "${TARGET_BRANCH}" \
-                      --head "${SYNC_BRANCH}" \
-                      --title "chore: 同步上游 ${UPSTREAM_REPO} 更新" \
-                      --body "$(cat <<EOF
-                  自动检测到上游 [${UPSTREAM_REPO}](https://github.com/${UPSTREAM_REPO}) 有新提交。
-
-                  - 合并时请选择 **Create a merge commit**，不要使用 Squash 或 Rebase，否则下次同步会重复出现已合并的提交。
-                  - 若提示存在冲突，可在网页上解决简单冲突；复杂冲突需在本地处理。合并前 main 不会被修改。
-                  - 工作流目录 \`.github/workflows\` 保持 ApexTV 当前配置，不跟随上游变化。
+                  这个 PR 不包含上游文件。不要把它当成代码合并；看完后关掉即可。指针 \`upstream-seen\` 已前进，同一批提交不会再次出现。
                   EOF
-                  )"
+                  )
+                  if [ -n "${PR_NUMBER}" ]; then
+                      gh pr edit "$PR_NUMBER" --title "chore: 审阅上游 ${UPSTREAM_REPO} 新提交" --body "$BODY"
+                  else
+                      gh pr create \
+                          --repo "$GITHUB_REPOSITORY" \
+                          --base "${TARGET_BRANCH}" \
+                          --head "${SYNC_BRANCH}" \
+                          --title "chore: 审阅上游 ${UPSTREAM_REPO} 新提交" \
+                          --body "$BODY"
+                  fi
+                  git push origin "upstream/${UPSTREAM_BRANCH}:refs/heads/${SEEN_BRANCH}"
