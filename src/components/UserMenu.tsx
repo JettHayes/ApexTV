@@ -19,7 +19,7 @@ import {
   X,
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 
 import './UserMenu.css';
@@ -80,10 +80,27 @@ export const UserMenu: React.FC<{ quickActions?: boolean }> = ({ quickActions = 
   const [isTvQrScannerOpen, setIsTvQrScannerOpen] = useState(false);
   const [tvQrScannerStatus, setTvQrScannerStatus] = useState('');
   const [tvQrScannerError, setTvQrScannerError] = useState('');
+  const accountTriggerRef = useRef<HTMLButtonElement>(null);
+  const [accountMenuBox, setAccountMenuBox] = useState<{ top: number; right: number } | null>(null);
   const tvQrVideoRef = useRef<HTMLVideoElement | null>(null);
   const tvQrStreamRef = useRef<MediaStream | null>(null);
   const tvQrScanStopRef = useRef(false);
   const [tvAccessTab, setTvAccessTab] = useState<'tvbox' | 'orion' | 'web'>('tvbox');
+
+  useLayoutEffect(() => {
+    if (!isOpen) return;
+    const place = () => {
+      const rect = accountTriggerRef.current?.getBoundingClientRect();
+      if (!rect) return;
+      setAccountMenuBox({
+        top: rect.bottom + 12,
+        right: Math.max(8, window.innerWidth - rect.right),
+      });
+    };
+    place();
+    window.addEventListener('resize', place);
+    return () => window.removeEventListener('resize', place);
+  }, [isOpen]);
 
   // Body 滚动锁定 - 使用 overflow 方式避免布局问题
   useEffect(() => {
@@ -1067,7 +1084,7 @@ export const UserMenu: React.FC<{ quickActions?: boolean }> = ({ quickActions = 
       />
 
       {/* 菜单面板 */}
-      <div className='ptv-menu ptv-account-menu ptv-pop-in origin-top-right fixed top-[calc(3.5rem+var(--safe-top))] right-[max(1rem,env(safe-area-inset-right))] max-h-[calc(100dvh-4.5rem-var(--safe-top)-env(safe-area-inset-bottom))] bg-white dark:bg-gray-900 rounded-lg shadow-xl z-[1001] border border-gray-200/50 dark:border-gray-700/50 overflow-y-auto'>
+      <div className='ptv-menu ptv-account-menu ptv-pop-in origin-top-right fixed top-[calc(3.5rem+var(--safe-top))] right-[max(var(--ptv-gutter),env(safe-area-inset-right))] max-h-[calc(100dvh-4.5rem-var(--safe-top)-env(safe-area-inset-bottom))] bg-white dark:bg-gray-900 rounded-lg shadow-xl z-[1001] border border-gray-200/50 dark:border-gray-700/50 overflow-y-auto' style={accountMenuBox == null ? undefined : { top: accountMenuBox.top, right: accountMenuBox.right, maxHeight: `calc(100dvh - ${accountMenuBox.top}px - 16px - env(safe-area-inset-bottom))` }}>
         {/* 用户信息区域 */}
         <div className='ptv-account-header'>
             <button
@@ -1661,6 +1678,7 @@ export const UserMenu: React.FC<{ quickActions?: boolean }> = ({ quickActions = 
       </>}
       <div className='relative'>
         <button
+          ref={accountTriggerRef}
           onClick={handleMenuClick}
           className='ptv-account-trigger w-11 h-11 shrink-0 p-0 rounded-full flex items-center justify-center text-gray-600 hover:bg-gray-200/50 dark:text-gray-300 dark:hover:bg-gray-700/50 active:scale-95 transition-[background-color,color,transform] duration-150'
           aria-label='账户菜单'

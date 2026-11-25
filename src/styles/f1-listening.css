@@ -8,7 +8,8 @@
 .f1-listening-queue-entry { display: flex; align-items: center; gap: 10px; padding: 0 14px; font-size: 13px; }
 .f1-listening-queue-entry span { color: var(--ptv-muted); font-variant-numeric: tabular-nums; }
 .f1-listening-art { width: clamp(280px,30vw,440px); border-right: 1px solid var(--ptv-line); background: var(--ptv-panel); }
-.f1-listening-lyrics { overscroll-behavior: contain; scrollbar-width: thin; scroll-padding: 80px; }
+.f1-listening-lyrics { overscroll-behavior: contain; overflow-x: hidden; scrollbar-width: none; scroll-padding: 80px; }
+.f1-listening-lyrics::-webkit-scrollbar { display: none; }
 .f1-listening-lyrics > div { padding-block: 64px; }
 .f1-listening-lyrics button { overflow-wrap: anywhere; }
 .f1-listening-up-next { display: none; width: 280px; min-height: 0; flex: none; padding: 24px 16px 16px; border-left: 1px solid var(--ptv-line); background: var(--ptv-panel); }

@@ -52,6 +52,8 @@ import {
   Palette,
   Pencil,
   Plus,
+  RefreshCw,
+  RotateCcw,
   Search,
   Send,
   Settings,
@@ -72,6 +74,7 @@ import {
   useCallback,
   useEffect,
   useId,
+  useLayoutEffect,
   useMemo,
   useRef,
   useState,
@@ -81,6 +84,7 @@ import { createPortal } from 'react-dom';
 import { AdminConfig, AdminConfigResult, OpenListExtraSource } from '@/lib/admin.types';
 import { adminConfigSaveError, getAdminConfigVersion, mergePendingOrder, registerAdminConfigVersion } from '@/lib/admin-config-client';
 import { getAuthInfoFromBrowserCookie } from '@/lib/auth';
+import { smoothScrollBehavior } from '@/lib/motion';
 import { BookSource } from '@/lib/book.types';
 import {
   ALL_FEATURE_PERMISSION_KEYS,
@@ -91,6 +95,7 @@ import { WEB_LIVE_PLATFORMS, isWebLivePlatformEnabled, normalizeWebLiveRoomId, w
 import { getProgressThumbPreset, PROGRESS_THUMB_PRESETS } from '@/lib/progress-thumb-presets';
 import { isCustomCSSEnabled } from '@/styles/themes';
 
+import { searchAdminItems, splitAdminQuery } from './admin-search-index';
 import AnimeSubscriptionComponent from '@/components/AnimeSubscriptionComponent';
 import CorrectDialog from '@/components/CorrectDialog';
 import DataMigration from '@/components/DataMigration';
@@ -19131,8 +19136,14 @@ function AdminPageClient() {
     if (typeof window === 'undefined') return 'siteConfig';
     return localStorage.getItem('admin_active_section') || 'siteConfig';
   });
+  const [finderOpen, setFinderOpen] = useState(false);
+  const [finderQuery, setFinderQuery] = useState('');
+  const [finderIndex, setFinderIndex] = useState(0);
+  const [findRequest, setFindRequest] = useState<{ text: string; nonce: number } | null>(null);
   // 切换区块时定位到内容标题，不建立第二个内容滚动区。
   const contentScrollRef = useRef<HTMLElement | null>(null);
+  const finderRef = useRef<HTMLDivElement | null>(null);
+  const finderInputRef = useRef<HTMLInputElement | null>(null);
 
   // 获取管理员配置
   // showLoading 用于控制是否在请求期间显示整体加载骨架。
@@ -19224,6 +19235,56 @@ function AdminPageClient() {
   }, [fetchConfig, fetchUsersV2, userPage]);
 
   useEffect(() => {
+    const openFinder = () => setFinderOpen(true);
+    const onKey = (event: KeyboardEvent) => {
+      if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'k') {
+        event.preventDefault();
+        setFinderOpen(true);
+      }
+    };
+    window.addEventListener('apex-admin-search', openFinder);
+    window.addEventListener('keydown', onKey);
+    return () => {
+      window.removeEventListener('apex-admin-search', openFinder);
+      window.removeEventListener('keydown', onKey);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!finderOpen || loading) return;
+    finderInputRef.current?.focus();
+    finderRef.current?.scrollIntoView({ block: 'start', behavior: smoothScrollBehavior() });
+  }, [finderOpen, loading]);
+
+  useLayoutEffect(() => {
+    const text = findRequest?.text;
+    const root = contentScrollRef.current;
+    if (!text || !root) return;
+    root.querySelectorAll('.apex-admin-find').forEach((el) => el.classList.remove('apex-admin-find'));
+    const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+    let match: HTMLElement | null = null;
+    let current: Node | null = walker.nextNode();
+    while (current) {
+      const value = current.textContent?.replace(/\s+/g, ' ').trim() ?? '';
+      if (value && value.length <= 80 && value.includes(text)) {
+        match = current.parentElement;
+        break;
+      }
+      current = walker.nextNode();
+    }
+    if (!match) return;
+    let parent: HTMLElement | null = match;
+    while (parent && parent !== root) {
+      if (parent.tagName === 'DETAILS') (parent as HTMLDetailsElement).open = true;
+      parent = parent.parentElement;
+    }
+    const row = match.closest('.apex-admin-field-row, summary, label, h2, h3, h4');
+    const mark = row instanceof HTMLElement ? row : match;
+    mark.classList.add('apex-admin-find');
+    mark.scrollIntoView({ block: 'center', behavior: smoothScrollBehavior() });
+  }, [findRequest, activeKey]);
+
+  useEffect(() => {
     // 首次加载时显示骨架
     void fetchConfig(true).catch(() => {});
     // 若恢复的区块是用户管理，则补拉一次用户列表
@@ -19235,8 +19296,9 @@ function AdminPageClient() {
   }, [fetchConfig]);
 
   // 共用同一入口，切换屏幕宽度不会卸载当前表单。
-  const selectSection = (key: string) => {
+  const selectSection = (key: string, find?: string) => {
     setActiveKey(key);
+    setFindRequest(find ? { text: find, nonce: Date.now() } : null);
     if (typeof window !== 'undefined') {
       localStorage.setItem('admin_active_section', key);
     }
@@ -19244,7 +19306,7 @@ function AdminPageClient() {
     if (key === 'userConfig' && !usersV2) {
       fetchUsersV2();
     }
-    contentScrollRef.current?.scrollIntoView({ block: 'start' });
+    if (!find) contentScrollRef.current?.scrollIntoView({ block: 'start', behavior: smoothScrollBehavior() });
   };
 
   // 新增: 重置配置处理函数
@@ -19644,6 +19706,7 @@ function AdminPageClient() {
   const activeGroup = navigationGroups.find((group) =>
     group.items.some((item) => item.key === activeItem.key)
   );
+  const finderHits = finderOpen ? searchAdminItems(navigationGroups, finderQuery) : [];
 
   return (
     <PageLayout activePath='/admin' navigationMode='workspace'>
@@ -19658,21 +19721,96 @@ function AdminPageClient() {
             </div>
             {config && role === 'owner' && (
               <div className='apex-admin-maintenance'>
-                <button
-                  onClick={handleResetConfig}
-                  className={`px-3 py-1 text-xs rounded-md transition-colors ${buttonStyles.dangerSmall}`}
-                >
-                  重置配置
-                </button>
-                <button
-                  onClick={handleReloadConfig}
-                  className={`px-3 py-1 text-xs rounded-md transition-colors ${buttonStyles.primarySmall}`}
-                >
-                  重载配置
-                </button>
+                <p className='apex-admin-maintenance-label'>配置维护</p>
+                <div className='apex-admin-maintenance-actions'>
+                  <button
+                    type='button'
+                    onClick={handleResetConfig}
+                    className='apex-admin-maintain apex-admin-maintain--danger'
+                    disabled={isLoading('resetConfig')}
+                  >
+                    <RotateCcw size={16} aria-hidden />
+                    重置配置
+                  </button>
+                  <button
+                    type='button'
+                    onClick={handleReloadConfig}
+                    className='apex-admin-maintain apex-admin-maintain--reload'
+                    disabled={isLoading('reloadConfig')}
+                  >
+                    <RefreshCw size={16} aria-hidden />
+                    {isLoading('reloadConfig') ? '重载中' : '重载配置'}
+                  </button>
+                </div>
               </div>
             )}
           </div>
+
+          {finderOpen && (
+            <div className='apex-admin-finder' ref={finderRef}>
+              <div className='apex-admin-finder-bar'>
+                <Search size={18} aria-hidden />
+                <input
+                  ref={finderInputRef}
+                  value={finderQuery}
+                  onChange={(event) => {
+                    setFinderQuery(event.target.value);
+                    setFinderIndex(0);
+                  }}
+                  onKeyDown={(event) => {
+                    if (event.key === 'ArrowDown') {
+                      event.preventDefault();
+                      setFinderIndex((current) => Math.min(current + 1, Math.max(finderHits.length - 1, 0)));
+                    } else if (event.key === 'ArrowUp') {
+                      event.preventDefault();
+                      setFinderIndex((current) => Math.max(current - 1, 0));
+                    } else if (event.key === 'Enter' && finderHits[finderIndex]) {
+                      event.preventDefault();
+                      selectSection(finderHits[finderIndex].key, finderHits[finderIndex].label);
+                      setFinderOpen(false);
+                    } else if (event.key === 'Escape') {
+                      event.preventDefault();
+                      setFinderOpen(false);
+                    }
+                  }}
+                  placeholder='搜索配置页，或页面里的具体项'
+                  aria-label='搜索管理项'
+                  aria-controls='admin-finder-results'
+                  aria-activedescendant={finderQuery.trim() ? `admin-finder-hit-${finderIndex}` : undefined}
+                />
+                <button type='button' className='apex-admin-finder-close' onClick={() => setFinderOpen(false)}>关闭</button>
+              </div>
+              <div id='admin-finder-results' className='apex-admin-finder-results' role='listbox' aria-label='管理项搜索结果'>
+                {finderQuery.trim() ? finderHits.length === 0 ? (
+                  <p className='apex-admin-finder-empty'>没有找到「{finderQuery.trim()}」</p>
+                ) : finderHits.map((hit, index) => {
+                  const parts = splitAdminQuery(hit.label, finderQuery);
+                  return (
+                    <button
+                      type='button'
+                      role='option'
+                      id={`admin-finder-hit-${index}`}
+                      aria-selected={index === finderIndex}
+                      key={`${hit.kind}-${hit.key}-${hit.label}`}
+                      className='apex-admin-finder-hit'
+                      data-active={index === finderIndex ? 'true' : undefined}
+                      onMouseEnter={() => setFinderIndex(index)}
+                      onClick={() => {
+                        selectSection(hit.key, hit.label);
+                        setFinderOpen(false);
+                      }}
+                    >
+                      <span>{hit.kind === 'field' ? '具体项' : '配置页'}</span>
+                      <strong>{parts ? <>{parts.before}<mark>{parts.match}</mark>{parts.after}</> : hit.label}</strong>
+                      <small>{hit.kind === 'field' ? `${hit.group} / ${hit.section}` : hit.group}</small>
+                    </button>
+                  );
+                }) : (
+                  <p className='apex-admin-finder-empty'>可以搜「站点配置」，也可以搜里面的「TMDB API Key」「夸克网盘」</p>
+                )}
+              </div>
+            </div>
+          )}
 
           {/* TMDB 未配置提示 */}
           {config && !config.SiteConfig.TMDBApiKey && (

@@ -100,7 +100,13 @@ export default function ChannelToolbar({ sidebar = false }: { sidebar?: boolean 
           </nav>
         )}
         <div className='f1-channel-actions'>
-          {!sidebar && <Link href='/search' prefetch={false} aria-label='搜索影片' title='搜索影片' className='f1-icon-button f1-top-search-compact'><Search size={20} aria-hidden /></Link>}
+          {isWorkspace ? (
+            <button type='button' className='f1-icon-button' aria-label='搜索管理项' title='搜索管理项' onClick={() => window.dispatchEvent(new Event('apex-admin-search'))}>
+              <Search size={20} aria-hidden />
+            </button>
+          ) : !sidebar ? (
+            <Link href='/search' prefetch={false} aria-label='搜索影片' title='搜索影片' className='f1-icon-button f1-top-search-compact'><Search size={20} aria-hidden /></Link>
+          ) : null}
           <ThemeToggle />
           <UserMenu quickActions />
         </div>

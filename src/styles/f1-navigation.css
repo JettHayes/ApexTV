@@ -121,8 +121,6 @@ html[data-navigation-layout='top'] .mtv-load-overlay { left: 0; }
   .f1-site-header[data-playback='true'] .f1-site-header-inner {
     display: grid;
     grid-template-columns: minmax(0, 1fr) max-content minmax(0, 1fr);
-    width: 100%;
-    max-width: calc(var(--ptv-max) - 2 * var(--ptv-gutter));
     column-gap: 24px;
   }
   .f1-site-header[data-playback='true'] .f1-site-brand {

@@ -8,7 +8,6 @@ import { createContext, useCallback, useContext, useLayoutEffect, useState } fro
 import { SPECIAL_SOURCE_PATH } from '@/lib/special-source.client';
 
 import BrandLogo from './BrandLogo';
-import SidebarResume from './SidebarResume';
 import { navigationActive, useNavigationItems } from './NavigationItems';
 
 interface SidebarContextType {
@@ -107,7 +106,6 @@ const Sidebar = ({ onToggle }: { onToggle?: (collapsed: boolean) => void; active
                 </div>
               )}
             </nav>
-            {!isCollapsed && !isUnderPath && <SidebarResume key={pathname} />}
           </div>
         </aside>
         <div className='sidebar-offset' />
