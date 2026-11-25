@@ -19138,12 +19138,14 @@ function AdminPageClient() {
   });
   const [finderOpen, setFinderOpen] = useState(false);
   const [finderQuery, setFinderQuery] = useState('');
+  const [finderSearch, setFinderSearch] = useState('');
   const [finderIndex, setFinderIndex] = useState(0);
   const [findRequest, setFindRequest] = useState<{ text: string; nonce: number } | null>(null);
   // 切换区块时定位到内容标题，不建立第二个内容滚动区。
   const contentScrollRef = useRef<HTMLElement | null>(null);
   const finderRef = useRef<HTMLDivElement | null>(null);
   const finderInputRef = useRef<HTMLInputElement | null>(null);
+  const finderComposingRef = useRef(false);
 
   // 获取管理员配置
   // showLoading 用于控制是否在请求期间显示整体加载骨架。
@@ -19261,7 +19263,7 @@ function AdminPageClient() {
   }, [finderOpen, loading]);
 
   useEffect(() => {
-    if (!finderOpen || !finderQuery.trim()) return;
+    if (!finderOpen || !finderSearch.trim()) return;
     const hit = document.getElementById(`admin-finder-hit-${finderIndex}`);
     const list = document.getElementById('admin-finder-results');
     if (!hit || !list) return;
@@ -19269,7 +19271,7 @@ function AdminPageClient() {
     const listRect = list.getBoundingClientRect();
     if (hitRect.top < listRect.top) list.scrollTop -= listRect.top - hitRect.top;
     else if (hitRect.bottom > listRect.bottom) list.scrollTop += hitRect.bottom - listRect.bottom;
-  }, [finderOpen, finderQuery, finderIndex]);
+  }, [finderOpen, finderSearch, finderIndex]);
 
   useLayoutEffect(() => {
     const text = findRequest?.text;
@@ -19721,14 +19723,16 @@ function AdminPageClient() {
   const activeGroup = navigationGroups.find((group) =>
     group.items.some((item) => item.key === activeItem.key)
   );
-  const finderHits = finderOpen ? searchAdminItems(navigationGroups, finderQuery) : [];
+  const finderHits = finderOpen ? searchAdminItems(navigationGroups, finderSearch) : [];
   const closeFinder = () => {
     setFinderOpen(false);
     setFinderQuery('');
+    setFinderSearch('');
     setFinderIndex(0);
   };
   const clearFinder = () => {
     setFinderQuery('');
+    setFinderSearch('');
     setFinderIndex(0);
     finderInputRef.current?.focus();
   };
@@ -19789,6 +19793,7 @@ function AdminPageClient() {
                 aria-modal='true'
                 aria-labelledby='admin-finder-title'
                 onKeyDown={(event) => {
+                  if (event.nativeEvent.isComposing || finderComposingRef.current) return;
                   if (event.key === 'ArrowDown') {
                     event.preventDefault();
                     setFinderIndex((current) => Math.min(current + 1, Math.max(finderHits.length - 1, 0)));
@@ -19828,14 +19833,28 @@ function AdminPageClient() {
                   <input
                     ref={finderInputRef}
                     value={finderQuery}
+                    onCompositionStart={() => {
+                      finderComposingRef.current = true;
+                    }}
+                    onCompositionEnd={(event) => {
+                      finderComposingRef.current = false;
+                      const value = event.currentTarget.value;
+                      setFinderQuery(value);
+                      setFinderSearch(value);
+                      setFinderIndex(0);
+                    }}
                     onChange={(event) => {
-                      setFinderQuery(event.target.value);
+                      const value = event.target.value;
+                      setFinderQuery(value);
+                      const native = event.nativeEvent;
+                      if ((native instanceof InputEvent && native.isComposing) || finderComposingRef.current) return;
+                      setFinderSearch(value);
                       setFinderIndex(0);
                     }}
                     placeholder='搜索配置页，或页面里的具体项'
                     aria-label='搜索管理项'
                     aria-controls='admin-finder-results'
-                    aria-activedescendant={finderQuery.trim() && finderHits.length ? `admin-finder-hit-${finderIndex}` : undefined}
+                    aria-activedescendant={finderSearch.trim() && finderHits.length ? `admin-finder-hit-${finderIndex}` : undefined}
                     autoComplete='off'
                     spellCheck={false}
                   />
@@ -19852,10 +19871,10 @@ function AdminPageClient() {
                   )}
                 </div>
                 <div id='admin-finder-results' className='apex-admin-finder-results' role='listbox' aria-label='管理项搜索结果'>
-                  {finderQuery.trim() ? finderHits.length === 0 ? (
-                    <p className='apex-admin-finder-empty'>没有找到「{finderQuery.trim()}」</p>
+                  {finderSearch.trim() ? finderHits.length === 0 ? (
+                    <p className='apex-admin-finder-empty'>没有找到「{finderSearch.trim()}」</p>
                   ) : finderHits.map((hit, index) => {
-                    const parts = splitAdminQuery(hit.label, finderQuery);
+                    const parts = splitAdminQuery(hit.label, finderSearch);
                     return (
                       <button
                         type='button'
@@ -19874,7 +19893,7 @@ function AdminPageClient() {
                       </button>
                     );
                   }) : (
-                    <p className='apex-admin-finder-empty'>可以搜「站点配置」，也可以搜里面的「TMDB API Key」「夸克网盘」</p>
+                    <p className='apex-admin-finder-empty'>可以搜配置页名称，也可以搜页面里的具体设置项</p>
                   )}
                 </div>
               </div>
