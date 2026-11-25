@@ -1,3 +1,4 @@
+import { reportAppError } from '@/lib/app-error';
 import { NextRequest, NextResponse } from 'next/server';
 
 import { getAuthInfoFromCookie } from '@/lib/auth';
@@ -30,7 +31,7 @@ interface CmsVideoResponse {
 export async function GET(request: NextRequest) {
   const authInfo = getAuthInfoFromCookie(request);
   if (!authInfo || !authInfo.username) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    return NextResponse.json({ error: '请先登录后重试' }, { status: 401 });
   }
 
   const { searchParams } = new URL(request.url);
@@ -79,13 +80,8 @@ export async function GET(request: NextRequest) {
       await searchResponse.text()
     );
 
-    if (!searchData.list || !Array.isArray(searchData.list)) {
-      return NextResponse.json({
-        results: [],
-        total: 0,
-        page: parseInt(page),
-        pageCount: 0,
-      });
+    if (!Array.isArray(searchData.list)) {
+      return NextResponse.json({ error: '视频源返回的数据格式无效，请稍后重试或更换视频源' }, { status: 502 });
     }
 
     // 转换为 SearchResult 格式
@@ -126,7 +122,7 @@ export async function GET(request: NextRequest) {
       pageCount: searchData.pagecount || 0,
     });
   } catch (error) {
-    console.error('Failed to search videos:', error);
+    reportAppError(error, '搜索视频');
     return NextResponse.json({ error: '搜索失败' }, { status: 500 });
   }
 }

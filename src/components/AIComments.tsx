@@ -1,5 +1,8 @@
 'use client';
 
+import { formatAppError, readJsonResponse, reportAppError } from '@/lib/app-error';
+
+
 import { useCallback, useEffect, useState } from 'react';
 
 interface AIComment {
@@ -46,7 +49,7 @@ export default function AIComments({ movieName, movieInfo }: AICommentsProps) {
 
       // 服务端流式返回一个 JSON（生成期间发送空白心跳避免网关超时），
       // JSON 前导空白会被忽略，这里照常解析即可。
-      const data = await response.json();
+      const data = await readJsonResponse<any>(response, "AI 请求");
 
       if (!response.ok || data.error) {
         throw new Error(data.error || '生成AI评论失败');
@@ -55,8 +58,8 @@ export default function AIComments({ movieName, movieInfo }: AICommentsProps) {
       console.log('AI评论生成成功:', data.comments?.length ?? 0);
       setComments(data.comments || []);
     } catch (err) {
-      console.error('生成AI评论失败:', err);
-      setError(err instanceof Error ? err.message : '生成AI评论失败');
+      reportAppError(err, "生成AI评论失败");
+      setError(formatAppError(err, "AI 请求"));
     } finally {
       setLoading(false);
     }
@@ -91,7 +94,7 @@ export default function AIComments({ movieName, movieInfo }: AICommentsProps) {
           <svg
             key={star}
             className='w-4 h-4'
-            fill={star <= rating ? '#3b82f6' : '#e0e0e0'}
+            fill={star <= rating ? 'var(--ptv-rating)' : 'var(--ptv-line)'}
             viewBox='0 0 24 24'
           >
             <path d='M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z' />
@@ -173,7 +176,7 @@ export default function AIComments({ movieName, movieInfo }: AICommentsProps) {
   }
 
   return (
-    <div className='space-y-4'>
+    <div className='f1-ai-comments space-y-4'>
       {/* 头部统计和操作 */}
       <div className='flex items-center justify-between'>
         <div className='text-sm text-gray-600 dark:text-gray-400'>
@@ -202,7 +205,7 @@ export default function AIComments({ movieName, movieInfo }: AICommentsProps) {
       </div>
 
       {/* 评论列表 */}
-      <div className='space-y-4'>
+      <div className='f1-ai-comments space-y-4'>
         {comments.map((comment) => (
           <div
             key={comment.id}

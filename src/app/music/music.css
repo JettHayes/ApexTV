@@ -19,9 +19,9 @@
   --music-bg-strong: var(--ptv-panel);
   --music-surface: var(--ptv-surface);
   --music-surface-soft: var(--ptv-soft);
-  --music-overlay: rgba(9, 18, 20, .6);
-  --music-glass: color-mix(in srgb, var(--ptv-text) 5%, transparent);
-  --music-glass-strong: color-mix(in srgb, var(--ptv-text) 10%, transparent);
+  --music-overlay: var(--ptv-media-bg-alpha-60);
+  --music-glass: var(--ptv-text-on-clear-5);
+  --music-glass-strong: var(--ptv-text-on-clear-10);
   --music-border: var(--ptv-line);
   --music-text: var(--ptv-text);
   --music-text-soft: var(--ptv-muted);
@@ -30,7 +30,7 @@
 
 .music-theme {
   background-color: var(--music-bg);
-  background: linear-gradient(180deg, var(--music-bg) 0%, color-mix(in srgb, var(--music-bg) 94%, #007c76 6%) 100%);
+  background: var(--ptv-page);
   color: var(--music-text);
 }
 
@@ -41,7 +41,7 @@
 }
 .music-theme :is(button, a, input, [tabindex]):focus-visible,
 .music-theme-portal :is(button, a, input, [tabindex]):focus-visible {
-  outline: 2px solid var(--theme-primary, #007c76);
+  outline: 2px solid var(--ptv-accent);
   outline-offset: 3px;
 }
 
@@ -92,7 +92,7 @@
 
 .music-theme :is([class*='from-zinc-800'], [class*='from-zinc-900']) {
   --tw-gradient-from: var(--music-surface-soft) var(--tw-gradient-from-position) !important;
-  --tw-gradient-to: rgb(255 255 255 / 0) var(--tw-gradient-to-position) !important;
+  --tw-gradient-to: transparent var(--tw-gradient-to-position) !important;
   --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to) !important;
 }
 
@@ -131,6 +131,6 @@
 }
 
 /* 封面上的文字保持亮色，不随页面主题变成深色。 */
-.apex-sleeve-art { color: #f5faf8; }
-.apex-sleeve-art .apex-sleeve-rank { margin-left: 0; align-self: flex-start; color: #f5faf8; font-size: 22px; }
-.apex-sleeve-shade { background: linear-gradient(180deg, rgb(5 15 17 / .45), rgb(5 15 17 / .1) 35%, rgb(5 15 17 / .88)); }
+.apex-sleeve-art { color: var(--ptv-media-text); }
+.apex-sleeve-art .apex-sleeve-rank { margin-left: 0; align-self: flex-start; color: var(--ptv-media-text); font-size: 22px; }
+.apex-sleeve-shade { background: linear-gradient(180deg, var(--ptv-media-bg-alpha-45), var(--ptv-media-bg-alpha-10) 35%, var(--ptv-media-bg-alpha-88)); }

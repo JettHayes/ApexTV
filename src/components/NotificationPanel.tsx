@@ -1,11 +1,11 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
 'use client';
 
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { Bell, Check, Settings, Trash2, X } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
+import { formatAppError, readJsonResponse, reportAppError } from '@/lib/app-error';
 import { getAuthInfoFromBrowserCookie } from '@/lib/auth';
 import { Notification } from '@/lib/types';
 
@@ -23,18 +23,19 @@ export const NotificationPanel: React.FC<NotificationPanelProps> = ({
   const router = useRouter();
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
 
   // 加载通知
   const loadNotifications = async () => {
     setLoading(true);
     try {
       const response = await fetch('/api/notifications');
-      if (response.ok) {
-        const data = await response.json();
-        setNotifications(data.notifications || []);
-      }
+      const data = await readJsonResponse<{ notifications: Notification[] }>(response, '加载通知');
+      setNotifications(data.notifications || []);
+      setError('');
     } catch (error) {
-      console.error('加载通知失败:', error);
+      reportAppError(error, '加载通知');
+      setError(formatAppError(error, '加载通知'));
     } finally {
       setLoading(false);
     }
@@ -52,6 +53,7 @@ export const NotificationPanel: React.FC<NotificationPanelProps> = ({
         }),
       });
 
+      await readJsonResponse(response, '标记通知已读');
       if (response.ok) {
         setNotifications((prev) =>
           prev.map((n) =>
@@ -62,7 +64,8 @@ export const NotificationPanel: React.FC<NotificationPanelProps> = ({
         window.dispatchEvent(new Event('notificationsUpdated'));
       }
     } catch (error) {
-      console.error('标记已读失败:', error);
+      reportAppError(error, '标记通知已读');
+      setError(formatAppError(error, '标记通知已读'));
     }
   };
 
@@ -78,6 +81,7 @@ export const NotificationPanel: React.FC<NotificationPanelProps> = ({
         }),
       });
 
+      await readJsonResponse(response, '删除通知');
       if (response.ok) {
         const deletedNotification = notifications.find((n) => n.id === notificationId);
         setNotifications((prev) => prev.filter((n) => n.id !== notificationId));
@@ -87,7 +91,8 @@ export const NotificationPanel: React.FC<NotificationPanelProps> = ({
         }
       }
     } catch (error) {
-      console.error('删除通知失败:', error);
+      reportAppError(error, '删除通知');
+      setError(formatAppError(error, '删除通知'));
     }
   };
 
@@ -102,13 +107,15 @@ export const NotificationPanel: React.FC<NotificationPanelProps> = ({
         }),
       });
 
+      await readJsonResponse(response, '清空通知');
       if (response.ok) {
         setNotifications([]);
         // 触发事件通知 UserMenu 更新未读计数
         window.dispatchEvent(new Event('notificationsUpdated'));
       }
     } catch (error) {
-      console.error('清空通知失败:', error);
+      reportAppError(error, '清空通知');
+      setError(formatAppError(error, '清空通知'));
     }
   };
 
@@ -166,7 +173,7 @@ export const NotificationPanel: React.FC<NotificationPanelProps> = ({
       />
 
       {/* 通知面板 */}
-      <div className='ptv-dialog ptv-modal-in fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[calc(100%-2rem)] max-w-lg h-[min(520px,calc(100dvh-2rem))] bg-white dark:bg-gray-900 rounded-xl shadow-xl z-[1001] flex flex-col overflow-hidden'>
+      <div className='ptv-dialog ptv-notification-panel ptv-modal-in fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[calc(100%-2rem)] max-w-lg h-[min(520px,calc(100dvh-2rem))] bg-white dark:bg-gray-900 rounded-xl shadow-xl z-[1001] flex flex-col overflow-hidden'>
         {/* 标题栏 */}
         <div className='flex shrink-0 flex-wrap items-center justify-between gap-2 px-4 py-3 sm:px-6 border-b border-gray-200 dark:border-gray-700'>
           <div className='flex min-w-0 flex-wrap items-center gap-2'>
@@ -181,14 +188,6 @@ export const NotificationPanel: React.FC<NotificationPanelProps> = ({
             )}
           </div>
           <div className='flex items-center gap-2'>
-            {notifications.length > 0 && (
-              <button
-                onClick={clearAll}
-                className='text-xs text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 transition-colors'
-              >
-                清空全部
-              </button>
-            )}
             <button
               onClick={onClose}
               className='w-8 h-8 p-1 rounded-full flex items-center justify-center text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors'
@@ -201,11 +200,12 @@ export const NotificationPanel: React.FC<NotificationPanelProps> = ({
 
         {/* 通知列表 */}
         <div className='flex min-h-0 flex-1 flex-col overflow-y-auto p-4'>
+          <div className='ptv-notification-toolbar'>
           {onOpenNotificationSettings && (
               <button
                 type='button'
                 onClick={handleOpenNotificationSettings}
-                className='mb-3 flex w-full items-center gap-2 rounded-lg border border-blue-200 bg-blue-50 px-3 py-2.5 text-left transition-colors hover:bg-blue-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:border-blue-800 dark:bg-blue-900/20 dark:hover:bg-blue-900/30 dark:focus:ring-offset-gray-900'
+                className="ptv-notification-config mb-3 flex w-full items-center gap-2 rounded-lg border border-blue-200 bg-blue-50 px-3 py-2.5 text-left transition-colors hover:bg-blue-100 focus:outline-none focus:ring-2 focus:ring-apex-accent focus:ring-offset-2 dark:border-blue-800 dark:bg-blue-900/20 dark:hover:bg-blue-900/30 dark:focus:ring-offset-gray-900"
               >
                 <div className='flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-blue-100 text-blue-600 dark:bg-blue-900/40 dark:text-blue-300'>
                   <Settings className='h-4 w-4' />
@@ -218,35 +218,46 @@ export const NotificationPanel: React.FC<NotificationPanelProps> = ({
                 </span>
               </button>
             )}
+            {notifications.length > 0 && (
+              <button
+                onClick={clearAll}
+                className='ptv-notification-clear text-xs text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 transition-colors'
+              >
+                清空全部
+              </button>
+            )}
+          </div>
 
+          {error && <p role='alert' className='text-sm text-red-600'>{error}</p>}
           {loading ? (
             <div className='flex items-center justify-center py-12'>
               <div className='w-8 h-8 border-4 border-green-500 border-t-transparent rounded-full animate-spin'></div>
             </div>
-          ) : notifications.length === 0 ? (
-            <div className='flex flex-1 flex-col items-center justify-center py-12 text-gray-500 dark:text-gray-400'>
+          ) : notifications.length === 0 && error ? null : notifications.length === 0 ? (
+            <div className='ptv-notification-empty flex flex-1 flex-col items-center justify-center py-12 text-gray-500 dark:text-gray-400'>
               <Bell className='w-12 h-12 mb-3 opacity-30' />
               <p className='text-sm'>暂无通知</p>
             </div>
           ) : (
-            <div className='space-y-2'>
+            <div className='ptv-notification-list'>
               {notifications.map((notification) => (
                 <div
                   key={notification.id}
-                  className={`group relative p-4 rounded-lg border transition-all cursor-pointer ${
+                  className={`ptv-notification-row group relative flex gap-3 p-4 rounded-lg border transition-all cursor-pointer ${
                     notification.read
                       ? 'bg-gray-50 dark:bg-gray-800/50 border-gray-200 dark:border-gray-700'
                       : 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800'
                   } hover:shadow-md`}
                   onClick={() => handleNotificationClick(notification)}
                 >
+                  <span className='ptv-notification-icon' aria-hidden='true'><Bell className='h-4 w-4' /></span>
                   {/* 未读标识 */}
                   {!notification.read && (
                     <div className='absolute top-4 right-4 w-2 h-2 bg-green-500 rounded-full'></div>
                   )}
 
                   {/* 通知内容 */}
-                  <div className='pr-8'>
+                  <div className='min-w-0 flex-1 pr-12'>
                     <div className='flex items-start justify-between mb-1'>
                       <h4 className='text-sm font-semibold text-gray-900 dark:text-gray-100'>
                         {notification.title}

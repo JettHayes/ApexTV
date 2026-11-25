@@ -2,6 +2,8 @@
 
 'use client';
 
+import { formatAppError, reportAppError } from '@/lib/app-error';
+
 import { useSearchParams } from 'next/navigation';
 import { Suspense } from 'react';
 import { useCallback, useEffect, useRef, useState } from 'react';
@@ -25,6 +27,7 @@ function DoubanPageClient() {
   const searchParams = useSearchParams();
   const [doubanData, setDoubanData] = useState<DoubanItem[]>([]);
   const [loading, setLoading] = useState(false);
+  const [loadError, setLoadError] = useState('');
   const [currentPage, setCurrentPage] = useState(0);
   const [hasMore, setHasMore] = useState(true);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
@@ -135,7 +138,8 @@ function DoubanPageClient() {
   // type变化时立即重置selectorsReady（最高优先级）
   useEffect(() => {
     setSelectorsReady(false);
-    setLoading(true); // 立即显示loading状态
+    setLoadError('');
+      setLoading(true); // 立即显示loading状态
   }, [type]);
 
   // 当type变化时重置选择器状态
@@ -282,6 +286,7 @@ function DoubanPageClient() {
     };
 
     try {
+      setLoadError('');
       setLoading(true);
       // 确保在加载初始数据时重置页面状态
       setDoubanData([]);
@@ -396,7 +401,8 @@ function DoubanPageClient() {
         throw new Error(data.message || '获取数据失败');
       }
     } catch (err) {
-      console.error(err);
+      reportAppError(err, '获取影视推荐');
+          setLoadError(formatAppError(err, '获取影视推荐'));
       setLoading(false); // 发生错误时总是停止loading状态
     }
   }, [
@@ -554,7 +560,8 @@ function DoubanPageClient() {
             throw new Error(data.message || '获取数据失败');
           }
         } catch (err) {
-          console.error(err);
+          reportAppError(err, '获取影视推荐');
+          setLoadError(formatAppError(err, '获取影视推荐'));
         } finally {
           setIsLoadingMore(false);
         }
@@ -636,7 +643,8 @@ function DoubanPageClient() {
     (value: string) => {
       // 只有当值真正改变时才设置loading状态
       if (value !== primarySelection) {
-        setLoading(true);
+        setLoadError('');
+      setLoading(true);
         // 立即重置页面状态，防止基于旧状态的请求
         setCurrentPage(0);
         setDoubanData([]);
@@ -696,7 +704,8 @@ function DoubanPageClient() {
     (value: string) => {
       // 只有当值真正改变时才设置loading状态
       if (value !== secondarySelection) {
-        setLoading(true);
+        setLoadError('');
+      setLoading(true);
         // 立即重置页面状态，防止基于旧状态的请求
         setCurrentPage(0);
         setDoubanData([]);
@@ -728,6 +737,7 @@ function DoubanPageClient() {
         return;
       }
 
+      setLoadError('');
       setLoading(true);
       // 立即重置页面状态，防止基于旧状态的请求
       setCurrentPage(0);
@@ -780,11 +790,11 @@ function DoubanPageClient() {
 
   return (
     <PageLayout activePath={getActivePath()}>
-      <div className='apex-page apex-catalog-page'>
+      <div className='apex-page apex-catalog-page f1-catalog-page'>
         {/* 页面标题和选择器 */}
         <div className='apex-catalog-intro'>
           {/* 页面标题 */}
-          <div className='apex-page-heading'>
+          <div className='apex-page-heading f1-media-heading'>
             <h1 className='text-2xl sm:text-3xl font-bold text-gray-800 mb-1 sm:mb-2 dark:text-gray-200'>
               {getPageTitle()}
             </h1>
@@ -886,9 +896,10 @@ function DoubanPageClient() {
             <div className='text-center text-gray-500 py-8'>已加载全部内容</div>
           )}
 
+          {loadError && doubanData.length > 0 && <p role='alert' className='text-red-500'>{loadError}</p>}
           {/* 空状态 */}
           {!isScheduleView && !loading && doubanData.length === 0 && (
-            <div className='text-center text-gray-500 py-8'>暂无相关内容</div>
+            <div className='text-center text-gray-500 py-8'>{loadError || '暂无相关内容'}</div>
           )}
         </div>
       </div>

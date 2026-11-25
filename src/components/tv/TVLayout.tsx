@@ -16,14 +16,16 @@ import { usePathname } from 'next/navigation';
 import { ReactNode, useEffect } from 'react';
 
 import TVVirtualRemote from './TVVirtualRemote';
+import BrandLogo from '../BrandLogo';
+import { ThemeToggle } from '../ThemeToggle';
 
 const navItems = [
   { label: '搜索', href: '/tv/search', icon: Search },
   { label: '主页', href: '/tv', icon: Home },
   { label: '电影', href: '/tv/movie', icon: Film },
   { label: '剧集', href: '/tv/series', icon: Tv },
-  { label: '动漫', href: '/tv/anime', icon: Sparkles },
   { label: '综艺', href: '/tv/variety', icon: MonitorPlay },
+  { label: '动漫', href: '/tv/anime', icon: Sparkles },
   { label: '直播', href: '/tv/live', icon: Radio },
   { label: '私人影库', href: '/tv/private', icon: Heart },
   { label: '我的', href: '/tv/me', icon: User },
@@ -52,11 +54,12 @@ export default function TVLayout({
   }, [pathname, showNav]);
 
   return (
-    <main className='ptv-tv min-h-screen overflow-x-hidden bg-black text-slate-50'>
-      <div className='fixed inset-0 pointer-events-none bg-[radial-gradient(circle_at_20%_0%,rgba(225,29,72,0.22),transparent_34%),radial-gradient(circle_at_90%_10%,rgba(79,70,229,0.24),transparent_30%),linear-gradient(180deg,#05050b_0%,#000_55%)]' />
+    <main className='ptv-tv f1-tv-shell min-h-screen overflow-x-hidden' data-tv-page={pathname}>
+      <div className='f1-tv-ambient fixed inset-0 pointer-events-none' />
       {showNav && (
-        <header className='fixed left-6 right-6 top-5 z-40 rounded-[28px] border border-white/10 bg-slate-950/78 px-5 py-3 shadow-2xl shadow-black/60 backdrop-blur-xl'>
-          <nav className='-my-5 flex items-center justify-center gap-3 overflow-x-auto overscroll-x-contain px-4 py-8 [scrollbar-width:none]'>
+        <header className='f1-tv-header fixed inset-y-0 left-0 z-40'>
+          <div className='f1-tv-brand'><BrandLogo /></div>
+          <nav aria-label='电视主导航' className='f1-tv-navigation flex flex-col overflow-y-auto overscroll-y-contain [scrollbar-width:none]'>
             {navItems.map((item) => {
               const active =
                 item.href === '/tv'
@@ -69,6 +72,7 @@ export default function TVLayout({
                   href={item.href}
                   data-tv-home-nav={item.href === '/tv' ? 'true' : undefined}
                   data-selected={active}
+                  aria-current={active ? 'page' : undefined}
                   className={`group flex shrink-0 cursor-pointer items-center gap-2 rounded-2xl px-5 py-3 text-xl font-semibold outline-none transition duration-200 tv-focusable ${
                     active
                       ? 'bg-rose-600 text-white shadow-lg shadow-rose-950/40'
@@ -81,9 +85,10 @@ export default function TVLayout({
               );
             })}
           </nav>
+          <ThemeToggle className='tv-focusable f1-tv-theme' />
         </header>
       )}
-      <div className={`relative z-10 px-8 pb-16 ${showNav ? 'pt-32' : 'pt-16'}`}>{children}</div>
+      <div className={`f1-tv-content relative z-10 ${showNav ? 'f1-tv-content--with-nav' : ''}`}>{children}</div>
       <TVVirtualRemote />
     </main>
   );

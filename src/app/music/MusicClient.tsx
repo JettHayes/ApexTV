@@ -26,6 +26,7 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 
+import { formatAppError,readJsonResponse, reportAppError } from '@/lib/app-error';
 import { cn } from '@/lib/cn';
 import { smoothScrollBehavior } from '@/lib/motion';
 import { getSourceDisplayLabel, normalizeSource, SourcePill } from '@/lib/music/shared';
@@ -34,7 +35,6 @@ import type { MusicQuality, MusicSource, Song } from '@/lib/music/types';
 import AddToPlaylistModal from '@/components/AddToPlaylistModal';
 import LyricsPiPWindow from '@/components/LyricsPiPWindow';
 import MusicEmpty from '@/components/music/MusicEmpty';
-import PageLayout from '@/components/PageLayout';
 import {
   MUSIC_ART_BROKEN,
   MUSIC_COUNT,
@@ -56,6 +56,7 @@ import {
   MUSIC_ROW_SOURCE,
   MUSIC_ROW_TEXT,
 } from '@/components/music/tokens';
+import PageLayout from '@/components/PageLayout';
 import Toast, { ToastProps } from '@/components/Toast';
 import { useWatchRoomContextSafe } from '@/components/WatchRoomProvider';
 
@@ -250,6 +251,7 @@ function AudioSpectrumCanvas({
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
+    const themeColor = getComputedStyle(canvas).getPropertyValue('--ptv-action').trim();
 
     let cssWidth = 0;
     let lastBars: number[] | null = null;
@@ -281,7 +283,7 @@ function AudioSpectrumCanvas({
       const cubeHeight = compact ? Math.max(2, Math.round(2 * dpr)) : Math.max(2, Math.round(2.5 * dpr));
       const cubeGap = 1;
       const scaleBase = compact ? height * 1.55 : height * 1.42;
-      const themeColor = '#10b981';
+
 
       const sampleBar = (index: number) => {
         const usableLength = Math.max(1, bars.length - SPECTRUM_EDGE_TRIM * 2);
@@ -332,7 +334,7 @@ function AudioSpectrumCanvas({
 }
 
 
-const VINYL_NEEDLE_SVG = `url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 130"><path d="M21,21 C21,65 86,70 86,100" fill="none" stroke="rgba(0,0,0,0.28)" stroke-width="6" stroke-linecap="round"/><path d="M20,20 C20,65 85,70 85,100" fill="none" stroke="%23e0e0e0" stroke-width="4.5" stroke-linecap="round"/><path d="M19,20 C19,65 84,70 84,100" fill="none" stroke="%23fff" stroke-width="1.5" stroke-linecap="round"/><g transform="translate(85, 100) rotate(25)"><rect x="-6" y="0" width="12" height="18" rx="2" fill="%23ccc"/><rect x="-4" y="5" width="8" height="14" rx="1" fill="%23333"/><rect x="-2" y="16" width="4" height="5" rx="1" fill="%23d43c33"/></g><circle cx="20" cy="20" r="10" fill="%23f0f0f0" stroke="%23ccc" stroke-width="1"/><circle cx="20" cy="20" r="4" fill="%23fff"/><circle cx="20" cy="20" r="1.5" fill="%23999"/></svg>')`;
+const VINYL_NEEDLE_SVG = "url('/vinyl-needle.svg')";
 
 function VinylTurntable({
   cover,
@@ -364,8 +366,8 @@ function VinylTurntable({
       <div
         className="relative flex h-[246px] w-[246px] items-center justify-center overflow-hidden rounded-full md:h-[300px] md:w-[300px]"
         style={{
-          background: 'conic-gradient(from 45deg, #070707 0%, #2b2b2b 10%, #101010 20%, #080808 32%, #242424 42%, #0b0b0b 55%, #1e1e1e 68%, #050505 80%, #2c2c2c 90%, #070707 100%)',
-          boxShadow: '0 0 0 8px rgba(255,255,255,0.055), 0 20px 42px rgba(0,0,0,0.65), inset 0 0 28px rgba(255,255,255,0.045)',
+          background: "var(--ptv-vinyl-texture)",
+          boxShadow: "var(--ptv-record-shadow)",
           animation: 'vinyl-spin 20s linear infinite',
           animationPlayState: isPlaying ? 'running' : 'paused',
         }}
@@ -373,7 +375,7 @@ function VinylTurntable({
         <div
           className="pointer-events-none absolute inset-0 rounded-full"
           style={{
-            background: 'repeating-radial-gradient(circle, transparent 0, transparent 3px, rgba(255,255,255,0.055) 3px, rgba(255,255,255,0.055) 4px)',
+            background: "var(--ptv-vinyl-grooves)",
           }}
         />
         <div className="pointer-events-none absolute left-[18%] top-[10%] h-[42%] w-[22%] rotate-[-28deg] rounded-full bg-white/10 blur-md" />
@@ -694,7 +696,7 @@ export default function MusicClient({ children: _children }: { children?: React.
       }),
     });
 
-    return response.json();
+    return readJsonResponse<any>(response, '获取播放信息');
   };
 
   const beginResolving = () => {
@@ -745,7 +747,7 @@ export default function MusicClient({ children: _children }: { children?: React.
     recordQuality?: MusicQuality
   ) => {
     saveHistoryRecord(record, song, playTime, totalDuration, lastPlayedAt, recordQuality).catch(err => {
-      console.error('保存播放记录到数据库失败:', err);
+      reportAppError(err, '保存播放记录到数据库');
     });
   };
 
@@ -904,7 +906,7 @@ export default function MusicClient({ children: _children }: { children?: React.
                 }
               })
               .catch((error) => {
-                console.error('加载歌词失败:', error);
+                reportAppError(error, '加载歌词');
               });
           } else {
             const data = await fetchPlayData(latestDbSong, platform, selectedQuality, true);
@@ -923,7 +925,7 @@ export default function MusicClient({ children: _children }: { children?: React.
           }
         }
       } catch (error) {
-        console.error('加载播放记录失败:', error);
+        reportAppError(error, '加载播放记录');
       }
     };
 
@@ -941,14 +943,19 @@ export default function MusicClient({ children: _children }: { children?: React.
   // 监听来自 PiP 窗口的消息
   useEffect(() => {
     const handleMessage = (event: MessageEvent) => {
-      switch (event.data.type) {
+      if (event.origin !== window.location.origin || event.source !== window) return;
+      const data = event.data;
+      if (!data || typeof data !== 'object') return;
+      switch (data.type) {
         case 'PIP_OPACITY_CHANGE':
-          setPipOpacity(event.data.opacity);
-          localStorage.setItem('lyricsPiPOpacity', event.data.opacity.toString());
+          if (typeof data.opacity !== 'number' || !Number.isFinite(data.opacity) || data.opacity < 0 || data.opacity > 1) return;
+          setPipOpacity(data.opacity);
+          localStorage.setItem('lyricsPiPOpacity', String(data.opacity));
           break;
         case 'PIP_MINIMIZED_CHANGE':
-          setPipMinimized(event.data.minimized);
-          localStorage.setItem('lyricsPiPMinimized', event.data.minimized.toString());
+          if (typeof data.minimized !== 'boolean') return;
+          setPipMinimized(data.minimized);
+          localStorage.setItem('lyricsPiPMinimized', String(data.minimized));
           break;
         case 'PIP_CLOSE':
           setShowPiPLyrics(false);
@@ -1058,7 +1065,7 @@ export default function MusicClient({ children: _children }: { children?: React.
       await playSong(targetSongs[0], 0);
       setToast({ message: `已开始播放 ${title}`, type: 'success', onClose: () => setToast(null) });
     } catch (error) {
-      console.error('播放全部失败:', error);
+      reportAppError(error, '播放全部');
       setToast({ message: '播放全部失败', type: 'error', onClose: () => setToast(null) });
     }
   };
@@ -1154,7 +1161,9 @@ export default function MusicClient({ children: _children }: { children?: React.
           audioRef.current.src = streamUrl;
           audioRef.current.load();
           audioRef.current.play().catch(err => {
-            console.error('播放失败:', err);
+            reportAppError(err, '播放音乐');
+          setIsPlaying(false);
+          setToast({ message: formatAppError(err, '播放音乐'), type: 'error', onClose: () => setToast(null) });
             setIsBuffering(false);
           });
           setIsPlaying(true);
@@ -1176,11 +1185,11 @@ export default function MusicClient({ children: _children }: { children?: React.
                 setLyrics(parsedLyrics);
               }
             } else {
-              console.error('播放信息获取失败:', data);
+              reportAppError(data, '播放信息获取');
             }
           })
           .catch((error) => {
-            console.error('加载歌词失败:', error);
+            reportAppError(error, '加载歌词');
           });
       } else {
         const data = await fetchPlayData(song, platform, quality, true);
@@ -1205,17 +1214,20 @@ export default function MusicClient({ children: _children }: { children?: React.
             audioRef.current.src = data.data.play.directUrl;
             audioRef.current.load();
             audioRef.current.play().catch(err => {
-              console.error('播放失败:', err);
+              reportAppError(err, '播放音乐');
+          setIsPlaying(false);
+          setToast({ message: formatAppError(err, '播放音乐'), type: 'error', onClose: () => setToast(null) });
               setIsBuffering(false);
             });
             setIsPlaying(true);
           }
         } else {
-          console.error('播放信息获取失败:', data);
+          reportAppError(data, '播放信息获取');
         }
       }
     } catch (error) {
-      console.error('播放失败:', error);
+      reportAppError(error, '播放音乐');
+      setToast({ message: formatAppError(error, '播放音乐'), type: 'error', onClose: () => setToast(null) });
       setIsBuffering(false);
     } finally {
       endResolving();
@@ -1293,13 +1305,15 @@ export default function MusicClient({ children: _children }: { children?: React.
         if (currentSong && playlistIndex >= 0 && playRecords[playlistIndex]) {
           const record = playRecords[playlistIndex];
           saveHistoryRecord(record, currentSong, audioRef.current.currentTime, audioRef.current.duration || 0).catch(err => {
-            console.error('暂停时保存播放记录失败:', err);
+            reportAppError(err, '暂停时保存播放记录');
           });
         }
       } else {
         setIsBuffering(true);
         audioRef.current.play().catch(err => {
-          console.error('播放失败:', err);
+          reportAppError(err, '播放音乐');
+          setIsPlaying(false);
+          setToast({ message: formatAppError(err, '播放音乐'), type: 'error', onClose: () => setToast(null) });
           setIsBuffering(false);
         });
         setIsPlaying(true);
@@ -1442,7 +1456,7 @@ export default function MusicClient({ children: _children }: { children?: React.
               audio.currentTime = seekTime;
             }
           } catch (error) {
-            console.warn('切换音质后恢复播放进度失败:', error);
+            reportAppError(error, '切换音质后恢复播放进度');
           }
         }
 
@@ -1452,7 +1466,7 @@ export default function MusicClient({ children: _children }: { children?: React.
           audio.play()
             .then(() => setIsPlaying(true))
             .catch((error) => {
-              console.error('切换音质后播放失败:', error);
+              reportAppError(error, '切换音质后播放');
               setIsPlaying(false);
               setIsBuffering(false);
             });
@@ -1468,10 +1482,10 @@ export default function MusicClient({ children: _children }: { children?: React.
       audio.load();
       setIsPlaying(shouldResume);
     } catch (error) {
-      console.error('切换音质失败:', error);
+      reportAppError(error, '切换音质');
       setIsBuffering(false);
       setToast({
-        message: (error as Error).message || '切换音质失败',
+        message: formatAppError(error, '切换音质'),
         type: 'error',
         onClose: () => setToast(null),
       });
@@ -1524,7 +1538,7 @@ export default function MusicClient({ children: _children }: { children?: React.
       });
       if (!response.ok) throw new Error(`HTTP ${response.status}`);
     } catch (error) {
-      console.error('保存播放顺序失败:', error);
+      reportAppError(error, '保存播放顺序');
       setPlaylist(prevPlaylist);
       setPlayRecords(prevRecords);
       setPlaylistIndex(prevIndex);
@@ -1549,7 +1563,7 @@ export default function MusicClient({ children: _children }: { children?: React.
         setPlaylistIndex(playlistIndex - 1);
       }
     } catch (error) {
-      console.error('删除播放记录失败:', error);
+      reportAppError(error, '删除播放记录');
     }
   };
 
@@ -1572,7 +1586,7 @@ export default function MusicClient({ children: _children }: { children?: React.
             onClose: () => setToast(null),
           });
         } catch (error) {
-          console.error('清空播放记录失败:', error);
+          reportAppError(error, '清空播放记录');
           setToast({
             message: '清空播放记录失败',
             type: 'error',
@@ -1659,7 +1673,7 @@ export default function MusicClient({ children: _children }: { children?: React.
       .then(buffer => {
         if (!cancelled && convolver) convolver.buffer = buffer;
       })
-      .catch(error => console.warn('加载环境混响音效失败:', error));
+      .catch(error => reportAppError(error, '加载环境混响音效', { level: 'warn' }));
     return () => { cancelled = true; };
   }, [reverbPreset, reverbEnabled]);
 
@@ -1727,7 +1741,7 @@ export default function MusicClient({ children: _children }: { children?: React.
               // 保存到数据库
               const record = updated[playlistIndex];
               saveHistoryRecord(record, currentSong, audio.currentTime, audio.duration || 0).catch(err => {
-                console.error('保存播放记录到数据库失败:', err);
+                reportAppError(err, '保存播放记录到数据库');
               });
             }
             return updated;
@@ -1777,7 +1791,7 @@ export default function MusicClient({ children: _children }: { children?: React.
             // 保存到数据库（包含时长信息）
             const record = updated[playlistIndex];
             saveHistoryRecord(record, currentSong, record.playTime, audio.duration).catch(err => {
-              console.error('保存播放记录到数据库失败:', err);
+              reportAppError(err, '保存播放记录到数据库');
             });
           }
           return updated;
@@ -1808,7 +1822,20 @@ export default function MusicClient({ children: _children }: { children?: React.
     audio.addEventListener('canplaythrough', handleBufferingEnd);
     audio.addEventListener('playing', handleBufferingEnd);
     audio.addEventListener('pause', handleBufferingEnd);
-    audio.addEventListener('error', handleBufferingEnd);
+    const handleMediaError = () => {
+      handleBufferingEnd();
+      const code = audio.error?.code;
+      if (!code || code === 1) return;
+      const mediaError = code === 2
+        ? { code: 'MEDIA_NETWORK_ERROR', message: '音频加载时网络连接中断', hint: '请检查网络，或切换音源后重试。' }
+        : code === 3
+          ? { code: 'MEDIA_DECODE_FAILED', message: '浏览器无法解码音频', hint: '请切换音源或浏览器后重试。' }
+          : { code: 'MEDIA_NOT_SUPPORTED', message: '浏览器不支持当前音频或音源不可用', hint: '请切换音源或浏览器后重试。' };
+      reportAppError(mediaError, '播放音乐');
+      setIsPlaying(false);
+      setToast({ message: formatAppError(mediaError, '播放音乐'), type: 'error', onClose: () => setToast(null) });
+    };
+    audio.addEventListener('error', handleMediaError);
     audio.addEventListener('loadedmetadata', handleLoadedMetadata);
     audio.addEventListener('durationchange', handleDurationChange);
     audio.addEventListener('ended', handleEnded);
@@ -1822,7 +1849,7 @@ export default function MusicClient({ children: _children }: { children?: React.
       audio.removeEventListener('canplaythrough', handleBufferingEnd);
       audio.removeEventListener('playing', handleBufferingEnd);
       audio.removeEventListener('pause', handleBufferingEnd);
-      audio.removeEventListener('error', handleBufferingEnd);
+      audio.removeEventListener('error', handleMediaError);
       audio.removeEventListener('loadedmetadata', handleLoadedMetadata);
       audio.removeEventListener('durationchange', handleDurationChange);
       audio.removeEventListener('ended', handleEnded);
@@ -2174,7 +2201,7 @@ export default function MusicClient({ children: _children }: { children?: React.
           await audioContextRef.current.resume();
         }
       } catch (error) {
-        console.warn('初始化频谱分析器失败，将使用模拟动画:', error);
+        reportAppError(error, '初始化频谱分析器');
       }
     };
 
@@ -2305,7 +2332,7 @@ export default function MusicClient({ children: _children }: { children?: React.
     // 那份进 SSR 样式表、首帧就在。别往这加 bg-* ——原来那个 bg-zinc-950 就是
     // "先黑一下再变回来"的来源（styled-jsx 要等 hydration 才插进 head）。
     <PageLayout activePath="/music/rankings">
-    <div className="music-theme min-h-screen">
+    <div className="music-theme f1-music-root min-h-screen">
       <>
       <style jsx global>{`
         @keyframes vinyl-spin {
@@ -2335,7 +2362,7 @@ export default function MusicClient({ children: _children }: { children?: React.
           margin-left: -20px;
           width: 108px;
           height: 140px;
-          background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 130"><path d="M21,21 C21,65 86,70 86,100" fill="none" stroke="rgba(0,0,0,0.28)" stroke-width="6" stroke-linecap="round"/><path d="M20,20 C20,65 85,70 85,100" fill="none" stroke="%23e0e0e0" stroke-width="4.5" stroke-linecap="round"/><path d="M19,20 C19,65 84,70 84,100" fill="none" stroke="%23fff" stroke-width="1.5" stroke-linecap="round"/><g transform="translate(85, 100) rotate(25)"><rect x="-6" y="0" width="12" height="18" rx="2" fill="%23ccc"/><rect x="-4" y="5" width="8" height="14" rx="1" fill="%23333"/><rect x="-2" y="16" width="4" height="5" rx="1" fill="%23d43c33"/></g><circle cx="20" cy="20" r="10" fill="%23f0f0f0" stroke="%23ccc" stroke-width="1"/><circle cx="20" cy="20" r="4" fill="%23fff"/><circle cx="20" cy="20" r="1.5" fill="%23999"/></svg>');
+          background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 130"><path d="M21,21 C21,65 86,70 86,100" fill="none" stroke="var(--ptv-media-bg-alpha-28)" stroke-width="6" stroke-linecap="round"/><path d="M20,20 C20,65 85,70 85,100" fill="none" stroke="%23e0e0e0" stroke-width="4.5" stroke-linecap="round"/><path d="M19,20 C19,65 84,70 84,100" fill="none" stroke="%23fff" stroke-width="1.5" stroke-linecap="round"/><g transform="translate(85, 100) rotate(25)"><rect x="-6" y="0" width="12" height="18" rx="2" fill="%23ccc"/><rect x="-4" y="5" width="8" height="14" rx="1" fill="%23333"/><rect x="-2" y="16" width="4" height="5" rx="1" fill="%23d43c33"/></g><circle cx="20" cy="20" r="10" fill="%23f0f0f0" stroke="%23ccc" stroke-width="1"/><circle cx="20" cy="20" r="4" fill="%23fff"/><circle cx="20" cy="20" r="1.5" fill="%23999"/></svg>');
           background-repeat: no-repeat;
           background-size: contain;
           transform-origin: 20px 20px;
@@ -2343,7 +2370,7 @@ export default function MusicClient({ children: _children }: { children?: React.
           transition: transform 0.5s cubic-bezier(0.3, 0, 0.1, 1);
           z-index: 5;
           pointer-events: none;
-          filter: drop-shadow(0 8px 8px rgba(0,0,0,0.35));
+          filter: drop-shadow(0 8px 8px var(--ptv-media-bg-alpha-35));
         }
         .vinyl-player.playing .vinyl-needle {
           transform: rotate(0deg);
@@ -2356,8 +2383,8 @@ export default function MusicClient({ children: _children }: { children?: React.
           display: flex;
           align-items: center;
           justify-content: center;
-          background: conic-gradient(from 45deg, #080808 0%, #2a2a2a 10%, #0f0f0f 20%, #111 40%, #303030 50%, #111 60%, #090909 80%, #2a2a2a 90%, #080808 100%);
-          box-shadow: 0 0 0 8px rgba(255,255,255,0.045), 0 18px 36px rgba(0,0,0,0.55), inset 0 0 24px rgba(255,255,255,0.04);
+          background: conic-gradient(from 45deg, var(--ptv-media-bg) 0%, var(--ptv-media-high) 10%, var(--ptv-media-bg) 20%, var(--ptv-media-bg) 40%, var(--ptv-media-high) 50%, var(--ptv-media-bg) 60%, var(--ptv-media-bg) 80%, var(--ptv-media-high) 90%, var(--ptv-media-bg) 100%);
+          box-shadow: 0 0 0 8px var(--ptv-media-text-alpha-4_5), 0 18px 36px var(--ptv-media-bg-alpha-55), inset 0 0 24px var(--ptv-media-text-alpha-4);
           animation: vinyl-spin 20s linear infinite;
           animation-play-state: paused;
         }
@@ -2369,7 +2396,7 @@ export default function MusicClient({ children: _children }: { children?: React.
           position: absolute;
           inset: 0;
           border-radius: inherit;
-          background: repeating-radial-gradient(transparent 0, transparent 3px, rgba(255,255,255,0.045) 3px, rgba(255,255,255,0.045) 4px), radial-gradient(circle at 35% 25%, rgba(255,255,255,0.14), transparent 28%);
+          background: repeating-radial-gradient(transparent 0, transparent 3px, var(--ptv-media-text-alpha-4_5) 3px, var(--ptv-media-text-alpha-4_5) 4px), radial-gradient(circle at 35% 25%, var(--ptv-media-text-alpha-14), transparent 28%);
           pointer-events: none;
         }
         .vinyl-disc::after {
@@ -2378,8 +2405,8 @@ export default function MusicClient({ children: _children }: { children?: React.
           width: 12px;
           height: 12px;
           border-radius: 9999px;
-          background: #111;
-          border: 2px solid rgba(255,255,255,0.25);
+          background: var(--ptv-media-bg);
+          border: 2px solid var(--ptv-media-text-alpha-25);
           z-index: 3;
           pointer-events: none;
         }
@@ -2390,15 +2417,15 @@ export default function MusicClient({ children: _children }: { children?: React.
           height: 64%;
           border-radius: 9999px;
           object-fit: cover;
-          border: 5px solid #0a0a0a;
+          border: 5px solid var(--ptv-media-bg);
           user-select: none;
-          box-shadow: inset 0 0 0 1px rgba(255,255,255,0.06);
+          box-shadow: inset 0 0 0 1px var(--ptv-media-text-alpha-6);
         }
         .vinyl-cover-fallback {
           display: flex;
           align-items: center;
           justify-content: center;
-          background: #27272a;
+          background: var(--ptv-media-high);
         }
         @keyframes music-note-bounce {
           0%,
@@ -2430,10 +2457,10 @@ export default function MusicClient({ children: _children }: { children?: React.
         .music-buffer-track {
           background-image: repeating-linear-gradient(
             115deg,
-            rgba(16, 185, 129, 0.08) 0,
-            rgba(16, 185, 129, 0.08) 6px,
-            rgba(110, 231, 183, 0.28) 6px,
-            rgba(110, 231, 183, 0.28) 12px
+            var(--ptv-media-bg-alpha-8) 0,
+            var(--ptv-media-bg-alpha-8) 6px,
+            var(--ptv-media-bg-alpha-28) 6px,
+            var(--ptv-media-bg-alpha-28) 12px
           );
           background-size: 24px 100%;
           animation: music-buffer-stripes 0.65s linear infinite;
@@ -2446,63 +2473,69 @@ export default function MusicClient({ children: _children }: { children?: React.
           background: linear-gradient(
             90deg,
             transparent,
-            rgba(167, 243, 208, 0.95),
+            var(--ptv-media-bg-alpha-95),
             transparent
           );
-          filter: drop-shadow(0 0 8px rgba(52, 211, 153, 0.7));
+          filter: drop-shadow(0 0 8px var(--ptv-media-bg-alpha-70));
           animation: music-buffer-scan 0.95s ease-in-out infinite;
         }
       `}</style>
       <style jsx global>{`
         @keyframes music-buffer-scan-global {
-          0% {
-            transform: translateX(-120%);
-          }
-          100% {
-            transform: translateX(260%);
-          }
-        }
-        @keyframes music-buffer-stripes-global {
-          0% {
-            background-position: 0 0;
-          }
-          100% {
-            background-position: 28px 0;
-          }
+          from { transform: translateX(-100%); }
+          to { transform: translateX(300%); }
         }
         .music-buffer-track-global {
-          background-image: repeating-linear-gradient(
-            115deg,
-            rgba(16, 185, 129, 0.1) 0,
-            rgba(16, 185, 129, 0.1) 7px,
-            rgba(110, 231, 183, 0.34) 7px,
-            rgba(110, 231, 183, 0.34) 14px
-          );
-          background-size: 28px 100%;
-          animation: music-buffer-stripes-global 0.55s linear infinite;
+          overflow: hidden;
+          pointer-events: none;
+          border-radius: inherit;
+          background: color-mix(in srgb, var(--ptv-accent, var(--ptv-action)) 14%, transparent);
         }
         .music-buffer-track-global::before {
           content: '';
           position: absolute;
-          top: 0;
-          bottom: 0;
-          left: 0;
-          width: 45%;
-          background: linear-gradient(
-            90deg,
-            transparent,
-            rgba(236, 253, 245, 0.95),
-            transparent
-          );
-          box-shadow: 0 0 12px rgba(0, 210, 190, 0.9);
-          animation: music-buffer-scan-global 0.85s ease-in-out infinite;
+          inset: 0 auto 0 0;
+          width: 36%;
+          border-radius: inherit;
+          background: linear-gradient(90deg, transparent, var(--ptv-accent, var(--ptv-action)), transparent);
+          animation: music-buffer-scan-global 1.6s cubic-bezier(.4, 0, .2, 1) infinite;
+        }
+        .music-dock-progress {
+          background: var(--ptv-line, var(--ptv-line));
+          border-radius: var(--f1-radius, 12px) var(--f1-radius, 12px) 0 0;
+        }
+        .music-dock-progress-fill {
+          background: var(--ptv-accent, var(--ptv-action));
+          border-radius: inherit;
+        }
+        .music-dock-buffering {
+          display: inline-flex;
+          flex-shrink: 0;
+          align-items: center;
+          gap: 4px;
+          color: var(--ptv-accent, var(--ptv-accent));
+          font-size: 10px;
+          line-height: 16px;
+        }
+        .music-dock-buffering::before {
+          content: '';
+          width: 4px;
+          height: 4px;
+          border-radius: 50%;
+          background: currentColor;
+        }
+        @media (prefers-reduced-motion: reduce) {
+          .music-buffer-track-global::before {
+            animation: none;
+            transform: translateX(90%);
+          }
         }
       `}</style>
       {resolvingCount > 0 && (
         <div className="fixed top-4 right-4 z-[80] pointer-events-none">
           <div className="relative w-16 h-16 md:w-20 md:h-20">
             <div className="absolute inset-0 rounded-full border-4 border-white/10" />
-            <div className="absolute inset-0 rounded-full border-4 border-transparent border-t-music-theme dark:border-t-music-night-theme border-r-music-theme dark:border-r-music-night-theme animate-spin shadow-[0_0_20px_rgba(0,124,118,0.35)]" />
+            <div className="absolute inset-0 rounded-full border-4 border-transparent border-t-music-theme dark:border-t-music-night-theme border-r-music-theme dark:border-r-music-night-theme animate-spin shadow-[0_0_20px_var(--ptv-media-bg-alpha-35)]" />
             <div className="absolute inset-1 rounded-full bg-zinc-950/90 backdrop-blur-md border border-white/10 flex flex-col items-center justify-center">
               <div className="text-[10px] md:text-xs text-zinc-400 leading-none mb-1">解析中</div>
               <div className="text-lg md:text-xl font-bold text-white leading-none">{resolvingCount}</div>
@@ -2519,18 +2552,18 @@ export default function MusicClient({ children: _children }: { children?: React.
 
       {/* Player */}
       {showPlayer && currentSong && (
-        <div className="apex-music-player fixed bottom-[calc(1rem+env(safe-area-inset-bottom))] left-1/2 -translate-x-1/2 w-[95%] max-w-3xl z-50">
+        <div className="apex-music-player f1-music-dock fixed bottom-[calc(1rem+env(safe-area-inset-bottom))] left-1/2 -translate-x-1/2 w-[95%] max-w-3xl z-50" aria-label="正在播放的音乐">
           {showSpectrum && !showLyrics && (
             <div className="pointer-events-none px-4">
               <AudioSpectrumCanvas barsRef={spectrumBarsRef} compact />
             </div>
           )}
 
-          <div className="relative bg-zinc-900/95 backdrop-blur-md rounded-xl p-4 pt-5 border border-white/10 shadow-2xl">
+          <div className="f1-music-dock-surface relative bg-zinc-900/95 backdrop-blur-md rounded-xl p-4 pt-5 border border-white/10 shadow-2xl">
             {/* Progress Bar */}
-            <div className="absolute left-0 right-0 top-0 h-1 bg-white/10 rounded-t-xl">
+            <div className="music-dock-progress absolute left-0 right-0 top-0 h-[3px]">
               <div
-                className="relative z-10 h-full w-full origin-left bg-[#00d2be] pointer-events-none"
+                className="music-dock-progress-fill relative z-10 h-full w-full origin-left pointer-events-none"
                 style={{ transform: `scaleX(${progress / 100})` }}
               />
               {showStreamBuffering && (
@@ -2577,7 +2610,12 @@ export default function MusicClient({ children: _children }: { children?: React.
                     <div className="min-w-0 truncate text-sm font-bold text-white">{currentSong.name}</div>
                     <SourcePill source={currentSong.platform} variant="accent" className="hidden sm:inline-flex" />
                   </div>
-                  <div className="text-xs text-zinc-500 truncate">{currentSong.artist}</div>
+                  <div className="flex min-w-0 items-center gap-2">
+                    <span className="truncate text-xs text-zinc-500">{currentSong.artist}</span>
+                    {showStreamBuffering && (
+                      <span className="music-dock-buffering" role="status">缓冲中</span>
+                    )}
+                  </div>
                 </div>
               </div>
 
@@ -2591,7 +2629,7 @@ export default function MusicClient({ children: _children }: { children?: React.
                 <button
                   onClick={togglePlay}
                   aria-label={isPlaying ? '暂停' : '播放'}
-                  className="w-11 h-11 rounded-full bg-[#00d2be] text-[#062421] flex items-center justify-center hover:bg-[#71e8dc] transition-colors"
+                  className="w-11 h-11 rounded-full bg-music-theme text-music-action-ink flex items-center justify-center hover:bg-music-theme transition-colors"
                 >
                   {isPlaying ? (
                     <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
@@ -2684,7 +2722,7 @@ export default function MusicClient({ children: _children }: { children?: React.
       {/* Lyrics Modal */}
       {showLyrics && currentSong && (
         <div
-          className="ptv-fade-in fixed inset-0 bg-black/90 backdrop-blur-sm z-[100] flex items-center justify-center p-4"
+          className="f1-listening-scrim ptv-fade-in fixed inset-0 bg-black/90 backdrop-blur-sm z-[100] flex items-center justify-center p-4"
           onClick={(e) => {
             // 点击背景关闭音量条
             if (e.target === e.currentTarget) {
@@ -2693,21 +2731,25 @@ export default function MusicClient({ children: _children }: { children?: React.
           }}
         >
           <div
-            className="relative w-full max-w-6xl h-[90vh] supports-[height:100dvh]:h-[90dvh] bg-zinc-900/95 rounded-2xl overflow-hidden border border-white/10 shadow-2xl flex flex-col"
+            className="f1-listening-room relative w-full h-[90vh] supports-[height:100dvh]:h-[90dvh] overflow-hidden flex flex-col"
             onClick={() => setShowVolumeSlider(false)}
           >
+            <header className="f1-listening-heading">
+              <div><span className="f1-listening-eyebrow">音乐</span><h2>正在聆听</h2></div>
+              <button type="button" className="f1-listening-queue-entry" onClick={() => setShowPlaylist(true)}><ListMusic size={18} />播放队列<span>{playlist.length}</span></button>
             <button
               onClick={() => setShowLyrics(false)}
               aria-label="关闭歌词"
-              className="absolute top-2 right-2 md:top-4 md:right-4 z-10 w-11 h-11 rounded-full bg-music-card-2 dark:bg-music-night-card-2 hover:bg-music-edge dark:hover:bg-music-night-edge flex items-center justify-center transition-colors"
+              className="f1-listening-close w-11 h-11 flex items-center justify-center transition-colors"
             >
               <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
               </svg>
             </button>
-            <div className="flex flex-1 min-h-0 flex-col md:flex-row">
+            </header>
+            <div className="f1-listening-stage flex flex-1 min-h-0 flex-col md:flex-row">
               {/* Cover / Meta */}
-              <div className="relative h-32 md:h-auto md:w-[380px] lg:w-[430px] xl:w-[480px] bg-gradient-to-b from-zinc-800 to-zinc-900 shrink-0 overflow-hidden">
+              <div className="f1-listening-art relative shrink-0 overflow-hidden">
                 {currentSong.pic && (
                   <div className="absolute inset-0">
                     <img
@@ -2718,7 +2760,9 @@ export default function MusicClient({ children: _children }: { children?: React.
                   </div>
                 )}
                 <div className="relative h-full flex flex-col items-center justify-center p-4 md:p-6 lg:p-8">
-                  <div
+                  <button
+                    type="button"
+                    aria-label={mobileLyricsView === 'lyrics' ? '切换为唱片' : '切换为歌词'}
                     onClick={(e) => {
                       e.stopPropagation();
                       setMobileLyricsView((view) => (view === 'lyrics' ? 'vinyl' : 'lyrics'));
@@ -2738,7 +2782,7 @@ export default function MusicClient({ children: _children }: { children?: React.
                         </svg>
                       </div>
                     )}
-                  </div>
+                  </button>
                   <div className="hidden md:block w-full">
                     <VinylTurntable cover={currentSong.pic} title={currentSong.name} isPlaying={isPlaying} />
                   </div>
@@ -2768,7 +2812,7 @@ export default function MusicClient({ children: _children }: { children?: React.
               )}
 
               {/* Lyrics Content */}
-              <div ref={lyricsContainerRef} className={`${mobileLyricsView === 'vinyl' ? 'hidden md:block' : 'block'} flex-1 overflow-y-auto p-4 md:p-6 lg:p-8`}>
+              <div ref={lyricsContainerRef} className={`f1-listening-lyrics ${mobileLyricsView === 'vinyl' ? 'hidden md:block' : 'block'} flex-1 overflow-y-auto p-4 md:p-6 lg:p-8`}>
                 {lyrics.length > 0 ? (
                   <div className="space-y-4 md:space-y-5">
                     {lyrics.map((line, index) => (
@@ -2776,6 +2820,7 @@ export default function MusicClient({ children: _children }: { children?: React.
                         key={index}
                         type="button"
                         data-index={index}
+                        data-current={index === currentLyricIndex}
                         onClick={() => seekToLyric(line, index)}
                         className={`block min-h-11 w-full appearance-none border-0 bg-transparent p-0 text-center text-base md:text-lg transition-[color,transform] duration-300 focus-visible:outline focus-visible:outline-2 focus-visible:outline-music-theme ${
                           index === currentLyricIndex
@@ -2807,10 +2852,23 @@ export default function MusicClient({ children: _children }: { children?: React.
                   </div>
                 )}
               </div>
+              <aside className="f1-listening-up-next" aria-label="播放队列预览">
+                <div className="f1-listening-queue-heading"><h3>播放队列</h3><span>{playlist.length} 首</span></div>
+                <div className="f1-listening-queue-list">
+                  {playlist.slice(Math.max(0, playlistIndex - 2), Math.max(0, playlistIndex - 2) + 12).map((song, offset) => {
+                    const index = Math.max(0, playlistIndex - 2) + offset;
+                    return <button key={`${song.platform}-${song.id}-${index}`} type="button" aria-pressed={index === playlistIndex} onClick={() => { setPlaylistIndex(index); playSong(song, -1); }}>
+                      <span className="f1-listening-queue-index">{String(index + 1).padStart(2, '0')}</span>
+                      <span className="f1-listening-queue-song"><strong>{song.name}</strong><small>{song.artist}</small></span>
+                    </button>;
+                  })}
+                </div>
+                <button type="button" className="f1-listening-manage" onClick={() => setShowPlaylist(true)}>管理完整队列</button>
+              </aside>
             </div>
 
             {/* Mini Player Controls */}
-            <div className="music-player-controls max-h-[45vh] overflow-y-auto border-t border-white/5 p-3 md:p-4 shrink-0">
+            <div className="music-player-controls f1-listening-controls max-h-[45vh] overflow-y-auto border-t border-white/5 p-3 md:p-4 shrink-0">
               {/* 上排：播放控制按钮 */}
               <div className="relative flex items-center justify-center gap-4 md:gap-6 mb-2 md:mb-3">
                 <button onClick={playPrev} aria-label="上一首" className="text-music-muted dark:text-music-night-muted hover:text-music-ink dark:hover:text-music-night-ink transition-colors">
@@ -2821,7 +2879,7 @@ export default function MusicClient({ children: _children }: { children?: React.
                 <button
                   onClick={togglePlay}
                   aria-label={isPlaying ? '暂停' : '播放'}
-                  className="w-12 h-12 rounded-full bg-music-theme dark:bg-music-night-theme text-music-chip dark:text-[#062421] flex items-center justify-center hover:bg-music-theme-hover dark:hover:bg-music-night-theme-hover transition-colors"
+                  className="w-12 h-12 rounded-full bg-music-theme dark:bg-music-night-theme text-music-action-ink flex items-center justify-center hover:bg-music-theme-hover dark:hover:bg-music-night-theme-hover transition-colors"
                 >
                   {isPlaying ? (
                     <svg className="w-4 h-4 md:w-5 md:h-5" fill="currentColor" viewBox="0 0 24 24">
@@ -2839,7 +2897,7 @@ export default function MusicClient({ children: _children }: { children?: React.
                   </svg>
                 </button>
                 {showStreamBuffering && (
-                  <span className="absolute left-[calc(50%+4rem)] top-1/2 inline-flex -translate-y-1/2 items-center gap-1 whitespace-nowrap rounded-full bg-music-theme/15 dark:bg-music-night-theme/15 px-2 py-0.5 text-[10px] font-medium text-music-theme dark:text-music-night-theme md:left-[calc(50%+5rem)]">
+                  <span className="absolute left-[calc(50%+4rem)] top-1/2 inline-flex -translate-y-1/2 items-center gap-1 whitespace-nowrap rounded-full bg-music-theme/15 dark:bg-music-night-theme/15 px-2 py-0.5 text-[10px] font-medium text-music-accent dark:text-music-night-accent md:left-[calc(50%+5rem)]">
                     <span className="h-2 w-2 rounded-full bg-music-theme dark:bg-music-night-theme animate-pulse" />
                     缓冲中
                   </span>
@@ -2857,7 +2915,7 @@ export default function MusicClient({ children: _children }: { children?: React.
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" />
                   </svg>
                   {playlist.length > 0 && (
-                    <span className="absolute -top-1 -right-1 w-3 h-3 bg-music-theme dark:bg-music-night-theme rounded-full text-[8px] text-music-chip dark:text-[#062421] flex items-center justify-center font-bold">
+                    <span className="absolute -top-1 -right-1 w-3 h-3 bg-music-theme dark:bg-music-night-theme rounded-full text-[8px] text-music-action-ink flex items-center justify-center font-bold">
                       {playlist.length > 9 ? '9+' : playlist.length}
                     </span>
                   )}
@@ -2873,7 +2931,7 @@ export default function MusicClient({ children: _children }: { children?: React.
                 </button>
                 <button
                   onClick={() => setShowQualityMenu(true)}
-                  className="px-2 py-0.5 rounded border text-music-theme dark:text-music-night-theme border-music-theme/50 dark:border-music-night-theme/50 bg-music-card-2 dark:bg-music-night-card-2 text-[9px] md:text-[10px] font-mono min-w-[32px] text-center hover:bg-music-card-2 dark:hover:bg-music-night-card-2 transition-colors"
+                  className="px-2 py-0.5 rounded border text-music-accent dark:text-music-night-accent border-music-theme/50 dark:border-music-night-theme/50 bg-music-card-2 dark:bg-music-night-card-2 text-[9px] md:text-[10px] font-mono min-w-[32px] text-center hover:bg-music-card-2 dark:hover:bg-music-night-card-2 transition-colors"
                   title="音质选择"
                 >
                   {getQualityLabel()}
@@ -2884,7 +2942,7 @@ export default function MusicClient({ children: _children }: { children?: React.
                     setShowSleepTimerMenu(true);
                   }}
                   className={`relative transition-colors ${
-                    sleepTimerEndAt ? 'text-music-theme dark:text-music-night-theme hover:text-music-theme dark:hover:text-music-night-theme' : 'text-music-muted dark:text-music-night-muted hover:text-music-ink dark:hover:text-music-night-ink'
+                    sleepTimerEndAt ? 'text-music-accent dark:text-music-night-accent hover:text-music-accent dark:hover:text-music-night-accent' : 'text-music-muted dark:text-music-night-muted hover:text-music-ink dark:hover:text-music-night-ink'
                   }`}
                   title={sleepTimerEndAt ? `睡眠定时：${formatSleepTimer(sleepTimerRemaining)}` : '睡眠定时'}
                 >
@@ -2892,7 +2950,7 @@ export default function MusicClient({ children: _children }: { children?: React.
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6l4 2m6-2a10 10 0 11-20 0 10 10 0 0120 0z" />
                   </svg>
                   {sleepTimerEndAt && (
-                    <span className="absolute -bottom-2 left-1/2 -translate-x-1/2 text-[8px] font-semibold leading-none text-music-theme dark:text-music-night-theme">
+                    <span className="absolute -bottom-2 left-1/2 -translate-x-1/2 text-[8px] font-semibold leading-none text-music-accent dark:text-music-night-accent">
                       {Math.max(1, Math.ceil(sleepTimerRemaining / 60))}
                     </span>
                   )}
@@ -2947,17 +3005,17 @@ export default function MusicClient({ children: _children }: { children?: React.
                     <div className="bg-zinc-800/95 backdrop-blur-sm rounded-lg p-3 shadow-xl border border-white/10">
                       <div className="flex flex-col items-center gap-2">
                         <span className="text-xs text-zinc-400 font-mono">{volume}</span>
-                        <input type="range" min="0" max="100" value={volume} onChange={handleVolumeChange} aria-label="音量" className="h-28 w-11 accent-music-theme dark:accent-music-night-theme [writing-mode:vertical-lr] [direction:rtl]" />
+                        <input type="range" min="0" max="100" value={volume} onChange={handleVolumeChange} aria-label="音量" className="h-28 w-11 accent-music-accent dark:accent-music-night-accent [writing-mode:vertical-lr] [direction:rtl]" />
                       </div>
                     </div>
                   </div>
                 </div>
-                <button onClick={(e) => { e.stopPropagation(); setShowAudioEffectsMenu(true); }} className={`transition-colors ${equalizerEnabled || loudnessEnabled || reverbEnabled || pitchRate !== 1 || surroundEnabled ? 'text-music-theme dark:text-music-night-theme' : 'text-music-muted dark:text-music-night-muted hover:text-music-ink dark:hover:text-music-night-ink'}`} title="均衡器和音效" aria-label="均衡器和音效"><SlidersHorizontal className="h-4 w-4 md:h-5 md:w-5" /></button>
+                <button onClick={(e) => { e.stopPropagation(); setShowAudioEffectsMenu(true); }} className={`transition-colors ${equalizerEnabled || loudnessEnabled || reverbEnabled || pitchRate !== 1 || surroundEnabled ? 'text-music-accent dark:text-music-night-accent' : 'text-music-muted dark:text-music-night-muted hover:text-music-ink dark:hover:text-music-night-ink'}`} title="均衡器和音效" aria-label="均衡器和音效"><SlidersHorizontal className="h-4 w-4 md:h-5 md:w-5" /></button>
                 {/* PiP 歌词按钮 */}
                 <button
                   onClick={toggleSpectrum}
                   className={`transition-colors ${
-                    showSpectrum ? 'text-music-theme dark:text-music-night-theme hover:text-music-theme dark:hover:text-music-night-theme' : 'text-music-muted dark:text-music-night-muted hover:text-music-ink dark:hover:text-music-night-ink'
+                    showSpectrum ? 'text-music-accent dark:text-music-night-accent hover:text-music-accent dark:hover:text-music-night-accent' : 'text-music-muted dark:text-music-night-muted hover:text-music-ink dark:hover:text-music-night-ink'
                   }`}
                   title={showSpectrum ? '隐藏音谱图' : '显示音谱图'}
                 >
@@ -2979,7 +3037,7 @@ export default function MusicClient({ children: _children }: { children?: React.
                   }}
                   className={`transition-colors ${
                     showPiPLyrics
-                      ? 'text-music-theme dark:text-music-night-theme hover:text-music-theme dark:hover:text-music-night-theme'
+                      ? 'text-music-accent dark:text-music-night-accent hover:text-music-accent dark:hover:text-music-night-accent'
                       : 'text-music-muted dark:text-music-night-muted hover:text-music-ink dark:hover:text-music-night-ink'
                   }`}
                   title={showPiPLyrics ? '关闭画中画歌词' : '画中画歌词'}
@@ -3048,7 +3106,7 @@ export default function MusicClient({ children: _children }: { children?: React.
       {/* Playlist Modal */}
       {showPlaylist && (
         <div className="ptv-scrim-in fixed inset-0 bg-black/90 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
-          <div className={cn('ptv-sheet-in', MUSIC_QUEUE_SHELL)}>
+          <div className={cn('ptv-sheet-in f1-music-queue', MUSIC_QUEUE_SHELL)}>
             <div className={MUSIC_QUEUE_HEAD}>
               <div className="flex items-center gap-2.5">
                 <h2 className={MUSIC_QUEUE_TITLE}>播放列表</h2>
@@ -3154,7 +3212,7 @@ export default function MusicClient({ children: _children }: { children?: React.
                 <button
                   key={minutes}
                   onClick={() => setSleepTimer(minutes)}
-                  className="rounded-lg bg-white/5 p-4 text-center text-sm font-medium text-music-ink dark:text-music-night-ink transition-colors hover:bg-music-theme/20 hover:text-music-theme dark:hover:text-music-night-theme"
+                  className="rounded-lg bg-white/5 p-4 text-center text-sm font-medium text-music-ink dark:text-music-night-ink transition-colors hover:bg-music-theme/20 hover:text-music-accent dark:hover:text-music-night-accent"
                 >
                   {minutes} 分钟
                 </button>
@@ -3220,7 +3278,7 @@ export default function MusicClient({ children: _children }: { children?: React.
                                 }
                               }}
                               className={`flex w-full items-center justify-center text-sm transition-colors ${
-                                isActive ? 'text-music-theme dark:text-music-night-theme' : 'text-zinc-400'
+                                isActive ? 'text-music-accent dark:text-music-night-accent' : 'text-zinc-400'
                               }`}
                               style={{ height: `${sleepPickerItemHeight}px`, scrollSnapAlign: 'center' }}
                             >
@@ -3238,7 +3296,7 @@ export default function MusicClient({ children: _children }: { children?: React.
               </div>
               <button
                 onClick={setCustomSleepTimer}
-                className="mt-4 w-full rounded-lg bg-music-theme dark:bg-music-night-theme p-3 text-sm font-medium text-music-chip dark:text-[#062421] transition-colors hover:bg-music-theme-hover dark:hover:bg-music-night-theme-hover disabled:cursor-not-allowed disabled:bg-zinc-700 disabled:text-music-chip"
+                className="mt-4 w-full rounded-lg bg-music-theme dark:bg-music-night-theme p-3 text-sm font-medium text-music-action-ink transition-colors hover:bg-music-theme-hover dark:hover:bg-music-night-theme-hover disabled:cursor-not-allowed disabled:bg-zinc-700 disabled:text-music-action-ink"
                 disabled={customSleepHours === 0 && customSleepMinutes === 0}
               >
                 {customSleepHours === 0 && customSleepMinutes === 0
@@ -3270,18 +3328,18 @@ export default function MusicClient({ children: _children }: { children?: React.
 
       {showAudioEffectsMenu && (
         <div className="ptv-scrim-in fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4" onClick={() => setShowAudioEffectsMenu(false)}>
-          <div className="ptv-sheet-in relative w-full max-w-5xl max-h-[90vh] supports-[height:100dvh]:max-h-[90dvh] bg-zinc-900 rounded-2xl border border-white/10 shadow-2xl overflow-hidden" onClick={(e) => e.stopPropagation()}>
+          <div className="ptv-sheet-in f1-music-effects relative w-full max-w-5xl max-h-[90vh] supports-[height:100dvh]:max-h-[90dvh] bg-zinc-900 rounded-2xl border border-white/10 shadow-2xl overflow-hidden" onClick={(e) => e.stopPropagation()}>
             <div className="p-5 border-b border-white/10 flex items-center justify-between"><div><h3 className="text-lg font-bold text-white">均衡器与音效调节</h3></div><button onClick={() => setShowAudioEffectsMenu(false)} className="w-8 h-8 rounded-lg text-music-muted dark:text-music-night-muted hover:text-music-ink dark:hover:text-music-night-ink hover:bg-music-card-2 dark:hover:bg-music-night-card-2">✕</button></div>
             <div className="p-5 overflow-y-auto max-h-[calc(90vh-80px)] supports-[height:100dvh]:max-h-[calc(90dvh-80px)]"><div className="grid grid-cols-1 lg:grid-cols-[1fr_280px] gap-8">
-              <section><div className="flex items-center justify-between mb-4"><div><h4 className="text-sm font-bold text-white">10 段均衡器</h4></div><label className="flex items-center gap-2 text-xs text-zinc-300"><input type="checkbox" checked={equalizerEnabled} onChange={(e) => setEqualizerEnabled(e.target.checked)} className="h-4 w-4 accent-music-theme dark:accent-music-night-theme" />启用 EQ</label></div>
-                <div className="rounded-xl border border-white/5 p-4 overflow-x-auto overscroll-x-contain [scrollbar-width:thin]"><div className="min-w-[760px] grid grid-cols-10 gap-3 items-end h-56 sm:h-64">{EQ_BANDS.map((band, index) => (<div key={band.frequency} className="h-full min-w-0 flex flex-col items-center gap-2"><span className="text-[10px] font-mono text-zinc-500">{(eqGains[index] || 0) > 0 ? '+' : ''}{(eqGains[index] || 0).toFixed(1)}</span><div className="flex-1 w-full min-h-0 flex items-center justify-center"><input type="range" min="-12" max="12" step="0.5" value={eqGains[index] || 0} onChange={(e) => { setEqPreset('自定义'); const value = Number(e.target.value); setEqGains(current => current.map((gain, i) => i === index ? value : gain)); }} disabled={!equalizerEnabled} className="w-40 sm:w-52 h-5 -rotate-90 accent-music-theme dark:accent-music-night-theme [direction:rtl] disabled:opacity-40" /></div><span className="text-[10px] font-mono text-zinc-400">{band.label}</span></div>))}</div></div>
-                <div className="mt-5"><div className="flex items-center justify-between mb-3"><h4 className="text-sm font-bold text-white">预设</h4><button onClick={() => applyEqPreset('Flat')} className="text-xs text-music-theme dark:text-music-night-theme hover:text-music-theme dark:hover:text-music-night-theme">Flat 重置</button></div><div className="flex flex-wrap gap-2">{Object.keys(EQ_PRESETS).map(name => (<button key={name} onClick={() => applyEqPreset(name)} className={`px-3 py-1.5 rounded-lg text-xs transition-colors ${eqPreset === name ? 'bg-music-theme/20 dark:bg-music-night-theme/20 text-music-theme dark:text-music-night-theme border border-music-theme/50 dark:border-music-night-theme/50' : 'bg-music-card dark:bg-music-night-card text-music-ink-soft dark:text-music-night-ink-soft border border-white/10 hover:bg-music-card-2 dark:hover:bg-music-night-card-2'}`}>{name}</button>))}</div></div>
+              <section><div className="flex items-center justify-between mb-4"><div><h4 className="text-sm font-bold text-white">10 段均衡器</h4></div><label className="flex items-center gap-2 text-xs text-zinc-300"><input type="checkbox" checked={equalizerEnabled} onChange={(e) => setEqualizerEnabled(e.target.checked)} className="h-4 w-4 accent-music-accent dark:accent-music-night-accent" />启用 EQ</label></div>
+                <div className="rounded-xl border border-white/5 p-4 overflow-x-auto overscroll-x-contain [scrollbar-width:thin]"><div className="min-w-[760px] grid grid-cols-10 gap-3 items-end h-56 sm:h-64">{EQ_BANDS.map((band, index) => (<div key={band.frequency} className="h-full min-w-0 flex flex-col items-center gap-2"><span className="text-[10px] font-mono text-zinc-500">{(eqGains[index] || 0) > 0 ? '+' : ''}{(eqGains[index] || 0).toFixed(1)}</span><div className="flex-1 w-full min-h-0 flex items-center justify-center"><input type="range" min="-12" max="12" step="0.5" value={eqGains[index] || 0} onChange={(e) => { setEqPreset('自定义'); const value = Number(e.target.value); setEqGains(current => current.map((gain, i) => i === index ? value : gain)); }} disabled={!equalizerEnabled} className="w-40 sm:w-52 h-5 -rotate-90 accent-music-accent dark:accent-music-night-accent [direction:rtl] disabled:opacity-40" /></div><span className="text-[10px] font-mono text-zinc-400">{band.label}</span></div>))}</div></div>
+                <div className="mt-5"><div className="flex items-center justify-between mb-3"><h4 className="text-sm font-bold text-white">预设</h4><button onClick={() => applyEqPreset('Flat')} className="text-xs text-music-accent dark:text-music-night-accent hover:text-music-accent dark:hover:text-music-night-accent">Flat 重置</button></div><div className="flex flex-wrap gap-2">{Object.keys(EQ_PRESETS).map(name => (<button key={name} onClick={() => applyEqPreset(name)} className={`px-3 py-1.5 rounded-lg text-xs transition-colors ${eqPreset === name ? 'bg-music-theme/20 dark:bg-music-night-theme/20 text-music-accent dark:text-music-night-accent border border-music-theme/50 dark:border-music-night-theme/50' : 'bg-music-card dark:bg-music-night-card text-music-ink-soft dark:text-music-night-ink-soft border border-white/10 hover:bg-music-card-2 dark:hover:bg-music-night-card-2'}`}>{name}</button>))}</div></div>
               </section>
-              <aside className="space-y-5"><section className="rounded-xl border border-white/10 bg-white/[0.03] p-4"><div className="flex items-center justify-between"><div><h4 className="text-sm font-bold text-white">响度增强</h4><p className="text-xs text-zinc-500 mt-1">轻微压缩，增强人声和细节</p></div><input type="checkbox" checked={loudnessEnabled} onChange={(e) => setLoudnessEnabled(e.target.checked)} className="h-4 w-4 accent-music-theme dark:accent-music-night-theme" /></div></section>
-                <section className="rounded-xl border border-white/10 bg-white/[0.03] p-4"><div className="flex items-center justify-between mb-3"><div><h4 className="text-sm font-bold text-white">环境混响音效</h4><p className="text-xs text-zinc-500 mt-1">模拟不同空间的回声效果</p></div><input type="checkbox" checked={reverbEnabled} onChange={(e) => setReverbEnabled(e.target.checked)} className="h-4 w-4 accent-music-theme dark:accent-music-night-theme" /></div><div className="flex flex-wrap gap-2">{Object.entries(REVERB_PRESETS).map(([id, preset]) => (<button key={id} onClick={() => { const selected = id as keyof typeof REVERB_PRESETS; const selectedPreset = REVERB_PRESETS[selected]; setReverbPreset(selected); setReverbEnabled(selected !== 'none'); setReverbMainGain(Math.round(selectedPreset.main * 100)); setReverbMix(Math.min(100, Math.round(selectedPreset.send * 30))); }} className={`rounded-lg border px-2.5 py-1 text-xs ${reverbPreset === id ? 'border-music-theme/50 dark:border-music-night-theme/50 bg-music-theme/20 dark:bg-music-night-theme/20 text-music-theme dark:text-music-night-theme' : 'border-white/10 bg-music-card dark:bg-music-night-card text-music-ink-soft dark:text-music-night-ink-soft hover:bg-music-card-2 dark:hover:bg-music-night-card-2'}`}>{preset.label}</button>))}</div><label className="mt-3 block text-xs text-zinc-400">原始音量 {reverbMainGain}%<input type="range" min="0" max="150" value={reverbMainGain} onChange={(e) => setReverbMainGain(Number(e.target.value))} disabled={!reverbEnabled} className="mt-2 w-full accent-music-theme dark:accent-music-night-theme disabled:opacity-40" /></label><label className="mt-3 block text-xs text-zinc-400">环境音效 {reverbMix}%<input type="range" min="0" max="100" value={reverbMix} onChange={(e) => setReverbMix(Number(e.target.value))} disabled={!reverbEnabled} className="mt-2 w-full accent-music-theme dark:accent-music-night-theme disabled:opacity-40" /></label></section>
-                <section className="rounded-xl border border-white/10 bg-white/[0.03] p-4"><div className="flex items-center justify-between mb-3"><div><h4 className="text-sm font-bold text-white">音调升降调节</h4><p className="text-xs text-zinc-500 mt-1">当前 {pitchRate.toFixed(2)}x</p></div><button onClick={() => setPitchRate(1)} className="text-xs text-music-theme dark:text-music-night-theme">重置</button></div><input type="range" min="0.5" max="1.5" step="0.01" value={pitchRate} onChange={(e) => setPitchRate(Number(e.target.value))} className="w-full accent-music-theme dark:accent-music-night-theme" /><div className="mt-2 flex justify-between text-xs text-zinc-500"><span>低</span><span>原速</span><span>高</span></div></section>
-                <section className="rounded-xl border border-white/10 bg-white/[0.03] p-4"><div className="flex items-center justify-between mb-3"><div><h4 className="text-sm font-bold text-white">3D 立体环绕</h4><p className="text-xs text-zinc-500 mt-1">需使用耳机，模拟声源环绕移动</p></div><input type="checkbox" checked={surroundEnabled} onChange={(e) => setSurroundEnabled(e.target.checked)} className="h-4 w-4 accent-music-theme dark:accent-music-night-theme" /></div><label className="block text-xs text-zinc-400">旋转速度 {surroundSpeed}<input type="range" min="5" max="60" value={surroundSpeed} onChange={(e) => setSurroundSpeed(Number(e.target.value))} disabled={!surroundEnabled} className="mt-2 w-full accent-music-theme dark:accent-music-night-theme disabled:opacity-40" /></label><label className="block mt-3 text-xs text-zinc-400">声场距离 {surroundDistance}<input type="range" min="1" max="10" value={surroundDistance} onChange={(e) => setSurroundDistance(Number(e.target.value))} disabled={!surroundEnabled} className="mt-2 w-full accent-music-theme dark:accent-music-night-theme disabled:opacity-40" /></label></section>
-                <button onClick={() => setShowAudioEffectsMenu(false)} className="w-full rounded-xl bg-music-theme dark:bg-music-night-theme p-3 text-sm font-medium text-music-chip dark:text-[#062421] hover:bg-music-theme-hover dark:hover:bg-music-night-theme-hover">完成</button>
+              <aside className="space-y-5"><section className="rounded-xl border border-white/10 bg-white/[0.03] p-4"><div className="flex items-center justify-between"><div><h4 className="text-sm font-bold text-white">响度增强</h4><p className="text-xs text-zinc-500 mt-1">轻微压缩，增强人声和细节</p></div><input type="checkbox" checked={loudnessEnabled} onChange={(e) => setLoudnessEnabled(e.target.checked)} className="h-4 w-4 accent-music-accent dark:accent-music-night-accent" /></div></section>
+                <section className="rounded-xl border border-white/10 bg-white/[0.03] p-4"><div className="flex items-center justify-between mb-3"><div><h4 className="text-sm font-bold text-white">环境混响音效</h4><p className="text-xs text-zinc-500 mt-1">模拟不同空间的回声效果</p></div><input type="checkbox" checked={reverbEnabled} onChange={(e) => setReverbEnabled(e.target.checked)} className="h-4 w-4 accent-music-accent dark:accent-music-night-accent" /></div><div className="flex flex-wrap gap-2">{Object.entries(REVERB_PRESETS).map(([id, preset]) => (<button key={id} onClick={() => { const selected = id as keyof typeof REVERB_PRESETS; const selectedPreset = REVERB_PRESETS[selected]; setReverbPreset(selected); setReverbEnabled(selected !== 'none'); setReverbMainGain(Math.round(selectedPreset.main * 100)); setReverbMix(Math.min(100, Math.round(selectedPreset.send * 30))); }} className={`rounded-lg border px-2.5 py-1 text-xs ${reverbPreset === id ? 'border-music-theme/50 dark:border-music-night-theme/50 bg-music-theme/20 dark:bg-music-night-theme/20 text-music-accent dark:text-music-night-accent' : 'border-white/10 bg-music-card dark:bg-music-night-card text-music-ink-soft dark:text-music-night-ink-soft hover:bg-music-card-2 dark:hover:bg-music-night-card-2'}`}>{preset.label}</button>))}</div><label className="mt-3 block text-xs text-zinc-400">原始音量 {reverbMainGain}%<input type="range" min="0" max="150" value={reverbMainGain} onChange={(e) => setReverbMainGain(Number(e.target.value))} disabled={!reverbEnabled} className="mt-2 w-full accent-music-accent dark:accent-music-night-accent disabled:opacity-40" /></label><label className="mt-3 block text-xs text-zinc-400">环境音效 {reverbMix}%<input type="range" min="0" max="100" value={reverbMix} onChange={(e) => setReverbMix(Number(e.target.value))} disabled={!reverbEnabled} className="mt-2 w-full accent-music-accent dark:accent-music-night-accent disabled:opacity-40" /></label></section>
+                <section className="rounded-xl border border-white/10 bg-white/[0.03] p-4"><div className="flex items-center justify-between mb-3"><div><h4 className="text-sm font-bold text-white">音调升降调节</h4><p className="text-xs text-zinc-500 mt-1">当前 {pitchRate.toFixed(2)}x</p></div><button onClick={() => setPitchRate(1)} className="text-xs text-music-accent dark:text-music-night-accent">重置</button></div><input type="range" min="0.5" max="1.5" step="0.01" value={pitchRate} onChange={(e) => setPitchRate(Number(e.target.value))} className="w-full accent-music-accent dark:accent-music-night-accent" /><div className="mt-2 flex justify-between text-xs text-zinc-500"><span>低</span><span>原速</span><span>高</span></div></section>
+                <section className="rounded-xl border border-white/10 bg-white/[0.03] p-4"><div className="flex items-center justify-between mb-3"><div><h4 className="text-sm font-bold text-white">3D 立体环绕</h4><p className="text-xs text-zinc-500 mt-1">需使用耳机，模拟声源环绕移动</p></div><input type="checkbox" checked={surroundEnabled} onChange={(e) => setSurroundEnabled(e.target.checked)} className="h-4 w-4 accent-music-accent dark:accent-music-night-accent" /></div><label className="block text-xs text-zinc-400">旋转速度 {surroundSpeed}<input type="range" min="5" max="60" value={surroundSpeed} onChange={(e) => setSurroundSpeed(Number(e.target.value))} disabled={!surroundEnabled} className="mt-2 w-full accent-music-accent dark:accent-music-night-accent disabled:opacity-40" /></label><label className="block mt-3 text-xs text-zinc-400">声场距离 {surroundDistance}<input type="range" min="1" max="10" value={surroundDistance} onChange={(e) => setSurroundDistance(Number(e.target.value))} disabled={!surroundEnabled} className="mt-2 w-full accent-music-accent dark:accent-music-night-accent disabled:opacity-40" /></label></section>
+                <button onClick={() => setShowAudioEffectsMenu(false)} className="w-full rounded-xl bg-music-theme dark:bg-music-night-theme p-3 text-sm font-medium text-music-action-ink hover:bg-music-theme-hover dark:hover:bg-music-night-theme-hover">完成</button>
               </aside></div></div>
           </div>
         </div>
@@ -3322,7 +3380,7 @@ export default function MusicClient({ children: _children }: { children?: React.
                   </div>
                 </div>
                 {quality === '128k' && (
-                  <svg className="w-5 h-5 text-music-theme dark:text-music-night-theme" fill="currentColor" viewBox="0 0 20 20">
+                  <svg className="w-5 h-5 text-music-accent dark:text-music-night-accent" fill="currentColor" viewBox="0 0 20 20">
                     <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                   </svg>
                 )}
@@ -3346,7 +3404,7 @@ export default function MusicClient({ children: _children }: { children?: React.
                   </div>
                 </div>
                 {quality === '320k' && (
-                  <svg className="w-5 h-5 text-music-theme dark:text-music-night-theme" fill="currentColor" viewBox="0 0 20 20">
+                  <svg className="w-5 h-5 text-music-accent dark:text-music-night-accent" fill="currentColor" viewBox="0 0 20 20">
                     <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                   </svg>
                 )}
@@ -3370,7 +3428,7 @@ export default function MusicClient({ children: _children }: { children?: React.
                   </div>
                 </div>
                 {quality === 'flac' && (
-                  <svg className="w-5 h-5 text-music-theme dark:text-music-night-theme" fill="currentColor" viewBox="0 0 20 20">
+                  <svg className="w-5 h-5 text-music-accent dark:text-music-night-accent" fill="currentColor" viewBox="0 0 20 20">
                     <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                   </svg>
                 )}
@@ -3394,7 +3452,7 @@ export default function MusicClient({ children: _children }: { children?: React.
                   </div>
                 </div>
                 {quality === 'flac24bit' && (
-                  <svg className="w-5 h-5 text-music-theme dark:text-music-night-theme" fill="currentColor" viewBox="0 0 20 20">
+                  <svg className="w-5 h-5 text-music-accent dark:text-music-night-accent" fill="currentColor" viewBox="0 0 20 20">
                     <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                   </svg>
                 )}

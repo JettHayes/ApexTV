@@ -1,5 +1,8 @@
 'use client';
 
+import { readJsonResponse } from '@/lib/app-error';
+
+
 import { useRouter } from 'next/navigation';
 import { useEffect, useMemo, useRef, useState } from 'react';
 
@@ -102,6 +105,7 @@ function AudioSpectrumCanvas({
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
+    const spectrumColor = getComputedStyle(canvas).getPropertyValue('--ptv-action').trim();
 
     const draw = () => {
       const rect = canvas.getBoundingClientRect();
@@ -140,8 +144,8 @@ function AudioSpectrumCanvas({
         return total / Math.max(1, end - start);
       };
 
-      ctx.fillStyle = '#10b981';
-      ctx.strokeStyle = '#10b981';
+      ctx.fillStyle = spectrumColor;
+      ctx.strokeStyle = spectrumColor;
 
       const visualVolume = Math.max(SPECTRUM_MIN_VOLUME, volume || SPECTRUM_REFERENCE_VOLUME);
       const visualVolumeScale =
@@ -176,7 +180,7 @@ function AudioSpectrumCanvas({
   );
 }
 
-const VINYL_NEEDLE_SVG = `url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 130"><path d="M21,21 C21,65 86,70 86,100" fill="none" stroke="rgba(0,0,0,0.28)" stroke-width="6" stroke-linecap="round"/><path d="M20,20 C20,65 85,70 85,100" fill="none" stroke="%23e0e0e0" stroke-width="4.5" stroke-linecap="round"/><path d="M19,20 C19,65 84,70 84,100" fill="none" stroke="%23fff" stroke-width="1.5" stroke-linecap="round"/><g transform="translate(85, 100) rotate(25)"><rect x="-6" y="0" width="12" height="18" rx="2" fill="%23ccc"/><rect x="-4" y="5" width="8" height="14" rx="1" fill="%23333"/><rect x="-2" y="16" width="4" height="5" rx="1" fill="%23d43c33"/></g><circle cx="20" cy="20" r="10" fill="%23f0f0f0" stroke="%23ccc" stroke-width="1"/><circle cx="20" cy="20" r="4" fill="%23fff"/><circle cx="20" cy="20" r="1.5" fill="%23999"/></svg>')`;
+const VINYL_NEEDLE_SVG = "url('/vinyl-needle.svg')";
 
 function VinylTurntable({ song, isPlaying }: { song: MusicQueueItem; isPlaying: boolean }) {
   return (
@@ -195,8 +199,8 @@ function VinylTurntable({ song, isPlaying }: { song: MusicQueueItem; isPlaying: 
       <div
         className="relative flex h-[246px] w-[246px] items-center justify-center overflow-hidden rounded-full md:h-[300px] md:w-[300px]"
         style={{
-          background: 'conic-gradient(from 45deg, #070707 0%, #2b2b2b 10%, #101010 20%, #080808 32%, #242424 42%, #0b0b0b 55%, #1e1e1e 68%, #050505 80%, #2c2c2c 90%, #070707 100%)',
-          boxShadow: '0 0 0 8px rgba(255,255,255,0.055), 0 20px 42px rgba(0,0,0,0.65), inset 0 0 28px rgba(255,255,255,0.045)',
+          background: "var(--ptv-vinyl-texture)",
+          boxShadow: "var(--ptv-record-shadow)",
           animation: 'music-room-vinyl-spin 20s linear infinite',
           animationPlayState: isPlaying ? 'running' : 'paused',
         }}
@@ -204,7 +208,7 @@ function VinylTurntable({ song, isPlaying }: { song: MusicQueueItem; isPlaying: 
         <div
           className="pointer-events-none absolute inset-0 rounded-full"
           style={{
-            background: 'repeating-radial-gradient(circle, transparent 0, transparent 3px, rgba(255,255,255,0.055) 3px, rgba(255,255,255,0.055) 4px)',
+            background: "var(--ptv-vinyl-grooves)",
           }}
         />
         <div className="pointer-events-none absolute left-[18%] top-[10%] h-[42%] w-[22%] rotate-[-28deg] rounded-full bg-white/10 blur-md" />
@@ -384,7 +388,7 @@ export default function WatchRoomMusicPage() {
           },
         }),
       })
-        .then((res) => res.json())
+        .then((res) => readJsonResponse<any>(res, "观影室"))
         .then((data) => {
           if (lyricRequestId !== lyricRequestIdRef.current) return;
           if (!data.success) return;
@@ -518,13 +522,13 @@ export default function WatchRoomMusicPage() {
   const showLyricsPanel = mobilePanel === 'lyrics';
   const isPlaying = Boolean(state?.isPlaying);
   const lyricActiveClass = isDark
-    ? 'scale-[1.12] text-emerald-300'
-    : 'scale-[1.12] text-emerald-600';
+    ? "scale-[1.12] text-apex-accent-on-soft"
+    : "scale-[1.12] text-apex-accent-on-soft";
   const lyricNearbyClass = isDark ? 'text-zinc-400' : 'text-zinc-500';
   const lyricIdleClass = isDark ? 'text-zinc-600 opacity-80' : 'text-zinc-500 opacity-80';
 
   return (
-    <main className={`relative min-h-screen overflow-hidden transition-colors ${themeRootClass}`}>
+    <main className={`f1-room-music relative min-h-screen overflow-hidden transition-colors ${themeRootClass}`}>
       <style>{`
         @keyframes music-room-vinyl-spin {
           from { transform: rotate(0deg); }
@@ -539,14 +543,14 @@ export default function WatchRoomMusicPage() {
       <div className={`absolute inset-0 ${isDark ? 'bg-zinc-950/80' : 'bg-white/75'}`} />
 
       <section className="relative z-10 mx-auto flex min-h-screen max-w-6xl flex-col px-5 py-6">
-        <div className={`mb-4 flex items-center justify-between gap-4 text-sm ${isDark ? 'text-zinc-400' : 'text-zinc-600'}`}>
+        <div className={`f1-shared-listening-header mb-4 flex items-center justify-between gap-4 text-sm ${isDark ? 'text-zinc-400' : 'text-zinc-600'}`}>
           <button
             onClick={() => router.push('/watch-room')}
             className={`rounded-md border px-3 py-2 transition-colors ${isDark ? 'border-white/10 text-zinc-300 hover:bg-white/10' : 'border-zinc-200 text-zinc-700 hover:bg-zinc-100'}`}
           >
             返回观影室
           </button>
-          <span className="truncate">房间：{currentRoom?.name || '-'}</span>
+          <div className="f1-shared-listening-title"><span>一起听</span><h1>{currentRoom?.name || '音乐房间'}</h1></div>
         </div>
 
         {song ? (
@@ -609,7 +613,7 @@ export default function WatchRoomMusicPage() {
                       <div className="flex items-center gap-2 text-xs tabular-nums">
                         <span className={`w-10 ${isDark ? 'text-zinc-500' : 'text-zinc-600'}`}>{formatTime(currentTime)}</span>
                         <div className={`relative h-1.5 flex-1 overflow-hidden rounded-full ${isDark ? 'bg-white/10' : 'bg-zinc-200'}`}>
-                          <div className="h-full rounded-full bg-emerald-400" style={{ width: `${progress}%` }} />
+                          <div className="h-full rounded-full bg-apex-action" style={{ width: `${progress}%` }} />
                         </div>
                         <span className={`w-10 text-right ${isDark ? 'text-zinc-500' : 'text-zinc-600'}`}>{formatTime(duration)}</span>
                       </div>
@@ -650,7 +654,7 @@ export default function WatchRoomMusicPage() {
                     <div className="mt-4 flex items-center gap-2 text-xs tabular-nums">
                       <span className={`w-10 ${isDark ? 'text-zinc-500' : 'text-zinc-600'}`}>{formatTime(currentTime)}</span>
                       <div className={`relative h-1.5 flex-1 overflow-hidden rounded-full ${isDark ? 'bg-white/10' : 'bg-zinc-200'}`}>
-                        <div className="h-full rounded-full bg-emerald-400" style={{ width: `${progress}%` }} />
+                        <div className="h-full rounded-full bg-apex-action" style={{ width: `${progress}%` }} />
                       </div>
                       <span className={`w-10 text-right ${isDark ? 'text-zinc-500' : 'text-zinc-600'}`}>{formatTime(duration)}</span>
                     </div>
@@ -659,9 +663,9 @@ export default function WatchRoomMusicPage() {
               </div>
             </div>
 
-            <div className="hidden md:grid flex-1 gap-4 md:grid-cols-[420px_minmax(0,1fr)]">
+            <div className="f1-shared-listening-stage hidden md:grid flex-1 gap-4">
               <div className={`${showCoverPanel ? 'block' : 'hidden'} min-w-0 md:block`}>
-                  <div ref={desktopVolumeControlRef} className={`rounded-lg border p-4 md:p-6 ${isDark ? 'border-white/10 bg-black/20' : 'border-zinc-200 bg-white/80 shadow-sm'}`}>
+                  <div ref={desktopVolumeControlRef} className={`f1-shared-listening-record rounded-lg border p-4 md:p-6 ${isDark ? 'border-white/10 bg-black/20' : 'border-zinc-200 bg-white/80 shadow-sm'}`}>
                   <div className="relative">
                     <button
                       type="button"
@@ -693,14 +697,14 @@ export default function WatchRoomMusicPage() {
                   <VinylTurntable song={song} isPlaying={Boolean(state?.isPlaying)} />
                   <AudioSpectrumCanvas bars={bars} compact volume={volume} />
                   <div className="mt-4 text-center">
-                    <h1 className="truncate text-xl font-bold md:text-3xl">{song.name}</h1>
+                    <h2 className="truncate text-xl font-bold md:text-3xl">{song.name}</h2>
                     <p className={`mt-2 truncate text-sm md:text-base ${isDark ? 'text-zinc-400' : 'text-zinc-600'}`}>{song.artist}</p>
                     {nextSong && <p className={`mt-2 truncate text-xs md:text-sm ${isDark ? 'text-zinc-500' : 'text-zinc-600'}`}>下一首：{nextSong.name} - {nextSong.artist}</p>}
                   </div>
                   <div className="mt-5 flex items-center gap-2 text-xs tabular-nums">
                     <span className={`w-10 ${isDark ? 'text-zinc-500' : 'text-zinc-600'}`}>{formatTime(currentTime)}</span>
                     <div className={`relative h-1.5 flex-1 overflow-hidden rounded-full ${isDark ? 'bg-white/10' : 'bg-zinc-200'}`}>
-                      <div className="h-full rounded-full bg-emerald-400" style={{ width: `${progress}%` }} />
+                      <div className="h-full rounded-full bg-apex-action" style={{ width: `${progress}%` }} />
                     </div>
                     <span className={`w-10 text-right ${isDark ? 'text-zinc-500' : 'text-zinc-600'}`}>{formatTime(duration)}</span>
                   </div>
@@ -709,7 +713,7 @@ export default function WatchRoomMusicPage() {
 
               <div
                 ref={desktopLyricsContainerRef}
-                className={`${showLyricsPanel ? 'block' : 'hidden'} min-h-0 rounded-lg border p-4 md:block md:h-[70vh] md:overflow-y-auto md:overflow-x-hidden md:p-6 ${isDark ? 'border-white/10 bg-black/20' : 'border-zinc-200 bg-white/80 shadow-sm'}`}
+                className={`f1-shared-listening-lyrics ${showLyricsPanel ? 'block' : 'hidden'} min-h-0 rounded-lg border p-4 md:block md:h-[70vh] md:overflow-y-auto md:overflow-x-hidden md:p-6 ${isDark ? 'border-white/10 bg-black/20' : 'border-zinc-200 bg-white/80 shadow-sm'}`}
               >
                 {lyrics.length > 0 ? (
                   <div className="space-y-4">
@@ -747,7 +751,7 @@ export default function WatchRoomMusicPage() {
           <button
             type="button"
             onClick={activate}
-            className="rounded-full bg-emerald-500 px-8 py-4 text-base font-semibold text-white shadow-2xl hover:bg-emerald-600"
+            className="rounded-full bg-apex-action px-8 py-4 text-base font-semibold text-apex-action-ink shadow-2xl hover:bg-apex-action"
           >
             点击加入一起听
           </button>

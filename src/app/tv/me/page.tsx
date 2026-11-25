@@ -198,17 +198,22 @@ export default function TVMePage() {
 
   return (
     <TVLayout>
-      <section className='mx-auto max-w-6xl overflow-hidden rounded-[42px] border border-white/10 bg-slate-950/75 shadow-2xl shadow-black/60 backdrop-blur-xl'>
+      <section className='f1-tv-me-panel mx-auto max-w-6xl overflow-hidden rounded-[42px] border border-white/10 bg-slate-950/75 shadow-2xl shadow-black/60 backdrop-blur-xl'>
         <div className='relative p-10 md:p-12'>
-          <div className='pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_18%_10%,rgba(244,63,94,0.25),transparent_34%),radial-gradient(circle_at_85%_0%,rgba(67,56,202,0.28),transparent_30%)]' />
-          <div className='relative grid gap-10 lg:grid-cols-[1fr_340px]'>
+          <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_18%_10%,var(--ptv-media-bg-alpha-25),transparent_34%),radial-gradient(circle_at_85%_0%,var(--ptv-media-bg-alpha-28),transparent_30%)]" />
+          <div className='f1-tv-me-shortcuts'>
+            <button className='tv-focusable' onClick={() => document.getElementById('tv-account')?.scrollIntoView({ behavior: 'smooth' })}><User />我的账号</button>
+            <button className='tv-focusable' onClick={() => document.getElementById('tv-remote')?.scrollIntoView({ behavior: 'smooth' })}><QrCode />手机遥控</button>
+            <button className='tv-focusable' onClick={() => document.getElementById('tv-preferences')?.scrollIntoView({ behavior: 'smooth' })}><SlidersHorizontal />设置</button>
+          </div>
+          <div id='tv-account' className='relative grid gap-10 lg:grid-cols-[1fr_340px]'>
             <div>
-              <div className='inline-flex items-center gap-3 rounded-full border border-emerald-400/30 bg-emerald-500/15 px-5 py-2 text-xl font-bold text-emerald-200'>
+              <div className="inline-flex items-center gap-3 rounded-full border border-apex-accent/30 bg-apex-selected/15 px-5 py-2 text-xl font-bold text-apex-accent-on-soft">
                 <BadgeCheck className='h-6 w-6' />
                 已登录电视端
               </div>
               <div className='mt-8 flex items-center gap-7'>
-                <div className='flex h-28 w-28 shrink-0 items-center justify-center rounded-[32px] bg-gradient-to-br from-rose-500 to-indigo-600 text-6xl font-black text-white shadow-2xl shadow-rose-950/50'>
+                <div className="flex h-28 w-28 shrink-0 items-center justify-center rounded-[32px] bg-gradient-to-br from-rose-500 to-apex-media-high text-6xl font-black text-white shadow-2xl shadow-rose-950/50">
                   {avatarText}
                 </div>
                 <div>
@@ -233,7 +238,7 @@ export default function TVMePage() {
                 </div>
                 <div className='rounded-[28px] border border-white/10 bg-white/[0.06] p-6'>
                   <div className='flex items-center gap-3 text-xl font-bold text-slate-300'>
-                    <Clock3 className='h-6 w-6 text-indigo-300' />
+                    <Clock3 className="h-6 w-6 text-apex-accent-on-soft" />
                     登录时间
                   </div>
                   <div className='mt-4 text-3xl font-black text-white'>
@@ -280,16 +285,16 @@ export default function TVMePage() {
             </aside>
           </div>
 
-          <div className='relative mt-10 overflow-hidden rounded-[34px] border border-indigo-300/20 bg-indigo-950/35 p-7'>
-            <div className='pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_8%_0%,rgba(99,102,241,0.35),transparent_34%),radial-gradient(circle_at_95%_10%,rgba(16,185,129,0.22),transparent_28%)]' />
+          <div id='tv-remote' className="relative mt-10 overflow-hidden rounded-[34px] border border-apex-line/20 bg-apex-selected/35 p-7">
+            <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_8%_0%,var(--ptv-media-bg-alpha-35),transparent_34%),radial-gradient(circle_at_95%_10%,var(--ptv-media-bg-alpha-22),transparent_28%)]" />
             <div className='relative flex flex-col gap-7 lg:flex-row lg:items-start lg:justify-between'>
               <div className='max-w-2xl'>
-                <div className='inline-flex items-center gap-3 rounded-full border border-emerald-300/25 bg-emerald-400/10 px-4 py-2 text-lg font-black text-emerald-200'>
+                <div className="inline-flex items-center gap-3 rounded-full border border-apex-line/25 bg-apex-selected/10 px-4 py-2 text-lg font-black text-apex-accent-on-soft">
                   <Wifi className='h-6 w-6' />
                   局域网直连
                 </div>
                 <h2 className='mt-5 flex items-center gap-3 text-4xl font-black tracking-tight text-white'>
-                  <QrCode className='h-10 w-10 text-indigo-200' />
+                  <QrCode className="h-10 w-10 text-apex-accent-on-soft" />
                   手机扫码遥控
                 </h2>
                 <p className='mt-4 text-xl leading-relaxed text-slate-300'>
@@ -298,7 +303,7 @@ export default function TVMePage() {
 
                 {localRemoteUrl ? (
                   <div className='mt-6 rounded-3xl border border-white/10 bg-black/30 p-5'>
-                    <div className='text-base font-bold text-indigo-200'>遥控地址</div>
+                    <div className="text-base font-bold text-apex-accent-on-soft">遥控地址</div>
                     <div className='mt-2 break-all font-mono text-lg font-black text-white'>
                       {localRemoteUrl}
                     </div>
@@ -331,7 +336,7 @@ export default function TVMePage() {
             </div>
           </div>
 
-          <div className='relative mt-10 rounded-[34px] border border-white/10 bg-black/35 p-7'>
+          <div id='tv-preferences' className='relative mt-10 rounded-[34px] border border-white/10 bg-black/35 p-7'>
             <div className='flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between'>
               <div className='max-w-2xl'>
                 <div className='flex items-center gap-3 text-3xl font-black text-white'>

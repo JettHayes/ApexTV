@@ -29,17 +29,15 @@ const Sidebar = ({ onToggle }: { onToggle?: (collapsed: boolean) => void; active
   const searchParams = useSearchParams();
   const isUnderPath = pathname === SPECIAL_SOURCE_PATH || pathname.startsWith(SPECIAL_SOURCE_PATH + '/');
   const { primary, categories, personal, other } = useNavigationItems(isUnderPath ? SPECIAL_SOURCE_PATH : '/search');
-  const [isCollapsed, setIsCollapsed] = useState(false);
-  const [hasSavedChoice, setHasSavedChoice] = useState(false);
+  const [isCollapsed, setIsCollapsed] = useState(true);
   const [animate, setAnimate] = useState(false);
 
   useLayoutEffect(() => {
-    const media = window.matchMedia('(min-width: 768px) and (max-width: 1199px)');
+    const media = window.matchMedia('(min-width: 1200px)');
     const update = () => {
       const saved = localStorage.getItem('sidebarCollapsed');
       const explicit = saved === 'true' || saved === 'false';
-      setHasSavedChoice(explicit);
-      const collapsed = explicit ? saved === 'true' : media.matches;
+      const collapsed = explicit ? saved === 'true' : !media.matches;
       setIsCollapsed(collapsed);
       window.__sidebarCollapsed = collapsed;
     };
@@ -58,20 +56,11 @@ const Sidebar = ({ onToggle }: { onToggle?: (collapsed: boolean) => void; active
     setAnimate(true);
     setIsCollapsed(next);
     localStorage.setItem('sidebarCollapsed', JSON.stringify(next));
-    setHasSavedChoice(true);
     window.__sidebarCollapsed = next;
     onToggle?.(next);
   }, [isCollapsed, onToggle]);
 
-  const resetChoice = () => {
-    localStorage.removeItem('sidebarCollapsed');
-    const next = window.matchMedia('(min-width: 768px) and (max-width: 1199px)').matches;
-    setHasSavedChoice(false);
-    setAnimate(true);
-    setIsCollapsed(next);
-    window.__sidebarCollapsed = next;
-    onToggle?.(next);
-  };
+
 
   if (pathname === '/watch-room/screen') return null;
 
@@ -90,10 +79,10 @@ const Sidebar = ({ onToggle }: { onToggle?: (collapsed: boolean) => void; active
   return (
     <SidebarContext.Provider value={{ isCollapsed }}>
       <div className='hidden md:flex'>
-        <aside data-sidebar data-collapsed={isCollapsed} data-animate={animate} className={`ptv-sidebar fixed left-0 top-0 z-40 h-dvh border-r ${isCollapsed ? 'w-16' : 'w-64'}`}>
+        <aside data-sidebar data-collapsed={isCollapsed} data-animate={animate} className='ptv-sidebar fixed left-0 top-0 z-40 h-dvh border-r'>
           <div className='flex h-full flex-col'>
             <div className='ptv-sidebar-brand'>
-              {!isCollapsed && <BrandLogo />}
+              <BrandLogo compact={isCollapsed} />
               <button type='button' onClick={handleToggle} aria-label={isCollapsed ? '展开导航' : '收起导航'} aria-expanded={!isCollapsed}
                 className='ptv-sidebar-toggle flex shrink-0 items-center justify-center rounded-lg'>
                 <Menu className='h-5 w-5' />
@@ -111,8 +100,12 @@ const Sidebar = ({ onToggle }: { onToggle?: (collapsed: boolean) => void; active
                 {!isCollapsed && <p className='px-4 pb-2 text-xs font-medium opacity-60'>我的</p>}
                 <div className='space-y-1'>{renderItems(personal)}</div>
               </div>
-              {other.length > 0 && <div className='ptv-nav-group space-y-1'>{renderItems(other)}</div>}
-              {hasSavedChoice && !isCollapsed && <button type='button' onClick={resetChoice} className='mt-6 px-4 py-2 text-xs opacity-60 hover:opacity-100'>恢复默认导航宽度</button>}
+              {other.length > 0 && (
+                <div className='ptv-nav-group'>
+                  {!isCollapsed && <p className='px-4 pb-2 text-xs font-medium opacity-60'>观看工具</p>}
+                  <div className='space-y-1'>{renderItems(other)}</div>
+                </div>
+              )}
             </nav>
             {!isCollapsed && !isUnderPath && <SidebarResume key={pathname} />}
           </div>

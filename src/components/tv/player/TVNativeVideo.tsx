@@ -1,5 +1,8 @@
 'use client';
 
+import { formatAppError, reportAppError } from '@/lib/app-error';
+
+
 import { Loader2, Pause, Play } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 
@@ -32,6 +35,8 @@ export default function TVNativeVideo({
   url,
   poster,
   live = false,
+  muted = false,
+  controls = false,
   title,
   onTime,
   onError: onPlaybackError,
@@ -47,6 +52,8 @@ export default function TVNativeVideo({
   url: string;
   poster?: string;
   live?: boolean;
+  muted?: boolean;
+  controls?: boolean;
   title?: string;
   onTime?: (current: number, duration: number) => void;
   onError?: () => void;
@@ -181,6 +188,14 @@ export default function TVNativeVideo({
               maxBufferLength: live ? 18 : 45,
               ...(CustomLoader ? { loader: CustomLoader } : {}),
             });
+            hls.on(Hls.Events.ERROR, (_event, data) => {
+              if (!data.fatal || disposed) return;
+              const failure = { code: 'HLS_PLAYBACK_ERROR', status: data.response?.code, message: data.type === Hls.ErrorTypes.MEDIA_ERROR ? '浏览器无法解码当前 HLS 视频' : data.response?.code ? '' : 'HLS 视频连接失败，具体原因尚未确认', details: data.type + ' / ' + data.details, hint: '请尝试切换线路或格式，持续失败时检查来源状态。' };
+              setError(formatAppError(reportAppError(failure, '电视视频播放'), '电视视频播放'));
+              setLoading(false);
+              clearBuffering();
+              onPlaybackErrorRef.current?.();
+            });
             hls.loadSource(url);
             hls.attachMedia(videoEl);
             videoEl.hls = hls;
@@ -193,6 +208,14 @@ export default function TVNativeVideo({
           const flvjs = flvModule.default;
           if (flvjs.isSupported()) {
             const flv = flvjs.createPlayer({ type: 'flv', url, isLive: live });
+            flv.on(flvjs.Events.ERROR, (type: string, detail: string) => {
+              if (disposed) return;
+              const failure = { code: 'FLV_PLAYBACK_ERROR', message: 'FLV 视频流加载或解码失败', details: type + ' / ' + detail, hint: '请尝试 HLS 协议或其他线路，部分浏览器不支持 FLV。' };
+              setError(formatAppError(reportAppError(failure, '电视视频播放'), '电视视频播放'));
+              setLoading(false);
+              clearBuffering();
+              onPlaybackErrorRef.current?.();
+            });
             flv.attachMediaElement(videoEl);
             flv.load();
             videoEl.flv = flv;
@@ -206,11 +229,11 @@ export default function TVNativeVideo({
         videoEl.setAttribute('playsinline', 'true');
         videoEl.setAttribute('webkit-playsinline', 'true');
         videoEl.playbackRate = playbackRate;
-        videoEl.muted = false;
+        videoEl.muted = muted;
         playSafely();
       } catch (err) {
-        console.error('[TVNativeVideo] attach failed:', err);
-        setError('播放器初始化失败');
+        reportAppError(err, "电视端");
+        setError(formatAppError(err, '电视播放器初始化'));
         setLoading(false);
       }
     }
@@ -257,7 +280,9 @@ export default function TVNativeVideo({
     const onError = () => {
       setLoading(false);
       clearBuffering();
-      setError('视频加载失败，请尝试切换线路或频道');
+      const code = videoEl.error?.code;
+      const failure = { code: 'MEDIA_ERROR_' + (code || 'UNKNOWN'), message: code === 1 ? '媒体加载被中止' : code === 2 ? '媒体网络连接失败' : code === 3 ? '浏览器无法解码当前媒体' : code === 4 ? '当前媒体格式或播放地址不受支持' : '视频加载失败，底层未提供具体原因', details: videoEl.error?.message, hint: '请尝试切换线路、播放协议或频道。' };
+      setError(formatAppError(reportAppError(failure, '电视视频播放'), '电视视频播放'));
       onPlaybackErrorRef.current?.();
     };
     const onTimeUpdate = () => {
@@ -297,7 +322,7 @@ export default function TVNativeVideo({
       clearBuffering();
       cleanup();
     };
-  }, [url, live, startTime, adFilterEnabled, playbackRate, sourceType]);
+  }, [url, live, startTime, adFilterEnabled, playbackRate, sourceType, muted]);
 
   useEffect(() => {
     const video = videoRef.current;
@@ -322,10 +347,11 @@ export default function TVNativeVideo({
         ref={videoRef}
         poster={poster}
         className='h-full w-full bg-black object-contain'
-        controls={false}
+        controls={controls}
+        muted={muted}
         playsInline
         preload='auto'
-        onClick={toggle}
+        onClick={controls ? undefined : toggle}
         aria-label={title || 'TV 视频播放器'}
       />
       {(loading || buffering) && (
@@ -341,14 +367,14 @@ export default function TVNativeVideo({
           {error}
         </div>
       )}
-      <button
+      {!controls && <button
         type='button'
         onClick={toggle}
         className='tv-focusable absolute left-1/2 top-1/2 flex h-24 w-24 -translate-x-1/2 -translate-y-1/2 cursor-pointer items-center justify-center rounded-full bg-black/35 text-white opacity-0 outline-none backdrop-blur transition hover:opacity-100 focus:opacity-100'
         aria-label={playing ? '暂停' : '播放'}
       >
         {playing ? <Pause className='h-12 w-12' /> : <Play className='h-12 w-12 fill-current' />}
-      </button>
+      </button>}
     </div>
   );
 }

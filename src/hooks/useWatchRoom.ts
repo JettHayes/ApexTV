@@ -1,5 +1,8 @@
-// React Hook for Watch Room
 'use client';
+
+import { reportAppError } from '@/lib/app-error';
+// React Hook for Watch Room
+
 
 import { useCallback, useEffect, useRef,useState } from 'react';
 
@@ -44,7 +47,7 @@ export function useWatchRoom(
     try {
       const sock = watchRoomSocketManager.getSocket();
       if (!sock || !watchRoomSocketManager.isConnected()) {
-        console.error('[WatchRoom] Not connected, cannot rejoin');
+        reportAppError('[WatchRoom] Not connected, cannot rejoin', "观影室");
         return;
       }
 
@@ -69,7 +72,7 @@ export function useWatchRoom(
       setIsOwner(result.room.ownerId === sock.id);
       console.log('[WatchRoom] Successfully rejoined room:', result.room.name);
     } catch (error) {
-      console.error('[WatchRoom] Failed to rejoin room:', error);
+      reportAppError(error, "观影室");
       clearStoredRoomInfo();
     } finally {
       rejoinInFlightRef.current = false;
@@ -100,7 +103,7 @@ export function useWatchRoom(
         scheduleRejoin(storedInfo);
       }
     } catch (error) {
-      console.error('[WatchRoom] Failed to connect:', error);
+      reportAppError(error, "观影室");
       setIsConnected(false);
     }
   }, [scheduleRejoin]);

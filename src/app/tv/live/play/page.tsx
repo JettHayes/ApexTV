@@ -1,18 +1,19 @@
 'use client';
 
+import { formatAppError, readJsonResponse, reportAppError } from '@/lib/app-error';
+
+
 import { AlertTriangle, ArrowLeft, Clock, Heart, Loader2, Maximize, Radio, RotateCcw, Search, Star, Volume2, VolumeX } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Suspense, useEffect, useMemo, useRef, useState } from 'react';
 
 import { deleteFavorite, isFavorited, saveFavorite } from '@/lib/db.client';
+import { resolveLiveUrl, type LiveSource, type LiveChannel, type TVPlayerSourceType } from '@/lib/tv-live-source';
 
 import TVNativeVideo from '@/components/tv/player/TVNativeVideo';
 import TVVirtualRemote from '@/components/tv/TVVirtualRemote';
 
-type LiveSource = { key: string; name: string; proxyMode?: 'full' | 'm3u8-only' | 'direct' };
-type LiveChannel = { id: string; tvgId?: string; name: string; logo?: string; group?: string; url: string };
 type EpgProgram = { start: string; end: string; title: string };
-type TVPlayerSourceType = 'm3u8' | 'flv' | 'native';
 
 const TV_LIVE_LAST_CHANNEL_KEY = 'tv_live_last_channel';
 const TV_VOLUME_KEY = 'tv_player_volume';
@@ -41,52 +42,6 @@ function getLogoUrl(logo?: string, source?: string) {
   return `/api/proxy/logo?url=${encodeURIComponent(logo)}${sourceParam}`;
 }
 
-function getUrlSourceType(rawUrl: string): TVPlayerSourceType | 'unknown' {
-  const lower = rawUrl.toLowerCase();
-  const path = lower.split('?')[0];
-  if (path.endsWith('.m3u8') || path.endsWith('.m3u') || lower.includes('.m3u8') || lower.includes('.m3u')) return 'm3u8';
-  if (path.endsWith('.flv') || lower.includes('.flv?')) return 'flv';
-  if (/\.(mp4|webm|ogv|ogg|mov)(\?.*)?$/.test(path)) return 'native';
-  return 'unknown';
-}
-
-async function resolveLiveUrl(rawUrl: string, source?: LiveSource | null): Promise<{ url: string; type: TVPlayerSourceType }> {
-  const proxyMode = source?.proxyMode || 'full';
-  const sourceType = getUrlSourceType(rawUrl);
-
-  if (sourceType === 'm3u8') {
-    return {
-      type: 'm3u8',
-      url: proxyMode === 'direct'
-        ? rawUrl
-        : `/api/proxy/m3u8?url=${encodeURIComponent(rawUrl)}&moontv-source=${encodeURIComponent(source?.key || '')}${proxyMode === 'm3u8-only' ? '&allowCORS=true' : ''}`,
-    };
-  }
-  if (sourceType === 'flv') return { type: 'flv', url: rawUrl };
-  if (sourceType === 'native') return { type: 'native', url: rawUrl };
-
-  if (!source?.key) throw new Error('未知直播流格式');
-
-  const precheckRes = await fetch(
-    `/api/live/precheck?url=${encodeURIComponent(rawUrl)}&moontv-source=${encodeURIComponent(source.key)}`,
-    { cache: 'no-store' }
-  );
-  if (!precheckRes.ok) throw new Error('不支持的直播流格式');
-  const precheck = await precheckRes.json();
-
-  if (precheck?.type === 'flv') return { type: 'flv', url: rawUrl };
-  if (precheck?.type === 'mp4') return { type: 'native', url: rawUrl };
-  if (precheck?.type === 'm3u8') {
-    return {
-      type: 'm3u8',
-      url: proxyMode === 'direct'
-        ? rawUrl
-        : `/api/proxy/m3u8?url=${encodeURIComponent(rawUrl)}&moontv-source=${encodeURIComponent(source.key)}${proxyMode === 'm3u8-only' ? '&allowCORS=true' : ''}`,
-    };
-  }
-
-  throw new Error('不支持的直播流格式');
-}
 
 function TVLivePlayClient() {
   const router = useRouter();
@@ -127,10 +82,10 @@ function TVLivePlayClient() {
   useEffect(() => {
     let alive = true;
     fetch('/api/live/sources')
-      .then((r) => {
+      .then(async (r) => {
         if (r.status === 401 || r.status === 403) throw new Error('无权限访问电视直播，请先登录或检查权限');
-        if (!r.ok) throw new Error('获取直播源失败');
-        return r.json();
+        if (!r.ok) await readJsonResponse(r, "电视端");
+        return readJsonResponse<any>(r, "电视端");
       })
       .then((data) => {
         if (!alive) return;
@@ -141,7 +96,7 @@ function TVLivePlayClient() {
         if (!selected) setLoading(false);
       })
       .catch((err) => {
-        setError(err instanceof Error ? err.message : '获取直播源失败');
+        setError(formatAppError(reportAppError(err, "电视端"), "电视端"));
         setLoading(false);
       });
     return () => { alive = false; };
@@ -153,10 +108,10 @@ function TVLivePlayClient() {
     setLoading(true);
     setError('');
     fetch(`/api/live/channels?source=${encodeURIComponent(source.key)}`)
-      .then((r) => {
+      .then(async (r) => {
         if (r.status === 401 || r.status === 403) throw new Error('无权限访问电视直播，请先登录或检查权限');
-        if (!r.ok) throw new Error('获取频道列表失败');
-        return r.json();
+        if (!r.ok) await readJsonResponse(r, "电视端");
+        return readJsonResponse<any>(r, "电视端");
       })
       .then((data) => {
         if (!alive) return;
@@ -173,7 +128,7 @@ function TVLivePlayClient() {
         setChannel(selected);
         setSelectedGroup(selected?.group || list[0]?.group || '');
       })
-      .catch((err) => setError(err instanceof Error ? err.message : '获取频道列表失败'))
+      .catch((err) => setError(formatAppError(reportAppError(err, "电视端"), "电视端")))
       .finally(() => alive && setLoading(false));
     return () => { alive = false; };
   }, [source, needChannel]);
@@ -194,7 +149,7 @@ function TVLivePlayClient() {
       })
       .catch((err) => {
         if (!alive) return;
-        setUnsupportedError(err instanceof Error ? err.message : '不支持的直播流格式');
+        setUnsupportedError(formatAppError(reportAppError(err, "电视端"), "电视端"));
       });
     return () => { alive = false; };
   }, [channel, source]);
@@ -212,7 +167,7 @@ function TVLivePlayClient() {
     let alive = true;
     setEpgLoading(true);
     fetch(`/api/live/epg?source=${encodeURIComponent(source.key)}&tvgId=${encodeURIComponent(channel.tvgId)}`)
-      .then((r) => r.ok ? r.json() : null)
+      .then((r) => r.ok ? readJsonResponse<any>(r, "电视端") : null)
       .then((data) => {
         if (!alive) return;
         setEpgPrograms((data?.data?.programs || []).slice(0, 12));
@@ -261,7 +216,7 @@ function TVLivePlayClient() {
           setVideoType(type);
           setVideoUrl(url);
         })
-        .catch((err) => setUnsupportedError(err instanceof Error ? err.message : '不支持的直播流格式'));
+        .catch((err) => setUnsupportedError(formatAppError(reportAppError(err, "电视端"), "电视端")));
     }, 2200);
     return () => window.clearTimeout(timer);
   }, [channel, playbackError, retryCount, source]);
@@ -495,7 +450,7 @@ function TVLivePlayClient() {
     <main
       data-tv-player-root
       data-tv-controls-open={showPanel ? 'true' : 'false'}
-      className='fixed inset-0 overflow-hidden bg-black text-white'
+      className='f1-tv-player f1-tv-live-player fixed inset-0 overflow-hidden bg-black text-white'
       onContextMenu={(event) => {
         const now = Date.now();
         if (now - menuKeyTimeRef.current < REMOTE_KEY_DEDUPE_MS) return;
@@ -522,7 +477,7 @@ function TVLivePlayClient() {
             <h2 className='text-4xl font-black'>当前频道播放失败</h2>
             <p className='mt-3 text-2xl text-slate-300'>{retryCount < 3 ? `正在自动重连（${retryCount + 1}/3）...` : '可以重试当前频道，或打开频道面板切换频道/直播源。'}</p>
             <div className='mt-8 flex justify-center gap-4'>
-              <button onClick={() => { setPlaybackError(false); setUnsupportedError(''); setVideoUrl(''); setVideoType(undefined); if (channel) resolveLiveUrl(channel.url, source).then(({ url, type }) => { setVideoType(type); setVideoUrl(url); }).catch((err) => setUnsupportedError(err instanceof Error ? err.message : '不支持的直播流格式')); }} className='tv-focusable flex cursor-pointer items-center gap-3 rounded-2xl bg-rose-600 px-7 py-4 text-2xl font-black outline-none focus:ring-4 focus:ring-rose-300'><RotateCcw className='h-7 w-7' />重试</button>
+              <button onClick={() => { setPlaybackError(false); setUnsupportedError(''); setVideoUrl(''); setVideoType(undefined); if (channel) resolveLiveUrl(channel.url, source).then(({ url, type }) => { setVideoType(type); setVideoUrl(url); }).catch((err) => setUnsupportedError(formatAppError(reportAppError(err, "电视端"), "电视端"))); }} className='tv-focusable flex cursor-pointer items-center gap-3 rounded-2xl bg-rose-600 px-7 py-4 text-2xl font-black outline-none focus:ring-4 focus:ring-rose-300'><RotateCcw className='h-7 w-7' />重试</button>
               <button onClick={() => { setPlaybackError(false); setShowPanel(true); }} className='tv-focusable rounded-2xl bg-white/10 px-7 py-4 text-2xl font-black outline-none focus:ring-4 focus:ring-white/40'>频道列表</button>
             </div>
           </section>
@@ -534,7 +489,7 @@ function TVLivePlayClient() {
         <div className='absolute inset-y-0 left-0 w-[560px] bg-gradient-to-r from-black/90 to-transparent' />
       </div>
 
-      <div className={`absolute left-8 right-8 top-8 flex items-center justify-between transition-opacity duration-300 ${showPanel ? 'opacity-100' : 'opacity-0'}`}>
+      <div className={`f1-tv-player-heading absolute left-8 right-8 top-8 flex items-center justify-between transition-opacity duration-300 ${showPanel ? 'opacity-100' : 'opacity-0'}`}>
         <button onClick={() => { if (showPanel) setShowPanel(false); else router.back(); }} data-tv-live-control className='tv-focusable flex cursor-pointer items-center gap-3 rounded-2xl bg-black/70 px-5 py-4 text-2xl font-black outline-none backdrop-blur focus:ring-4 focus:ring-rose-300'><ArrowLeft className='h-7 w-7' />返回</button>
         <div className='flex items-center gap-4 rounded-2xl bg-black/70 px-6 py-4 backdrop-blur'>
           {channel.logo ? <img src={getLogoUrl(channel.logo, source?.key)} alt='' className='h-12 w-12 rounded-xl object-contain' /> : <Radio className='h-10 w-10 text-rose-500' />}
@@ -549,8 +504,9 @@ function TVLivePlayClient() {
       </div>
 
       {showPanel && (
-        <aside data-tv-live-control className='ptv-content-in absolute bottom-8 left-8 top-28 grid w-[720px] grid-cols-[220px_1fr] gap-4 rounded-[34px] border border-white/10 bg-slate-950/88 p-5 shadow-2xl shadow-black/70 backdrop-blur-2xl'>
-          <div className='overflow-y-auto px-2 py-2'>
+        <aside data-tv-live-control className='ptv-content-in f1-tv-channel-panel absolute bottom-8 left-8 top-28 grid w-[720px] grid-cols-[220px_1fr] gap-4'>
+          <header className='f1-tv-channel-heading'><h2>电视直播</h2><span>{filteredChannels.length} 个频道</span></header>
+          <div className='f1-tv-channel-filters overflow-y-auto px-2 py-2'>
             {sources.length > 1 && (
               <>
                 <h2 className='mb-3 text-2xl font-black'>直播源</h2>
@@ -564,9 +520,9 @@ function TVLivePlayClient() {
               {groups.map((group) => <button key={group} onClick={() => setSelectedGroup(group)} data-selected={selectedGroup === group} className={`tv-focusable w-full cursor-pointer rounded-2xl px-4 py-4 text-left text-xl font-black outline-none focus:ring-4 focus:ring-inset focus:ring-rose-300 ${selectedGroup === group ? 'bg-rose-600' : 'bg-white/10'}`}>{group}</button>)}
             </div>
           </div>
-          <div className='overflow-y-auto px-2 py-2'>
+          <div className='f1-tv-channel-content overflow-y-auto px-2 py-2'>
             <h2 className='mb-4 flex items-center gap-2 text-2xl font-black'><Star className='h-6 w-6 text-rose-500' />频道</h2>
-            <section className='mb-4 rounded-2xl bg-white/[0.06] p-4'>
+            <section className='f1-tv-programme mb-4 p-4'>
               <h3 className='mb-3 flex items-center gap-2 text-xl font-black text-slate-100'><Clock className='h-5 w-5 text-rose-400' />节目单</h3>
               {epgLoading ? <div className='text-lg text-slate-400'>正在加载 EPG...</div> : epgPrograms.length > 0 ? (
                 <div className='max-h-36 space-y-2 overflow-y-auto pr-2'>
@@ -578,7 +534,7 @@ function TVLivePlayClient() {
               <Search className='h-6 w-6 text-slate-300' />
               <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder='搜索频道' className='tv-focusable h-12 flex-1 bg-transparent text-xl font-bold text-white outline-none placeholder:text-slate-500' />
             </label>
-            <div className='grid grid-cols-1 gap-3'>
+            <div className='f1-tv-channels grid grid-cols-1 gap-3'>
               {filteredChannels.map((item) => {
                 const absoluteIndex = channels.findIndex((c) => c.id === item.id) + 1;
                 return <button key={item.id} ref={(el) => { channelButtonRefs.current[item.id] = el; }} onClick={() => switchChannel(item)} data-selected={item.id === channel.id} className={`tv-focusable flex min-h-16 cursor-pointer items-center gap-3 rounded-2xl px-4 py-3 text-left text-xl font-black outline-none focus:ring-4 focus:ring-inset focus:ring-rose-300 ${item.id === channel.id ? 'bg-rose-600' : 'bg-white/10'}`}>{item.logo ? <img src={getLogoUrl(item.logo, source?.key)} alt='' className='h-9 w-9 rounded-lg object-contain' /> : <Radio className='h-8 w-8 text-rose-400' />}<span className='min-w-12 text-slate-300'>#{absoluteIndex}</span><span className='line-clamp-1'>{item.name}</span></button>;

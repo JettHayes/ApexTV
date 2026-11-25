@@ -1,5 +1,8 @@
 'use client';
 
+import { formatAppError, reportAppError } from '@/lib/app-error';
+
+
 import { ArrowLeft, Loader2, Play, Server } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import {
@@ -121,7 +124,7 @@ function TVDetailClient() {
       })
       .catch((err) => {
         if (!alive) return;
-        setError(err instanceof Error ? err.message : '加载详情失败');
+        setError(formatAppError(reportAppError(err, "电视端"), "电视端"));
       })
       .finally(() => alive && setLoading(false));
     return () => {
@@ -397,7 +400,7 @@ function TVDetailClient() {
 
   return (
     <TVLayout>
-      <section className='relative overflow-hidden rounded-[44px] border border-white/10 bg-slate-950/80 p-8 shadow-2xl shadow-black/70'>
+      <section className='f1-tv-detail-hero relative overflow-hidden rounded-[44px] border border-white/10 bg-slate-950/80 p-8 shadow-2xl shadow-black/70'>
         {poster && (
           <img
             src={poster}
@@ -406,7 +409,7 @@ function TVDetailClient() {
           />
         )}
         <div className='relative grid grid-cols-[300px_1fr] gap-10'>
-          <div className='overflow-hidden rounded-[32px] bg-slate-900 shadow-2xl shadow-black/70'>
+          <div className='f1-tv-detail-poster overflow-hidden rounded-[32px] bg-slate-900 shadow-2xl shadow-black/70'>
             {poster ? (
               <img
                 src={poster}
@@ -420,7 +423,7 @@ function TVDetailClient() {
           <div className='py-2'>
             <button
               onClick={() => router.back()}
-              className='tv-focusable mb-6 flex cursor-pointer items-center gap-2 rounded-2xl bg-white/10 px-5 py-3 text-xl font-bold outline-none'
+              className='f1-tv-detail-back tv-focusable mb-6 flex cursor-pointer items-center gap-2 rounded-2xl bg-white/10 px-5 py-3 text-xl font-bold outline-none'
             >
               <ArrowLeft className='h-6 w-6' />
               返回
@@ -428,7 +431,7 @@ function TVDetailClient() {
             <h1 className='text-6xl font-black tracking-tight text-white'>
               {detail.title}
             </h1>
-            <div className='mt-4 flex flex-wrap gap-3 text-xl font-bold text-slate-200'>
+            <div className='f1-tv-detail-meta mt-4 flex flex-wrap gap-3 text-xl font-bold text-slate-200'>
               <span className='rounded-full bg-rose-600 px-4 py-2'>
                 {detail.source_name || detail.source}
               </span>
@@ -449,13 +452,13 @@ function TVDetailClient() {
               )}
             </div>
             {detail.desc && (
-              <p className='mt-6 line-clamp-5 max-w-5xl text-2xl leading-relaxed text-slate-300'>
+              <p className='f1-tv-detail-description mt-6 line-clamp-5 max-w-5xl text-2xl leading-relaxed text-slate-300'>
                 {detail.desc}
               </p>
             )}
             <button
               onClick={() => play(bestSource)}
-              className='tv-focusable mt-8 flex cursor-pointer items-center gap-3 rounded-3xl bg-rose-600 px-9 py-5 text-3xl font-black text-white outline-none'
+              className='f1-tv-detail-play tv-focusable mt-8 flex cursor-pointer items-center gap-3 rounded-3xl bg-rose-600 px-9 py-5 text-3xl font-black text-white outline-none'
             >
               <Play className='h-9 w-9 fill-current' /> 立即播放
             </button>
@@ -464,7 +467,7 @@ function TVDetailClient() {
       </section>
 
       {sources.length > 1 && (
-        <section className='mt-10 rounded-[36px] border border-white/10 bg-white/[0.04] p-6'>
+        <section className='f1-tv-detail-sources mt-10 rounded-[36px] border border-white/10 bg-white/[0.04] p-6'>
           <div className='mb-5 flex flex-wrap items-center justify-between gap-4'>
             <h2 className='text-4xl font-black'>播放源</h2>
             <div className='flex items-center gap-3 rounded-2xl bg-white/10 px-5 py-3 text-xl font-black text-slate-100'>
@@ -503,7 +506,7 @@ function TVDetailClient() {
                     <span
                       className={`text-base font-bold ${
                         info.status === 'ok'
-                          ? 'text-emerald-200'
+                          ? "text-apex-accent-on-soft"
                           : info.status === 'testing'
                           ? 'text-amber-200'
                           : 'text-red-200'
@@ -523,7 +526,7 @@ function TVDetailClient() {
         </section>
       )}
 
-      <section className='mt-10 rounded-[36px] border border-white/10 bg-white/[0.04] p-6'>
+      <section className='f1-tv-detail-episodes mt-10 rounded-[36px] border border-white/10 bg-white/[0.04] p-6'>
         <h2 className='mb-5 text-4xl font-black'>选集</h2>
         <div className='grid grid-cols-3 gap-4 md:grid-cols-5 lg:grid-cols-8'>
           {(detail.episodes_titles?.length
@@ -532,7 +535,7 @@ function TVDetailClient() {
           ).map((ep, index) => (
             <button
               key={`${ep}-${index}`}
-              onClick={() => play(bestSource, index)}
+              onClick={() => play(detail, index)}
               className='tv-focusable min-h-20 cursor-pointer rounded-2xl bg-white/10 px-4 py-3 text-xl font-black text-white outline-none'
             >
               {detail.episodes_titles?.[index] || `第 ${index + 1} 集`}

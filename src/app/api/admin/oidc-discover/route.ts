@@ -1,3 +1,4 @@
+import { appErrorPayload, reportAppError } from '@/lib/app-error';
 /* eslint-disable no-console */
 import { NextRequest, NextResponse } from 'next/server';
 
@@ -47,7 +48,7 @@ export async function POST(request: NextRequest) {
     });
 
     if (!response.ok) {
-      console.error('获取OIDC配置失败:', response.status, response.statusText);
+      reportAppError(response.statusText, "获取OIDC配置失败");
       return NextResponse.json(
         {
           error: `无法获取OIDC配置: ${response.status} ${response.statusText}`,
@@ -76,7 +77,7 @@ export async function POST(request: NextRequest) {
       issuer: data.issuer,
     });
   } catch (error) {
-    console.error('OIDC自动发现失败:', error);
+    reportAppError(error, "OIDC自动发现失败");
 
     if (error instanceof Error) {
       if (error.name === 'AbortError') {
@@ -86,13 +87,13 @@ export async function POST(request: NextRequest) {
         );
       }
       return NextResponse.json(
-        { error: `获取配置失败: ${error.message}` },
+        {...{ error: `获取配置失败: ${error.message}` }, ...appErrorPayload(error, "后台配置服务", 500)},
         { status: 500 }
       );
     }
 
     return NextResponse.json(
-      { error: '获取配置失败，请检查Issuer URL是否正确' },
+      {...{ error: '获取配置失败，请检查Issuer URL是否正确' }, ...appErrorPayload(error, "后台配置服务", 500)},
       { status: 500 }
     );
   }

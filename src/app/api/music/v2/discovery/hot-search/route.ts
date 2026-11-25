@@ -40,16 +40,22 @@ export async function GET(request: NextRequest) {
 
     const fallbackSources = [source, 'mg', 'kw', 'tx', 'wy', 'kg'].filter((item, index, arr) => arr.indexOf(item) === index);
     let list: HotSearchItem[] = [];
+    let lastError: unknown;
+    let failedSources = 0;
 
     for (const candidate of fallbackSources) {
       try {
         const payload = await lxGetJson<LxHotSearchPayload>(`/api/music/hotSearch?source=${candidate}`, 'none');
         list = normalizeHotSearchPayload(payload, candidate);
         if (list.length > 0) break;
-      } catch {
+      } catch (error) {
+        lastError = error;
+        failedSources++;
         continue;
       }
     }
+
+    if (failedSources === fallbackSources.length) return internalError('所有热搜音源均获取失败', lastError);
 
     return NextResponse.json(
       {
@@ -65,6 +71,6 @@ export async function GET(request: NextRequest) {
       }
     );
   } catch (error) {
-    return internalError('获取热搜失败', (error as Error).message);
+    return internalError('获取热搜失败', error);
   }
 }

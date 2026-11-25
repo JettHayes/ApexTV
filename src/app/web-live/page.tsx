@@ -1,5 +1,7 @@
 'use client';
 
+import { formatAppError, readJsonResponse, reportAppError } from '@/lib/app-error';
+
 import { AlertTriangle, ChevronDown, Download, Info, Loader2, Play, Radio, SlidersHorizontal } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
@@ -66,7 +68,6 @@ export default function WebLivePage() {
 
   const originalVideoUrl = playback?.originalUrl || '';
   const [streamInfo, setStreamInfo] = useState<WebLiveRoomInfo | null>(null);
-  const [activeTab, setActiveTab] = useState<'rooms' | 'platforms'>('rooms');
   const [isChannelListCollapsed, setIsChannelListCollapsed] = useState(false);
   const [isVideoLoading, setIsVideoLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -152,14 +153,16 @@ export default function WebLivePage() {
       setLoadingMessage('正在加载直播源...');
       setSourcesError('');
       const res = await fetch('/api/web-live/sources', { signal });
-      if (!res.ok) throw new Error('获取直播源失败');
       setLoadingStage('fetching');
-      const data = await res.json();
+      const data = await readJsonResponse<WebLiveSource[]>(res, '获取直播源');
       if (signal.aborted) return;
       setSources(data);
       setLoadingStage('ready');
-    } catch {
-      if (!signal.aborted) setSourcesError('获取直播源失败，请刷新页面重试。');
+    } catch (error) {
+      if (!signal.aborted) {
+        reportAppError(error, '获取直播源');
+        setSourcesError(formatAppError(error, '获取直播源'));
+      }
     } finally {
       if (!signal.aborted) setLoading(false);
     }
@@ -251,6 +254,8 @@ export default function WebLivePage() {
       const data = await response.json();
       if (controller.signal.aborted) return;
       if (!response.ok) throw Object.assign(new Error(data.error || '获取直播流失败'), {
+        status: response.status,
+        upstreamStatus: data.upstreamStatus,
         retryable: data.retryable ?? response.status >= 500,
         code: data.code || 'NETWORK_ERROR',
       });
@@ -276,7 +281,8 @@ export default function WebLivePage() {
     } catch (error) {
       if (!controller.signal.aborted) {
         const failure = error as Error & { retryable?: boolean; code?: string };
-        setErrorMessage(failure instanceof Error ? failure.message : '获取直播流失败');
+        reportAppError(error, '获取直播流');
+        setErrorMessage(formatAppError(error, '获取直播流'));
         setCanAutoRetry(failure.retryable !== false);
         setErrorCode(failure.code || 'NETWORK_ERROR');
       }
@@ -348,7 +354,6 @@ export default function WebLivePage() {
   // 处理平台点击
   const handlePlatformClick = (platform: string) => {
     setSelectedPlatform(platform);
-    setActiveTab('rooms');
   };
 
   // 清除平台筛选
@@ -413,17 +418,17 @@ export default function WebLivePage() {
                 <>
                   {/* 动画直播图标 */}
                   <div className='relative mb-8'>
-                    <div className='relative mx-auto w-24 h-24 bg-gradient-to-r from-green-500 to-emerald-600 rounded-2xl shadow-2xl flex items-center justify-center transform hover:scale-105 transition-transform duration-300'>
+                    <div className="relative mx-auto w-24 h-24 bg-gradient-to-r from-apex-media-panel to-apex-media-high rounded-2xl shadow-2xl flex items-center justify-center transform hover:scale-105 transition-transform duration-300">
                       <div className='text-white text-4xl'>📺</div>
                       {/* 旋转光环 */}
-                      <div className='absolute -inset-2 bg-gradient-to-r from-green-500 to-emerald-600 rounded-2xl opacity-20 animate-spin'></div>
+                      <div className="absolute -inset-2 bg-gradient-to-r from-apex-media-panel to-apex-media-high rounded-2xl opacity-20 animate-spin"></div>
                     </div>
 
                     {/* 浮动粒子效果 */}
                     <div className='absolute top-0 left-0 w-full h-full pointer-events-none'>
                       <div className='absolute top-2 left-2 w-2 h-2 bg-green-400 rounded-full animate-bounce'></div>
                       <div
-                        className='absolute top-4 right-4 w-1.5 h-1.5 bg-emerald-400 rounded-full animate-bounce'
+                        className="absolute top-4 right-4 w-1.5 h-1.5 bg-apex-action rounded-full animate-bounce"
                         style={{ animationDelay: '0.5s' }}
                       ></div>
                       <div
@@ -450,7 +455,7 @@ export default function WebLivePage() {
                     {/* 进度条 */}
                     <div className='w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2 overflow-hidden'>
                       <div
-                        className='h-full bg-gradient-to-r from-green-500 to-emerald-600 rounded-full transition-all duration-1000 ease-out'
+                        className="h-full bg-gradient-to-r from-apex-media-panel to-apex-media-high rounded-full transition-all duration-1000 ease-out"
                         style={{
                           width: loadingStage === 'loading' ? '33%' : loadingStage === 'fetching' ? '66%' : '100%',
                         }}
@@ -475,9 +480,10 @@ export default function WebLivePage() {
 
   return (
     <PageLayout activePath='/web-live'>
-      <div className='ptv-live-page apex-live-content flex flex-col gap-4'>
+      <div className='ptv-live-page apex-live-content f1-web-live-page'>
+        <div className='f1-network-reference-main flex flex-col gap-4'>
         <LiveTabs active='web-live' />
-        <div className='py-1'>
+        <div className='f1-broadcast-page-heading py-1'>
           <h1 className='text-xl font-semibold text-gray-900 dark:text-gray-100 flex items-center gap-2 max-w-[80%]'>
             <Radio className='w-5 h-5 text-blue-500 flex-shrink-0' />
             <div className='min-w-0 flex-1'>
@@ -488,8 +494,14 @@ export default function WebLivePage() {
           </h1>
         </div>
 
-        <div className='space-y-2'>
-          <div className='hidden lg:flex justify-end'>
+        <nav className='f1-web-live-platform-tabs' aria-label='直播平台'>
+          <button type='button' aria-pressed={!selectedPlatform} onClick={clearPlatformFilter} disabled={webLiveSync.shouldDisableControls}>全部</button>
+          {platforms.map((platform) => <button key={platform} type='button' aria-pressed={selectedPlatform === platform} onClick={() => handlePlatformClick(platform)} disabled={webLiveSync.shouldDisableControls}>
+            <WebLivePlatformIcon platform={platform} /><span>{webLivePlatformName(platform)}</span>
+          </button>)}
+        </nav>
+        <div className='f1-broadcast-workspace space-y-2'>
+          <div className='f1-broadcast-view-toggle hidden lg:flex justify-end'>
             <button
               onClick={() => setIsChannelListCollapsed(!isChannelListCollapsed)}
               className='group relative flex items-center space-x-1.5 px-3 py-1.5 rounded-full bg-white/80 hover:bg-white dark:bg-gray-800/80 dark:hover:bg-gray-800 backdrop-blur-sm border border-gray-200/50 dark:border-gray-700/50 shadow-sm hover:shadow-md transition-all duration-200'
@@ -509,7 +521,7 @@ export default function WebLivePage() {
             </button>
           </div>
 
-          <div className={`ptv-player-grid ${isChannelListCollapsed ? 'ptv-player-grid-collapsed' : ''}`}>
+          <div className={`ptv-player-grid f1-network-broadcast-grid ${isChannelListCollapsed ? 'ptv-player-grid-collapsed' : ''}`}>
             <div className='ptv-player-stage'>
               <div className='ptv-player-canvas relative w-full aspect-video' style={currentSource?.platform === 'twitch' ? { minHeight: 300 } : undefined}>
                 <div className='bg-black w-full h-full rounded-xl overflow-hidden shadow-lg border border-white/0 dark:border-white/30'>
@@ -578,9 +590,9 @@ export default function WebLivePage() {
                         legacy={
                           <>
                             <div className='relative mb-8'>
-                              <div className='relative mx-auto w-24 h-24 bg-gradient-to-r from-green-500 to-emerald-600 rounded-2xl shadow-2xl flex items-center justify-center transform hover:scale-105 transition-transform duration-300'>
+                              <div className="relative mx-auto w-24 h-24 bg-gradient-to-r from-apex-media-panel to-apex-media-high rounded-2xl shadow-2xl flex items-center justify-center transform hover:scale-105 transition-transform duration-300">
                                 <div className='text-white text-4xl'>📺</div>
-                                <div className='absolute -inset-2 bg-gradient-to-r from-green-500 to-emerald-600 rounded-2xl opacity-20 animate-spin'></div>
+                                <div className="absolute -inset-2 bg-gradient-to-r from-apex-media-panel to-apex-media-high rounded-2xl opacity-20 animate-spin"></div>
                               </div>
                             </div>
                             <div className='space-y-2'>
@@ -598,7 +610,8 @@ export default function WebLivePage() {
                 <WebLiveRoomDetails source={currentSource} info={streamInfo} loading={isVideoLoading} error={!!errorMessage} />
               )}
               {playback?.kind === 'stream' && playback.url && playback.liveStatus !== 'offline' && (
-                <section className='ptv-live-settings' aria-label='直播画质与线路'>
+                <section className='ptv-live-settings f1-broadcast-console' aria-label='直播画质与线路'>
+                  <div id='network-playback-controls' className='f1-broadcast-console-heading'><h2>播放设置</h2><span>画质与线路</span></div>
                   {variant && (
                     <div className='ptv-live-controls'>
                       <label className='ptv-live-field'>
@@ -837,25 +850,11 @@ export default function WebLivePage() {
 
             </div>
 
-            <div className='ptv-player-panel overflow-hidden'>
+            <div className='ptv-player-panel f1-room-panel overflow-hidden'>
               <div className='px-4 py-0 h-full flex flex-col overflow-hidden'>
-                <div className='flex mb-1 -mx-6 flex-shrink-0'>
-                  <div
-                    onClick={() => setActiveTab('rooms')}
-                    className={`flex-1 py-3 px-6 text-center cursor-pointer transition-all duration-200 font-medium ${activeTab === 'rooms' ? 'text-green-600 dark:text-green-400' : 'text-gray-700 hover:text-green-600 bg-black/5 dark:bg-white/5 dark:text-gray-300 dark:hover:text-green-400 hover:bg-black/3 dark:hover:bg-white/3'}`}
-                  >
-                    房间
-                  </div>
-                  <div
-                    onClick={() => setActiveTab('platforms')}
-                    className={`flex-1 py-3 px-6 text-center cursor-pointer transition-all duration-200 font-medium ${activeTab === 'platforms' ? 'text-green-600 dark:text-green-400' : 'text-gray-700 hover:text-green-600 bg-black/5 dark:bg-white/5 dark:text-gray-300 dark:hover:text-green-400 hover:bg-black/3 dark:hover:bg-white/3'}`}
-                  >
-                    平台
-                  </div>
-                </div>
-
-                {activeTab === 'rooms' && (
-                  <div className='ptv-content-in flex-1 overflow-y-auto space-y-2 pb-4 mt-4'>
+                <>
+                  <div id='network-room-list' className='ptv-content-in f1-broadcast-list flex-1 overflow-y-auto space-y-2 pb-4 mt-4'>
+                    <div className='f1-broadcast-list-heading'><h2>直播房间</h2><span>{filteredSources.length} 个房间</span></div>
                     {selectedPlatform && (
                       <div className='mb-3 flex items-center justify-between px-2 py-2 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-800'>
                         <div className='flex items-center gap-2'>
@@ -873,7 +872,7 @@ export default function WebLivePage() {
                       </div>
                     )}
                     {sourcesError ? (
-                      <p role='alert' className='px-2 py-4 text-sm text-red-600 dark:text-red-400'>{sourcesError}</p>
+                      <div role='alert' className='px-2 py-4 text-sm text-red-600 dark:text-red-400'><p>{sourcesError}</p><button type='button' onClick={() => window.location.reload()} className='f1-manga-retry'>重试</button></div>
                     ) : filteredSources.length > 0 ? (
                       filteredSources.map((source) => {
                         const isActive = source.key === currentSource?.key;
@@ -882,7 +881,8 @@ export default function WebLivePage() {
                             key={source.key}
                             onClick={() => handleSourceClick(source)}
                             disabled={webLiveSync.shouldDisableControls}
-                            className={`w-full p-3 rounded-lg text-left active:scale-[0.97] transition-[transform,background-color,color,border-color] duration-150 ${isActive ? 'bg-green-100 dark:bg-green-900/30 border border-green-300 dark:border-green-700' : 'hover:bg-gray-100 dark:hover:bg-gray-700'} ${webLiveSync.shouldDisableControls ? 'opacity-50 cursor-not-allowed' : ''}`}
+                            aria-pressed={isActive}
+                            className={`f1-broadcast-room w-full p-3 rounded-lg text-left active:scale-[0.97] transition-[transform,background-color,color,border-color] duration-150 ${isActive ? 'bg-green-100 dark:bg-green-900/30 border border-green-300 dark:border-green-700' : 'hover:bg-gray-100 dark:hover:bg-gray-700'} ${webLiveSync.shouldDisableControls ? 'opacity-50 cursor-not-allowed' : ''}`}
                           >
                             <div className='flex items-center gap-3'>
                               <WebLiveAvatar avatar={isActive ? streamInfo?.avatar || source.avatar : source.avatar} cover={isActive ? streamInfo?.cover || source.cover : source.cover} />
@@ -905,46 +905,13 @@ export default function WebLivePage() {
                       </div>
                     )}
                   </div>
-                )}
+                </>
 
-                {activeTab === 'platforms' && (
-                  <div className='ptv-content-in flex flex-col h-full mt-4'>
-                    <div className='flex-1 overflow-y-auto space-y-2 pb-20'>
-                      {platforms.length > 0 ? (
-                        platforms.map((platform) => (
-                          <button
-                            key={platform}
-                            onClick={() => handlePlatformClick(platform)}
-                            disabled={webLiveSync.shouldDisableControls}
-                            className={`w-full flex items-start gap-3 px-2 py-3 rounded-lg bg-gray-200/50 dark:bg-white/10 hover:bg-gray-300/50 dark:hover:bg-white/20 active:scale-[0.97] transition-[transform,background-color,color,border-color] duration-150 cursor-pointer ${webLiveSync.shouldDisableControls ? 'opacity-50 cursor-not-allowed' : ''}`}
-                          >
-                            <div className='w-12 h-12 bg-gray-200 dark:bg-gray-600 rounded-lg flex items-center justify-center flex-shrink-0 overflow-hidden'>
-                              <WebLivePlatformIcon platform={platform} />
-                            </div>
-                            <div className='flex-1 min-w-0 text-left'>
-                              <div className='text-sm font-medium text-gray-900 dark:text-gray-100 truncate'>
-                                {webLivePlatformName(platform)}
-                              </div>
-                              <div className='text-xs text-gray-500 dark:text-gray-400 mt-1'>
-                                {sources.filter(s => s.platform === platform).length} 个房间
-                              </div>
-                            </div>
-                          </button>
-                        ))
-                      ) : (
-                        <div className='flex flex-col items-center justify-center py-12 text-center'>
-                          <div className='w-16 h-16 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center mb-4'>
-                            <Radio className='w-8 h-8 text-gray-400 dark:text-gray-600' />
-                          </div>
-                          <p className='text-gray-500 dark:text-gray-400 font-medium'>暂无可用平台</p>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                )}
+
               </div>
             </div>
           </div>
+        </div>
         </div>
       </div>
     </PageLayout>

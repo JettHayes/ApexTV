@@ -2,9 +2,10 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 
+import { reportAppError } from '@/lib/app-error';
 import { getConfig } from '@/lib/config';
-import { requireFeaturePermission } from '@/lib/permissions';
 import { OpenListClient } from '@/lib/openlist.client';
+import { requireFeaturePermission } from '@/lib/permissions';
 
 export const runtime = 'nodejs';
 
@@ -176,11 +177,10 @@ export async function GET(request: NextRequest) {
       headers,
     });
   } catch (error) {
-    console.error('代理OpenList音频失败:', error);
+    reportAppError(error, '代理音频');
     return NextResponse.json(
       {
         error: '代理请求失败',
-        details: (error as Error).message,
       },
       { status: 500 }
     );

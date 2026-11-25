@@ -2,6 +2,8 @@
 
 'use client';
 
+import { formatAppError, readJsonResponse, reportAppError } from '@/lib/app-error';
+
 import { ArrowDownWideNarrow, ArrowUpNarrowWide, Film, Search, X } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -151,20 +153,16 @@ export default function PrivateLibraryPage() {
     setIsSearching(true);
     try {
       const response = await fetch(`/api/xiaoya/search?keyword=${encodeURIComponent(xiaoyaSearchKeyword)}`);
-      if (!response.ok) {
-        throw new Error('搜索失败');
-      }
-
-      const data = await response.json();
+      const data = await readJsonResponse<any>(response, '搜索');
       if (data.error) {
-        setError(data.error);
+        setError(formatAppError(new Error(data.error), '获取媒体数据'));
         setXiaoyaSearchResults([]);
       } else {
         setXiaoyaSearchResults(data.videos || []);
       }
     } catch (err) {
-      console.error('搜索失败:', err);
-      setError('搜索失败');
+      reportAppError(err, '搜索');
+      setError(formatAppError(err, '搜索'));
       setXiaoyaSearchResults([]);
     } finally {
       setIsSearching(false);
@@ -514,15 +512,11 @@ export default function PrivateLibraryPage() {
 
         const response = await fetch(endpoint, { signal: abortController.signal });
 
-        if (!response.ok) {
-          throw new Error('获取视频列表失败');
-        }
-
-        const data = await response.json();
+        const data = await readJsonResponse<any>(response, '获取视频列表');
         if (abortController.signal.aborted || abortControllerRef.current !== abortController) return;
 
         if (data.error) {
-          setError(data.error);
+          setError(formatAppError(new Error(data.error), '获取媒体数据'));
           if (isInitial) {
             setVideos([]);
           }
@@ -559,8 +553,8 @@ export default function PrivateLibraryPage() {
         if (err.name === 'AbortError' || abortController.signal.aborted) {
           return;
         }
-        console.error('获取视频列表失败:', err);
-        setError('获取视频列表失败');
+        reportAppError(err, '获取视频列表');
+        setError(formatAppError(err, '获取视频列表'));
         if (isInitial) {
           setVideos([]);
         }
@@ -628,8 +622,8 @@ export default function PrivateLibraryPage() {
 
   return (
     <PageLayout activePath='/private-library'>
-      <div className='ptv-library-page'>
-        <div className='apex-page-heading apex-heading-row'>
+      <div className='ptv-library-page f1-private-library'>
+        <div className='apex-page-heading apex-heading-row f1-media-heading'>
           <div>
             <h1 className='text-2xl font-bold text-gray-900 dark:text-gray-100'>
               私人影库
@@ -651,7 +645,7 @@ export default function PrivateLibraryPage() {
 
         {/* 第一级：源类型选择（OpenList / Emby / 小雅） */}
         {mounted && (
-          <div className='ptv-library-tools mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between'>
+          <div className='ptv-library-tools f1-library-toolbar mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between'>
             <CapsuleSwitch
               options={[
                 ...(runtimeConfig.OPENLIST_ENABLED ? [{ label: 'OpenList', value: 'openlist' }] : []),
@@ -1016,7 +1010,7 @@ export default function PrivateLibraryPage() {
                       handleXiaoyaSearch();
                     }
                   }}
-                  className='w-full px-4 py-2 pr-10 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500'
+                  className="w-full px-4 py-2 pr-10 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-apex-accent"
                 />
                 {xiaoyaSearchKeyword ? (
                   <button

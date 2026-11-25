@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 
+import { reportAppError } from '@/lib/app-error';
 import { db } from '@/lib/db';
 import { MangaShelfItem } from '@/lib/manga.types';
 
@@ -25,7 +26,7 @@ export async function GET(request: NextRequest) {
     const records = await db.getAllMangaShelf(username);
     return NextResponse.json(records, { status: 200 });
   } catch (error) {
-    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+    return NextResponse.json((({ code, message, status, upstreamStatus }) => ({ error: message, code, status, upstreamStatus }))(reportAppError(error, '漫画服务')), { status: 500 });
   }
 }
 
@@ -50,7 +51,7 @@ export async function POST(request: NextRequest) {
     });
     return NextResponse.json({ success: true }, { status: 200 });
   } catch (error) {
-    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+    return NextResponse.json((({ code, message, status, upstreamStatus }) => ({ error: message, code, status, upstreamStatus }))(reportAppError(error, '漫画服务')), { status: 500 });
   }
 }
 
@@ -78,6 +79,6 @@ export async function DELETE(request: NextRequest) {
 
     return NextResponse.json({ success: true }, { status: 200 });
   } catch (error) {
-    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+    return NextResponse.json((({ code, message, status, upstreamStatus }) => ({ error: message, code, status, upstreamStatus }))(reportAppError(error, '漫画服务')), { status: 500 });
   }
 }

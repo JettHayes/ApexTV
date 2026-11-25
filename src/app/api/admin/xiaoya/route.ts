@@ -1,3 +1,4 @@
+import { appErrorPayload } from '@/lib/app-error';
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 import { NextRequest, NextResponse } from 'next/server';
@@ -67,7 +68,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: '无效的操作' }, { status: 400 });
   } catch (error) {
     return NextResponse.json(
-      { error: (error as Error).message },
+      {...{ error: (error as Error).message }, ...appErrorPayload(error, "后台配置服务", 500)},
       { status: 500 }
     );
   }

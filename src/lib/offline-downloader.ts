@@ -4,9 +4,9 @@
  */
 
 import * as fs from 'fs';
-import * as path from 'path';
 import { URL } from 'url';
 
+import { assertOfflineDownloadPath, resolveOfflineDownloadDirectory, resolveOfflineDownloadFile } from './offline-download-path';
 import { safeFetch } from './safe-http';
 
 export interface OfflineDownloadTask {
@@ -79,7 +79,7 @@ export class OfflineDownloader {
     }
   ): Promise<OfflineDownloadTask> {
     const taskId = `${source}_${videoId}_${episodeIndex}_${Date.now()}`;
-    const downloadDir = path.join(this.baseDir, source, videoId, `ep${episodeIndex + 1}`);
+    const downloadDir = resolveOfflineDownloadDirectory(this.baseDir, source, videoId, episodeIndex);
 
     const task: OfflineDownloadTask = {
       id: taskId,
@@ -113,11 +113,12 @@ export class OfflineDownloader {
       task.updatedAt = new Date();
       onProgress?.(task);
 
-      // 确保下载目录存在
+      // 重新验证持久化任务，避免旧记录将读写引向下载根目录以外。
+      task.downloadDir = resolveOfflineDownloadDirectory(this.baseDir, task.source, task.videoId, task.episodeIndex);
       this.ensureDir(task.downloadDir);
 
       // 检查是否已经下载过（避免重复下载）
-      const playlistPath = path.join(task.downloadDir, 'playlist.m3u8');
+      const playlistPath = resolveOfflineDownloadFile(this.baseDir, task.downloadDir, 'playlist.m3u8');
       if (fs.existsSync(playlistPath)) {
         // 检查所有文件是否完整
         const isComplete = await this.verifyDownload(task.downloadDir);
@@ -330,7 +331,7 @@ export class OfflineDownloader {
       if (queue.length === 0) return;
 
       const segment = queue.shift()!;
-      const segmentPath = path.join(task.downloadDir, segment.filename);
+      const segmentPath = resolveOfflineDownloadFile(this.baseDir, task.downloadDir, segment.filename);
 
       // 如果文件已存在且大小 > 0，跳过下载
       if (fs.existsSync(segmentPath) && fs.statSync(segmentPath).size > 0) {
@@ -368,7 +369,7 @@ export class OfflineDownloader {
   private async downloadKey(keyInfo: KeyInfo, downloadDir: string): Promise<void> {
     if (!keyInfo.uri) return;
 
-    const keyPath = path.join(downloadDir, 'key.key');
+    const keyPath = resolveOfflineDownloadFile(this.baseDir, downloadDir, 'key.key');
 
     // 如果 key 已存在，跳过下载
     if (fs.existsSync(keyPath) && fs.statSync(keyPath).size > 0) {
@@ -550,7 +551,7 @@ export class OfflineDownloader {
       }
     }
 
-    const playlistPath = path.join(downloadDir, 'playlist.m3u8');
+    const playlistPath = resolveOfflineDownloadFile(this.baseDir, downloadDir, 'playlist.m3u8');
     fs.writeFileSync(playlistPath, modifiedLines.join('\n'), 'utf-8');
   }
 
@@ -559,7 +560,7 @@ export class OfflineDownloader {
    */
   private async verifyDownload(downloadDir: string): Promise<boolean> {
     try {
-      const playlistPath = path.join(downloadDir, 'playlist.m3u8');
+      const playlistPath = resolveOfflineDownloadFile(this.baseDir, downloadDir, 'playlist.m3u8');
       if (!fs.existsSync(playlistPath)) {
         return false;
       }
@@ -570,7 +571,7 @@ export class OfflineDownloader {
       // 检查所有 ts 文件是否存在
       for (const line of lines) {
         if (line && !line.startsWith('#')) {
-          const segmentPath = path.join(downloadDir, line);
+          const segmentPath = resolveOfflineDownloadFile(this.baseDir, downloadDir, line);
           if (!fs.existsSync(segmentPath) || fs.statSync(segmentPath).size === 0) {
             return false;
           }
@@ -624,8 +625,9 @@ export class OfflineDownloader {
    * 删除下载任务的所有文件
    */
   async deleteTask(task: OfflineDownloadTask): Promise<void> {
-    if (fs.existsSync(task.downloadDir)) {
-      fs.rmSync(task.downloadDir, { recursive: true, force: true });
+    const downloadDir = assertOfflineDownloadPath(this.baseDir, task.downloadDir);
+    if (fs.existsSync(downloadDir)) {
+      fs.rmSync(downloadDir, { recursive: true, force: true });
     }
   }
 
@@ -633,8 +635,8 @@ export class OfflineDownloader {
    * 检查视频是否已下载
    */
   checkDownloaded(source: string, videoId: string, episodeIndex: number): boolean {
-    const downloadDir = path.join(this.baseDir, source, videoId, `ep${episodeIndex + 1}`);
-    const playlistPath = path.join(downloadDir, 'playlist.m3u8');
+    const downloadDir = resolveOfflineDownloadDirectory(this.baseDir, source, videoId, episodeIndex);
+    const playlistPath = resolveOfflineDownloadFile(this.baseDir, downloadDir, 'playlist.m3u8');
     return fs.existsSync(playlistPath);
   }
 
@@ -642,8 +644,8 @@ export class OfflineDownloader {
    * 获取本地播放列表路径
    */
   getLocalPlaylistPath(source: string, videoId: string, episodeIndex: number): string | null {
-    const downloadDir = path.join(this.baseDir, source, videoId, `ep${episodeIndex + 1}`);
-    const playlistPath = path.join(downloadDir, 'playlist.m3u8');
+    const downloadDir = resolveOfflineDownloadDirectory(this.baseDir, source, videoId, episodeIndex);
+    const playlistPath = resolveOfflineDownloadFile(this.baseDir, downloadDir, 'playlist.m3u8');
     return fs.existsSync(playlistPath) ? playlistPath : null;
   }
 }

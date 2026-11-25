@@ -1,5 +1,11 @@
 'use client';
 
+import ErrorNotice from '@/components/ErrorNotice';
+
+
+import { readJsonResponse, reportAppError } from '@/lib/app-error';
+
+
 import { CalendarDays, Loader2 } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 
@@ -25,8 +31,8 @@ const weekdayMap: Record<string, string> = {
 
 async function loadDouban(kind: 'movie' | 'tv', tag: string, type: TVItem['type']): Promise<TVItem[]> {
   const res = await fetch(`/api/douban?type=${kind}&tag=${encodeURIComponent(tag)}&pageSize=12`, { cache: 'no-store' });
-  if (!res.ok) return [];
-  const data = await res.json();
+  if (!res.ok) await readJsonResponse(res, "电视端");
+  const data = await readJsonResponse<any>(res, "电视端");
   return (data.list || []).map((item: TVItem) => ({ ...item, type }));
 }
 
@@ -53,6 +59,7 @@ export default function TVAnimePage() {
   const [calendar, setCalendar] = useState<BangumiCalendarData[]>([]);
   const [rows, setRows] = useState<TVSection[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<unknown>(null);
   const [activeDay, setActiveDay] = useState('');
 
   useEffect(() => {
@@ -64,12 +71,14 @@ export default function TVAnimePage() {
     let alive = true;
     async function load() {
       setLoading(true);
+      setLoadError(null);
+      const loadSection = (kind: 'movie' | 'tv', tag: string, type: TVItem['type']) => loadDouban(kind, tag, type).catch((error) => { if (alive) setLoadError(error); reportAppError(error, '电视动漫加载'); return [] as TVItem[]; });
       const [calendarData, hotAnime, jpAnime, cnAnime, animeMovies] = await Promise.all([
         GetBangumiCalendarData().catch(() => []),
-        loadDouban('tv', '动画', 'tv'),
-        loadDouban('tv', '日本动画', 'tv'),
-        loadDouban('tv', '国产动画', 'tv'),
-        loadDouban('movie', '动画', 'movie'),
+        loadSection('tv', '动画', 'tv'),
+        loadSection('tv', '日本动画', 'tv'),
+        loadSection('tv', '国产动画', 'tv'),
+        loadSection('movie', '动画', 'movie'),
       ]);
       if (!alive) return;
       setCalendar(calendarData);
@@ -81,7 +90,7 @@ export default function TVAnimePage() {
       ].filter((section) => section.items.length > 0));
       setLoading(false);
     }
-    load();
+    load().catch((error) => { if (alive) setLoadError(error); reportAppError(error, '电视动漫加载'); }).finally(() => { if (alive) setLoading(false); });
     return () => { alive = false; };
   }, []);
 
@@ -95,7 +104,8 @@ export default function TVAnimePage() {
 
   return (
     <TVLayout>
-      <section className='rounded-[42px] border border-white/10 bg-slate-950/70 p-8 shadow-2xl shadow-black/60'>
+      {loadError != null && <ErrorNotice error={loadError} context='电视动漫加载' onRetry={() => window.location.reload()} />}
+      <section className='f1-tv-anime-browser rounded-[42px] border border-white/10 bg-slate-950/70 p-8 shadow-2xl shadow-black/60'>
         <div className='flex items-center gap-4'>
           <CalendarDays className='h-14 w-14 text-rose-500' />
           <div>
@@ -130,7 +140,7 @@ export default function TVAnimePage() {
         </div>
       ) : (
         <>
-          <section className='mt-10'>
+          <section className='f1-tv-anime-schedule mt-10'>
             <div className='mb-5 flex items-end justify-between'>
               <div>
                 <h2 className='text-4xl font-black tracking-tight text-white'>

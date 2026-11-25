@@ -1,85 +1,3 @@
-html[data-moontvplus] {
-  --apex-accent-rgb: 0 111 104;
-  --ptv-accent: rgb(var(--apex-accent-rgb));
-  --apex-action-rgb: 0 111 104;
-  --ptv-action: rgb(var(--apex-action-rgb));
-  --apex-action-hover-rgb: 0 91 85;
-  --ptv-action-hover: rgb(var(--apex-action-hover-rgb));
-  --apex-action-ink-rgb: 255 255 255;
-  --ptv-action-ink: rgb(var(--apex-action-ink-rgb));
-  --ptv-info: #0e61ac;
-  --apex-text-rgb: 28 43 48;
-  --ptv-text: rgb(var(--apex-text-rgb));
-  --apex-muted-rgb: 83 100 107;
-  --ptv-muted: rgb(var(--apex-muted-rgb));
-  --apex-page-rgb: 244 243 238;
-  --ptv-page: rgb(var(--apex-page-rgb));
-  --apex-panel-rgb: 255 252 245;
-  --ptv-panel: rgb(var(--apex-panel-rgb));
-  --apex-surface-rgb: 255 252 245;
-  --ptv-surface: rgb(var(--apex-surface-rgb));
-  --apex-soft-rgb: 233 238 234;
-  --ptv-soft: rgb(var(--apex-soft-rgb));
-  --apex-line-rgb: 212 220 215;
-  --ptv-line: rgb(var(--apex-line-rgb));
-  --ptv-field-line: #778984;
-  --apex-selected-rgb: 221 238 232;
-  --ptv-selected: rgb(var(--apex-selected-rgb));
-  --ptv-error: #b42318;
-  --ptv-success: #167044;
-  --ptv-shadow: 0 12px 32px rgba(10, 34, 36, .08);
-  --skeleton-color: var(--ptv-soft);
-  --skeleton-highlight: var(--ptv-panel);
-  --ptv-gutter: clamp(16px, 2.6vw, 40px);
-  --ptv-max: 1760px;
-  --ptv-page-top: 28px;
-  --ptv-section-gap: clamp(28px, 3vw, 44px);
-  --ptv-title-size: clamp(24px, 2.1vw, 32px);
-  --ptv-sidebar-collapsed-width: 64px;
-  --ptv-ease: cubic-bezier(.16, 1, .3, 1);
-  --theme-primary: var(--ptv-accent);
-  --theme-primary-hover: var(--ptv-action-hover);
-  --theme-bg: var(--ptv-page);
-  --theme-bg-secondary: var(--ptv-surface);
-  --theme-text: var(--ptv-text);
-  --theme-text-secondary: var(--ptv-muted);
-  --theme-border: var(--ptv-line);
-  color-scheme: light;
-}
-
-html[data-moontvplus].dark {
-  --apex-accent-rgb: 83 199 185;
-  --ptv-accent: rgb(var(--apex-accent-rgb));
-  --apex-action-rgb: 83 199 185;
-  --ptv-action: rgb(var(--apex-action-rgb));
-  --apex-action-hover-rgb: 138 224 210;
-  --ptv-action-hover: rgb(var(--apex-action-hover-rgb));
-  --apex-action-ink-rgb: 8 45 41;
-  --ptv-action-ink: rgb(var(--apex-action-ink-rgb));
-  --ptv-info: #83b8e7;
-  --apex-text-rgb: 232 238 235;
-  --ptv-text: rgb(var(--apex-text-rgb));
-  --apex-muted-rgb: 165 183 186;
-  --ptv-muted: rgb(var(--apex-muted-rgb));
-  --apex-page-rgb: 13 22 26;
-  --ptv-page: rgb(var(--apex-page-rgb));
-  --apex-panel-rgb: 22 35 41;
-  --ptv-panel: rgb(var(--apex-panel-rgb));
-  --apex-surface-rgb: 29 45 51;
-  --ptv-surface: rgb(var(--apex-surface-rgb));
-  --apex-soft-rgb: 36 54 60;
-  --ptv-soft: rgb(var(--apex-soft-rgb));
-  --apex-line-rgb: 43 59 64;
-  --ptv-line: rgb(var(--apex-line-rgb));
-  --ptv-field-line: #71868c;
-  --apex-selected-rgb: 32 63 61;
-  --ptv-selected: rgb(var(--apex-selected-rgb));
-  --ptv-error: #fda29b;
-  --ptv-success: #86d9a6;
-  --ptv-shadow: 0 12px 32px rgba(0, 0, 0, .22);
-  color-scheme: dark;
-}
-
 html[data-moontvplus] body { background: var(--ptv-page); color: var(--ptv-text); }
 html[data-moontvplus].dark body { background: var(--ptv-page); }
 html[data-moontvplus] ::selection { background: var(--ptv-action); color: var(--ptv-action-ink); }
@@ -92,7 +10,7 @@ html[data-moontvplus] :where(.ptv-page, .ptv-auth, .ptv-dialog, .ptv-popover, .p
 .ptv-page main { min-width: 0; }
 .ptv-page-main { margin-top: calc(3.5rem + var(--safe-top)); padding-bottom: calc(3.5rem + env(safe-area-inset-bottom)); }
 .ptv-wallpaper { position: fixed; inset: 0; z-index: 0; background-position: center; background-size: cover; background-repeat: no-repeat; opacity: .22; }
-.ptv-wallpaper-overlay { position: fixed; inset: 0; z-index: 0; background: color-mix(in srgb, var(--ptv-page) 35%, transparent); }
+.ptv-wallpaper-overlay { position: fixed; inset: 0; z-index: 0; background: var(--ptv-page-on-clear-35); }
 .ptv-wallpaper:is([data-page='search'], [data-page='library']) { opacity: .10; }
 .ptv-wallpaper:is([data-page='admin'], [data-page='play'], [data-page='live']) { opacity: .04; }
 
@@ -102,14 +20,14 @@ html[data-moontvplus] :is(.ptv-dialog, .ptv-popover, .ptv-menu) { background-col
 :where(.ptv-page, .ptv-dialog, .ptv-popover, .ptv-menu) :is(.text-blue-500, .text-blue-600, .text-blue-700) { color: var(--ptv-info); }
 :where(.ptv-page, .ptv-dialog, .ptv-popover, .ptv-menu) :is(.text-green-500, .text-green-600, .text-green-700) { color: var(--ptv-success); }
 :where(.ptv-page, .ptv-dialog, .ptv-popover, .ptv-menu) :is(.bg-white, .bg-gray-50) { background-color: var(--ptv-surface); }
-:where(.ptv-page, .ptv-dialog, .ptv-popover, .ptv-menu) :is(.bg-gray-100, .bg-gray-200) { background-color: var(--ptv-soft); }
+:where(.ptv-page, .ptv-dialog, .ptv-popover, .ptv-menu) :is(.bg-gray-100, .bg-gray-200) { background-color: var(--ptv-soft); --ptv-muted: var(--ptv-muted-on-soft); --apex-muted-rgb: var(--apex-muted-on-soft-rgb); --ptv-accent: var(--ptv-accent-on-soft); --apex-accent-rgb: var(--apex-accent-on-soft-rgb); }
 :where(.ptv-page, .ptv-dialog, .ptv-popover, .ptv-menu) :is(.border-gray-200, .border-gray-300) { border-color: var(--ptv-line); }
 .dark :where(.ptv-page, .ptv-dialog, .ptv-popover, .ptv-menu) :is(.dark\:text-gray-100, .dark\:text-gray-200, .dark\:text-gray-300) { color: var(--ptv-text); }
 .dark :where(.ptv-page, .ptv-dialog, .ptv-popover, .ptv-menu) :is(.dark\:text-gray-400, .dark\:text-gray-500) { color: var(--ptv-muted); }
 .dark :where(.ptv-page, .ptv-dialog, .ptv-popover, .ptv-menu) :is(.dark\:text-blue-200, .dark\:text-blue-300, .dark\:text-blue-400) { color: var(--ptv-info); }
 .dark :where(.ptv-page, .ptv-dialog, .ptv-popover, .ptv-menu) .dark\:text-green-400 { color: var(--ptv-success); }
 .dark :where(.ptv-page, .ptv-dialog, .ptv-popover, .ptv-menu) :is(.dark\:bg-gray-800, .dark\:bg-gray-900) { background-color: var(--ptv-surface); }
-.dark :where(.ptv-page, .ptv-dialog, .ptv-popover, .ptv-menu) .dark\:bg-gray-700 { background-color: var(--ptv-soft); }
+.dark :where(.ptv-page, .ptv-dialog, .ptv-popover, .ptv-menu) .dark\:bg-gray-700 { background-color: var(--ptv-soft); --ptv-muted: var(--ptv-muted-on-soft); --apex-muted-rgb: var(--apex-muted-on-soft-rgb); --ptv-accent: var(--ptv-accent-on-soft); --apex-accent-rgb: var(--apex-accent-on-soft-rgb); }
 .dark :where(.ptv-page, .ptv-dialog, .ptv-popover, .ptv-menu) :is(.dark\:border-gray-600, .dark\:border-gray-700) { border-color: var(--ptv-line); }
 .ptv-primary {
   background: var(--ptv-action);
@@ -117,13 +35,13 @@ html[data-moontvplus] :is(.ptv-dialog, .ptv-popover, .ptv-menu) { background-col
   border-color: transparent;
 }
 :where(.ptv-page, .ptv-dialog, .ptv-popover, .ptv-menu) :is(button, a):is(.bg-green-500, .bg-green-600) { background-color: var(--ptv-action); color: var(--ptv-action-ink); }
-:where(.ptv-page, .ptv-dialog, .ptv-popover, .ptv-menu) :is(button, a):is(.bg-blue-500, .bg-blue-600) { background-color: #0e61ac; color: #fff; }
-:where(.ptv-page, .ptv-dialog, .ptv-popover, .ptv-menu) :is(button, a).bg-red-500 { background-color: #b42318; color: #fff; }
-:where(.ptv-page, .ptv-dialog, .ptv-popover, .ptv-menu) :is(button, a).bg-yellow-500 { color: #332b00; }
+:where(.ptv-page, .ptv-dialog, .ptv-popover, .ptv-menu) :is(button, a):is(.bg-blue-500, .bg-blue-600) { background-color: var(--ptv-action); color: var(--ptv-action-ink); }
+:where(.ptv-page, .ptv-dialog, .ptv-popover, .ptv-menu) :is(button, a).bg-red-500 { background-color: var(--ptv-danger-fill); color: var(--ptv-media-text); }
+:where(.ptv-page, .ptv-dialog, .ptv-popover, .ptv-menu) :is(button, a).bg-yellow-500 { color: var(--ptv-warning); }
 :where(.ptv-page, .ptv-dialog, .ptv-popover, .ptv-menu) :is(button, a):is(.bg-green-500, .bg-green-600, .bg-blue-500, .bg-blue-600, .bg-red-500, .bg-yellow-500) .text-white { color: inherit; }
 :where(.ptv-page, .ptv-dialog, .ptv-popover, .ptv-menu) :is(button, a):is(.bg-green-500, .bg-green-600):not(:disabled):hover { background-color: var(--ptv-action-hover); }
-:where(.ptv-page, .ptv-dialog, .ptv-popover, .ptv-menu) :is(button, a):is(.bg-blue-500, .bg-blue-600):not(:disabled):hover { background-color: #084b86; }
-:where(.ptv-page, .ptv-dialog, .ptv-popover, .ptv-menu) :is(button, a).bg-red-500:not(:disabled):hover { background-color: #912018; }
+:where(.ptv-page, .ptv-dialog, .ptv-popover, .ptv-menu) :is(button, a):is(.bg-blue-500, .bg-blue-600):not(:disabled):hover { background-color: var(--ptv-action-hover); }
+:where(.ptv-page, .ptv-dialog, .ptv-popover, .ptv-menu) :is(button, a).bg-red-500:not(:disabled):hover { background-color: var(--ptv-error-hover); }
 :where(.ptv-page, .ptv-dialog, .ptv-popover, .ptv-menu) :is(input:not([type='checkbox']):not([type='radio']), select, textarea) {
   color: var(--ptv-text);
   background-color: var(--ptv-panel);
@@ -154,7 +72,7 @@ html[data-moontvplus] :is(.ptv-dialog, .ptv-popover, .ptv-menu) { background-col
 .ptv-sidebar-brand .ptv-brand img { width: 32px; height: 32px; }
 .ptv-sidebar-brand .ptv-brand-name { font-size: 22px; color: var(--ptv-text); }
 .ptv-sidebar-toggle { width: 44px; height: 44px; color: var(--ptv-muted); transition: color 160ms, background-color 160ms, transform 120ms var(--ptv-ease); }
-.ptv-sidebar-toggle:hover { background: var(--ptv-selected); color: var(--ptv-accent); }
+.ptv-sidebar-toggle:hover { background: var(--ptv-selected); color: var(--ptv-accent); --ptv-muted: var(--ptv-muted-on-soft); --apex-muted-rgb: var(--apex-muted-on-soft-rgb); --ptv-accent: var(--ptv-accent-on-soft); --apex-accent-rgb: var(--apex-accent-on-soft-rgb); }
 .ptv-sidebar-toggle:active { transform: scale(.94); }
 .ptv-sidebar[data-collapsed='true'] .ptv-sidebar-brand { justify-content: center; padding-inline: 10px; }
 /* 收展动效只在用户点击后启用，首屏按本地记录纠正宽度时不播放 */
@@ -170,7 +88,7 @@ html[data-moontvplus] :is(.ptv-dialog, .ptv-popover, .ptv-menu) { background-col
 .ptv-sidebar[data-collapsed='true'] .ptv-nav-group-title { grid-template-rows: 0fr; opacity: 0; }
 .ptv-sidebar[data-animate='true'] .ptv-nav-group-title { transition: grid-template-rows 300ms var(--ptv-ease), opacity 200ms; }
 .ptv-nav-link { min-height: 46px; border-radius: 10px; color: var(--ptv-muted); transition: background-color 160ms, color 160ms; }
-.ptv-nav-link:is([data-active='true'], [aria-current='page']) { color: var(--ptv-accent); background: var(--ptv-selected); }
+.ptv-nav-link:is([data-active='true'], [aria-current='page']) { color: var(--ptv-accent); background: var(--ptv-selected); --ptv-muted: var(--ptv-muted-on-soft); --apex-muted-rgb: var(--apex-muted-on-soft-rgb); --ptv-accent: var(--ptv-accent-on-soft); --apex-accent-rgb: var(--apex-accent-on-soft-rgb); }
 .ptv-mobile-header, .ptv-mobile-nav { background: var(--ptv-surface) !important; border-color: var(--ptv-line) !important; box-shadow: none !important; }
 .ptv-mobile-header :is(button, a:not(.ptv-brand)) { min-width: 44px; min-height: 44px; }
 .ptv-mobile-nav a { min-height: 56px; color: var(--ptv-muted); }
@@ -226,17 +144,17 @@ html[data-theme-switching]::view-transition-new(ptv-theme-player) { animation: n
   min-height: 360px;
   height: calc(clamp(360px, 32vw, 460px) * var(--ptv-hero-scale, 1));
   border-radius: 18px;
-  background: #102023;
-  color: #edf4f2;
+  background: var(--ptv-media-bg);
+  color: var(--ptv-media-text);
   box-shadow: var(--ptv-shadow);
 }
-.ptv-hero::after { content: ''; position: absolute; inset: 0; z-index: 0; pointer-events: none; background: linear-gradient(90deg, rgba(7, 19, 22, .90), rgba(7, 19, 22, .52) 48%, rgba(7, 19, 22, .05) 85%); }
+.ptv-hero::after { content: ''; position: absolute; inset: 0; z-index: 0; pointer-events: none; background: linear-gradient(90deg, var(--ptv-media-bg-alpha-90), var(--ptv-media-bg-alpha-52) 48%, var(--ptv-media-bg-alpha-5) 85%); }
 .ptv-hero-content { z-index: 1; padding: clamp(24px, 3.2vw, 52px); }
-.ptv-hero-content h2 { font-size: clamp(28px, 3.7vw, 48px); line-height: 1.15; letter-spacing: -.035em; color: #edf4f2 !important; }
-.ptv-hero-content p { max-width: 56ch; color: #d7e5e2 !important; line-height: 1.7; font-size: 15px; }
+.ptv-hero-content h2 { font-size: clamp(28px, 3.7vw, 48px); line-height: 1.15; letter-spacing: -.035em; color: var(--ptv-media-text) !important; }
+.ptv-hero-content p { max-width: 56ch; color: var(--ptv-media-muted) !important; line-height: 1.7; font-size: 15px; }
 .ptv-hero-play { min-height: 48px; padding: 12px 24px; border-radius: 10px; background: var(--ptv-action) !important; color: var(--ptv-action-ink) !important; }
 .ptv-hero > button[aria-label] { min-width: 44px; min-height: 44px; }
-.ptv-hero :is(button, a):focus-visible { outline-color: #00d2be; }
+.ptv-hero :is(button, a):focus-visible { outline-color: var(--f1-racing); }
 
 .ptv-video-card { transform: none; transition: transform 200ms var(--ptv-ease), box-shadow 200ms var(--ptv-ease); }
 .ptv-video-card:has(.ptv-card-open:focus-visible) { outline: 2px solid var(--ptv-accent); outline-offset: 4px; border-radius: 12px; }
@@ -265,19 +183,19 @@ html[data-theme-switching]::view-transition-new(ptv-theme-player) { animation: n
 .ptv-auth {
   background-color: var(--ptv-page);
   background-image:
-    radial-gradient(56rem 36rem at 88% -12%, color-mix(in srgb, var(--ptv-action) 16%, transparent), transparent 62%),
-    radial-gradient(40rem 28rem at -6% 112%, color-mix(in srgb, var(--ptv-accent) 12%, transparent), transparent 70%),
-    repeating-linear-gradient(115deg, transparent 0 26px, color-mix(in srgb, var(--ptv-text) 3.5%, transparent) 26px 27px);
+    radial-gradient(56rem 36rem at 88% -12%, var(--ptv-action-on-clear-16), transparent 62%),
+    radial-gradient(40rem 28rem at -6% 112%, var(--ptv-accent-on-clear-12), transparent 70%),
+    repeating-linear-gradient(115deg, transparent 0 26px, var(--ptv-text-on-clear-3_5) 26px 27px);
   color: var(--ptv-text);
 }
-.ptv-auth[data-has-bg]::before { content: ''; position: absolute; inset: 0; pointer-events: none; background: color-mix(in srgb, var(--ptv-page) 58%, transparent); }
-.ptv-auth-panel { position: relative; overflow: hidden; background: var(--ptv-surface); border: 1px solid var(--ptv-line); box-shadow: inset 0 1px 0 rgba(255, 255, 255, .7), var(--ptv-shadow); border-radius: 20px; padding: clamp(24px, 5vw, 40px); }
-.ptv-auth-panel::before { content: ''; position: absolute; inset: 0 0 auto; height: 4px; background: linear-gradient(90deg, var(--ptv-action) 0 38%, #c3cecc 38% 72%, var(--ptv-accent) 72%); }
-html[data-moontvplus].dark .ptv-auth-panel { box-shadow: inset 0 1px 0 rgba(255, 255, 255, .05), var(--ptv-shadow); }
-html[data-moontvplus].dark .ptv-auth-panel::before { background: linear-gradient(90deg, var(--ptv-action) 0 38%, #4d5f61 38% 72%, #007c76 72%); }
+.ptv-auth[data-has-bg]::before { content: ''; position: absolute; inset: 0; pointer-events: none; background: var(--ptv-page-on-clear-58); }
+.ptv-auth-panel { position: relative; overflow: hidden; background: var(--ptv-surface); border: 1px solid var(--ptv-line); box-shadow: inset 0 1px 0 var(--ptv-media-text-alpha-70), var(--ptv-shadow); border-radius: 20px; padding: clamp(24px, 5vw, 40px); }
+.ptv-auth-panel::before { content: ''; position: absolute; inset: 0 0 auto; height: 4px; background: linear-gradient(90deg, var(--ptv-action) 0 38%, var(--ptv-silver) 38% 72%, var(--ptv-accent) 72%); }
+html[data-moontvplus].dark .ptv-auth-panel { box-shadow: inset 0 1px 0 var(--ptv-media-text-alpha-5), var(--ptv-shadow); }
+html[data-moontvplus].dark .ptv-auth-panel::before { background: linear-gradient(90deg, var(--ptv-action) 0 38%, var(--ptv-media-line) 38% 72%, var(--ptv-action) 72%); }
 .ptv-auth-panel h1 { color: var(--ptv-accent); }
 .ptv-auth-panel :where(input:not([type='checkbox']):not([type='radio']), button[type='submit']) { min-height: 48px; border-radius: 10px; }
-.ptv-auth-panel :where(input:not([type='checkbox']):not([type='radio'])) { color: var(--ptv-text); background: var(--ptv-panel); border-color: var(--ptv-line); }
+.ptv-auth-panel :where(input:not([type='checkbox']):not([type='radio'])) { color: var(--ptv-text); background: var(--ptv-panel); border-color: var(--ptv-field-line); }
 .ptv-auth-panel :where(button[type='submit']) { background: var(--ptv-action); color: var(--ptv-action-ink); }
 
 .ptv-login-panel { animation: ptv-reveal 460ms var(--ptv-ease) both; }
@@ -293,7 +211,7 @@ html[data-moontvplus].dark .ptv-auth-panel::before { background: linear-gradient
 .ptv-field-label span { font: 600 11px/1 ui-monospace, 'Cascadia Mono', Consolas, monospace; letter-spacing: .1em; color: var(--ptv-accent); }
 .ptv-field-control { position: relative; display: flex; align-items: center; border: 1px solid var(--ptv-field-line); border-radius: 12px; background: var(--ptv-panel); transition: border-color 160ms, box-shadow 160ms, background-color 160ms; }
 .ptv-field-control > svg { position: absolute; left: 15px; width: 18px; height: 18px; color: var(--ptv-muted); pointer-events: none; transition: color 160ms; }
-.ptv-field-control:focus-within { border-color: var(--ptv-accent); background: var(--ptv-surface); box-shadow: 0 0 0 4px color-mix(in srgb, var(--ptv-accent) 16%, transparent); }
+.ptv-field-control:focus-within { border-color: var(--ptv-accent); background: var(--ptv-surface); box-shadow: 0 0 0 4px var(--ptv-accent-on-clear-16); }
 .ptv-field-control:focus-within > svg { color: var(--ptv-accent); }
 .ptv-auth-panel .ptv-field-control input { flex: 1; min-width: 0; min-height: 52px; padding: 0 16px 0 46px; border: 0; border-radius: 12px; background: transparent; box-shadow: none; color: var(--ptv-text); font-size: 16px; }
 /* 复合输入框由外层统一绘制焦点，覆盖旧自定义 CSS 的输入框独立光圈。 */
@@ -308,17 +226,17 @@ html[data-moontvplus] :is(.ptv-auth-panel, .ptv-library-tools) .ptv-field-contro
 
 .ptv-switch { position: relative; display: inline-flex; align-items: center; gap: 12px; min-height: 44px; font-size: 14px; color: var(--ptv-text); cursor: pointer; user-select: none; }
 .ptv-switch input { position: absolute; width: 1px; height: 1px; opacity: 0; }
-.ptv-switch-track { position: relative; flex-shrink: 0; width: 42px; height: 24px; border: 1px solid var(--ptv-line); border-radius: 999px; background: var(--ptv-soft); transition: background-color 180ms, border-color 180ms; }
-.ptv-switch-track::after { content: ''; position: absolute; top: 2px; left: 2px; width: 18px; height: 18px; border-radius: 50%; background: #fff; box-shadow: 0 1px 3px rgba(6, 36, 33, .3); transition: transform 220ms var(--ptv-ease); }
+.ptv-switch-track { position: relative; flex-shrink: 0; width: 42px; height: 24px; border: 1px solid var(--ptv-line); border-radius: 999px; background: var(--ptv-soft); transition: background-color 180ms, border-color 180ms; --ptv-muted: var(--ptv-muted-on-soft); --apex-muted-rgb: var(--apex-muted-on-soft-rgb); --ptv-accent: var(--ptv-accent-on-soft); --apex-accent-rgb: var(--apex-accent-on-soft-rgb); }
+.ptv-switch-track::after { content: ''; position: absolute; top: 2px; left: 2px; width: 18px; height: 18px; border-radius: 50%; background: var(--ptv-panel); box-shadow: 0 1px 3px var(--ptv-media-bg-alpha-30); transition: transform 220ms var(--ptv-ease); }
 .ptv-switch input:checked + .ptv-switch-track { border-color: transparent; background: var(--ptv-action); }
 .ptv-switch input:checked + .ptv-switch-track::after { transform: translateX(18px); }
 .ptv-switch input:focus-visible + .ptv-switch-track { outline: 2px solid var(--ptv-accent); outline-offset: 3px; }
 
-.ptv-login-error { display: flex; align-items: flex-start; gap: 10px; padding: 12px 14px; border: 1px solid rgba(217, 45, 32, .28); border-radius: 12px; background: rgba(217, 45, 32, .07); color: #b42318; font-size: 14px; line-height: 1.5; }
-html[data-moontvplus].dark .ptv-login-error { color: #fda29b; background: rgba(240, 68, 56, .1); }
+.ptv-login-error { display: flex; align-items: flex-start; gap: 10px; padding: 12px 14px; border: 1px solid var(--ptv-media-bg-alpha-28); border-radius: 12px; background: var(--ptv-media-bg-alpha-7); color: var(--ptv-error); font-size: 14px; line-height: 1.5; }
+html[data-moontvplus].dark .ptv-login-error { color: var(--ptv-error); background: var(--ptv-media-bg-alpha-10); }
 
-.ptv-auth-panel button.ptv-login-submit { position: relative; display: flex; align-items: center; justify-content: center; gap: 10px; width: 100%; min-height: 52px; overflow: hidden; border-radius: 12px; background: var(--ptv-action); color: var(--ptv-action-ink); font-size: 16px; font-weight: 700; letter-spacing: .04em; box-shadow: 0 12px 24px -14px rgba(0, 166, 150, .9); transition: background-color 160ms, box-shadow 160ms, transform 160ms var(--ptv-ease); }
-.ptv-login-submit::before { content: ''; position: absolute; inset: 0; background: repeating-linear-gradient(115deg, transparent 0 14px, rgba(255, 255, 255, .16) 14px 16px); opacity: 0; transition: opacity 200ms; }
+.ptv-auth-panel button.ptv-login-submit { position: relative; display: flex; align-items: center; justify-content: center; gap: 10px; width: 100%; min-height: 52px; overflow: hidden; border-radius: 12px; background: var(--ptv-action); color: var(--ptv-action-ink); font-size: 16px; font-weight: 700; letter-spacing: .04em; box-shadow: 0 12px 24px -14px var(--ptv-action-alpha-90); transition: background-color 160ms, box-shadow 160ms, transform 160ms var(--ptv-ease); }
+.ptv-login-submit::before { content: ''; position: absolute; inset: 0; background: repeating-linear-gradient(115deg, transparent 0 14px, var(--ptv-media-text-alpha-16) 14px 16px); opacity: 0; transition: opacity 200ms; }
 .ptv-login-submit svg { transition: transform 200ms var(--ptv-ease); }
 
 .ptv-turnstile { min-width: 0; width: 100%; padding: 12px; border: 1px solid var(--ptv-line); border-radius: 12px; background: var(--ptv-panel); }
@@ -328,7 +246,7 @@ html[data-moontvplus].dark .ptv-login-error { color: #fda29b; background: rgba(2
 .ptv-turnstile-error { margin-top: 8px; color: var(--ptv-error); font-size: 13px; line-height: 1.6; }
 .ptv-turnstile-error button { min-height: 44px; margin-top: 6px; color: var(--ptv-accent); text-decoration: underline; text-underline-offset: 3px; }
 .ptv-auth-panel button.ptv-login-submit:not(:disabled):active { transform: scale(.985); }
-.ptv-auth-panel button.ptv-login-submit:disabled { cursor: not-allowed; background: var(--ptv-soft); color: var(--ptv-muted); box-shadow: none; }
+.ptv-auth-panel button.ptv-login-submit:disabled { cursor: not-allowed; background: var(--ptv-soft); color: var(--ptv-muted-on-soft); box-shadow: none; --ptv-muted: var(--ptv-muted-on-soft); --apex-muted-rgb: var(--apex-muted-on-soft-rgb); --ptv-accent: var(--ptv-accent-on-soft); --apex-accent-rgb: var(--apex-accent-on-soft-rgb); }
 .ptv-login-spinner { width: 18px; height: 18px; border: 2px solid currentColor; border-right-color: transparent; border-radius: 50%; animation: ptv-spin 700ms linear infinite; }
 @keyframes ptv-spin { to { transform: rotate(360deg); } }
 
@@ -344,7 +262,7 @@ html[data-moontvplus].dark .ptv-login-error { color: #fda29b; background: rgba(2
 .ptv-player-panel, .ptv-player-tools { color: var(--ptv-text); }
 .ptv-player-grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; align-items: start; }
 .ptv-player-stage { min-width: 0; }
-.ptv-player-canvas { background: #000; color: #fff; border-radius: 12px; overflow: hidden; }
+.ptv-player-canvas { background: var(--ptv-media-bg); color: var(--ptv-media-text); border-radius: 12px; overflow: hidden; }
 .ptv-player-panel { min-width: 0; min-height: 0; border: 1px solid var(--ptv-line); border-radius: 12px; background: var(--ptv-panel); color: var(--ptv-text); }
 .ptv-player-panel button { min-height: 44px; }
 .ptv-player-tools { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; padding-block: 12px; }
@@ -359,7 +277,7 @@ html[data-moontvplus].dark .ptv-login-error { color: #fda29b; background: rgba(2
   border: 1px solid var(--ptv-line);
   border-radius: 16px;
   background: var(--ptv-surface);
-  box-shadow: 0 18px 40px -28px rgba(9, 18, 20, .45);
+  box-shadow: 0 18px 40px -28px var(--ptv-media-bg-alpha-45);
 }
 .ptv-live-page .ptv-player-canvas,
 .ptv-live-page .ptv-player-canvas .shadow-lg {
@@ -387,7 +305,7 @@ html[data-moontvplus].dark .ptv-login-error { color: #fda29b; background: rgba(2
   border: 1px solid var(--ptv-line);
   border-radius: 16px;
   background: var(--ptv-surface);
-  box-shadow: 0 18px 40px -28px rgba(9, 18, 20, .45);
+  box-shadow: 0 18px 40px -28px var(--ptv-media-bg-alpha-45);
 }
 .ptv-play-page .ptv-player-canvas,
 .ptv-play-page .ptv-player-canvas .shadow-lg { border-radius: 0; box-shadow: none; }
@@ -437,14 +355,14 @@ html[data-moontvplus].dark .ptv-login-error { color: #fda29b; background: rgba(2
   overflow: visible;
   color: inherit;
 }
-.ptv-page .ptv-play-page .ptv-player-tools button[aria-pressed='true'] { background: var(--ptv-selected); color: var(--ptv-accent); border-color: var(--ptv-accent); }
-.ptv-page .ptv-play-page .ptv-player-tools button[data-state='loading'] { background: var(--ptv-soft); color: var(--ptv-muted); cursor: wait; }
+.ptv-page .ptv-play-page .ptv-player-tools button[aria-pressed='true'] { background: var(--ptv-selected); color: var(--ptv-accent); border-color: var(--ptv-accent); --ptv-muted: var(--ptv-muted-on-soft); --apex-muted-rgb: var(--apex-muted-on-soft-rgb); --ptv-accent: var(--ptv-accent-on-soft); --apex-accent-rgb: var(--apex-accent-on-soft-rgb); }
+.ptv-page .ptv-play-page .ptv-player-tools button[data-state='loading'] { background: var(--ptv-soft); color: var(--ptv-muted-on-soft); cursor: wait; --ptv-muted: var(--ptv-muted-on-soft); --apex-muted-rgb: var(--apex-muted-on-soft-rgb); --ptv-accent: var(--ptv-accent-on-soft); --apex-accent-rgb: var(--apex-accent-on-soft-rgb); }
 .ptv-page .ptv-play-page .ptv-player-tools button:disabled:not([data-state='loading']) { opacity: .55; cursor: not-allowed; }
 .ptv-live-page { width: 100%; max-width: 1600px; margin-inline: auto; padding: 24px var(--ptv-gutter) 40px; }
 .ptv-live-page .ptv-player-panel { max-height: 650px; }
 .ptv-live-page button { min-width: 44px; min-height: 44px; }
 .ptv-room-info { display: flex; align-items: flex-start; gap: 16px; padding: 20px clamp(16px, 2vw, 24px) 16px; color: var(--ptv-text); }
-.ptv-room-avatar { display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; width: 56px; height: 56px; overflow: hidden; border: 1px solid var(--ptv-line); border-radius: 50%; background: var(--ptv-soft); color: var(--ptv-muted); }
+.ptv-room-avatar { display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; width: 56px; height: 56px; overflow: hidden; border: 1px solid var(--ptv-line); border-radius: 50%; background: var(--ptv-soft); color: var(--ptv-muted-on-soft); --ptv-muted: var(--ptv-muted-on-soft); --apex-muted-rgb: var(--apex-muted-on-soft-rgb); --ptv-accent: var(--ptv-accent-on-soft); --apex-accent-rgb: var(--apex-accent-on-soft-rgb); }
 .ptv-room-avatar img { width: 100%; height: 100%; object-fit: cover; }
 .ptv-room-copy { flex: 1; min-width: 0; }
 .ptv-room-heading { display: flex; align-items: flex-start; gap: 12px; }
@@ -466,10 +384,10 @@ html[data-moontvplus].dark .ptv-login-error { color: #fda29b; background: rgba(2
 .ptv-live-select > svg { position: absolute; inset-inline-end: 14px; top: 50%; width: 16px; height: 16px; transform: translateY(-50%); color: var(--ptv-muted); pointer-events: none; }
 .ptv-live-advanced-toggle { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 44px; padding: 10px 14px; border: 1px solid var(--ptv-line); border-radius: 10px; color: var(--ptv-muted); font-size: 13px; font-weight: 500; }
 .ptv-live-advanced-toggle > svg, .ptv-live-help summary > svg, .ptv-live-notice > svg { width: 16px; height: 16px; flex-shrink: 0; }
-.ptv-live-advanced-toggle[aria-expanded='true'] { background: var(--ptv-selected); border-color: var(--ptv-accent); color: var(--ptv-accent); }
+.ptv-live-advanced-toggle[aria-expanded='true'] { background: var(--ptv-selected); border-color: var(--ptv-accent); color: var(--ptv-accent); --ptv-muted: var(--ptv-muted-on-soft); --apex-muted-rgb: var(--apex-muted-on-soft-rgb); --ptv-accent: var(--ptv-accent-on-soft); --apex-accent-rgb: var(--apex-accent-on-soft-rgb); }
 .ptv-live-disclosure-arrow { transition: transform 160ms var(--ptv-ease); }
 .ptv-live-advanced-toggle[aria-expanded='true'] .ptv-live-disclosure-arrow, .ptv-live-help[open] .ptv-live-disclosure-arrow { transform: rotate(180deg); }
-.ptv-live-advanced { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 24px; margin-top: 16px; padding: 16px; border-radius: 10px; background: var(--ptv-soft); }
+.ptv-live-advanced { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 24px; margin-top: 16px; padding: 16px; border-radius: 10px; background: var(--ptv-soft); --ptv-muted: var(--ptv-muted-on-soft); --apex-muted-rgb: var(--apex-muted-on-soft-rgb); --ptv-accent: var(--ptv-accent-on-soft); --apex-accent-rgb: var(--apex-accent-on-soft-rgb); }
 .ptv-live-field--protocol { flex: 0 1 232px; }
 .ptv-live-advanced > p { flex: 1 1 220px; color: var(--ptv-muted); font-size: 12px; line-height: 1.7; }
 .ptv-live-help { margin-top: 14px; border-top: 1px solid var(--ptv-line); }
@@ -481,7 +399,7 @@ html[data-moontvplus].dark .ptv-login-error { color: #fda29b; background: rgba(2
 .ptv-live-help dl > div { min-width: 0; }
 .ptv-live-help dt { margin-bottom: 3px; color: var(--ptv-text); font-weight: 600; }
 .ptv-live-help dd { margin: 0; color: var(--ptv-muted); overflow-wrap: anywhere; }
-.ptv-live-notice { display: flex; align-items: flex-start; gap: 8px; margin-top: 14px; padding: 10px 12px; border-radius: 8px; background: var(--ptv-selected); color: var(--ptv-accent); font-size: 12px; line-height: 1.7; }
+.ptv-live-notice { display: flex; align-items: flex-start; gap: 8px; margin-top: 14px; padding: 10px 12px; border-radius: 8px; background: var(--ptv-selected); color: var(--ptv-accent); font-size: 12px; line-height: 1.7; --ptv-muted: var(--ptv-muted-on-soft); --apex-muted-rgb: var(--apex-muted-on-soft-rgb); --ptv-accent: var(--ptv-accent-on-soft); --apex-accent-rgb: var(--apex-accent-on-soft-rgb); }
 .ptv-live-notice > svg { margin-top: 2px; }
 @container live-settings (min-width: 30rem) {
   .ptv-live-controls { grid-template-columns: minmax(0, 1fr) minmax(0, 1.25fr); }
@@ -499,13 +417,13 @@ html[data-moontvplus].dark .ptv-login-error { color: #fda29b; background: rgba(2
   .ptv-page .ptv-live-select select { font-size: 16px; }
 }
 @media (hover: hover) {
-  .ptv-live-advanced-toggle:hover { background: var(--ptv-soft); color: var(--ptv-text); }
+  .ptv-live-advanced-toggle:hover { background: var(--ptv-soft); color: var(--ptv-text); --ptv-muted: var(--ptv-muted-on-soft); --apex-muted-rgb: var(--apex-muted-on-soft-rgb); --ptv-accent: var(--ptv-accent-on-soft); --apex-accent-rgb: var(--apex-accent-on-soft-rgb); }
   .ptv-live-help summary:hover { color: var(--ptv-accent); }
 }
 .ptv-room-tools { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px clamp(16px, 2vw, 24px); border-top: 1px solid var(--ptv-line); }
 .ptv-room-tools-label { flex-shrink: 0; color: var(--ptv-muted); font-size: 12px; }
 .ptv-room-tools button { box-shadow: none; background: transparent; transition: color 160ms, background-color 160ms; }
-.ptv-room-tools button:hover { background: var(--ptv-selected); }
+.ptv-room-tools button:hover { background: var(--ptv-selected); --ptv-muted: var(--ptv-muted-on-soft); --apex-muted-rgb: var(--apex-muted-on-soft-rgb); --ptv-accent: var(--ptv-accent-on-soft); --apex-accent-rgb: var(--apex-accent-on-soft-rgb); }
 .ptv-room-tools button span { display: none; }
 .ptv-room-tools button svg { color: var(--ptv-muted); }
 .ptv-player-panel .ptv-room-avatar { width: 40px; height: 40px; border-radius: 10px; }
@@ -550,25 +468,25 @@ html[data-moontvplus].dark .ptv-login-error { color: #fda29b; background: rgba(2
 @media (max-width: 639px) { .ptv-sheet-in { animation: ptv-sheet 260ms var(--ptv-ease) backwards; } }
 
 @media (hover: hover) and (pointer: fine) {
-  .ptv-nav-link:not([aria-current='page']):not([data-active='true']):hover { background: var(--ptv-soft); color: var(--ptv-text); }
-  .ptv-more-link:hover, .ptv-more-card:hover { background: var(--ptv-selected); color: var(--ptv-accent); }
+  .ptv-nav-link:not([aria-current='page']):not([data-active='true']):hover { background: var(--ptv-soft); color: var(--ptv-text); --ptv-muted: var(--ptv-muted-on-soft); --apex-muted-rgb: var(--apex-muted-on-soft-rgb); --ptv-accent: var(--ptv-accent-on-soft); --apex-accent-rgb: var(--apex-accent-on-soft-rgb); }
+  .ptv-more-link:hover, .ptv-more-card:hover { background: var(--ptv-selected); color: var(--ptv-accent); --ptv-muted: var(--ptv-muted-on-soft); --apex-muted-rgb: var(--apex-muted-on-soft-rgb); --ptv-accent: var(--ptv-accent-on-soft); --apex-accent-rgb: var(--apex-accent-on-soft-rgb); }
   .ptv-video-card:hover { transform: translateY(-3px) scale(1.02); }
-  .ptv-video-card-menu:hover { background: var(--ptv-selected); color: var(--ptv-accent); }
+  .ptv-video-card-menu:hover { background: var(--ptv-selected); color: var(--ptv-accent); --ptv-muted: var(--ptv-muted-on-soft); --apex-muted-rgb: var(--apex-muted-on-soft-rgb); --ptv-accent: var(--ptv-accent-on-soft); --apex-accent-rgb: var(--apex-accent-on-soft-rgb); }
   .ptv-search-submit:hover, .ptv-hero-play:hover { background: var(--ptv-action-hover) !important; }
-  .ptv-field-control:not(:focus-within):hover { border-color: color-mix(in srgb, var(--ptv-accent) 40%, var(--ptv-line)); }
-  .ptv-field-toggle:hover, .ptv-login-alt:not(:disabled):hover { color: var(--ptv-accent); background: var(--ptv-selected); }
+  .ptv-field-control:not(:focus-within):hover { border-color: var(--ptv-accent-on-line-40); }
+  .ptv-field-toggle:hover, .ptv-login-alt:not(:disabled):hover { color: var(--ptv-accent); background: var(--ptv-selected); --ptv-muted: var(--ptv-muted-on-soft); --apex-muted-rgb: var(--apex-muted-on-soft-rgb); --ptv-accent: var(--ptv-accent-on-soft); --apex-accent-rgb: var(--apex-accent-on-soft-rgb); }
   .ptv-login-alt:not(:disabled):hover { border-color: var(--ptv-accent); }
   .ptv-auth-panel button.ptv-login-submit:not(:disabled):hover { background: var(--ptv-action-hover); }
   .ptv-login-submit:not(:disabled):hover::before { opacity: 1; }
   .ptv-login-submit:not(:disabled):hover svg { transform: translateX(4px); }
-  .ptv-page .ptv-play-page .ptv-player-tools button:not(:disabled):hover { background: var(--ptv-selected); color: var(--ptv-accent); }
+  .ptv-page .ptv-play-page .ptv-player-tools button:not(:disabled):hover { background: var(--ptv-selected); color: var(--ptv-accent); --ptv-muted: var(--ptv-muted-on-soft); --apex-muted-rgb: var(--apex-muted-on-soft-rgb); --ptv-accent: var(--ptv-accent-on-soft); --apex-accent-rgb: var(--apex-accent-on-soft-rgb); }
 }
 @media (pointer: coarse) {
   .ptv-page :is(button, a.ptv-nav-link) { touch-action: manipulation; }
   .ptv-page .ptv-play-page .ptv-player-tools button, .ptv-player-tools > :is(button, a), .ptv-library-tools button { min-height: 44px; min-width: 44px; }
   .ptv-video-card:active { transform: scale(.985); }
   .ptv-history-delete { position: static; width: 44px; height: 44px; opacity: 1; color: var(--ptv-muted); background: transparent; }
-  .ptv-search-history .group { display: flex; align-items: center; border-radius: 24px; background: var(--ptv-soft); }
+  .ptv-search-history .group { display: flex; align-items: center; border-radius: 24px; background: var(--ptv-soft); --ptv-muted: var(--ptv-muted-on-soft); --apex-muted-rgb: var(--apex-muted-on-soft-rgb); --ptv-accent: var(--ptv-accent-on-soft); --apex-accent-rgb: var(--apex-accent-on-soft-rgb); }
 }
 @media (min-width: 480px) { .ptv-media-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
 @media (min-width: 768px) {
@@ -608,9 +526,9 @@ html[data-moontvplus].dark .ptv-login-error { color: #fda29b; background: rgba(2
   .ptv-brand img { width: 26px; height: 26px; }
   .ptv-home-tools { gap: 4px 12px; }
   .ptv-hero { min-height: 340px; height: calc(360px * var(--ptv-hero-scale, 1)); border-radius: 14px; }
-  .ptv-hero::after { background: linear-gradient(0deg, rgba(7, 19, 22, .95), rgba(7, 19, 22, .50) 58%, rgba(7, 19, 22, .10)); }
+  .ptv-hero::after { background: linear-gradient(0deg, var(--ptv-media-bg-alpha-95), var(--ptv-media-bg-alpha-50) 58%, var(--ptv-media-bg-alpha-10)); }
   .ptv-hero-content { padding: 24px 20px 52px; }
-  .ptv-hero-pause { top: 12px; left: 12px; right: auto; bottom: auto; }
+  .ptv-hero-pause { top: auto; left: auto; right: 12px; bottom: 12px; }
   .ptv-hero-content h2 { font-size: clamp(28px, 7vw, 36px); }
   .ptv-hero-content p { font-size: 14px; -webkit-line-clamp: 2; }
   .ptv-continue { margin-block: 24px 30px; }
@@ -628,3 +546,6 @@ html[data-moontvplus].dark .ptv-login-error { color: #fda29b; background: rgba(2
   :is(.ptv-dialog, .ptv-popover, .ptv-menu, .ptv-library, .ptv-tv), :is(.ptv-dialog, .ptv-popover, .ptv-menu, .ptv-library, .ptv-tv) *, :is(.ptv-dialog, .ptv-popover, .ptv-menu, .ptv-library, .ptv-tv) *::before, :is(.ptv-dialog, .ptv-popover, .ptv-menu, .ptv-library, .ptv-tv) *::after,
   :is(.ptv-fade-in, .ptv-content-in, .ptv-scrim-in, .ptv-scrim-out, .ptv-modal-in, .ptv-modal-out, .ptv-pop-in, .ptv-drawer-in, .ptv-drawer-out, .ptv-sheet-in) { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
 }
+
+/* Semantic action surfaces keep readable foregrounds even with legacy utility variants. */
+html[data-moontvplus] :is(.bg-apex-action,.from-apex-action) { color:var(--ptv-action-ink); }

@@ -1,7 +1,7 @@
 'use client';
 
 import { ChevronLeft, ChevronRight } from 'lucide-react';
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { smoothScrollBehavior } from '@/lib/motion';
 
@@ -21,8 +21,11 @@ export default function VirtualScrollableRow({
   const [showRightScroll, setShowRightScroll] = useState(false);
   const [visibleRange, setVisibleRange] = useState({ start: 0, end: maxVisible });
 
-  // 检查滚动状态
-  const checkScroll = () => {
+  const strideRef = useRef(208);
+  const [itemStride, setItemStride] = useState(208);
+
+  // Scroll bookkeeping follows the measured card width, including responsive layouts.
+  const checkScroll = useCallback(() => {
     if (!containerRef.current) return;
 
     const { scrollLeft, scrollWidth, clientWidth } = containerRef.current;
@@ -33,7 +36,7 @@ export default function VirtualScrollableRow({
     setShowRightScroll(canScrollRight);
 
     // 计算可见范围（基于滚动位置）
-    const itemWidth = 208; // 每个项目约 200px + 8px gap
+    const itemWidth = strideRef.current;
     const scrolledItems = Math.floor(scrollLeft / itemWidth);
     const visibleItems = Math.ceil(clientWidth / itemWidth);
 
@@ -42,24 +45,36 @@ export default function VirtualScrollableRow({
     const newStart = Math.max(0, scrolledItems - bufferSize);
     const newEnd = Math.min(children.length, scrolledItems + visibleItems + bufferSize);
 
-    setVisibleRange({ start: newStart, end: newEnd });
-  };
-
-  useEffect(() => {
-    checkScroll();
-    const container = containerRef.current;
-
-    if (container) {
-      container.addEventListener('scroll', checkScroll);
-      return () => container.removeEventListener('scroll', checkScroll);
-    }
+    setVisibleRange((previous) => previous.start === newStart && previous.end === newEnd ? previous : { start: newStart, end: newEnd });
   }, [children.length]);
 
-  // 监听窗口大小变化
   useEffect(() => {
-    window.addEventListener('resize', checkScroll);
-    return () => window.removeEventListener('resize', checkScroll);
-  }, []);
+    const container = containerRef.current;
+    if (!container) return;
+    const measure = () => {
+      const card = Array.from(container.children).find((child) => !child.hasAttribute('data-virtual-spacer')) as HTMLElement | undefined;
+      if (card) {
+        const gap = Number.parseFloat(window.getComputedStyle(container).columnGap) || 8;
+        const stride = card.getBoundingClientRect().width + gap;
+        if (stride > 0 && Math.abs(stride - strideRef.current) > 0.5) {
+          strideRef.current = stride;
+          setItemStride(stride);
+        }
+      }
+      checkScroll();
+    };
+    const frame = window.requestAnimationFrame(measure);
+    const observer = typeof ResizeObserver === 'undefined' ? null : new ResizeObserver(measure);
+    observer?.observe(container);
+    container.addEventListener('scroll', checkScroll, { passive: true });
+    window.addEventListener('resize', measure);
+    return () => {
+      window.cancelAnimationFrame(frame);
+      observer?.disconnect();
+      container.removeEventListener('scroll', checkScroll);
+      window.removeEventListener('resize', measure);
+    };
+  }, [checkScroll]);
 
   const scrollLeft = () => {
     if (containerRef.current) {
@@ -105,7 +120,7 @@ export default function VirtualScrollableRow({
       >
         {/* 左侧占位符（用于保持滚动位置） */}
         {visibleRange.start > 0 && (
-          <div style={{ minWidth: visibleRange.start * 208, flexShrink: 0 }} />
+          <div data-virtual-spacer style={{ minWidth: Math.max(0, visibleRange.start * itemStride - 8), flexShrink: 0 }} />
         )}
 
         {/* 渲染可见项目 */}
@@ -113,7 +128,7 @@ export default function VirtualScrollableRow({
 
         {/* 右侧占位符 */}
         {visibleRange.end < children.length && (
-          <div style={{ minWidth: (children.length - visibleRange.end) * 208, flexShrink: 0 }} />
+          <div data-virtual-spacer style={{ minWidth: Math.max(0, (children.length - visibleRange.end) * itemStride - 8), flexShrink: 0 }} />
         )}
       </div>
 

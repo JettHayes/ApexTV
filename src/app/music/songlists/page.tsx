@@ -4,6 +4,11 @@ import { ChevronDown, Disc3 } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
+import { reportAppError,requestJson } from '@/lib/app-error';
+import { cn } from '@/lib/cn';
+import { musicSources, normalizeSource } from '@/lib/music/shared';
+
+import ErrorNotice from '@/components/ErrorNotice';
 import CoverCard from '@/components/music/CoverCard';
 import MusicEmpty, { MusicCardGridSkeleton } from '@/components/music/MusicEmpty';
 import MusicPage from '@/components/music/MusicPage';
@@ -30,8 +35,6 @@ import {
   MUSIC_TAG_IDLE,
   MUSIC_TAG_WRAP,
 } from '@/components/music/tokens';
-import { cn } from '@/lib/cn';
-import { musicSources, normalizeSource } from '@/lib/music/shared';
 
 interface SongListItem {
   id: string;
@@ -103,6 +106,10 @@ export default function MusicSongListsPage() {
   // 两个初值都给 true，理由同 rankings 页：挂载即发请求，false 会先闪一帧空态。
   const [loadingTags, setLoadingTags] = useState(true);
   const [loadingList, setLoadingList] = useState(true);
+  const [listError, setListError] = useState<unknown>(null);
+  const [tagError, setTagError] = useState<unknown>(null);
+  const [retryList, setRetryList] = useState(0);
+  const [retryTags, setRetryTags] = useState(0);
   const [total, setTotal] = useState(0);
   const [activeTagLabel, setActiveTagLabel] = useState(tagId);
   const [activeSource, setActiveSource] = useState(source);
@@ -156,13 +163,13 @@ export default function MusicSongListsPage() {
     const cacheKey = `music_songlist_tags_${source}`;
     const cached = readCache<{ groups: SongListGroup[]; hotTags: SongListTag[] }>(cacheKey);
     setLoadingTags(true);
+    setTagError(null);
     if (cached) {
       setGroups(cached.groups || []);
       setHotTags(cached.hotTags || []);
     }
 
-    fetch(`/api/music/v2/discovery/songlist-tags?source=${source}`)
-      .then((res) => res.json())
+    requestJson<any>(`/api/music/v2/discovery/songlist-tags?source=${source}`, undefined, '获取歌单分类')
       .then((data) => {
         if (data.success) {
           const next = {
@@ -177,26 +184,28 @@ export default function MusicSongListsPage() {
           setHotTags([]);
         }
       })
-      .catch(() => {
+      .catch((error) => {
+        reportAppError(error, '获取歌单分类');
         if (!cached) {
+          setTagError(error);
           setGroups([]);
           setHotTags([]);
         }
       })
       .finally(() => setLoadingTags(false));
-  }, [source]);
+  }, [source, retryTags]);
 
   useEffect(() => {
     const cacheKey = `music_songlists_${source}_${tagId}_${sortId}_${page}`;
     const cached = readCache<{ list: SongListItem[]; total: number }>(cacheKey);
     setLoadingList(true);
+    setListError(null);
     if (cached) {
       setSongLists(cached.list || []);
       setTotal(cached.total || 0);
     }
 
-    fetch(`/api/music/v2/discovery/songlists?source=${source}&tagId=${encodeURIComponent(tagId)}&sortId=${encodeURIComponent(sortId)}&page=${page}`)
-      .then((res) => res.json())
+    requestJson<any>(`/api/music/v2/discovery/songlists?source=${source}&tagId=${encodeURIComponent(tagId)}&sortId=${encodeURIComponent(sortId)}&page=${page}`, undefined, '获取歌单')
       .then((data) => {
         if (data.success) {
           const next = {
@@ -211,14 +220,16 @@ export default function MusicSongListsPage() {
           setTotal(0);
         }
       })
-      .catch(() => {
+      .catch((error) => {
+        reportAppError(error, '获取歌单');
         if (!cached) {
+          setListError(error);
           setSongLists([]);
           setTotal(0);
         }
       })
       .finally(() => setLoadingList(false));
-  }, [source, tagId, sortId, page]);
+  }, [source, tagId, sortId, page, retryList]);
 
   const openDetail = (item: SongListItem) => {
     router.push(`/music/songlists/${item.source}/${encodeURIComponent(item.id)}?name=${encodeURIComponent(item.name)}`);
@@ -249,7 +260,7 @@ export default function MusicSongListsPage() {
         />
       }
     >
-      <div className='mb-5 flex flex-wrap items-center justify-between gap-3'>
+      <div className='f1-music-filterbar mb-5 flex flex-wrap items-center justify-between gap-3'>
         {/* 两个选项：摊开比收进下拉少一次点击，也不用记"现在选的是哪个"。 */}
         <div className={MUSIC_SEG} role='group' aria-label='排序'>
           {sortOptions.map((item) => (
@@ -297,7 +308,7 @@ export default function MusicSongListsPage() {
               />
               {/* 右侧贴齐触发器、向左展开；宽度上限留出 3rem 而不是 2rem——
                   100vw 在有没有竖向滚动条时会差十几 px，窄屏上正好会把面板顶出左边。 */}
-              <div className='ptv-pop-in origin-top-right absolute right-0 top-[calc(100%+6px)] z-[60] max-h-[min(70vh,520px)] w-[min(760px,calc(100vw-3rem))] overflow-auto rounded-[4px] border border-music-edge bg-music-paper p-4 shadow-[0_18px_40px_-18px_rgba(0,0,0,0.55)] dark:border-music-night-edge dark:bg-music-night-card'>
+              <div className="ptv-pop-in origin-top-right absolute right-0 top-[calc(100%+6px)] z-[60] max-h-[min(70vh,520px)] w-[min(760px,calc(100vw-3rem))] overflow-auto rounded-[4px] border border-music-edge bg-music-paper p-4 shadow-[0_18px_40px_-18px_var(--ptv-media-bg-alpha-55)] dark:border-music-night-edge dark:bg-music-night-card">
                 {tagId ? (
                   <button
                     type='button'
@@ -310,6 +321,8 @@ export default function MusicSongListsPage() {
 
                 {loadingTags ? (
                   <p className={cn(MUSIC_LABEL, 'py-6 text-center')}>正在取分类…</p>
+                ) : tagError ? (
+                  <ErrorNotice error={tagError} context='获取歌单分类' onRetry={() => setRetryTags((value) => value + 1)} />
                 ) : flatTags.length === 0 ? (
                   <p className={cn(MUSIC_MUTED, 'py-6 text-center font-music-body text-[calc(12*var(--music-px))]')}>
                     当前音源无法获取此分类
@@ -367,8 +380,10 @@ export default function MusicSongListsPage() {
 
       {loadingList ? (
         <MusicCardGridSkeleton count={10} />
+      ) : listError ? (
+        <ErrorNotice error={listError} context='获取歌单' onRetry={() => setRetryList((value) => value + 1)} />
       ) : songLists.length > 0 ? (
-        <div className={MUSIC_COVER_GRID}>
+        <div className={`${MUSIC_COVER_GRID} f1-album-grid`}>
           {songLists.map((item) => (
             <CoverCard
               key={item.id}

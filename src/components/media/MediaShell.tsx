@@ -40,12 +40,14 @@ export default function MediaShell({
   backHref,
   tabs,
   reader,
+  hideHeader = false,
 }: {
   children: React.ReactNode;
   siteName: string;
   title: string;
   subtitle?: string;
   backHref?: string;
+  hideHeader?: boolean;
   tabs: MediaShellTab[];
   reader?: {
     actions: React.ReactNode;
@@ -65,7 +67,7 @@ export default function MediaShell({
         LIBRARY_TEXT
       )}
     >
-      <header
+      {!hideHeader && <header
         className={
           isReader
             ? 'fixed inset-x-0 top-0 z-40 border-b border-library-edge bg-library-paper/95 dark:border-library-night-edge dark:bg-library-night/95'
@@ -77,7 +79,7 @@ export default function MediaShell({
           className={
             isReader
               ? 'mx-auto flex h-14 max-w-7xl items-center gap-3 px-3 sm:h-16 sm:px-6'
-              : 'apex-media-header-inner'
+              : 'apex-media-header-inner f1-reading-toolbar'
           }
         >
           <div
@@ -156,7 +158,7 @@ export default function MediaShell({
             </>
           )}
         </div>
-      </header>
+      </header>}
 
       <div
         role={isReader ? 'main' : undefined}

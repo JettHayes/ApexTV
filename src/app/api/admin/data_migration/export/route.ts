@@ -1,3 +1,4 @@
+import { appErrorPayload, reportAppError } from '@/lib/app-error';
 /* eslint-disable @typescript-eslint/no-explicit-any,no-console */
 
 import { NextRequest, NextResponse } from 'next/server';
@@ -157,7 +158,7 @@ export async function POST(req: NextRequest) {
             }
           };
         } catch (error) {
-          console.error(`导出用户 ${username} 数据失败:`, error);
+          reportAppError(error, "后台配置服务");
           return null;
         }
       });
@@ -219,14 +220,14 @@ export async function POST(req: NextRequest) {
     });
 
   } catch (error) {
-    console.error('数据导出失败:', error);
+    reportAppError(error, "数据导出失败");
     // 清除进度信息
     const authInfo = getAuthInfoFromCookie(req);
     if (authInfo?.username) {
       clearProgress(authInfo.username, 'export');
     }
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : '导出失败' },
+      {...{ error: error instanceof Error ? error.message : '导出失败' }, ...appErrorPayload(error, "后台配置服务", 500)},
       { status: 500 }
     );
   }
@@ -269,7 +270,7 @@ async function getUserPasswordV2(username: string): Promise<string | null> {
 
     return null;
   } catch (error) {
-    console.error(`获取用户 ${username} V2密码失败:`, error);
+    reportAppError(error, "后台配置服务");
     return null;
   }
 }

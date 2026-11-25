@@ -1,5 +1,8 @@
 'use client';
 
+import { formatAppError, reportAppError } from '@/lib/app-error';
+
+
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { useWatchRoomContextSafe } from '@/components/WatchRoomProvider';
@@ -171,7 +174,7 @@ export function useScreenShare(qualityPreset: ScreenShareQualityPreset = 'smooth
         offer,
       });
     } catch (err) {
-      console.error('[ScreenShare] Failed to send offer:', err);
+      reportAppError(err, "屏幕共享");
       setError('无法建立屏幕共享连接');
     }
   }, [createPeerConnection, socket]);
@@ -225,8 +228,8 @@ export function useScreenShare(qualityPreset: ScreenShareQualityPreset = 'smooth
         members.filter((member) => !member.isOwner).map((member) => sendOfferToMember(member.id))
       );
     } catch (err: any) {
-      console.error('[ScreenShare] Failed to start sharing:', err);
-      setError(err?.message || '开启屏幕共享失败');
+      reportAppError(err, "屏幕共享");
+      setError(formatAppError(reportAppError(err?.message || '开启屏幕共享失败', "屏幕共享"), "屏幕共享"));
     } finally {
       setIsStarting(false);
     }
@@ -248,7 +251,7 @@ export function useScreenShare(qualityPreset: ScreenShareQualityPreset = 'smooth
           answer,
         });
       } catch (err) {
-        console.error('[ScreenShare] Failed to handle offer:', err);
+        reportAppError(err, "屏幕共享");
         setError('接收共享画面失败');
       }
     };
@@ -262,7 +265,7 @@ export function useScreenShare(qualityPreset: ScreenShareQualityPreset = 'smooth
       try {
         await pc.setRemoteDescription(new RTCSessionDescription(data.answer));
       } catch (err) {
-        console.error('[ScreenShare] Failed to handle answer:', err);
+        reportAppError(err, "屏幕共享");
       }
     };
 
@@ -273,7 +276,7 @@ export function useScreenShare(qualityPreset: ScreenShareQualityPreset = 'smooth
       try {
         await pc.addIceCandidate(new RTCIceCandidate(data.candidate));
       } catch (err) {
-        console.error('[ScreenShare] Failed to handle ICE:', err);
+        reportAppError(err, "屏幕共享");
       }
     };
 

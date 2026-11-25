@@ -1,3 +1,4 @@
+import { formatAppError, reportAppError } from '@/lib/app-error';
 /* eslint-disable @typescript-eslint/no-explicit-any,no-console */
 
 import { NextRequest, NextResponse } from 'next/server';
@@ -91,13 +92,13 @@ export async function GET(request: NextRequest) {
       }
     );
   } catch (error) {
-    console.error('获取短剧分类失败:', error);
+    reportAppError(error, '获取短剧分类');
     return NextResponse.json(
       {
         code: 500,
         message: '获取短剧分类失败',
         data: [],
-        error: (error as Error).message,
+        error: formatAppError(error, '获取短剧分类'),
       },
       { status: 500 }
     );

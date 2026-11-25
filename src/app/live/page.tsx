@@ -2,6 +2,8 @@
 
 'use client';
 
+import { formatAppError, readJsonResponse, reportAppError } from '@/lib/app-error';
+
 import {
   ChevronDown,
   Download,
@@ -409,11 +411,7 @@ function LivePageClient() {
 
       // 获取 AdminConfig 中的直播源信息
       const response = await fetch('/api/live/sources');
-      if (!response.ok) {
-        throw new Error('获取直播源失败');
-      }
-
-      const result = await response.json();
+      const result = await readJsonResponse<any>(response, '获取直播源');
       if (!result.success) {
         throw new Error(result.error || '获取直播源失败');
       }
@@ -446,7 +444,8 @@ function LivePageClient() {
         setLoading(false);
       }, 1000);
     } catch (err) {
-      console.error('获取直播源失败:', err);
+      reportAppError(err, '获取直播源');
+      setError(formatAppError(err, '获取直播源'));
       // 不设置错误，而是显示空状态
       setLiveSources([]);
       setLoading(false);
@@ -460,11 +459,7 @@ function LivePageClient() {
 
       // 从 cachedLiveChannels 获取频道信息
       const response = await fetch(`/api/live/channels?source=${source.key}`);
-      if (!response.ok) {
-        throw new Error('获取频道列表失败');
-      }
-
-      const result = await response.json();
+      const result = await readJsonResponse<any>(response, '获取频道列表');
       if (!result.success) {
         throw new Error(result.error || '获取频道列表失败');
       }
@@ -552,7 +547,7 @@ function LivePageClient() {
                 origin: 'live',
               });
             } catch (err) {
-              console.error('保存播放记录失败:', err);
+              reportAppError(err, '保存播放记录');
             }
           }
 
@@ -608,7 +603,8 @@ function LivePageClient() {
 
       setIsVideoLoading(false);
     } catch (err) {
-      console.error('获取频道列表失败:', err);
+      reportAppError(err, '获取频道列表');
+      setError(formatAppError(err, '获取频道列表'));
       // 不设置错误，而是设置空频道列表
       setCurrentChannels([]);
       setGroupedChannels({});
@@ -654,7 +650,7 @@ function LivePageClient() {
       const newUrl = `?${newSearchParams.toString()}`;
       router.replace(newUrl);
     } catch (err) {
-      console.error('切换直播源失败:', err);
+      reportAppError(err, '切换直播源');
       // 不设置错误，保持当前状态
     } finally {
       // 切换完成，解锁频道切换器
@@ -682,7 +678,7 @@ function LivePageClient() {
           }
         }
       } catch (error) {
-        console.error('获取节目单信息失败:', error);
+        reportAppError(error, '获取节目单信息');
       } finally {
         setIsEpgLoading(false); // 无论成功失败都结束加载状态
       }
@@ -744,7 +740,7 @@ function LivePageClient() {
           origin: 'live',
         });
       } catch (err) {
-        console.error('保存播放记录失败:', err);
+        reportAppError(err, '保存播放记录');
       }
     }
   };
@@ -981,7 +977,7 @@ function LivePageClient() {
         artPlayerRef.current.notice.show = `超分已启用 (${anime4kModeRef.current}, ${scale}x)`;
       }
     } catch (err) {
-      console.error('初始化Anime4K失败:', err);
+      reportAppError(err, '初始化Anime4K');
 
       // 清理已创建的资源
       if (frameRequestId) {
@@ -1001,7 +997,7 @@ function LivePageClient() {
 
       // 显示错误信息
       if (artPlayerRef.current) {
-        const errorMsg = err instanceof Error ? err.message : '未知错误';
+        const errorMsg = formatAppError(err, '初始化超分');
         artPlayerRef.current.notice.show = '超分启用失败：' + errorMsg;
       }
 
@@ -1051,7 +1047,7 @@ function LivePageClient() {
 
         console.log('Anime4K已清理');
       } catch (err) {
-        console.warn('清理Anime4K时出错:', err);
+        reportAppError(err, '清理Anime4K时', { level: 'warn' });
       }
     }
   };
@@ -1075,7 +1071,7 @@ function LivePageClient() {
       localStorage.setItem('enable_anime4k', String(enabled));
       return enabled;
     } catch (err) {
-      console.error('切换超分状态失败:', err);
+      reportAppError(err, '切换超分状态');
       if (artPlayerRef.current) {
         artPlayerRef.current.notice.show = '切换超分状态失败';
       }
@@ -1101,7 +1097,7 @@ function LivePageClient() {
         await initAnime4K();
       }
     } catch (err) {
-      console.error('更改超分模式失败:', err);
+      reportAppError(err, '更改超分模式');
       if (artPlayerRef.current) {
         artPlayerRef.current.notice.show = '更改超分模式失败';
       }
@@ -1126,7 +1122,7 @@ function LivePageClient() {
         await initAnime4K();
       }
     } catch (err) {
-      console.error('更改超分倍数失败:', err);
+      reportAppError(err, '更改超分倍数');
       if (artPlayerRef.current) {
         artPlayerRef.current.notice.show = '更改超分倍数失败';
       }
@@ -1168,7 +1164,7 @@ function LivePageClient() {
             // 确保引用被清空
             artPlayerRef.current.video.flv = null;
           } catch (flvError) {
-            console.warn('FLV实例销毁时出错:', flvError);
+            reportAppError(flvError, 'FLV实例销毁时', { level: 'warn' });
             // 强制清空引用
             artPlayerRef.current.video.flv = null;
           }
@@ -1186,7 +1182,7 @@ function LivePageClient() {
         artPlayerRef.current.destroy();
         artPlayerRef.current = null;
       } catch (err) {
-        console.warn('清理播放器资源时出错:', err);
+        reportAppError(err, '清理播放器资源时', { level: 'warn' });
         artPlayerRef.current = null;
       }
     }
@@ -1584,7 +1580,7 @@ function LivePageClient() {
         speedKBps: 0,
         bytesRead: 0,
         testedAt: Date.now(),
-        error: error instanceof Error ? error.message : '客户端测速失败',
+        error: formatAppError(error, '直播线路测速'),
       };
     } finally {
       window.clearTimeout(timeout);
@@ -1643,7 +1639,7 @@ function LivePageClient() {
             const failResult: LiveLineTestResult = {
               status: 'fail',
               testedAt: Date.now(),
-              error: error instanceof Error ? error.message : '测速失败',
+              error: formatAppError(error, '直播线路测速'),
             };
             results[key] = failResult;
             commitTestResults({
@@ -1858,13 +1854,13 @@ function LivePageClient() {
           await deleteFavorite(`live_${currentSourceRef.current.key}`, `live_${currentChannelRef.current.id}`);
         }
       } catch (err) {
-        console.error('收藏操作失败:', err);
+        reportAppError(err, '收藏操作');
         // 如果操作失败，回滚状态
         setFavorited(currentFavorited);
         favoritedRef.current = currentFavorited;
       }
     } catch (err) {
-      console.error('切换收藏失败:', err);
+      reportAppError(err, '切换收藏');
     }
   };
 
@@ -1889,7 +1885,7 @@ function LivePageClient() {
         console.log('WebGPU支持检测：✅ 支持');
       } catch (err) {
         setWebGPUSupported(false);
-        console.log('WebGPU不支持：', err);
+        reportAppError(err, '检测 WebGPU', { level: 'warn' });
       }
     };
 
@@ -1910,7 +1906,7 @@ function LivePageClient() {
         setFavorited(fav);
         favoritedRef.current = fav;
       } catch (err) {
-        console.error('检查收藏状态失败:', err);
+        reportAppError(err, '检查收藏状态');
       }
     })();
   }, [currentSource, currentChannel]);
@@ -2037,7 +2033,7 @@ function LivePageClient() {
         video.hls.destroy();
         video.hls = null;
       } catch (err) {
-        console.warn('清理 HLS 实例时出错:', err);
+        reportAppError(err, '清理 HLS 实例时', { level: 'warn' });
       }
     }
 
@@ -2055,8 +2051,8 @@ function LivePageClient() {
     hls.attachMedia(video);
     video.hls = hls;
 
-    hls.on(Hls.Events.ERROR, function (event: any, data: any) {
-      console.error('HLS Error:', event, data);
+    hls.on(Hls.Events.ERROR, function (_event: any, data: any) {
+      if (data.fatal) reportAppError(new Error(data.type === Hls.ErrorTypes.NETWORK_ERROR ? 'NetworkError' : data.type === Hls.ErrorTypes.MEDIA_ERROR ? 'MEDIA_ERR_DECODE' : '播放流异常'), '播放直播');
 
       if (data.fatal) {
         switch (data.type) {
@@ -2089,7 +2085,7 @@ function LivePageClient() {
         video.flv.destroy();
         video.flv = null;
       } catch (err) {
-        console.warn('清理 FLV 实例时出错:', err);
+        reportAppError(err, '清理 FLV 实例时', { level: 'warn' });
       }
     }
 
@@ -2099,8 +2095,8 @@ function LivePageClient() {
       isLive: true
     });
     flvPlayer.attachMediaElement(video);
-    flvPlayer.on(flvjs.Events.ERROR, (errorType: string, errorDetail: string) => {
-      console.error('FLV.js error:', errorType, errorDetail);
+    flvPlayer.on(flvjs.Events.ERROR, () => {
+      reportAppError(new Error('NetworkError'), '播放直播');
     });
     flvPlayer.load();
     video.flv = flvPlayer;
@@ -2120,7 +2116,6 @@ function LivePageClient() {
         return;
       }
 
-      console.log('视频URL:', videoUrl);
 
       // 销毁之前的播放器实例并创建新的
       if (artPlayerRef.current) {
@@ -2139,21 +2134,15 @@ function LivePageClient() {
         try {
           const precheckUrl = `/api/live/precheck?url=${encodeURIComponent(videoUrl)}&moontv-source=${currentSourceRef.current?.key || ''}`;
           const precheckResponse = await fetch(precheckUrl);
-          if (!precheckResponse.ok) {
-            console.error('预检查失败:', precheckResponse.statusText);
-            setIsVideoLoading(false);
-            return;
-          }
-          const precheckResult = await precheckResponse.json();
+          const precheckResult = await readJsonResponse<any>(precheckResponse, '检查直播线路');
           if (precheckResult?.success && precheckResult?.type) {
             type = precheckResult.type;
           } else {
-            console.error('预检查返回无效结果:', precheckResult);
-            setIsVideoLoading(false);
-            return;
+            throw new Error('直播线路返回的数据格式无效');
           }
         } catch (err) {
-          console.error('预检查异常:', err);
+          reportAppError(err, '检查直播线路');
+          setError(formatAppError(err, '检查直播线路'));
           setIsVideoLoading(false);
           return;
         }
@@ -2212,7 +2201,7 @@ function LivePageClient() {
           playsInline: true,
           autoPlayback: false,
           airplay: true,
-          theme: '#22c55e',
+          theme: 'var(--ptv-action)',
           lang: 'zh-cn',
           hotkey: false,
           fastForward: false, // 直播不需要快进
@@ -2233,7 +2222,7 @@ function LivePageClient() {
               {
                 name: 'Anime4K超分',
                 html: 'Anime4K超分',
-                icon: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 2L2 7v10c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V7l-10-5zm0 18c-4 0-7-3-7-7V9l7-3.5L19 9v4c0 4-3 7-7 7z" fill="#ffffff"/><path d="M10 12l2 2 4-4" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+                icon: "<svg width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" xmlns=\"http://www.w3.org/2000/svg\"><path d=\"M12 2L2 7v10c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V7l-10-5zm0 18c-4 0-7-3-7-7V9l7-3.5L19 9v4c0 4-3 7-7 7z\" fill=\"var(--ptv-media-text)\"/><path d=\"M10 12l2 2 4-4\" stroke=\"var(--ptv-media-text)\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/></svg>",
                 switch: anime4kEnabledRef.current,
                 onSwitch: async function (item: any) {
                   const newVal = !item.switch;
@@ -2341,7 +2330,7 @@ function LivePageClient() {
         });
 
         artPlayerRef.current.on('error', (err: any) => {
-          console.error('播放器错误:', err);
+          reportAppError(err, '播放直播');
         });
 
         if (artPlayerRef.current?.video) {
@@ -2352,7 +2341,8 @@ function LivePageClient() {
         }
 
       } catch (err) {
-        console.error('创建播放器失败:', err);
+        reportAppError(err, '初始化直播播放器');
+        setError(formatAppError(err, '初始化直播播放器'));
         // 不设置错误，只记录日志
       }
     }
@@ -2465,17 +2455,17 @@ function LivePageClient() {
                 <>
                   {/* 动画直播图标 */}
                   <div className='relative mb-8'>
-                    <div className='relative mx-auto w-24 h-24 bg-gradient-to-r from-green-500 to-emerald-600 rounded-2xl shadow-2xl flex items-center justify-center transform hover:scale-105 transition-transform duration-300'>
+                    <div className="relative mx-auto w-24 h-24 bg-gradient-to-r from-apex-media-panel to-apex-media-high rounded-2xl shadow-2xl flex items-center justify-center transform hover:scale-105 transition-transform duration-300">
                       <div className='text-white text-4xl'>📺</div>
                       {/* 旋转光环 */}
-                      <div className='absolute -inset-2 bg-gradient-to-r from-green-500 to-emerald-600 rounded-2xl opacity-20 animate-spin'></div>
+                      <div className="absolute -inset-2 bg-gradient-to-r from-apex-media-panel to-apex-media-high rounded-2xl opacity-20 animate-spin"></div>
                     </div>
 
                     {/* 浮动粒子效果 */}
                     <div className='absolute top-0 left-0 w-full h-full pointer-events-none'>
                       <div className='absolute top-2 left-2 w-2 h-2 bg-green-400 rounded-full animate-bounce'></div>
                       <div
-                        className='absolute top-4 right-4 w-1.5 h-1.5 bg-emerald-400 rounded-full animate-bounce'
+                        className="absolute top-4 right-4 w-1.5 h-1.5 bg-apex-action rounded-full animate-bounce"
                         style={{ animationDelay: '0.5s' }}
                       ></div>
                       <div
@@ -2505,7 +2495,7 @@ function LivePageClient() {
                     {/* 进度条 */}
                     <div className='w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2 overflow-hidden'>
                       <div
-                        className='h-full bg-gradient-to-r from-green-500 to-emerald-600 rounded-full transition-all duration-1000 ease-out'
+                        className="h-full bg-gradient-to-r from-apex-media-panel to-apex-media-high rounded-full transition-all duration-1000 ease-out"
                         style={{
                           width:
                             loadingStage === 'loading' ? '33%' : loadingStage === 'fetching' ? '66%' : '100%',
@@ -2572,7 +2562,7 @@ function LivePageClient() {
             <div className='space-y-3'>
               <button
                 onClick={() => window.location.reload()}
-                className='flex w-full items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-500 to-cyan-600 text-white rounded-xl font-medium hover:from-blue-600 hover:to-cyan-700 transform hover:scale-105 transition-all duration-200 shadow-lg hover:shadow-xl'
+                className="flex w-full items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-apex-action to-apex-action text-apex-action-ink rounded-xl font-medium hover:from-apex-action hover:to-apex-action transform hover:scale-105 transition-all duration-200 shadow-lg hover:shadow-xl"
               >
                 <RefreshCw className='h-4 w-4 flex-shrink-0' />
                 重新尝试
@@ -2586,10 +2576,10 @@ function LivePageClient() {
 
   return (
     <PageLayout activePath='/live'>
-      <div className='ptv-live-page apex-live-content flex flex-col gap-4'>
+      <div className='ptv-live-page apex-live-content f1-tv-live-page flex flex-col gap-4'>
         <LiveTabs active='live' />
         {/* 第一行：页面标题 */}
-        <div className='py-1'>
+        <div className='f1-broadcast-page-heading py-1'>
           <h1 className='text-xl font-semibold text-gray-900 dark:text-gray-100 flex items-center gap-2 max-w-[80%]'>
             <Radio className='w-5 h-5 text-blue-500 flex-shrink-0' />
             <div className='min-w-0 flex-1'>
@@ -2611,9 +2601,9 @@ function LivePageClient() {
         </div>
 
         {/* 第二行：播放器和频道列表 */}
-        <div className='space-y-2'>
+        <div className='f1-broadcast-workspace space-y-2'>
           {/* 折叠控制 - 仅在 lg 及以上屏幕显示 */}
-          <div className='hidden lg:flex justify-end'>
+          <div className='f1-broadcast-view-toggle hidden lg:flex justify-end'>
             <button
               onClick={() =>
                 setIsChannelListCollapsed(!isChannelListCollapsed)
@@ -2651,7 +2641,7 @@ function LivePageClient() {
             </button>
           </div>
 
-          <div className={`ptv-player-grid ${isChannelListCollapsed ? 'ptv-player-grid-collapsed' : ''}`}>
+          <div className={`ptv-player-grid f1-tv-broadcast-grid ${isChannelListCollapsed ? 'ptv-player-grid-collapsed' : ''}`}>
             {/* 播放器 */}
             <div className='ptv-player-stage'>
               <div className='ptv-player-canvas relative w-full aspect-video'>
@@ -2703,9 +2693,9 @@ function LivePageClient() {
                         legacy={
                           <>
                             <div className='relative mb-8'>
-                              <div className='relative mx-auto w-24 h-24 bg-gradient-to-r from-green-500 to-emerald-600 rounded-2xl shadow-2xl flex items-center justify-center transform hover:scale-105 transition-transform duration-300'>
+                              <div className="relative mx-auto w-24 h-24 bg-gradient-to-r from-apex-media-panel to-apex-media-high rounded-2xl shadow-2xl flex items-center justify-center transform hover:scale-105 transition-transform duration-300">
                                 <div className='text-white text-4xl'>📺</div>
-                                <div className='absolute -inset-2 bg-gradient-to-r from-green-500 to-emerald-600 rounded-2xl opacity-20 animate-spin'></div>
+                                <div className="absolute -inset-2 bg-gradient-to-r from-apex-media-panel to-apex-media-high rounded-2xl opacity-20 animate-spin"></div>
                               </div>
                             </div>
                             <div className='space-y-2'>
@@ -2895,11 +2885,11 @@ function LivePageClient() {
             </div>
 
             {/* 频道列表 */}
-            <div className='ptv-player-panel overflow-hidden'>
+            <div className='ptv-player-panel f1-channel-panel overflow-hidden'>
               <div className='px-4 py-0 h-full flex flex-col overflow-hidden'>
                 {/* 主要的 Tab 切换 */}
-                <div className='flex mb-1 -mx-4 flex-shrink-0'>
-                  <div
+                <div className='f1-broadcast-tabs flex mb-1 -mx-4 flex-shrink-0'>
+                  <button type='button' aria-pressed={activeTab === 'channels'}
                     onClick={() => setActiveTab('channels')}
                     className={`flex-1 py-3 px-6 text-center cursor-pointer transition-all duration-200 font-medium
                       ${activeTab === 'channels'
@@ -2909,8 +2899,8 @@ function LivePageClient() {
                     `.trim()}
                   >
                     频道
-                  </div>
-                  <div
+                  </button>
+                  <button type='button' aria-pressed={activeTab === 'sources'}
                     onClick={() => setActiveTab('sources')}
                     className={`flex-1 py-3 px-6 text-center cursor-pointer transition-all duration-200 font-medium
                       ${activeTab === 'sources'
@@ -2920,14 +2910,14 @@ function LivePageClient() {
                     `.trim()}
                   >
                     直播源
-                  </div>
+                  </button>
                 </div>
 
                 {/* 频道 Tab 内容 */}
                 {activeTab === 'channels' && (
                   <div className='ptv-content-in flex flex-col flex-1 min-h-0'>
                     {/* 搜索框 */}
-                    <div className='mb-3 -mx-4 px-4 flex-shrink-0'>
+                    <div className='f1-broadcast-search mb-3 -mx-4 px-4 flex-shrink-0'>
                       <div className='relative'>
                         <input
                           type='text'
@@ -2976,7 +2966,7 @@ function LivePageClient() {
                     </div>
 
                     {/* 分组标签 */}
-                    <div className='flex items-center gap-4 mb-4 border-b border-gray-300 dark:border-gray-700 -mx-4 px-4 flex-shrink-0'>
+                    <div className='f1-broadcast-filters flex items-center gap-4 mb-4 border-b border-gray-300 dark:border-gray-700 -mx-4 px-4 flex-shrink-0'>
                       {/* 切换状态提示 */}
                       {isSwitchingSource && (
                         <div className='flex items-center gap-2 text-sm text-amber-600 dark:text-amber-400'>
@@ -3373,13 +3363,10 @@ function LivePageClient() {
                 )}
               </div>
             </div>
-          </div>
-        </div>
-
         {/* 当前频道信息 */}
         {currentChannel && (
-          <div className='pt-4'>
-            <div className='flex flex-col lg:flex-row gap-4'>
+          <section className='f1-broadcast-channel-info' aria-label='频道信息与节目单'>
+            <div className='f1-broadcast-channel-heading flex flex-col lg:flex-row gap-4'>
               {/* 频道图标+名称 - 在小屏幕上占100%，大屏幕占20% */}
               <div className='w-full flex-shrink-0'>
                 <div className='flex items-center gap-4'>
@@ -3420,13 +3407,20 @@ function LivePageClient() {
             </div>
 
             {/* EPG节目单 */}
+            <div className='f1-broadcast-programs'><h2>节目单</h2>
             <EpgScrollableRow
               programs={epgData?.programs || []}
               currentTime={new Date()}
               isLoading={isEpgLoading}
+              compact
             />
-          </div>
+            </div>
+          </section>
         )}
+          </div>
+        </div>
+
+
       </div>
     </PageLayout>
   );
@@ -3443,8 +3437,8 @@ const FavoriteIcon = ({ filled }: { filled: boolean }) => {
       >
         <path
           d='M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z'
-          fill='#ef4444' /* Tailwind red-500 */
-          stroke='#ef4444'
+          fill="var(--ptv-error)" /* Tailwind red-500 */
+          stroke="var(--ptv-error)"
           strokeWidth='2'
           strokeLinecap='round'
           strokeLinejoin='round'

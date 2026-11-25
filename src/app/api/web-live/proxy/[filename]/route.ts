@@ -1,3 +1,4 @@
+import { reportAppError } from '@/lib/app-error';
 import { NextRequest, NextResponse } from 'next/server';
 
 import { requireFeaturePermission } from '@/lib/permissions';
@@ -90,8 +91,9 @@ export async function GET(request: NextRequest) {
       if (value) outputHeaders.set(name, value);
     }
     return new NextResponse(stream, { status: response.status, headers: outputHeaders });
-  } catch {
+  } catch (error) {
     cleanup?.();
-    return NextResponse.json({ error: '直播代理请求失败，请刷新线路后重试' }, { status: 502 });
+    const info = reportAppError(error, '请求直播代理');
+    return NextResponse.json({ error: '直播代理请求失败，请刷新线路后重试', code: info.code, upstreamStatus: info.upstreamStatus }, { status: 502 });
   }
 }

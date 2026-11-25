@@ -1,3 +1,4 @@
+import { appErrorPayload, reportAppError } from '@/lib/app-error';
 /* eslint-disable @typescript-eslint/no-explicit-any,no-console */
 
 import { NextRequest, NextResponse } from 'next/server';
@@ -471,7 +472,7 @@ export async function POST(request: NextRequest) {
       await db.deleteGlobalValue('duanju');
       console.log('已清除短剧视频源缓存');
     } catch (error) {
-      console.error('清除短剧视频源缓存失败:', error);
+      reportAppError(error, "清除短剧视频源缓存失败");
       // 不影响主流程，继续执行
     }
 
@@ -490,12 +491,12 @@ export async function POST(request: NextRequest) {
       },
     });
   } catch (error) {
-    console.error('视频源管理操作失败:', error);
+    reportAppError(error, "视频源管理操作失败");
     return NextResponse.json(
-      {
+      {...{
         error: '视频源管理操作失败',
         details: (error as Error).message,
-      },
+      }, ...appErrorPayload(error, "后台配置服务", 500)},
       { status: 500 }
     );
   }

@@ -1,22 +1,11 @@
 'use client';
 
+import { Disc3, Play } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 
 import { cn } from '@/lib/cn';
 import { subscribeRankingCover } from '@/lib/music/ranking-covers.client';
 import type { MusicSource } from '@/lib/music/types';
-
-import {
-  MUSIC_FACE,
-  MUSIC_FACE_BOTTOM,
-  MUSIC_FACE_CAT,
-  MUSIC_FACE_META,
-  MUSIC_FACE_NAME,
-  MUSIC_FACE_TOP,
-  MUSIC_SLEEVE,
-  MUSIC_SLEEVE_DISC,
-  MUSIC_SLEEVE_DISC_LABEL,
-} from './tokens';
 
 /** 榜单有封面时展示原图，缺图或加载失败时使用编号唱片套。 */
 export default function SleeveCard({
@@ -94,14 +83,10 @@ export default function SleeveCard({
       ref={rootRef}
       type='button'
       onClick={onOpen}
-      className={MUSIC_SLEEVE}
+      className='f1-album-card f1-ranking-card'
+      aria-label={`打开${name}榜单`}
     >
-      <span className='relative block aspect-square w-full'>
-        <span aria-hidden className={MUSIC_SLEEVE_DISC}>
-          <span className={MUSIC_SLEEVE_DISC_LABEL} />
-        </span>
-
-        <span className={cn(MUSIC_FACE, src && 'apex-sleeve-art')}>
+      <span className={cn('f1-album-art', src && 'f1-album-art--loaded')}>
           {src && (
             <>
               <img
@@ -113,23 +98,15 @@ export default function SleeveCard({
                 onError={() => setFailedCover(src)}
                 className='absolute inset-0 h-full w-full object-cover'
               />
-              <span
-                className='apex-sleeve-shade absolute inset-0'
-                aria-hidden
-              />
+              <span className='f1-album-shade' aria-hidden />
             </>
           )}
-          {top ? <span className={MUSIC_FACE_TOP}>{top}</span> : null}
-          {/* 名次就是这张套面的编号：不用 aria-hidden，它本来就是要读的内容。 */}
-          <span className={cn(MUSIC_FACE_CAT, src && 'apex-sleeve-rank')}>
-            {rankLabel}
-          </span>
-          <span className={MUSIC_FACE_BOTTOM}>
-            <span className={MUSIC_FACE_NAME}>{name}</span>
-            {meta ? <span className={MUSIC_FACE_META}>{meta}</span> : null}
-          </span>
-        </span>
+          {!src && <span className='f1-album-fallback' aria-hidden><Disc3 strokeWidth={.8} /></span>}
+          <span className='f1-album-rank'>{rankLabel}</span>
+          {top && <span className='f1-album-source'>{top}</span>}
+          <span className='f1-album-play' aria-hidden><Play size={22} fill='currentColor' /></span>
       </span>
+      <span className='f1-album-caption'><span className='f1-album-title'>{name}</span>{meta && <span className='f1-album-meta'>{meta}</span>}</span>
     </button>
   );
 }

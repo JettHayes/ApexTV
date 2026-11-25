@@ -25,7 +25,7 @@ export const LIBRARY_SERIF = 'font-book';
 
 /** 赭石强调：实心按钮。 */
 export const LIBRARY_BUTTON =
-  'inline-flex items-center justify-center gap-2 rounded-md bg-library-ochre px-4 py-2.5 text-sm font-medium text-white transition-colors duration-200 hover:bg-library-ochre-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-library-ochre focus-visible:ring-offset-2 focus-visible:ring-offset-library-paper dark:bg-library-night-ochre dark:text-library-night dark:hover:bg-library-night-ochre/90 dark:focus-visible:ring-library-night-ochre dark:focus-visible:ring-offset-library-night';
+  'inline-flex items-center justify-center gap-2 rounded-md bg-library-action px-4 py-2.5 text-sm font-medium text-library-action-ink transition-colors duration-200 hover:bg-[var(--ptv-action-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-library-ochre focus-visible:ring-offset-2 focus-visible:ring-offset-library-paper dark:focus-visible:ring-library-night-ochre dark:focus-visible:ring-offset-library-night';
 
 /** 赭石强调：描边按钮。 */
 export const LIBRARY_GHOST_BUTTON =
@@ -85,11 +85,11 @@ export const LIBRARY_ACCENT_ICON =
  * 会被封面图整个盖住，所以只能做成覆盖层。
  */
 export const BOOK_COVER_LIFT =
-  'shadow-[0_1px_2px_rgba(0,0,0,0.22),0_12px_24px_-16px_rgba(0,0,0,0.5)]';
+  "shadow-[0_1px_2px_var(--ptv-media-bg-alpha-22),0_12px_24px_-16px_var(--ptv-media-bg-alpha-50)]";
 
 /** 覆盖在封面之上的书脊层，必须放在 <img> 之后。 */
 export const BOOK_SPINE_OVERLAY =
-  'pointer-events-none absolute inset-0 shadow-[inset_3px_0_0_rgba(255,255,255,0.14),inset_6px_0_10px_-6px_rgba(0,0,0,0.55)]';
+  "pointer-events-none absolute inset-0 shadow-[inset_3px_0_0_var(--ptv-media-text-alpha-14),inset_6px_0_10px_-6px_var(--ptv-media-bg-alpha-55)]";
 
 /** 书架板：横滑 rail 底部那条木色细线。 */
 export const BOOK_SHELF_BOARD =

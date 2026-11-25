@@ -1,10 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-import { legadoClient } from '@/lib/legado.client';
+import { reportAppError } from '@/lib/app-error';
 import {
   BookRuleParseError,
   BookSourceRequestError,
 } from '@/lib/book-source-error';
+import { legadoClient } from '@/lib/legado.client';
 
 import { getAuthorizedBooksUsername } from '../../_utils';
 
@@ -39,7 +40,7 @@ export async function GET(request: NextRequest) {
     );
   } catch (error) {
     return NextResponse.json(
-      { error: (error as Error).message },
+      (({ code, message, status, upstreamStatus }) => ({ error: message, code, status, upstreamStatus }))(reportAppError(error, '电子书服务')),
       {
         status:
           error instanceof BookRuleParseError

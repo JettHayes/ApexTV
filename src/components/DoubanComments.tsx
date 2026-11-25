@@ -1,5 +1,8 @@
 'use client';
 
+import { formatAppError, readJsonResponse, reportAppError } from '@/lib/app-error';
+
+
 import { useCallback,useEffect, useState } from 'react';
 
 import { useEnableComments } from '@/hooks/useEnableComments';
@@ -49,7 +52,7 @@ export default function DoubanComments({ doubanId }: DoubanCommentsProps) {
         throw new Error('获取评论失败');
       }
 
-      const data = await response.json();
+      const data = await readJsonResponse<any>(response, "内容操作");
       console.log('获取到评论数据:', {
         newComments: data.comments.length,
         total: data.total,
@@ -70,8 +73,8 @@ export default function DoubanComments({ doubanId }: DoubanCommentsProps) {
       setHasMore(data.hasMore);
       console.log('更新后状态 - hasMore:', data.hasMore, 'total:', data.total);
     } catch (err) {
-      console.error('获取评论失败:', err);
-      setError(err instanceof Error ? err.message : '获取评论失败');
+      reportAppError(err, "获取评论失败");
+      setError(formatAppError(err, "内容操作"));
     } finally {
       setLoading(false);
     }
@@ -115,7 +118,7 @@ export default function DoubanComments({ doubanId }: DoubanCommentsProps) {
           <svg
             key={star}
             className='w-4 h-4'
-            fill={star <= rating ? '#f99b01' : '#e0e0e0'}
+            fill={star <= rating ? 'var(--ptv-rating)' : 'var(--ptv-line)'}
             viewBox='0 0 24 24'
           >
             <path d='M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z' />

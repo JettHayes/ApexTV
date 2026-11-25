@@ -1,3 +1,4 @@
+import { appErrorPayload } from '@/lib/app-error';
 import { NextRequest, NextResponse } from 'next/server';
 
 import type { AdminConfig } from '@/lib/admin.types';
@@ -85,7 +86,7 @@ export async function POST(request: NextRequest) {
     } catch (error) {
       if (error instanceof TelegramApiError) {
         return NextResponse.json(
-          {
+          {...{
             error: error.message,
             telegram: {
               status: error.status,
@@ -95,13 +96,13 @@ export async function POST(request: NextRequest) {
               apiBaseUrl: apiBaseUrl || 'https://api.telegram.org',
               apiProxyEnabled: Boolean(apiProxy),
             },
-          },
+          }, ...appErrorPayload(error, "后台配置服务", 502)},
           { status: 502 }
         );
       }
 
       return NextResponse.json(
-        { error: error instanceof Error ? error.message : 'Webhook 设置失败' },
+        {...{ error: error instanceof Error ? error.message : 'Webhook 设置失败' }, ...appErrorPayload(error, "后台配置服务", 502)},
         { status: 502 }
       );
     }

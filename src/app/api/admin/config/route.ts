@@ -1,3 +1,4 @@
+import { appErrorPayload, reportAppError } from '@/lib/app-error';
 /* eslint-disable no-console */
 
 import { NextRequest, NextResponse } from 'next/server';
@@ -56,12 +57,12 @@ export async function GET(request: NextRequest) {
       },
     });
   } catch (error) {
-    console.error('获取管理员配置失败:', error);
+    reportAppError(error, "获取管理员配置失败");
     return NextResponse.json(
-      {
+      {...{
         error: '获取管理员配置失败',
         details: (error as Error).message,
-      },
+      }, ...appErrorPayload(error, "后台配置服务", 500)},
       { status: 500 }
     );
   }
@@ -113,9 +114,9 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ success: true, message: '配置已保存' });
   } catch (error) {
     if (error instanceof Error && error.message === 'CONFIG_VERSION_CONFLICT') return NextResponse.json({ error: '配置已被其他操作修改，请刷新后重新保存' }, { status: 409 });
-    console.error('保存配置失败:', error);
+    reportAppError(error, "保存配置失败");
     return NextResponse.json(
-      { error: '保存配置失败: ' + (error as Error).message },
+      {...{ error: '保存配置失败: ' + (error as Error).message }, ...appErrorPayload(error, "后台配置服务", 500)},
       { status: 500 }
     );
   }

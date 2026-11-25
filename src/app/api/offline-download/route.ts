@@ -8,6 +8,7 @@ import * as path from 'path';
 
 import { getAuthInfoFromCookie } from '@/lib/auth';
 import { OfflineDownloader, OfflineDownloadTask } from '@/lib/offline-downloader';
+import { OfflineDownloadPathError } from '@/lib/offline-download-path';
 
 // 检查是否启用离线下载功能
 const OFFLINE_DOWNLOAD_ENABLED = process.env.NEXT_PUBLIC_ENABLE_OFFLINE_DOWNLOAD === 'true';
@@ -138,10 +139,19 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: '参数不完整' }, { status: 400 });
     }
 
-    const downloader = getDownloader();
-    const downloaded = downloader.checkDownloaded(source, videoId, parseInt(episodeIndex));
-
-    return NextResponse.json({ downloaded });
+    if (!/^\d+$/.test(episodeIndex)) {
+      return NextResponse.json({ error: '集数参数无效' }, { status: 400 });
+    }
+    try {
+      const downloader = getDownloader();
+      const downloaded = downloader.checkDownloaded(source, videoId, Number(episodeIndex));
+      return NextResponse.json({ downloaded });
+    } catch (error) {
+      if (error instanceof OfflineDownloadPathError) {
+        return NextResponse.json({ error: error.message }, { status: 400 });
+      }
+      throw error;
+    }
   }
 
   // 获取所有任务列表
@@ -275,6 +285,9 @@ export async function POST(request: NextRequest) {
       message: '任务已创建',
     });
   } catch (error) {
+    if (error instanceof OfflineDownloadPathError) {
+      return NextResponse.json({ error: error.message }, { status: 400 });
+    }
     console.error('创建任务失败:', error);
     return NextResponse.json(
       { error: error instanceof Error ? error.message : '创建任务失败' },
@@ -330,6 +343,9 @@ export async function DELETE(request: NextRequest) {
 
     return NextResponse.json({ message: '任务已删除' });
   } catch (error) {
+    if (error instanceof OfflineDownloadPathError) {
+      return NextResponse.json({ error: error.message }, { status: 403 });
+    }
     console.error('删除任务失败:', error);
     return NextResponse.json(
       { error: error instanceof Error ? error.message : '删除任务失败' },

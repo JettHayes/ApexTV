@@ -1,3 +1,4 @@
+import { AppRequestError, readJsonResponse } from '@/lib/app-error';
 import { getConfig } from '@/lib/config';
 import { normalizeApiBaseUrl } from '@/lib/url';
 
@@ -345,11 +346,19 @@ async function lxFetch(path: string, init: RequestInit = {}, authMode: LxFetchAu
 
 export async function lxGetJson<T>(path: string, authMode: LxFetchAuthMode = 'auto', signal?: AbortSignal): Promise<T> {
   const response = await lxFetch(path, { signal }, authMode);
-  if (!response.ok) {
-    const text = await response.text();
-    throw new Error(text || `请求失败(${response.status})`);
+  try {
+    return await readJsonResponse<T>(response, '请求音乐上游');
+  } catch (error) {
+    if (error instanceof AppRequestError) {
+      throw new AppRequestError({
+        code: error.info.code,
+        message: response.ok ? error.info.message : '音乐上游服务返回错误',
+        upstreamStatus: error.info.upstreamStatus || error.info.status,
+        hint: error.info.hint,
+      }, '请求音乐上游');
+    }
+    throw error;
   }
-  return response.json() as Promise<T>;
 }
 
 export async function lxPostJson<T>(path: string, body: any, authMode: LxFetchAuthMode = 'auto', signal?: AbortSignal): Promise<T> {
@@ -358,11 +367,19 @@ export async function lxPostJson<T>(path: string, body: any, authMode: LxFetchAu
     body: JSON.stringify(body),
     signal,
   }, authMode);
-  if (!response.ok) {
-    const text = await response.text();
-    throw new Error(text || `请求失败(${response.status})`);
+  try {
+    return await readJsonResponse<T>(response, '请求音乐上游');
+  } catch (error) {
+    if (error instanceof AppRequestError) {
+      throw new AppRequestError({
+        code: error.info.code,
+        message: response.ok ? error.info.message : '音乐上游服务返回错误',
+        upstreamStatus: error.info.upstreamStatus || error.info.status,
+        hint: error.info.hint,
+      }, '请求音乐上游');
+    }
+    throw error;
   }
-  return response.json() as Promise<T>;
 }
 
 export function extractSongmid(song: Pick<MusicV2Song, 'songId' | 'songmid'>) {

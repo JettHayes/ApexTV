@@ -3,11 +3,14 @@
 import {
   ChevronLeft,
   ChevronRight,
+  Info,
   Pause,
   Play,
+  Star,
   Volume2,
   VolumeX,
 } from 'lucide-react';
+import dynamic from 'next/dynamic';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import {
@@ -27,6 +30,8 @@ import {
 
 import ProxyImage from '@/components/ProxyImage';
 import { useSite } from '@/components/SiteProvider';
+
+const BannerDetails = dynamic(() => import('./DetailPanel'), { ssr: false });
 
 interface BannerCarouselProps {
   autoPlayInterval?: number; // 自动播放间隔（毫秒）
@@ -63,6 +68,7 @@ export default function BannerCarousel({
   const router = useRouter();
   const { siteName } = useSite();
   const [items, setItems] = useState<BannerItem[]>([]);
+  const [detailsItem, setDetailsItem] = useState<BannerItem | null>(null);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [shouldLoad, setShouldLoad] = useState(!delayLoad); // 是否应该开始加载数据
@@ -91,8 +97,7 @@ export default function BannerCarousel({
   const touchEndX = useRef(0);
   const isManualChange = useRef(false); // 标记是否为手动切换
 
-  // LocalStorage 缓存配置
-  const LOCALSTORAGE_DURATION = 24 * 60 * 60 * 1000; // 1天
+  // 旧画面可先显示，随后由服务端确认当前数据源。
   const currentTitle = items[currentIndex]?.title || '';
 
   useEffect(() => {
@@ -105,7 +110,7 @@ export default function BannerCarousel({
 
   // 根据数据源获取缓存key
   const getLocalStorageKey = (source: string) => {
-    return `banner_trending_cache_${source}`;
+    return `banner_trending_cache_v2_${source}`;
   };
 
   // 跳转到播放页面
@@ -266,13 +271,13 @@ export default function BannerCarousel({
     // 如果不应该加载，直接返回
     if (!shouldLoad) return;
 
+    const controller = new AbortController();
     const fetchTrending = async () => {
       try {
         // 先尝试从所有可能的数据源缓存中读取，找到最新的缓存
         const sources = ['TMDB', 'TX', 'Douban'];
         let cachedData = null;
         let validSource = null;
-        let cacheExpired = false;
         let latestTimestamp = 0;
 
         // 遍历所有数据源，找到最新的缓存
@@ -289,7 +294,6 @@ export default function BannerCarousel({
                 cachedData = data;
                 validSource = source;
                 latestTimestamp = timestamp;
-                cacheExpired = Date.now() - timestamp > LOCALSTORAGE_DURATION;
               }
             } catch (e) {
               console.error('解析缓存数据失败:', e);
@@ -299,22 +303,28 @@ export default function BannerCarousel({
 
         // 乐观缓存：如果有缓存（无论是否过期），先显示缓存数据
         if (cachedData) {
-          setItems(cachedData);
+          setItems(cachedData.slice(0, 10));
           setDataSource(validSource || ''); // 设置数据源
           setIsLoading(false);
           setTrailersLoaded(false); // 重置预告片加载状态
         }
 
-        // 如果缓存过期或没有缓存，后台更新数据
-        if (!cachedData || cacheExpired) {
-          const response = await fetch('/api/tmdb/trending');
+        // 每次进入都确认站点选定的数据源，避免旧浏览器缓存覆盖后台配置。
+        {
+          const response = await fetch('/api/tmdb/trending', {
+            cache: 'no-store',
+            signal: controller.signal,
+          });
           const result = await response.json();
+          if (controller.signal.aborted) return;
 
-          if (result.code === 200 && result.list.length > 0) {
+          if (result.code === 200 && Array.isArray(result.list)) {
             const newDataSource = result.source || 'TMDB'; // 获取数据源标识
             const cacheKey = getLocalStorageKey(newDataSource);
 
-            setItems(result.list);
+            const nextItems = result.list.slice(0, 10);
+            setItems(nextItems);
+            setCurrentIndex(0);
             setDataSource(newDataSource); // 设置数据源
             setTrailersLoaded(false); // 重置预告片加载状态
 
@@ -323,7 +333,7 @@ export default function BannerCarousel({
               localStorage.setItem(
                 cacheKey,
                 JSON.stringify({
-                  data: result.list,
+                  data: nextItems,
                   timestamp: Date.now(),
                 })
               );
@@ -331,16 +341,20 @@ export default function BannerCarousel({
               // localStorage 可能已满，忽略错误
               console.error('保存到 localStorage 失败:', e);
             }
+          } else if (result.source && result.source !== validSource) {
+            setItems([]);
+            setDataSource(result.source);
           }
         }
       } catch (error) {
-        console.error('获取热门内容失败:', error);
+        if (!controller.signal.aborted) console.error('获取热门内容失败:', error);
       } finally {
-        setIsLoading(false);
+        if (!controller.signal.aborted) setIsLoading(false);
       }
     };
 
     fetchTrending();
+    return () => controller.abort();
   }, [shouldLoad]);
 
   // 前端获取豆瓣预告片
@@ -430,7 +444,7 @@ export default function BannerCarousel({
 
   // 自动播放
   useEffect(() => {
-    if (!items.length || reducedMotion || isPaused || isAutoPlayPaused || isFocused || !isVisible || !isOnscreen) return;
+    if (!items.length || detailsItem || reducedMotion || isPaused || isAutoPlayPaused || isFocused || !isVisible || !isOnscreen) return;
 
     const timer = setInterval(() => {
       // 如果设置了跳过标志，跳过这一次自动播放
@@ -443,7 +457,7 @@ export default function BannerCarousel({
     }, autoPlayInterval);
 
     return () => clearInterval(timer);
-  }, [items.length, reducedMotion, isPaused, isAutoPlayPaused, isFocused, isVisible, isOnscreen, autoPlayInterval, skipNextAutoPlay]);
+  }, [items.length, detailsItem, reducedMotion, isPaused, isAutoPlayPaused, isFocused, isVisible, isOnscreen, autoPlayInterval, skipNextAutoPlay]);
 
   const goToPrevious = useCallback(() => {
     isManualChange.current = true;
@@ -540,6 +554,7 @@ export default function BannerCarousel({
   const currentItem = items[currentIndex];
 
   return (
+    <>
     <section
       ref={heroRef}
       style={{ '--ptv-hero-scale': Number(bannerHeightScale) } as React.CSSProperties}
@@ -624,26 +639,9 @@ export default function BannerCarousel({
       </div>
 
       {/* 内容信息 */}
-      <div className='absolute inset-0 flex items-end p-8 md:p-12 pointer-events-none'>
+      <div className='f1-hero-layout absolute inset-0 flex items-end pointer-events-none'>
         <div key={currentItem.id} className='ptv-hero-content max-w-2xl space-y-4'>
-          <h2
-            ref={titleRef}
-            className='text-3xl md:text-5xl font-bold text-white drop-shadow-lg'
-            style={
-              isMobileView && bannerHeightScale === '1'
-                ? { fontSize: `${mobileTitleFontSize}px` }
-                : undefined
-            }
-          >
-            <span ref={titleTextRef}>{currentItem.title}</span>
-          </h2>
-
-          <div className='flex items-center gap-2 md:gap-3 text-sm md:text-base text-white/90 flex-wrap'>
-            {currentItem.vote_average > 0 && (
-              <span className='px-2 py-1 bg-yellow-500 text-black font-semibold rounded'>
-                {currentItem.vote_average.toFixed(1)}
-              </span>
-            )}
+          <div className='f1-hero-genres'>
             {/* 显示标签：优先TX的tags，其次豆瓣的genres，最后TMDB的genre_ids */}
             {currentItem.tags && currentItem.tags.length > 0
               ? currentItem.tags.slice(0, 3).map((tag, index) => (
@@ -675,12 +673,33 @@ export default function BannerCarousel({
                     {genre}
                   </span>
                 ))}
+
+          </div>
+          <h2
+            ref={titleRef}
+            className='text-3xl md:text-5xl font-bold text-white drop-shadow-lg'
+            style={
+              isMobileView && bannerHeightScale === '1'
+                ? { fontSize: `${mobileTitleFontSize}px` }
+                : undefined
+            }
+          >
+            <span ref={titleTextRef}>{currentItem.title}</span>
+          </h2>
+
+          <div className='f1-hero-metadata flex items-center gap-2 md:gap-3 text-sm md:text-base text-white/90 flex-wrap'>
+            {currentItem.vote_average > 0 && (
+              <span className='f1-hero-rating'><Star size={15} fill='currentColor' aria-hidden />
+                {currentItem.vote_average.toFixed(1)}
+              </span>
+            )}
             {currentItem.release_date && (
               <span>{currentItem.release_date}</span>
             )}
           </div>
 
-          {/* PC端播放按钮 */}
+          {/* 首页主操作 */}
+          <div className='f1-hero-actions'>
           <button
             onClick={(e) => {
               e.stopPropagation();
@@ -691,6 +710,8 @@ export default function BannerCarousel({
             <Play className='w-5 h-5 fill-white' />
             立即播放
           </button>
+          <button type='button' className='f1-hero-details' onClick={(event) => { event.stopPropagation(); setDetailsItem(currentItem); }}><Info size={17} aria-hidden />详情</button>
+          </div>
 
           {currentItem.overview && (
             <p className='text-sm md:text-base text-white/80 line-clamp-3 drop-shadow-md'>
@@ -752,5 +773,17 @@ export default function BannerCarousel({
         ))}
       </div>
     </section>
+    {detailsItem && <BannerDetails
+      isOpen={true}
+      onClose={() => setDetailsItem(null)}
+      title={detailsItem.title}
+      poster={getImageUrl(detailsItem.poster_path || detailsItem.backdrop_path || null)}
+      doubanId={dataSource === 'Douban' ? Number(detailsItem.id) : undefined}
+      tmdbId={dataSource === 'TMDB' ? Number(detailsItem.id) : undefined}
+      type={detailsItem.media_type === 'tv' ? 'tv' : 'movie'}
+      year={detailsItem.release_date?.slice(0, 4)}
+      cmsData={{ desc: detailsItem.overview }}
+    />}
+    </>
   );
 }

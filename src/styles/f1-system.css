@@ -1,0 +1,94 @@
+/* Shared F1 interface primitives. Media canvases and user reader palettes are isolated. */
+html[data-moontvplus] {
+  --f1-radius-sm: 8px;
+  --f1-radius: 14px;
+  --f1-radius-lg: 20px;
+  --f1-header-height: 72px;
+  --f1-display: 'Rajdhani', 'Bahnschrift', 'DIN Alternate', 'MiSans', sans-serif;  --f1-panel: var(--ptv-panel);  --f1-fast: 160ms;
+  --f1-enter: 260ms;
+}
+html[data-moontvplus] body { font-feature-settings: 'ss01'; -webkit-font-smoothing: antialiased; }
+html[data-moontvplus] :where(button, a, input, select, textarea) { -webkit-tap-highlight-color: transparent; }
+html[data-moontvplus] :where(button, a, [tabindex]):focus-visible { outline: 2px solid var(--ptv-accent); outline-offset: 4px; }
+html[data-moontvplus] :where(button):disabled { cursor: not-allowed; }
+.ptv-brand-name { font-family: var(--f1-display); font-weight: 700; letter-spacing: -.035em; }
+.f1-channel-toolbar { display: none; }
+.f1-channel-context, .f1-channel-actions { display: flex; align-items: center; min-width: 0; gap: 8px; }
+.f1-channel-actions { flex-shrink: 0; }
+.f1-channel-name { padding-inline: 8px; font-size: 14px; font-weight: 600; }
+.f1-channel-links { display: flex; min-width: 0; overflow-x: auto; gap: 6px; scrollbar-width: none; }
+.f1-channel-links a { position: relative; display: inline-flex; align-items: center; min-height: 44px; padding: 9px 18px; white-space: nowrap; color: var(--ptv-muted); font-size: 14px; font-weight: 550; border-radius: var(--f1-radius-sm); }
+.f1-channel-links a[aria-current='page'] { color: var(--ptv-accent); background: var(--ptv-selected); --ptv-muted: var(--ptv-muted-on-soft); --apex-muted-rgb: var(--apex-muted-on-soft-rgb); --ptv-accent: var(--ptv-accent-on-soft); --apex-accent-rgb: var(--apex-accent-on-soft-rgb); }
+.f1-channel-links a[aria-current='page']::after { content: ''; position: absolute; height: 2px; left: 18px; right: 18px; bottom: 2px; background: var(--ptv-accent); transform: skewX(-20deg); }
+.f1-icon-button { display: inline-flex; align-items: center; justify-content: center; min-width: 44px; min-height: 44px; border-radius: var(--f1-radius-sm); color: var(--ptv-muted); }
+.ptv-page:has(.ptv-sidebar) { --ptv-sidebar-width: 240px; --ptv-sidebar-collapsed-width: 80px; }
+.ptv-page:has(.ptv-sidebar[data-collapsed='true']) { --ptv-sidebar-width: 80px; }
+.ptv-page .ptv-sidebar, .ptv-page .sidebar-offset { width: var(--ptv-sidebar-width); flex-shrink: 0; }
+.ptv-sidebar { background-image: linear-gradient(165deg, rgb(var(--apex-panel-rgb) / .4), transparent 35%); }
+.ptv-sidebar-brand { min-height: var(--f1-header-height); border-bottom-color: transparent; }
+.ptv-sidebar-brand .ptv-brand-name { font-size: 24px; }
+.ptv-sidebar-brand .ptv-brand-mark { width: 40px; height: 34px; flex: none; }
+.ptv-sidebar-brand .ptv-brand-mark img { width: 46px; height: 46px; }
+.ptv-sidebar-brand .ptv-brand > svg { width: 40px; height: 40px; flex: none; }
+.ptv-sidebar[data-collapsed='true'] .ptv-sidebar-brand { flex-direction: column; padding: 12px 8px 4px; min-height: 112px; gap: 2px; }
+.ptv-sidebar[data-collapsed='true'] .ptv-brand { flex: none; justify-content: center; min-height: 44px; }
+.ptv-sidebar[data-collapsed='true'] .ptv-nav-link { padding-inline: 0; justify-content: center; min-height: 44px; margin-block: 0; }
+.ptv-sidebar[data-collapsed='true'] .ptv-nav-link svg { width: 22px; height: 22px; }
+.ptv-sidebar .ptv-nav-link { position: relative; min-height: 44px; border-radius: 10px; }
+.ptv-sidebar .ptv-nav-link[data-active='true']::before { content: ''; width: 3px; height: 18px; position: absolute; inset-inline-start: 0; background: var(--ptv-accent); transform: skewY(-18deg); border-radius: 2px; }
+.ptv-nav-group { margin-top: 18px; padding-top: 8px; }
+.ptv-sidebar[data-collapsed='true'] .ptv-nav-group { border-top: 1px solid var(--ptv-line); margin-inline: 8px; }
+.ptv-sidebar nav { scrollbar-width: thin; }
+.ptv-sidebar nav::-webkit-scrollbar { display: block; width: 3px; }
+.ptv-sidebar nav::-webkit-scrollbar-thumb { background: var(--ptv-line); border-radius: 4px; }
+.ptv-wallpaper[data-page='home'] { opacity: .10; }
+.ptv-wallpaper-overlay { background: rgb(var(--apex-page-rgb) / .50); }
+.ptv-mobile-header { background: var(--ptv-surface); }
+.ptv-mobile-nav .ptv-nav-link { border-radius: 0; position: relative; }
+.ptv-mobile-nav a[aria-current='page'] { background: transparent; }
+.ptv-mobile-nav a[aria-current='page']::before { content: ''; position: absolute; width: 34px; height: 3px; top: 0; border-radius: 0 0 3px 3px; background: var(--ptv-accent); }
+.f1-surface { background: var(--ptv-panel); border: 1px solid var(--ptv-line); border-radius: var(--f1-radius); }
+.f1-section-title { display: flex; align-items: center; gap: 10px; font-size: clamp(19px, 1.5vw, 25px); font-weight: 650; letter-spacing: -.025em; }
+.f1-section-title::before { content: ''; width: 6px; height: 18px; background: var(--ptv-accent); transform: skew(-18deg); flex-shrink: 0; }
+.f1-button { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 44px; padding: 10px 18px; border: 1px solid var(--ptv-line); border-radius: var(--f1-radius-sm); background: var(--ptv-panel); color: var(--ptv-text); font-size: 14px; font-weight: 600; transition: transform var(--f1-fast) var(--ptv-ease), background-color var(--f1-fast); }
+.f1-button--primary { background: var(--ptv-action); color: var(--ptv-action-ink); border-color: transparent; }
+.f1-button:active { transform: translateY(1px); }
+.f1-tabs { display: flex; align-items: center; gap: 6px; min-width: 0; overflow-x: auto; padding-bottom: 8px; border-bottom: 1px solid var(--ptv-line); }
+.f1-tabs :is(a,button) { min-height: 44px; flex-shrink: 0; padding: 10px 16px; border-radius: 8px; }
+.f1-tabs :is([aria-current='page'],[aria-selected='true']) { color: var(--ptv-accent); background: var(--ptv-selected); --ptv-muted: var(--ptv-muted-on-soft); --apex-muted-rgb: var(--apex-muted-on-soft-rgb); --ptv-accent: var(--ptv-accent-on-soft); --apex-accent-rgb: var(--apex-accent-on-soft-rgb); }
+.ptv-dialog { border: 1px solid var(--ptv-line); border-radius: var(--f1-radius-lg); box-shadow: 0 24px 80px var(--ptv-media-bg-alpha-25); }
+.ptv-popover, .ptv-menu { border-radius: var(--f1-radius); box-shadow: var(--f1-elevation); }
+.ptv-dialog :is(input:not([type='range']):not([type='checkbox']):not([type='radio']),select,textarea) { border-radius: var(--f1-radius-sm); }
+.f1-state { display: grid; place-content: center; justify-items: center; gap: 14px; padding: clamp(28px, 5vw, 64px); text-align: center; min-height: 220px; color: var(--ptv-muted); }
+.f1-state h2 { font-size: 20px; font-weight: 600; color: var(--ptv-text); }
+.f1-state p { max-width: 48ch; line-height: 1.7; }
+.f1-state > svg { color: var(--ptv-accent); }
+.ptv-page :where(h1,h2,h3) { text-wrap: balance; }
+.ptv-page :where(input,select,textarea) { font-variant-numeric: tabular-nums; }
+.f1-standalone { min-height: 100dvh; background: var(--ptv-page); color: var(--ptv-text); }
+.ptv-page[data-navigation='workspace'] .ptv-page-main { padding-bottom: 24px; }
+@media (hover: hover) and (pointer: fine) {
+  .f1-channel-links a:hover, .f1-icon-button:hover { background: var(--ptv-soft); color: var(--ptv-text); --ptv-muted: var(--ptv-muted-on-soft); --apex-muted-rgb: var(--apex-muted-on-soft-rgb); --ptv-accent: var(--ptv-accent-on-soft); --apex-accent-rgb: var(--apex-accent-on-soft-rgb); }
+  .f1-button:hover { border-color: var(--ptv-accent); }
+  .f1-button--primary:hover { background: var(--ptv-action-hover); }
+}
+@media (min-width: 768px) {
+  html[data-moontvplus] { --ptv-page-top: 28px; }
+  .f1-channel-toolbar { display: flex; position: sticky; top: 0; z-index: 35; align-items: center; justify-content: space-between; gap: 16px; min-height: var(--f1-header-height); padding: 10px var(--ptv-gutter); background: rgb(var(--apex-page-rgb) / .94); border-bottom: 1px solid rgb(var(--apex-line-rgb) / .6); }
+  @supports (backdrop-filter: blur(8px)) { .f1-channel-toolbar { backdrop-filter: blur(8px); } }
+  .ptv-page-main { margin-top: 0; }
+  .ptv-page[data-page='home'] .ptv-page-main { padding-top: 24px; }
+}
+@media (min-width: 768px) and (max-width: 1100px) {
+  .f1-channel-links { gap: 0; }
+  .f1-channel-links a { padding-inline: 12px; }
+  .f1-channel-toolbar { gap: 8px; }
+}
+@media (max-width: 767px) {
+  html[data-moontvplus] { --ptv-page-top: 22px; --ptv-gutter: 18px; --f1-radius-lg: 16px; }
+  .ptv-dialog { max-width: calc(100vw - 24px); }
+  .ptv-page :where(input:not([type='checkbox']):not([type='radio']):not([type='range']),select) { font-size: 16px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .f1-button, .f1-channel-links a, .ptv-nav-link { transition: none; }
+}

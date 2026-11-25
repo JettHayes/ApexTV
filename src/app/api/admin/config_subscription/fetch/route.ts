@@ -1,3 +1,4 @@
+import { appErrorPayload, reportAppError } from '@/lib/app-error';
 /* eslint-disable no-console */
 
 import { NextRequest, NextResponse } from 'next/server';
@@ -64,9 +65,9 @@ export async function POST(request: NextRequest) {
     });
 
   } catch (error) {
-    console.error('拉取配置失败:', error);
+    reportAppError(error, "拉取配置失败");
     return NextResponse.json(
-      { error: '拉取配置失败' },
+      {...{ error: '拉取配置失败' }, ...appErrorPayload(error, "后台配置服务", 500)},
       { status: 500 }
     );
   }

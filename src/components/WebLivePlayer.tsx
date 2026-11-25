@@ -1,5 +1,7 @@
 'use client';
 
+import { formatAppError, reportAppError } from '@/lib/app-error';
+
 import { useEffect, useRef } from 'react';
 
 export default function WebLivePlayer({
@@ -34,7 +36,13 @@ export default function WebLivePlayer({
     const fail = (message: string, retryable: boolean, code?: string) => {
       if (!cancelled && !reported) {
         reported = true;
-        failureRef.current(message, retryable, code);
+        if (code === 'PLAYBACK_ENDED') {
+          failureRef.current(message, retryable, code);
+        } else {
+          const error = { code: code || 'MEDIA_PLAYBACK_FAILED', message, hint: '请检查网络，重试或切换播放线路。' };
+          reportAppError(error, '播放直播');
+          failureRef.current(formatAppError(error, '播放直播'), retryable, code);
+        }
       }
     };
 
@@ -57,12 +65,12 @@ export default function WebLivePlayer({
           element.canPlayType('application/vnd.apple.mpegurl')
         ) {
           element.src = streamUrl;
-          element.onerror = () => fail('直播流播放失败', true);
+          element.onerror = () => fail('直播流播放失败，请检查线路或媒体格式', true, element.error?.code === 3 ? 'MEDIA_DECODE_FAILED' : element.error?.code === 4 ? 'MEDIA_NOT_SUPPORTED' : 'MEDIA_PLAYBACK_FAILED');
         } else if (type === 'hls') {
           const Hls = (await import('hls.js')).default;
           if (cancelled) return;
           if (!Hls.isSupported()) {
-            fail('当前浏览器不支持 HLS 播放', false);
+            fail('当前浏览器不支持 HLS 播放，请切换线路或浏览器', false, 'MEDIA_NOT_SUPPORTED');
             return;
           }
           const hls = new Hls({ enableWorker: true, lowLatencyMode: true });
@@ -80,11 +88,11 @@ export default function WebLivePlayer({
               fail(
                 status === 401 || status === 403
                   ? '播放地址已失效或访问被拒绝'
-                  : '直播流连接失败',
+                  : data.type === Hls.ErrorTypes.MEDIA_ERROR ? '直播媒体解码失败' : '直播流连接失败',
                 true,
                 status === 401 || status === 403
                   ? 'HTTP_EXPIRED'
-                  : 'NETWORK_ERROR'
+                  : data.type === Hls.ErrorTypes.MEDIA_ERROR ? 'MEDIA_DECODE_FAILED' : status >= 400 && status <= 599 ? `HTTP_${status}` : 'NETWORK_ERROR'
               );
             }
           });
@@ -94,7 +102,7 @@ export default function WebLivePlayer({
           const flv = (await import('flv.js')).default;
           if (cancelled) return;
           if (!flv.isSupported()) {
-            fail('当前浏览器不支持 FLV，请尝试 HLS 线路或其他设备', false);
+            fail('当前浏览器不支持 FLV，请尝试 HLS 线路或其他设备', false, 'MEDIA_NOT_SUPPORTED');
             return;
           }
           const player = flv.createPlayer({
@@ -107,7 +115,7 @@ export default function WebLivePlayer({
             player.detachMediaElement();
             player.destroy();
           };
-          player.on(flv.Events.ERROR, () => fail('直播流连接失败', true));
+          player.on(flv.Events.ERROR, () => fail('直播流连接失败', true, 'NETWORK_ERROR'));
           player.attachMediaElement(element);
           player.load();
         }

@@ -1,5 +1,6 @@
 'use client';
 
+import { readThemeColorAsHex } from '@/lib/theme-colors';
 import {
   createContext,
   ReactNode,
@@ -33,42 +34,13 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     root.classList.toggle('light', theme === 'light');
     root.style.colorScheme = theme;
     document.querySelector('meta[name="theme-color"]')?.setAttribute(
-      'content', theme === 'dark' ? '#0d161a' : '#f4f3ee'
+      'content', readThemeColorAsHex('--ptv-page')
     );
     setResolvedTheme(theme);
   }, []);
 
   useEffect(() => {
-    const media = window.matchMedia('(prefers-color-scheme: dark)');
-    const root = document.documentElement;
-    let frame = 0;
-
-    const syncSystemTheme = () => {
-      const theme = media.matches ? 'dark' : 'light';
-      if (root.classList.contains('dark') === media.matches) {
-        setTheme(theme);
-        return;
-      }
-      root.dataset.themeSyncing = 'true';
-      setTheme(theme);
-      window.cancelAnimationFrame(frame);
-      frame = window.requestAnimationFrame(() => {
-        frame = window.requestAnimationFrame(() => {
-          delete root.dataset.themeSyncing;
-        });
-      });
-    };
-
-    syncSystemTheme();
-    if (media.addEventListener) media.addEventListener('change', syncSystemTheme);
-    else media.addListener(syncSystemTheme);
-
-    return () => {
-      if (media.removeEventListener) media.removeEventListener('change', syncSystemTheme);
-      else media.removeListener(syncSystemTheme);
-      window.cancelAnimationFrame(frame);
-      delete root.dataset.themeSyncing;
-    };
+    setTheme('light');
   }, [setTheme]);
 
   const value = useMemo(() => ({ resolvedTheme, setTheme }), [resolvedTheme, setTheme]);

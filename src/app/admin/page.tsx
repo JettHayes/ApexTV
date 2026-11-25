@@ -1,6 +1,9 @@
+'use client';
+
+import { formatAppError, readJsonResponse, reportAppError } from '@/lib/app-error';
 /* eslint-disable @typescript-eslint/no-explicit-any, no-console, @typescript-eslint/no-non-null-assertion,react-hooks/exhaustive-deps,@typescript-eslint/no-empty-function */
 
-'use client';
+
 
 import {
   closestCenter,
@@ -323,7 +326,7 @@ const AlertModal = ({
                     confirmInFlight.current = true;
                     setConfirming(true);
                     try { await onConfirm?.(); }
-                    catch (error) { console.error('确认操作失败', error); }
+                    catch (error) { reportAppError(error, "确认操作失败"); }
                     finally { confirmInFlight.current = false; setConfirming(false); }
                   }}
                   className={buttonStyles.danger}
@@ -380,10 +383,11 @@ const useAlertModal = () => {
 
 // 统一弹窗方法（必须在首次使用前定义）
 const showError = (message: string, showAlert?: (config: any) => void) => {
+  message = formatAppError(reportAppError(message, '管理设置'), '管理设置');
   if (showAlert) {
     showAlert({ type: 'error', title: '错误', message, showConfirm: true });
   } else {
-    console.error(message);
+    reportAppError(message, "管理设置");
   }
 };
 
@@ -749,7 +753,7 @@ const UserConfig = ({
         });
 
         if (!res.ok) {
-          const data = await res.json().catch(() => ({}));
+          const data = await readJsonResponse<any>(res, "管理设置");
           throw new Error(data.error || `操作失败: ${res.status}`);
         }
 
@@ -862,7 +866,7 @@ const UserConfig = ({
         });
 
         if (!res.ok) {
-          const data = await res.json().catch(() => ({}));
+          const data = await readJsonResponse<any>(res, "管理设置");
           throw new Error(data.error || `操作失败: ${res.status}`);
         }
 
@@ -969,11 +973,11 @@ const UserConfig = ({
       });
 
       if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
+        const data = await readJsonResponse<any>(res, "管理设置");
         throw new Error(data.error || `获取设备失败: ${res.status}`);
       }
 
-      const data = await res.json();
+      const data = await readJsonResponse<any>(res, "管理设置");
       setUserDevices(Array.isArray(data.devices) ? data.devices : []);
     } catch (err) {
       showError(err instanceof Error ? err.message : '获取设备失败', showAlert);
@@ -999,7 +1003,7 @@ const UserConfig = ({
       });
 
       if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
+        const data = await readJsonResponse<any>(res, "管理设置");
         throw new Error(data.error || `登出设备失败: ${res.status}`);
       }
 
@@ -1106,7 +1110,7 @@ const UserConfig = ({
         });
 
         if (!res.ok) {
-          const data = await res.json().catch(() => ({}));
+          const data = await readJsonResponse<any>(res, "管理设置");
           throw new Error(data.error || `操作失败: ${res.status}`);
         }
 
@@ -1153,7 +1157,7 @@ const UserConfig = ({
         });
 
         if (!res.ok) {
-          const data = await res.json().catch(() => ({}));
+          const data = await readJsonResponse<any>(res, "管理设置");
           throw new Error(data.error || `操作失败: ${res.status}`);
         }
 
@@ -1196,7 +1200,7 @@ const UserConfig = ({
       });
 
       if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
+        const data = await readJsonResponse<any>(res, "管理设置");
         throw new Error(data.error || `操作失败: ${res.status}`);
       }
 
@@ -1282,7 +1286,7 @@ const UserConfig = ({
                             );
 
                             if (!response.ok) {
-                              const errorData = await response.json();
+                              const errorData = await readJsonResponse<any>(response, "管理设置");
                               throw new Error(errorData.error || '迁移失败');
                             }
 
@@ -1294,7 +1298,7 @@ const UserConfig = ({
                               timer: 2000,
                             });
                           } catch (error: any) {
-                            console.error('迁移用户数据失败:', error);
+                            reportAppError(error, "迁移用户数据失败");
                             showAlert({
                               type: 'error',
                               title: '迁移失败',
@@ -1322,7 +1326,7 @@ const UserConfig = ({
 
       {/* 用户组管理 */}
       <div>
-        <div className='flex items-center justify-between mb-3'>
+        <div className='apex-admin-toolbar flex items-center justify-between mb-3'>
           <h4 className='text-sm font-medium text-gray-700 dark:text-gray-300'>
             用户组管理
           </h4>
@@ -1463,7 +1467,7 @@ const UserConfig = ({
                     value={userSearch}
                     onChange={(e) => setUserSearch(e.target.value)}
                     placeholder='按用户名搜索'
-                    className='w-full pl-9 pr-3 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent'
+                    className="w-full pl-9 pr-3 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-apex-accent focus:border-transparent"
                   />
                 </div>
                 {trimmedUserSearch && (
@@ -1536,7 +1540,7 @@ const UserConfig = ({
                       username: e.target.value,
                     }))
                   }
-                  className='px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-green-500 focus:border-transparent'
+                  className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-apex-accent focus:border-transparent"
                 />
                 <input
                   type='password'
@@ -1548,7 +1552,7 @@ const UserConfig = ({
                       password: e.target.value,
                     }))
                   }
-                  className='px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-green-500 focus:border-transparent'
+                  className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-apex-accent focus:border-transparent"
                 />
               </div>
               <div>
@@ -1563,7 +1567,7 @@ const UserConfig = ({
                       userGroup: e.target.value,
                     }))
                   }
-                  className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-green-500 focus:border-transparent'
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-apex-accent focus:border-transparent"
                 >
                   <option value=''>无用户组（无限制）</option>
                   {userGroups.map((group) => (
@@ -1624,7 +1628,7 @@ const UserConfig = ({
                     password: e.target.value,
                   }))
                 }
-                className='flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent'
+                className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-apex-accent focus:border-transparent"
               />
               <button
                 onClick={handleChangePassword}
@@ -1705,7 +1709,7 @@ const UserConfig = ({
                           onChange={(e) =>
                             handleSelectAllUsers(e.target.checked)
                           }
-                          className='w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600'
+                          className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-apex-accent dark:focus:ring-apex-accent dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
                         />
                       ) : (
                         <div className='w-4 h-4' />
@@ -1844,7 +1848,7 @@ const UserConfig = ({
                                     e.target.checked
                                   )
                                 }
-                                className='w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600'
+                                className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-apex-accent dark:focus:ring-apex-accent dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
                               />
                             ) : (
                               <div className='w-4 h-4' />
@@ -1866,7 +1870,7 @@ const UserConfig = ({
                                 user.role === 'owner'
                                   ? 'bg-yellow-100 dark:bg-yellow-900/20 text-yellow-800 dark:text-yellow-300'
                                   : user.role === 'admin'
-                                  ? 'bg-purple-100 dark:bg-purple-900/20 text-purple-800 dark:text-purple-300'
+                                  ? "bg-apex-selected dark:bg-apex-selected/20 text-apex-accent-on-soft dark:text-apex-accent-on-soft"
                                   : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300'
                               }`}
                             >
@@ -2360,7 +2364,7 @@ const UserConfig = ({
                               );
                             }
                           }}
-                          className='rounded border-gray-300 text-blue-600 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700'
+                          className="rounded border-gray-300 text-blue-600 focus:ring-apex-accent dark:border-gray-600 dark:bg-gray-700"
                         />
                         <div className='flex-1 min-w-0'>
                           <div className='text-sm font-medium text-gray-900 dark:text-gray-100 truncate'>
@@ -2509,7 +2513,7 @@ const UserConfig = ({
                           name: e.target.value,
                         }))
                       }
-                      className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent'
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-apex-accent focus:border-transparent"
                     />
                   </div>
 
@@ -2546,7 +2550,7 @@ const UserConfig = ({
                                 }));
                               }
                             }}
-                            className='mt-0.5 rounded border-gray-300 text-blue-600 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700'
+                            className="mt-0.5 rounded border-gray-300 text-blue-600 focus:ring-apex-accent dark:border-gray-600 dark:bg-gray-700"
                           />
                           <div className='flex-1 min-w-0'>
                             <div className='text-sm font-medium text-gray-900 dark:text-gray-100'>
@@ -2621,7 +2625,7 @@ const UserConfig = ({
                                 }));
                               }
                             }}
-                            className='rounded border-gray-300 text-blue-600 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700'
+                            className="rounded border-gray-300 text-blue-600 focus:ring-apex-accent dark:border-gray-600 dark:bg-gray-700"
                           />
                           <div className='flex-1 min-w-0'>
                             <div className='text-sm font-medium text-gray-900 dark:text-gray-100 truncate'>
@@ -2794,7 +2798,7 @@ const UserConfig = ({
                                 );
                               }
                             }}
-                            className='rounded border-gray-300 text-purple-600 focus:ring-purple-500 dark:border-gray-600 dark:bg-gray-700'
+                            className="rounded border-gray-300 text-apex-accent-on-soft focus:ring-apex-accent dark:border-gray-600 dark:bg-gray-700"
                           />
                           <div className='flex-1 min-w-0'>
                             <div className='text-sm font-medium text-gray-900 dark:text-gray-100 truncate'>
@@ -2880,7 +2884,7 @@ const UserConfig = ({
                                 );
                               }
                             }}
-                            className='mt-0.5 rounded border-gray-300 text-purple-600 focus:ring-purple-500 dark:border-gray-600 dark:bg-gray-700'
+                            className="mt-0.5 rounded border-gray-300 text-apex-accent-on-soft focus:ring-apex-accent dark:border-gray-600 dark:bg-gray-700"
                           />
                           <div className='flex-1 min-w-0'>
                             <div className='text-sm font-medium text-gray-900 dark:text-gray-100'>
@@ -3042,7 +3046,7 @@ const UserConfig = ({
                       const value = e.target.value;
                       setSelectedUserGroups(value ? [value] : []);
                     }}
-                    className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors'
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-apex-accent focus:border-transparent transition-colors"
                   >
                     <option value=''>无用户组（无限制）</option>
                     {userGroups.map((group) => (
@@ -3426,7 +3430,7 @@ const UserConfig = ({
                     </label>
                     <select
                       onChange={(e) => setSelectedUserGroup(e.target.value)}
-                      className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors'
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-apex-accent focus:border-transparent transition-colors"
                       value={selectedUserGroup}
                     >
                       <option value=''>无用户组（无限制）</option>
@@ -3628,7 +3632,7 @@ const OpenListConfigComponent = ({
       if (!response.ok) {
         throw new Error(`获取视频列表失败：${response.status}`);
       }
-      const data = await response.json();
+      const data = await readJsonResponse<any>(response, "管理设置");
       if (!data.success || !Array.isArray(data.list)) {
         throw new Error(data.error || '视频列表返回异常');
       }
@@ -3726,7 +3730,7 @@ const OpenListConfigComponent = ({
         });
 
         if (!response.ok) {
-          const data = await response.json();
+          const data = await readJsonResponse<any>(response, "管理设置");
           throw new Error(data.error || '保存失败');
         }
 
@@ -3753,11 +3757,11 @@ const OpenListConfigComponent = ({
       });
 
       if (!response.ok) {
-        const data = await response.json();
+        const data = await readJsonResponse<any>(response, "管理设置");
         throw new Error(data.error || '刷新失败');
       }
 
-      const result = await response.json();
+      const result = await readJsonResponse<any>(response, "管理设置");
       const taskId = result.taskId;
 
       if (!taskId) {
@@ -3776,7 +3780,7 @@ const OpenListConfigComponent = ({
             throw new Error('获取进度失败');
           }
 
-          const progressData = await progressResponse.json();
+          const progressData = await readJsonResponse<any>(progressResponse, "管理设置");
           const task = progressData.task;
 
           if (task.status === 'running') {
@@ -3825,7 +3829,7 @@ const OpenListConfigComponent = ({
       });
 
       if (!response.ok) {
-        const data = await response.json();
+        const data = await readJsonResponse<any>(response, "管理设置");
         throw new Error(data.error || '刷新失败');
       }
 
@@ -3852,7 +3856,7 @@ const OpenListConfigComponent = ({
           }),
         });
 
-        const data = await response.json();
+        const data = await readJsonResponse<any>(response, "管理设置");
 
         if (response.ok && data.success) {
           showSuccess('连接成功', showAlert);
@@ -3895,7 +3899,7 @@ const OpenListConfigComponent = ({
         }),
       });
 
-      const data = await response.json();
+      const data = await readJsonResponse<any>(response, "管理设置");
 
       if (response.ok && data.success) {
         showSuccess(`「${name}」连接成功`, showAlert);
@@ -3932,7 +3936,7 @@ const OpenListConfigComponent = ({
           });
 
           if (!response.ok) {
-            const data = await response.json();
+            const data = await readJsonResponse<any>(response, "管理设置");
             throw new Error(data.error || '删除失败');
           }
 
@@ -4011,12 +4015,12 @@ const OpenListConfigComponent = ({
             onChange={(e) => setEnabled(e.target.checked)}
             className='sr-only peer'
           />
-          <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-transform after:duration-200 after:ease-[cubic-bezier(.16,1,.3,1)] dark:border-gray-600 peer-checked:bg-blue-600"></div>
+          <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-apex-accent dark:peer-focus:ring-apex-accent rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-transform after:duration-200 after:ease-[cubic-bezier(.16,1,.3,1)] dark:border-gray-600 peer-checked:bg-blue-600"></div>
         </label>
       </div>
 
       {/* 配置表单 */}
-      <div className='space-y-4'>
+      <section aria-label='OpenList 配置' className='apex-admin-config-group space-y-4'>
         <div className='space-y-4 rounded-lg border border-gray-200 bg-gray-50 p-4 dark:border-gray-700 dark:bg-gray-800'>
           <div>
             <h3 className='text-sm font-medium text-gray-900 dark:text-gray-100'>
@@ -4026,7 +4030,7 @@ const OpenListConfigComponent = ({
               扫描与播放默认使用此源，路径不写「源名@」前缀即指向主源
             </p>
           </div>
-          <div>
+          <div className='apex-admin-field-row'>
             <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
               OpenList URL
             </label>
@@ -4036,12 +4040,12 @@ const OpenListConfigComponent = ({
               onChange={(e) => setUrl(e.target.value)}
               disabled={!enabled}
               placeholder='https://your-openlist-server.com'
-              className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed'
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-apex-accent focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed"
             />
           </div>
 
           <div className='grid grid-cols-1 sm:grid-cols-2 gap-4'>
-            <div>
+            <div className='apex-admin-field-row'>
               <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
                 账号
               </label>
@@ -4051,10 +4055,10 @@ const OpenListConfigComponent = ({
                 onChange={(e) => setUsername(e.target.value)}
                 disabled={!enabled}
                 placeholder='admin'
-                className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed'
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-apex-accent focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed"
               />
             </div>
-            <div>
+            <div className='apex-admin-field-row'>
               <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
                 密码
               </label>
@@ -4064,7 +4068,7 @@ const OpenListConfigComponent = ({
                 onChange={(e) => setPassword(e.target.value)}
                 disabled={!enabled}
                 placeholder='password'
-                className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed'
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-apex-accent focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed"
               />
             </div>
           </div>
@@ -4160,7 +4164,7 @@ const OpenListConfigComponent = ({
                     extraSources.map((source, index) => {
                       const expanded = extraSourceExpanded.has(index);
                       const fieldClass =
-                        'w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:border-transparent focus:ring-2 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100';
+                        "w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:border-transparent focus:ring-2 focus:ring-apex-accent dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100";
                       const updateSource = (
                         patch: Partial<OpenListExtraSource>
                       ) => {
@@ -4239,7 +4243,7 @@ const OpenListConfigComponent = ({
                                     updateSource({ name: e.target.value })
                                   }
                                   placeholder='源名（如 115）'
-                                  className='min-w-0 flex-1 rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-sm text-gray-900 focus:border-transparent focus:ring-2 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100'
+                                  className="min-w-0 flex-1 rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-sm text-gray-900 focus:border-transparent focus:ring-2 focus:ring-apex-accent dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100"
                                 />
                                 {checkButton}
                                 <button
@@ -4390,7 +4394,7 @@ const OpenListConfigComponent = ({
             document.body
           )}
 
-        <div>
+        <div className='apex-admin-field-row'>
           <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
             根目录列表
           </label>
@@ -4437,7 +4441,7 @@ const OpenListConfigComponent = ({
           </p>
         </div>
 
-        <div>
+        <div className='apex-admin-field-row'>
           <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
             离线下载目录
           </label>
@@ -4452,7 +4456,7 @@ const OpenListConfigComponent = ({
           </p>
         </div>
 
-        <div>
+        <div className='apex-admin-field-row'>
           <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
             定时扫描间隔（分钟）
           </label>
@@ -4463,14 +4467,14 @@ const OpenListConfigComponent = ({
             disabled={!enabled}
             placeholder='0'
             min='0'
-            className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed'
+            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-apex-accent focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed"
           />
           <p className='mt-1 text-xs text-gray-500 dark:text-gray-400'>
             设置为 0 关闭定时扫描，最低 60 分钟
           </p>
         </div>
 
-        <div>
+        <div className='apex-admin-field-row'>
           <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
             扫描模式
           </label>
@@ -4480,7 +4484,7 @@ const OpenListConfigComponent = ({
               setScanMode(e.target.value as 'torrent' | 'name' | 'hybrid')
             }
             disabled={!enabled}
-            className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed'
+            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-apex-accent focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <option value='hybrid'>混合模式（推荐）</option>
             <option value='torrent'>种子库匹配</option>
@@ -4662,7 +4666,7 @@ const OpenListConfigComponent = ({
                                 );
                               }}
                               placeholder='路径，如 /videos 或 115@/videos'
-                              className='min-w-0 flex-1 rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-sm text-gray-900 focus:border-transparent focus:ring-2 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100'
+                              className="min-w-0 flex-1 rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-sm text-gray-900 focus:border-transparent focus:ring-2 focus:ring-apex-accent dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100"
                             />
                             <button
                               type='button'
@@ -4699,7 +4703,7 @@ const OpenListConfigComponent = ({
                                       );
                                     }}
                                     placeholder='分类，如 动漫'
-                                    className='w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:border-transparent focus:ring-2 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100'
+                                    className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:border-transparent focus:ring-2 focus:ring-apex-accent dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100"
                                   />
                                 </div>
 
@@ -4729,7 +4733,7 @@ const OpenListConfigComponent = ({
                                       );
                                     }}
                                     placeholder='60'
-                                    className='w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:border-transparent focus:ring-2 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100'
+                                    className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:border-transparent focus:ring-2 focus:ring-apex-accent dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100"
                                   />
                                 </div>
                               </div>
@@ -4861,7 +4865,7 @@ const OpenListConfigComponent = ({
             {isLoading('saveOpenList') ? (<><Loader2 className='mr-1.5 inline h-4 w-4 animate-spin align-[-3px]' />保存中...</>) : '保存配置'}
           </button>
         </div>
-      </div>
+      </section>
 
       {/* 视频列表区域 */}
       {enabled &&
@@ -5241,7 +5245,7 @@ const NetDiskConfigComponent = ({
         }),
       });
 
-      const data = await response.json();
+      const data = await readJsonResponse<any>(response, "管理设置");
       if (!response.ok) {
         throw new Error(data.error || '保存失败');
       }
@@ -5266,7 +5270,7 @@ const NetDiskConfigComponent = ({
           }),
         });
 
-        const data = await response.json();
+        const data = await readJsonResponse<any>(response, "管理设置");
         if (!response.ok) {
           throw new Error(data.error || '校验失败');
         }
@@ -5297,7 +5301,7 @@ const NetDiskConfigComponent = ({
           }),
         });
 
-        const data = await response.json();
+        const data = await readJsonResponse<any>(response, "管理设置");
         if (!response.ok) {
           throw new Error(data.error || '校验失败');
         }
@@ -5328,7 +5332,7 @@ const NetDiskConfigComponent = ({
           }),
         });
 
-        const data = await response.json();
+        const data = await readJsonResponse<any>(response, "管理设置");
         if (!response.ok) {
           throw new Error(data.error || '校验失败');
         }
@@ -5360,7 +5364,7 @@ const NetDiskConfigComponent = ({
           }),
         });
 
-        const data = await response.json();
+        const data = await readJsonResponse<any>(response, "管理设置");
         if (!response.ok) {
           throw new Error(data.error || '校验失败');
         }
@@ -5392,7 +5396,7 @@ const NetDiskConfigComponent = ({
           }),
         });
 
-        const data = await response.json();
+        const data = await readJsonResponse<any>(response, "管理设置");
         if (!response.ok) {
           throw new Error(data.error || '校验失败');
         }
@@ -5425,7 +5429,7 @@ const NetDiskConfigComponent = ({
           }),
         });
 
-        const data = await response.json();
+        const data = await readJsonResponse<any>(response, "管理设置");
         if (!response.ok) {
           throw new Error(data.error || '校验失败');
         }
@@ -5456,7 +5460,7 @@ const NetDiskConfigComponent = ({
           }),
         });
 
-        const data = await response.json();
+        const data = await readJsonResponse<any>(response, "管理设置");
         if (!response.ok) {
           throw new Error(data.error || '校验失败');
         }
@@ -5495,7 +5499,7 @@ const NetDiskConfigComponent = ({
                 onChange={(e) => setEnabled(e.target.checked)}
                 className='sr-only peer'
               />
-              <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-transform after:duration-200 after:ease-[cubic-bezier(.16,1,.3,1)] dark:border-gray-600 peer-checked:bg-blue-600"></div>
+              <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-apex-accent dark:peer-focus:ring-apex-accent rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-transform after:duration-200 after:ease-[cubic-bezier(.16,1,.3,1)] dark:border-gray-600 peer-checked:bg-blue-600"></div>
             </label>
           </div>
 
@@ -5509,7 +5513,7 @@ const NetDiskConfigComponent = ({
               disabled={!enabled}
               rows={5}
               placeholder='粘贴夸克网盘 Cookie'
-              className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed'
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-apex-accent focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed"
             />
           </div>
 
@@ -5523,7 +5527,7 @@ const NetDiskConfigComponent = ({
               onChange={(e) => setSavePath(e.target.value)}
               disabled={!enabled}
               placeholder='/影视/正式转存'
-              className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed'
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-apex-accent focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed"
             />
           </div>
 
@@ -5541,7 +5545,7 @@ const NetDiskConfigComponent = ({
                 )
               }
               disabled={!enabled}
-              className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed'
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-apex-accent focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <option value='direct_first'>直链优先</option>
               <option value='transcode_first'>转码优先</option>
@@ -5568,7 +5572,7 @@ const NetDiskConfigComponent = ({
                 disabled={!enabled}
                 className='sr-only peer'
               />
-              <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-disabled:opacity-50 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-transform after:duration-200 after:ease-[cubic-bezier(.16,1,.3,1)] dark:border-gray-600 peer-checked:bg-blue-600"></div>
+              <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-apex-accent dark:peer-focus:ring-apex-accent rounded-full peer dark:bg-gray-700 peer-disabled:opacity-50 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-transform after:duration-200 after:ease-[cubic-bezier(.16,1,.3,1)] dark:border-gray-600 peer-checked:bg-blue-600"></div>
             </label>
           </div>
 
@@ -5823,7 +5827,7 @@ const NetDiskConfigComponent = ({
                 onChange={(e) => setPan123Enabled(e.target.checked)}
                 className='sr-only peer'
               />
-              <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-teal-300 dark:peer-focus:ring-teal-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-transform after:duration-200 after:ease-[cubic-bezier(.16,1,.3,1)] dark:border-gray-600 peer-checked:bg-teal-600"></div>
+              <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-apex-accent dark:peer-focus:ring-apex-accent rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-transform after:duration-200 after:ease-[cubic-bezier(.16,1,.3,1)] dark:border-gray-600 peer-checked:bg-apex-action"></div>
             </label>
           </div>
 
@@ -5837,7 +5841,7 @@ const NetDiskConfigComponent = ({
               onChange={(e) => setPan123Account(e.target.value)}
               disabled={!pan123Enabled}
               placeholder='输入123网盘账号'
-              className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-teal-500 focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed'
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-apex-accent focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed"
             />
           </div>
 
@@ -5851,7 +5855,7 @@ const NetDiskConfigComponent = ({
               onChange={(e) => setPan123Password(e.target.value)}
               disabled={!pan123Enabled}
               placeholder='输入123网盘密码'
-              className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-teal-500 focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed'
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-apex-accent focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed"
             />
           </div>
 
@@ -5902,7 +5906,7 @@ const NetDiskConfigComponent = ({
                 onChange={(e) => setUcEnabled(e.target.checked)}
                 className='sr-only peer'
               />
-              <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-green-300 dark:peer-focus:ring-green-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-transform after:duration-200 after:ease-[cubic-bezier(.16,1,.3,1)] dark:border-gray-600 peer-checked:bg-green-600"></div>
+              <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-apex-accent dark:peer-focus:ring-apex-accent rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-transform after:duration-200 after:ease-[cubic-bezier(.16,1,.3,1)] dark:border-gray-600 peer-checked:bg-green-600"></div>
             </label>
           </div>
 
@@ -5916,7 +5920,7 @@ const NetDiskConfigComponent = ({
               disabled={!ucEnabled}
               rows={5}
               placeholder='粘贴 UC 网盘 Cookie'
-              className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-green-500 focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed'
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-apex-accent focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed"
             />
           </div>
 
@@ -5930,7 +5934,7 @@ const NetDiskConfigComponent = ({
               onChange={(e) => setUcToken(e.target.value)}
               disabled={!ucEnabled}
               placeholder='可选，填写后优先尝试原画地址'
-              className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-green-500 focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed'
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-apex-accent focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed"
             />
           </div>
 
@@ -5944,7 +5948,7 @@ const NetDiskConfigComponent = ({
               onChange={(e) => setUcSavePath(e.target.value)}
               disabled={!ucEnabled}
               placeholder='/影视/UC临时转存'
-              className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-green-500 focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed'
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-apex-accent focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed"
             />
           </div>
 
@@ -6313,7 +6317,7 @@ const EmbyConfigComponent = ({
           }),
         });
 
-        const data = await response.json();
+        const data = await readJsonResponse<any>(response, "管理设置");
 
         if (data.success) {
           showSuccess(data.message || 'Emby 连接测试成功', showAlert);
@@ -6341,7 +6345,7 @@ const EmbyConfigComponent = ({
           }),
         });
 
-        const data = await response.json();
+        const data = await readJsonResponse<any>(response, "管理设置");
 
         if (data.success) {
           showSuccess(data.message || '缓存清除成功', showAlert);
@@ -6363,7 +6367,7 @@ const EmbyConfigComponent = ({
       try {
         const response = await fetch('/api/admin/emby/export');
         if (!response.ok) {
-          const data = await response.json();
+          const data = await readJsonResponse<any>(response, "管理设置");
           showError(data.error || '导出失败', showAlert);
           return;
         }
@@ -6404,7 +6408,7 @@ const EmbyConfigComponent = ({
             body: JSON.stringify({ data }),
           });
 
-          const result = await response.json();
+          const result = await readJsonResponse<any>(response, "管理设置");
 
           if (result.success) {
             await refreshConfig();
@@ -7033,7 +7037,7 @@ const EmbyConfigComponent = ({
                     })
                   }
                   placeholder='留空使用默认浏览器UA'
-                  className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white text-sm'
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-apex-accent focus:border-apex-accent dark:bg-gray-700 dark:text-white text-sm"
                 />
                 <p className='text-xs text-gray-500 dark:text-gray-400 mt-1'>
                   用于登录、获取影片和代理视频时的User-Agent，留空则使用默认浏览器UA
@@ -7055,7 +7059,7 @@ const EmbyConfigComponent = ({
                     })
                   }
                   placeholder='留空使用默认 moontvplus 认证头'
-                  className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white text-sm'
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-apex-accent focus:border-apex-accent dark:bg-gray-700 dark:text-white text-sm"
                 />
                 <p className='text-xs text-gray-500 dark:text-gray-400 mt-1'>
                   仅用于账号认证登录请求，示例：MediaBrowser Client=&quot;moontvplus&quot;, Device=&quot;Web&quot;, DeviceId=&quot;moontvplus-web&quot;, Version=&quot;1.0.0&quot;
@@ -7159,7 +7163,7 @@ const WeightModalInput = memo(
             setLocalWeight(clampedValue);
           }}
           onBlur={(e) => commitWeight(parseInt(e.target.value) || 0)}
-          className='w-20 px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent'
+          className="w-20 px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-apex-accent focus:border-transparent"
         />
       </div>
     );
@@ -7394,7 +7398,7 @@ const VideoSourceConfig = ({
     withLoading(`toggleSource_${key}`, () =>
       callSourceApi({ action, key })
     ).catch(() => {
-      console.error('操作失败', action, key);
+      reportAppError(key, "操作失败");
     });
   };
 
@@ -7427,7 +7431,7 @@ const VideoSourceConfig = ({
         });
 
         if (!response.ok) {
-          const data = await response.json().catch(() => ({}));
+          const data = await readJsonResponse<any>(response, "管理设置");
           throw new Error(data.error || `操作失败: ${response.status}`);
         }
 
@@ -7446,7 +7450,7 @@ const VideoSourceConfig = ({
         throw error;
       }
     }).catch(() => {
-      console.error('操作失败', 'toggle_proxy_mode', key);
+      reportAppError(key, "操作失败");
     });
   };
 
@@ -7469,7 +7473,7 @@ const VideoSourceConfig = ({
       });
       closeSpecialSourcesModal();
     }).catch(() => {
-      console.error('操作失败', 'set_special_sources');
+      reportAppError('set_special_sources', "操作失败");
     });
   };
 
@@ -7491,7 +7495,7 @@ const VideoSourceConfig = ({
       });
       closeClientAdSourcesModal();
     }).catch(() => {
-      console.error('操作失败', 'set_client_ad_sources');
+      reportAppError('set_client_ad_sources', "操作失败");
     });
   };
 
@@ -7557,7 +7561,7 @@ const VideoSourceConfig = ({
         });
 
         if (!response.ok) {
-          const data = await response.json().catch(() => ({}));
+          const data = await readJsonResponse<any>(response, "管理设置");
           throw new Error(data.error || `操作失败: ${response.status}`);
         }
 
@@ -7578,7 +7582,7 @@ const VideoSourceConfig = ({
         throw error;
       }
     }).catch(() => {
-      console.error('操作失败', 'update_weight', key, weight);
+      reportAppError(weight, "操作失败");
     });
   };
 
@@ -7602,7 +7606,7 @@ const VideoSourceConfig = ({
       });
       setShowAddForm(false);
     }).catch(() => {
-      console.error('操作失败', 'add', newSource);
+      reportAppError(newSource, "操作失败");
     });
   };
 
@@ -7623,7 +7627,7 @@ const VideoSourceConfig = ({
       });
       setEditingSource(null);
     }).catch(() => {
-      console.error('操作失败', 'update', editingSource);
+      reportAppError(editingSource, "操作失败");
     });
   };
 
@@ -7753,7 +7757,7 @@ const VideoSourceConfig = ({
       setOrderChanged(false);
       handleCloseWeightModal();
     }).catch(() => {
-      console.error('操作失败', 'batch_update_weights');
+      reportAppError('batch_update_weights', "操作失败");
     });
   }, [callSourceApi, handleCloseWeightModal, weightDraftSources, withLoading]);
 
@@ -7855,12 +7859,12 @@ const VideoSourceConfig = ({
                 break;
             }
           } catch (error) {
-            console.error('解析EventSource数据失败:', error);
+            reportAppError(error, "解析EventSource数据失败");
           }
         };
 
         eventSource.onerror = (error) => {
-          console.error('EventSource错误:', error);
+          reportAppError(error, "EventSource错误");
           eventSource.close();
           setIsValidating(false);
           showAlert({
@@ -7945,7 +7949,7 @@ const VideoSourceConfig = ({
             type='checkbox'
             checked={selectedSources.has(source.key)}
             onChange={(e) => handleSelectSource(source.key, e.target.checked)}
-            className='w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600'
+            className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-apex-accent dark:focus:ring-apex-accent dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
           />
         </td>
         <td className='px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100'>
@@ -8267,8 +8271,8 @@ const VideoSourceConfig = ({
   return (
     <div className='apex-admin-fields space-y-6'>
       {/* 添加视频源表单 */}
-      <div className='flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4'>
-        <h4 className='shrink-0 whitespace-nowrap text-sm font-medium text-gray-700 dark:text-gray-300'>
+      <div className='apex-admin-toolbar flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4'>
+          <h4 className='shrink-0 whitespace-nowrap text-sm font-medium text-gray-700 dark:text-gray-300'>
           视频源列表
         </h4>
         <div className='flex min-w-0 flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-end sm:gap-2'>
@@ -8654,7 +8658,7 @@ const VideoSourceConfig = ({
                   type='checkbox'
                   checked={selectAll}
                   onChange={(e) => handleSelectAll(e.target.checked)}
-                  className='w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600'
+                  className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-apex-accent dark:focus:ring-apex-accent dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
                 />
               </th>
               <th className='px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider'>
@@ -9268,7 +9272,7 @@ const CategoryDraggableRow = ({
           className={`px-2 py-1 text-xs rounded-full ${
             category.type === 'movie'
               ? 'bg-blue-100 dark:bg-blue-900/20 text-blue-800 dark:text-blue-300'
-              : 'bg-purple-100 dark:bg-purple-900/20 text-purple-800 dark:text-purple-300'
+              : "bg-apex-selected dark:bg-apex-selected/20 text-apex-accent-on-soft dark:text-apex-accent-on-soft"
           }`}
         >
           {category.type === 'movie' ? '电影' : '电视剧'}
@@ -9404,7 +9408,7 @@ const CategoryConfig = ({
     withLoading(`toggleCategory_${query}_${type}`, () =>
       callCategoryApi({ action, query, type })
     ).catch(() => {
-      console.error('操作失败', action, query, type);
+      reportAppError(type, "操作失败");
     });
   };
 
@@ -9433,7 +9437,7 @@ const CategoryConfig = ({
       });
       setShowAddForm(false);
     }).catch(() => {
-      console.error('操作失败', 'add', newCategory);
+      reportAppError(newCategory, "操作失败");
     });
   };
 
@@ -9459,7 +9463,7 @@ const CategoryConfig = ({
         setOrderChanged(false);
       })
       .catch(() => {
-        console.error('操作失败', 'sort', order);
+        reportAppError(order, "操作失败");
       });
   };
 
@@ -9474,8 +9478,8 @@ const CategoryConfig = ({
   return (
     <div className='apex-admin-fields space-y-6'>
       {/* 添加分类表单 */}
-      <div className='flex flex-wrap items-center justify-between gap-3'>
-        <h4 className='text-sm font-medium text-gray-700 dark:text-gray-300'>
+      <div className='apex-admin-toolbar flex flex-wrap items-center justify-between gap-3'>
+          <h4 className='text-sm font-medium text-gray-700 dark:text-gray-300'>
           自定义分类列表
         </h4>
         <button
@@ -9688,7 +9692,7 @@ const VideoSourceScriptLab = () => {
       const response = await fetch('/api/admin/source-script', {
         cache: 'no-store',
       });
-      const data = await response.json().catch(() => ({}));
+      const data = await readJsonResponse<any>(response, "管理设置");
       if (!response.ok) {
         throw new Error(data.error || '加载脚本失败');
       }
@@ -9787,7 +9791,7 @@ const VideoSourceScriptLab = () => {
           }),
         });
 
-        const data = await response.json().catch(() => ({}));
+        const data = await readJsonResponse<any>(response, "管理设置");
         if (!response.ok) {
           throw new Error(data.error || '导入失败');
         }
@@ -9822,7 +9826,7 @@ const VideoSourceScriptLab = () => {
           enabled: editor.enabled,
         }),
       });
-      const data = await response.json().catch(() => ({}));
+      const data = await readJsonResponse<any>(response, "管理设置");
       if (!response.ok) {
         throw new Error(data.error || '保存失败');
       }
@@ -9856,7 +9860,7 @@ const VideoSourceScriptLab = () => {
               id: editor.id,
             }),
           });
-          const data = await response.json().catch(() => ({}));
+          const data = await readJsonResponse<any>(response, "管理设置");
           if (!response.ok) {
             throw new Error(data.error || '删除失败');
           }
@@ -9882,7 +9886,7 @@ const VideoSourceScriptLab = () => {
           id,
         }),
       });
-      const data = await response.json().catch(() => ({}));
+      const data = await readJsonResponse<any>(response, "管理设置");
       if (!response.ok) {
         throw new Error(data.error || '更新失败');
       }
@@ -9914,7 +9918,7 @@ const VideoSourceScriptLab = () => {
           payload,
         }),
       });
-      const data = await response.json().catch(() => ({}));
+      const data = await readJsonResponse<any>(response, "管理设置");
       setTestOutput(JSON.stringify(data, null, 2));
       if (!response.ok) {
         throw new Error(data.error || data.message || '测试失败');
@@ -9955,8 +9959,8 @@ const VideoSourceScriptLab = () => {
     <div className='apex-admin-fields space-y-6'>
       <div className='apex-admin-script-workspace'>
         <div className='apex-admin-script-list space-y-4'>
-          <div className='flex flex-wrap items-center justify-between gap-3'>
-            <h4 className='text-sm font-medium text-gray-700 dark:text-gray-300'>
+          <div className='apex-admin-toolbar flex flex-wrap items-center justify-between gap-3'>
+          <h4 className='text-sm font-medium text-gray-700 dark:text-gray-300'>
               脚本列表
             </h4>
             <div className='flex items-center gap-2'>
@@ -10436,7 +10440,7 @@ const ConfigFileComponent = ({
               onChange={(e) => setSubscriptionUrl(e.target.value)}
               placeholder='https://example.com/config.json'
               disabled={false}
-              className='w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all duration-200 shadow-sm hover:border-gray-400 dark:hover:border-gray-500'
+              className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-apex-accent focus:border-transparent transition-all duration-200 shadow-sm hover:border-gray-400 dark:hover:border-gray-500"
             />
             <p className='mt-2 text-xs text-gray-500 dark:text-gray-400'>
               输入配置文件的订阅地址，要求 JSON 格式，且使用 Base58 编码
@@ -10453,7 +10457,7 @@ const ConfigFileComponent = ({
               value={subscriptionProxy}
               onChange={(e) => setSubscriptionProxy(e.target.value)}
               placeholder='http://127.0.0.1:7890（可选）'
-              className='w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all duration-200 shadow-sm hover:border-gray-400 dark:hover:border-gray-500'
+              className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-apex-accent focus:border-transparent transition-all duration-200 shadow-sm hover:border-gray-400 dark:hover:border-gray-500"
             />
           </div>
 
@@ -10520,7 +10524,7 @@ const ConfigFileComponent = ({
             rows={20}
             placeholder='请输入配置文件内容（JSON 格式）...'
             disabled={false}
-            className='w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 font-mono text-sm leading-relaxed resize-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 hover:border-gray-400 dark:hover:border-gray-500'
+            className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 font-mono text-sm leading-relaxed resize-none focus:ring-2 focus:ring-apex-accent focus:border-transparent transition-all duration-200 hover:border-gray-400 dark:hover:border-gray-500"
             style={{
               fontFamily:
                 'ui-monospace, SFMono-Regular, "SF Mono", Consolas, "Liberation Mono", Menlo, monospace',
@@ -10770,7 +10774,7 @@ const ThemeConfigComponent = ({
           }),
         });
 
-        const data = await response.json();
+        const data = await readJsonResponse<any>(response, "管理设置");
 
         if (!response.ok) {
           throw new Error(data.error || '保存失败');
@@ -10849,7 +10853,7 @@ const ThemeConfigComponent = ({
               }
               placeholder='在此输入自定义 CSS 代码…'
               spellCheck={false}
-              className='h-96 w-full rounded-lg border border-gray-300 bg-white px-4 py-3 font-mono text-sm text-gray-900 focus:border-transparent focus:ring-2 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100'
+              className="h-96 w-full rounded-lg border border-gray-300 bg-white px-4 py-3 font-mono text-sm text-gray-900 focus:border-transparent focus:ring-2 focus:ring-apex-accent dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100"
             />
             <p className='mt-2 text-sm text-gray-600 dark:text-gray-400'>
               可使用 CSS 变量、媒体查询等特性；覆盖颜色时请同时考虑深浅模式。
@@ -10895,7 +10899,7 @@ const ThemeConfigComponent = ({
                         cacheMinutes: parseInt(e.target.value) || 1440,
                       }))
                     }
-                    className='w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent'
+                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-apex-accent focus:border-transparent"
                   />
                   <p className='mt-2 text-sm text-gray-600 dark:text-gray-400'>
                     建议值：60分钟（1小时）、1440分钟（1天）、10080分钟（7天）
@@ -10933,7 +10937,7 @@ const ThemeConfigComponent = ({
                       setLoginBackgroundImages(newImages);
                     }}
                     placeholder='请输入登录界面背景图URL (http:// 或 https://)'
-                    className='flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent font-mono text-sm'
+                    className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-apex-accent focus:border-transparent font-mono text-sm"
                   />
                   {loginBackgroundImages.length > 1 && (
                     <button
@@ -11003,7 +11007,7 @@ const ThemeConfigComponent = ({
                       setRegisterBackgroundImages(newImages);
                     }}
                     placeholder='请输入注册界面背景图URL (http:// 或 https://)'
-                    className='flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent font-mono text-sm'
+                    className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-apex-accent focus:border-transparent font-mono text-sm"
                   />
                   {registerBackgroundImages.length > 1 && (
                     <button
@@ -11073,7 +11077,7 @@ const ThemeConfigComponent = ({
                       setHomeBackgroundImages(newImages);
                     }}
                     placeholder='请输入首页背景图URL (http:// 或 https://)'
-                    className='flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent font-mono text-sm'
+                    className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-apex-accent focus:border-transparent font-mono text-sm"
                   />
                   {homeBackgroundImages.length > 1 && (
                     <button
@@ -11255,7 +11259,7 @@ const ThemeConfigComponent = ({
             </label>
             <input
               type='text'
-              className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400'
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-apex-accent focus:border-apex-accent transition-all duration-200 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
               placeholder='例如: https://example.com/icon.png'
               value={themeSettings.progressThumbCustomUrl}
               onChange={(e) =>
@@ -11441,10 +11445,10 @@ const ThemeConfigComponent = ({
                 desc: '默认',
                 preview: (
                   <div
-                    className='w-8 flex flex-col items-center pt-1 pb-2 text-[#4a2600] font-extrabold text-sm'
+                    className="w-8 flex flex-col items-center pt-1 pb-2 text-[var(--ptv-rating-high-ink)] font-extrabold text-sm"
                     style={{
                       background:
-                        'linear-gradient(180deg,#ffd54a,#ff8a3d)',
+                        "linear-gradient(180deg,var(--ptv-rating-high-a),var(--ptv-rating-high-b))",
                       clipPath:
                         'polygon(0 0,100% 0,100% 100%,50% 84%,0 100%)',
                     }}
@@ -11455,7 +11459,7 @@ const ThemeConfigComponent = ({
                           key={i}
                           viewBox='0 0 24 24'
                           className='w-2 h-2'
-                          fill='#4a2600'
+                          fill="var(--ptv-rating-high-ink)"
                         >
                           <path d='M12 2l2.9 6.3 6.9.7-5.1 4.6 1.4 6.8L12 17.8 5.9 20.4l1.4-6.8L2.2 9l6.9-.7z' />
                         </svg>
@@ -11473,14 +11477,14 @@ const ThemeConfigComponent = ({
                   <div className='flex flex-col items-center'>
                     <div className='relative w-6 h-4 -mb-2'>
                       <i
-                        className='absolute left-0 top-0 w-2.5 h-4 -rotate-6 bg-[#ff8a3d] block'
+                        className="absolute left-0 top-0 w-2.5 h-4 -rotate-6 bg-[var(--ptv-rating-high-b)] block"
                         style={{
                           clipPath:
                             'polygon(0 0,100% 0,100% 100%,50% 72%,0 100%)',
                         }}
                       />
                       <i
-                        className='absolute right-0 top-0 w-2.5 h-4 rotate-6 bg-[#ff8a3d] block'
+                        className="absolute right-0 top-0 w-2.5 h-4 rotate-6 bg-[var(--ptv-rating-high-b)] block"
                         style={{
                           clipPath:
                             'polygon(0 0,100% 0,100% 100%,50% 72%,0 100%)',
@@ -11488,10 +11492,10 @@ const ThemeConfigComponent = ({
                       />
                     </div>
                     <div
-                      className='relative z-10 w-8 h-8 rounded-full flex flex-col items-center justify-center text-[#4a2600] font-extrabold text-[11px] leading-none border-2 border-white/70'
+                      className="relative z-10 w-8 h-8 rounded-full flex flex-col items-center justify-center text-[var(--ptv-rating-high-ink)] font-extrabold text-[11px] leading-none border-2 border-white/70"
                       style={{
                         background:
-                          'linear-gradient(135deg,#ffd54a,#ff8a3d)',
+                          "linear-gradient(135deg,var(--ptv-rating-high-a),var(--ptv-rating-high-b))",
                       }}
                     >
                       <span className='flex flex-col items-center -mb-[1px]'>
@@ -11499,7 +11503,7 @@ const ThemeConfigComponent = ({
                           <svg
                             viewBox='0 0 24 24'
                             className='w-1.5 h-1.5'
-                            fill='#4a2600'
+                            fill="var(--ptv-rating-high-ink)"
                           >
                             <path d='M12 2l2.9 6.3 6.9.7-5.1 4.6 1.4 6.8L12 17.8 5.9 20.4l1.4-6.8L2.2 9l6.9-.7z' />
                           </svg>
@@ -11510,7 +11514,7 @@ const ThemeConfigComponent = ({
                               key={i}
                               viewBox='0 0 24 24'
                               className='w-1.5 h-1.5'
-                              fill='#4a2600'
+                              fill="var(--ptv-rating-high-ink)"
                             >
                               <path d='M12 2l2.9 6.3 6.9.7-5.1 4.6 1.4 6.8L12 17.8 5.9 20.4l1.4-6.8L2.2 9l6.9-.7z' />
                             </svg>
@@ -11706,7 +11710,7 @@ const SiteConfigComponent = ({
       .then((response) => (response.ok ? response.text() : ''))
       .then(setBangumiProxyScript)
       .catch((error) => {
-        console.error('加载 Bangumi Workers 脚本失败:', error);
+        reportAppError(error, "加载 Bangumi Workers 脚本失败");
       });
   }, []);
 
@@ -11845,7 +11849,7 @@ const SiteConfigComponent = ({
       showSuccess('已复制 Bangumi Workers 脚本', showAlert);
       setTimeout(() => setBangumiProxyScriptCopied(false), 2000);
     } catch (error) {
-      console.error('复制 Bangumi Workers 脚本失败:', error);
+      reportAppError(error, "复制 Bangumi Workers 脚本失败");
       showError('复制失败', showAlert);
     }
   };
@@ -11884,8 +11888,10 @@ const SiteConfigComponent = ({
 
   return (
     <div className='apex-admin-fields space-y-6'>
+      <section className='apex-admin-config-group apex-admin-site-group space-y-6' aria-label='站点信息'>
+        <h3 className='apex-admin-group-title'>站点信息</h3>
       {/* 站点名称 */}
-      <div>
+      <div className='apex-admin-field-row'>
         <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
           站点名称
         </label>
@@ -11895,12 +11901,12 @@ const SiteConfigComponent = ({
           onChange={(e) =>
             setSiteSettings((prev) => ({ ...prev, SiteName: e.target.value }))
           }
-          className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-green-500 focus:border-transparent'
+          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-apex-accent focus:border-transparent"
         />
       </div>
 
       {/* 站点公告 */}
-      <div>
+      <div className='apex-admin-field-row'>
         <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
           站点公告
         </label>
@@ -11913,12 +11919,12 @@ const SiteConfigComponent = ({
             }))
           }
           rows={3}
-          className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-green-500 focus:border-transparent'
+          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-apex-accent focus:border-transparent"
         />
       </div>
 
       {/* 公告显示模式 */}
-      <div>
+      <div className='apex-admin-field-row'>
         <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
           公告显示模式
         </label>
@@ -11935,7 +11941,7 @@ const SiteConfigComponent = ({
                   AnnouncementDisplayMode: 'once',
                 }))
               }
-              className='text-green-600 focus:ring-green-500'
+              className="text-green-600 focus:ring-apex-accent"
             />
             <span className='text-sm text-gray-700 dark:text-gray-300'>
               单次显示
@@ -11953,7 +11959,7 @@ const SiteConfigComponent = ({
                   AnnouncementDisplayMode: 'every',
                 }))
               }
-              className='text-green-600 focus:ring-green-500'
+              className="text-green-600 focus:ring-apex-accent"
             />
             <span className='text-sm text-gray-700 dark:text-gray-300'>
               每次显示
@@ -11962,9 +11968,14 @@ const SiteConfigComponent = ({
         </div>
       </div>
 
+      </section>
+
+      <section className='apex-admin-config-group apex-admin-site-group space-y-6' aria-label='数据源与搜索'>
+        <h3 className='apex-admin-group-title'>数据源与搜索</h3>
+
       {/* 豆瓣数据源设置 */}
       <div className='space-y-3'>
-        <div>
+        <div className='apex-admin-field-row'>
           <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
             豆瓣数据代理
           </label>
@@ -11973,7 +11984,7 @@ const SiteConfigComponent = ({
             <button
               type='button'
               onClick={() => setIsDoubanDropdownOpen(!isDoubanDropdownOpen)}
-              className='w-full px-3 py-2.5 pr-10 border border-gray-300 dark:border-gray-600 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 shadow-sm hover:border-gray-400 dark:hover:border-gray-500 text-left'
+              className="w-full px-3 py-2.5 pr-10 border border-gray-300 dark:border-gray-600 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-apex-accent focus:border-apex-accent transition-all duration-200 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 shadow-sm hover:border-gray-400 dark:hover:border-gray-500 text-left"
             >
               {
                 doubanDataSourceOptions.find(
@@ -12025,7 +12036,7 @@ const SiteConfigComponent = ({
 
         {/* 豆瓣代理地址设置 - 仅在选择自定义代理时显示 */}
         {siteSettings.DoubanProxyType === 'custom' && (
-          <div>
+          <div className='apex-admin-field-row'>
             <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
               豆瓣代理地址
             </label>
@@ -12039,7 +12050,7 @@ const SiteConfigComponent = ({
                   DoubanProxy: e.target.value,
                 }))
               }
-              className='w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 shadow-sm hover:border-gray-400 dark:hover:border-gray-500'
+              className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-apex-accent focus:border-apex-accent transition-all duration-200 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 shadow-sm hover:border-gray-400 dark:hover:border-gray-500"
             />
             <p className='mt-1 text-xs text-gray-500 dark:text-gray-400'>
               自定义代理服务器地址
@@ -12050,7 +12061,7 @@ const SiteConfigComponent = ({
 
       {/* 豆瓣图片代理设置 */}
       <div className='space-y-3'>
-        <div>
+        <div className='apex-admin-field-row'>
           <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
             豆瓣图片代理
           </label>
@@ -12063,7 +12074,7 @@ const SiteConfigComponent = ({
                   !isDoubanImageProxyDropdownOpen
                 )
               }
-              className='w-full px-3 py-2.5 pr-10 border border-gray-300 dark:border-gray-600 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 shadow-sm hover:border-gray-400 dark:hover:border-gray-500 text-left'
+              className="w-full px-3 py-2.5 pr-10 border border-gray-300 dark:border-gray-600 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-apex-accent focus:border-apex-accent transition-all duration-200 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 shadow-sm hover:border-gray-400 dark:hover:border-gray-500 text-left"
             >
               {
                 doubanImageProxyTypeOptions.find(
@@ -12115,7 +12126,7 @@ const SiteConfigComponent = ({
 
         {/* 豆瓣代理地址设置 - 仅在选择自定义代理时显示 */}
         {siteSettings.DoubanImageProxyType === 'custom' && (
-          <div>
+          <div className='apex-admin-field-row'>
             <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
               豆瓣图片代理地址
             </label>
@@ -12129,7 +12140,7 @@ const SiteConfigComponent = ({
                   DoubanImageProxy: e.target.value,
                 }))
               }
-              className='w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 shadow-sm hover:border-gray-400 dark:hover:border-gray-500'
+              className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-apex-accent focus:border-apex-accent transition-all duration-200 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 shadow-sm hover:border-gray-400 dark:hover:border-gray-500"
             />
             <p className='mt-1 text-xs text-gray-500 dark:text-gray-400'>
               自定义图片代理服务器地址
@@ -12139,7 +12150,7 @@ const SiteConfigComponent = ({
       </div>
 
       {/* 搜索接口可拉取最大页数 */}
-      <div>
+      <div className='apex-admin-field-row'>
         <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
           搜索接口可拉取最大页数
         </label>
@@ -12153,12 +12164,12 @@ const SiteConfigComponent = ({
               SearchDownstreamMaxPage: Number(e.target.value),
             }))
           }
-          className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-green-500 focus:border-transparent'
+          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-apex-accent focus:border-transparent"
         />
       </div>
 
       {/* 站点接口缓存时间 */}
-      <div>
+      <div className='apex-admin-field-row'>
         <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
           站点接口缓存时间（秒）
         </label>
@@ -12172,7 +12183,7 @@ const SiteConfigComponent = ({
               SiteInterfaceCacheTime: Number(e.target.value),
             }))
           }
-          className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-green-500 focus:border-transparent'
+          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-apex-accent focus:border-transparent"
         />
       </div>
 
@@ -12249,7 +12260,7 @@ const SiteConfigComponent = ({
       </div>
 
       {/* 本地设置云同步模式 */}
-      <div>
+      <div className='apex-admin-field-row'>
         <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
           本地设置云同步
         </label>
@@ -12264,7 +12275,7 @@ const SiteConfigComponent = ({
                 | 'auto',
             }))
           }
-          className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-green-500 focus:border-transparent'
+          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-apex-accent focus:border-transparent"
         >
           <option value='off'>关闭</option>
           <option value='manual'>手动模式</option>
@@ -12285,7 +12296,7 @@ const SiteConfigComponent = ({
         </summary>
         <div className='mt-4 space-y-4'>
           {/* 轮播图数据源 */}
-          <div>
+          <div className='apex-admin-field-row'>
             <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
               轮播图数据源
             </label>
@@ -12297,7 +12308,7 @@ const SiteConfigComponent = ({
                   BannerDataSource: e.target.value,
                 }))
               }
-              className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-green-500 focus:border-transparent'
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-apex-accent focus:border-transparent"
             >
               <option value='Douban'>豆瓣</option>
               <option value='TMDB'>TMDB</option>
@@ -12309,7 +12320,7 @@ const SiteConfigComponent = ({
           </div>
 
           {/* 更多推荐数据源 */}
-          <div>
+          <div className='apex-admin-field-row'>
             <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
               更多推荐数据源
             </label>
@@ -12321,7 +12332,7 @@ const SiteConfigComponent = ({
                   RecommendationDataSource: e.target.value,
                 }))
               }
-              className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-green-500 focus:border-transparent'
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-apex-accent focus:border-transparent"
             >
               <option value='Mixed'>混合</option>
               <option value='Douban'>豆瓣</option>
@@ -12333,6 +12344,11 @@ const SiteConfigComponent = ({
           </div>
         </div>
       </details>
+
+      </section>
+
+      <section className='apex-admin-config-group apex-admin-site-group space-y-6' aria-label='媒体服务'>
+        <h3 className='apex-admin-group-title'>媒体服务</h3>
 
       {/* 弹幕 API 配置 */}
       <details className='pt-4 border-t border-gray-200 dark:border-gray-700'>
@@ -12385,7 +12401,7 @@ const SiteConfigComponent = ({
           {siteSettings.DanmakuSourceType === 'custom' && (
             <>
               {/* 弹幕 API 地址 */}
-              <div>
+              <div className='apex-admin-field-row'>
                 <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
                   弹幕 API 地址
                 </label>
@@ -12399,7 +12415,7 @@ const SiteConfigComponent = ({
                       DanmakuApiBase: e.target.value,
                     }))
                   }
-                  className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-green-500 focus:border-transparent'
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-apex-accent focus:border-transparent"
                 />
                 <p className='mt-1 text-xs text-gray-500 dark:text-gray-400'>
                   自定义弹幕服务器的 API 地址。API部署参考
@@ -12415,7 +12431,7 @@ const SiteConfigComponent = ({
               </div>
 
               {/* 弹幕 API Token */}
-              <div>
+              <div className='apex-admin-field-row'>
                 <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
                   弹幕 API Token
                 </label>
@@ -12429,7 +12445,7 @@ const SiteConfigComponent = ({
                       DanmakuApiToken: e.target.value,
                     }))
                   }
-                  className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-green-500 focus:border-transparent'
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-apex-accent focus:border-transparent"
                 />
                 <p className='mt-1 text-xs text-gray-500 dark:text-gray-400'>
                   自定义弹幕服务器的访问令牌，默认为 87654321
@@ -12478,7 +12494,7 @@ const SiteConfigComponent = ({
             由于国内网络环境限制，TMDB 服务通常需要配置代理后才能正常使用。
           </p>
           {/* TMDB API Key */}
-          <div>
+          <div className='apex-admin-field-row'>
             <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
               TMDB API Key
             </label>
@@ -12492,7 +12508,7 @@ const SiteConfigComponent = ({
                   TMDBApiKey: e.target.value,
                 }))
               }
-              className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-green-500 focus:border-transparent'
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-apex-accent focus:border-transparent"
             />
             <p className='mt-1 text-xs text-gray-500 dark:text-gray-400'>
               配置后首页将显示 TMDB 即将上映电影。支持配置多个 API
@@ -12510,7 +12526,7 @@ const SiteConfigComponent = ({
           </div>
 
           {/* TMDB Proxy */}
-          <div>
+          <div className='apex-admin-field-row'>
             <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
               TMDB 系统代理
             </label>
@@ -12524,7 +12540,7 @@ const SiteConfigComponent = ({
                   TMDBProxy: e.target.value,
                 }))
               }
-              className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-green-500 focus:border-transparent'
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-apex-accent focus:border-transparent"
             />
             <p className='mt-1 text-xs text-gray-500 dark:text-gray-400'>
               配置代理服务器地址，用于访问 TMDB API（可选）
@@ -12532,7 +12548,7 @@ const SiteConfigComponent = ({
           </div>
 
           {/* TMDB Reverse Proxy */}
-          <div>
+          <div className='apex-admin-field-row'>
             <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
               TMDB 反代代理
             </label>
@@ -12546,7 +12562,7 @@ const SiteConfigComponent = ({
                   TMDBReverseProxy: e.target.value,
                 }))
               }
-              className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-green-500 focus:border-transparent'
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-apex-accent focus:border-transparent"
             />
             <p className='mt-1 text-xs text-gray-500 dark:text-gray-400'>
               配置 TMDB 反向代理 Base URL（可选）
@@ -12554,7 +12570,7 @@ const SiteConfigComponent = ({
           </div>
 
           {/* TMDB Image Base URL */}
-          <div>
+          <div className='apex-admin-field-row'>
             <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
               TMDB 图片默认地址
             </label>
@@ -12568,7 +12584,7 @@ const SiteConfigComponent = ({
                   TMDBImageBaseUrl: e.target.value,
                 }))
               }
-              className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-green-500 focus:border-transparent'
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-apex-accent focus:border-transparent"
             />
             <p className='mt-1 text-xs text-gray-500 dark:text-gray-400'>
               用户未在本地数据源设置中配置 TMDB 图片地址时，图片默认使用该地址（默认
@@ -12589,7 +12605,7 @@ const SiteConfigComponent = ({
             在部分国内网络环境下可能无法直连，可按部署环境选择合适的数据源。
           </p>
 
-          <div>
+          <div className='apex-admin-field-row'>
             <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
               默认动漫数据源
             </label>
@@ -12626,7 +12642,7 @@ const SiteConfigComponent = ({
             </p>
           </div>
 
-          <div>
+          <div className='apex-admin-field-row'>
             <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
               Bangumi Base URL
             </label>
@@ -12640,7 +12656,7 @@ const SiteConfigComponent = ({
                   BangumiApiBaseUrl: e.target.value,
                 }))
               }
-              className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-green-500 focus:border-transparent'
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-apex-accent focus:border-transparent"
             />
             <p className='mt-1 text-xs text-gray-500 dark:text-gray-400'>
               Bangumi 官方或自建反代地址，不要带末尾路径，例如
@@ -12648,7 +12664,7 @@ const SiteConfigComponent = ({
             </p>
           </div>
 
-          <div>
+          <div className='apex-admin-field-row'>
             <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
               Bangumi 图片 Base URL
             </label>
@@ -12662,7 +12678,7 @@ const SiteConfigComponent = ({
                   BangumiImageBaseUrl: e.target.value,
                 }))
               }
-              className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-green-500 focus:border-transparent'
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-apex-accent focus:border-transparent"
             />
             <p className='mt-1 text-xs text-gray-500 dark:text-gray-400'>
               用于替换 Bangumi
@@ -12671,7 +12687,7 @@ const SiteConfigComponent = ({
             </p>
           </div>
 
-          <div>
+          <div className='apex-admin-field-row'>
             <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
               Bangumi 系统代理
             </label>
@@ -12685,7 +12701,7 @@ const SiteConfigComponent = ({
                   BangumiProxy: e.target.value,
                 }))
               }
-              className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-green-500 focus:border-transparent'
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-apex-accent focus:border-transparent"
             />
             <p className='mt-1 text-xs text-gray-500 dark:text-gray-400'>
               用于服务器代理访问 Bangumi API。Cloudflare
@@ -12693,7 +12709,7 @@ const SiteConfigComponent = ({
             </p>
           </div>
 
-          <div>
+          <div className='apex-admin-field-row'>
             <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
               LiveChart 系统代理
             </label>
@@ -12707,7 +12723,7 @@ const SiteConfigComponent = ({
                   LiveChartProxy: e.target.value,
                 }))
               }
-              className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-green-500 focus:border-transparent'
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-apex-accent focus:border-transparent"
             />
             <p className='mt-1 text-xs text-gray-500 dark:text-gray-400'>
               用于服务器代理访问 LiveChart 番剧时刻表。留空则直连。
@@ -12760,7 +12776,7 @@ const SiteConfigComponent = ({
           <p className='text-xs text-amber-600 dark:text-amber-400'>
             由于国内网络环境限制，部分磁链搜索站点通常需要配置代理后才能正常访问。
           </p>
-          <div>
+          <div className='apex-admin-field-row'>
             <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
               系统代理
             </label>
@@ -12774,7 +12790,7 @@ const SiteConfigComponent = ({
                   MagnetProxy: e.target.value,
                 }))
               }
-              className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-green-500 focus:border-transparent'
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-apex-accent focus:border-transparent"
             />
             <p className='mt-1 text-xs text-gray-500 dark:text-gray-400'>
               用于访问磁链搜索站点的系统代理。Cloudflare
@@ -12782,7 +12798,7 @@ const SiteConfigComponent = ({
             </p>
           </div>
 
-          <div>
+          <div className='apex-admin-field-row'>
             <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
               Mikan 反代代理
             </label>
@@ -12796,14 +12812,14 @@ const SiteConfigComponent = ({
                   MagnetMikanReverseProxy: e.target.value,
                 }))
               }
-              className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-green-500 focus:border-transparent'
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-apex-accent focus:border-transparent"
             />
             <p className='mt-1 text-xs text-gray-500 dark:text-gray-400'>
               配置后将使用该地址替代默认的 Mikan 域名进行请求。
             </p>
           </div>
 
-          <div>
+          <div className='apex-admin-field-row'>
             <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
               动漫花园反代代理
             </label>
@@ -12817,14 +12833,14 @@ const SiteConfigComponent = ({
                   MagnetDmhyReverseProxy: e.target.value,
                 }))
               }
-              className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-green-500 focus:border-transparent'
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-apex-accent focus:border-transparent"
             />
             <p className='mt-1 text-xs text-gray-500 dark:text-gray-400'>
               配置后将使用该地址替代默认的动漫花园域名进行请求。
             </p>
           </div>
 
-          <div>
+          <div className='apex-admin-field-row'>
             <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
               ACG.RIP 反代代理
             </label>
@@ -12838,14 +12854,14 @@ const SiteConfigComponent = ({
                   MagnetAcgripReverseProxy: e.target.value,
                 }))
               }
-              className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-green-500 focus:border-transparent'
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-apex-accent focus:border-transparent"
             />
             <p className='mt-1 text-xs text-gray-500 dark:text-gray-400'>
               配置后将使用该地址替代默认的 ACG.RIP 域名进行请求。
             </p>
           </div>
 
-          <div>
+          <div className='apex-admin-field-row'>
             <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
               Nyaa 反代代理
             </label>
@@ -12859,7 +12875,7 @@ const SiteConfigComponent = ({
                   MagnetNyaaReverseProxy: e.target.value,
                 }))
               }
-              className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-green-500 focus:border-transparent'
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-apex-accent focus:border-transparent"
             />
             <p className='mt-1 text-xs text-gray-500 dark:text-gray-400'>
               配置后将使用该地址替代默认的 Nyaa 域名进行请求。
@@ -12875,7 +12891,7 @@ const SiteConfigComponent = ({
         </summary>
         <div className='mt-4 space-y-4'>
           {/* Pansou API 地址 */}
-          <div>
+          <div className='apex-admin-field-row'>
             <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
               Pansou API 地址
             </label>
@@ -12889,7 +12905,7 @@ const SiteConfigComponent = ({
                   PansouApiUrl: e.target.value,
                 }))
               }
-              className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-green-500 focus:border-transparent'
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-apex-accent focus:border-transparent"
             />
             <p className='mt-1 text-xs text-gray-500 dark:text-gray-400'>
               配置 Pansou 服务器地址，用于网盘资源搜索。项目地址：{' '}
@@ -12905,7 +12921,7 @@ const SiteConfigComponent = ({
           </div>
 
           {/* Pansou 账号 */}
-          <div>
+          <div className='apex-admin-field-row'>
             <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
               Pansou 账号（可选）
             </label>
@@ -12919,7 +12935,7 @@ const SiteConfigComponent = ({
                   PansouUsername: e.target.value,
                 }))
               }
-              className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-green-500 focus:border-transparent'
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-apex-accent focus:border-transparent"
             />
             <p className='mt-1 text-xs text-gray-500 dark:text-gray-400'>
               如果 Pansou 服务启用了认证功能，需要提供账号密码
@@ -12927,7 +12943,7 @@ const SiteConfigComponent = ({
           </div>
 
           {/* Pansou 密码 */}
-          <div>
+          <div className='apex-admin-field-row'>
             <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
               Pansou 密码（可选）
             </label>
@@ -12941,7 +12957,7 @@ const SiteConfigComponent = ({
                   PansouPassword: e.target.value,
                 }))
               }
-              className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-green-500 focus:border-transparent'
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-apex-accent focus:border-transparent"
             />
             <p className='mt-1 text-xs text-gray-500 dark:text-gray-400'>
               配置账号密码后，系统会自动登录并缓存 Token
@@ -12949,7 +12965,7 @@ const SiteConfigComponent = ({
           </div>
 
           {/* 关键词屏蔽 */}
-          <div>
+          <div className='apex-admin-field-row'>
             <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
               关键词屏蔽（可选）
             </label>
@@ -12963,7 +12979,7 @@ const SiteConfigComponent = ({
                   PansouKeywordBlocklist: e.target.value,
                 }))
               }
-              className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-green-500 focus:border-transparent'
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-apex-accent focus:border-transparent"
             />
             <p className='mt-1 text-xs text-gray-500 dark:text-gray-400'>
               设置后会过滤包含这些关键词的搜索结果
@@ -12971,6 +12987,11 @@ const SiteConfigComponent = ({
           </div>
         </div>
       </details>
+
+      </section>
+
+      <section className='apex-admin-config-group apex-admin-site-group space-y-6' aria-label='互动与统计'>
+        <h3 className='apex-admin-group-title'>互动与统计</h3>
 
       {/* 评论功能配置 */}
       <details className='pt-4 border-t border-gray-200 dark:border-gray-700'>
@@ -13025,7 +13046,7 @@ const SiteConfigComponent = ({
         <div className='mt-4 space-y-4'>
           {/* 启用开关 */}
           <div className='flex flex-wrap items-center justify-between gap-3'>
-            <div>
+            <div className='apex-admin-field-row'>
               <label className='block text-sm font-medium text-gray-700 dark:text-gray-300'>
                 启用流量统计
               </label>
@@ -13062,7 +13083,7 @@ const SiteConfigComponent = ({
           {siteSettings.AnalyticsEnabled && (
             <>
               {/* 统计服务提供商 */}
-              <div>
+              <div className='apex-admin-field-row'>
                 <label className='block text-sm font-medium text-gray-700 dark:text-gray-300'>
                   统计服务
                 </label>
@@ -13085,7 +13106,7 @@ const SiteConfigComponent = ({
 
               {siteSettings.AnalyticsProvider === 'umami' && (
                 <>
-                  <div>
+                  <div className='apex-admin-field-row'>
                     <label className='block text-sm font-medium text-gray-700 dark:text-gray-300'>
                       Umami 脚本地址
                     </label>
@@ -13105,7 +13126,7 @@ const SiteConfigComponent = ({
                       Umami 实例的 script.js 完整 URL
                     </p>
                   </div>
-                  <div>
+                  <div className='apex-admin-field-row'>
                     <label className='block text-sm font-medium text-gray-700 dark:text-gray-300'>
                       网站 ID (Website ID)
                     </label>
@@ -13129,7 +13150,7 @@ const SiteConfigComponent = ({
               )}
 
               {siteSettings.AnalyticsProvider === 'google' && (
-                <div>
+                <div className='apex-admin-field-row'>
                   <label className='block text-sm font-medium text-gray-700 dark:text-gray-300'>
                     Measurement ID
                   </label>
@@ -13152,7 +13173,7 @@ const SiteConfigComponent = ({
               )}
 
               {siteSettings.AnalyticsProvider === 'clarity' && (
-                <div>
+                <div className='apex-admin-field-row'>
                   <label className='block text-sm font-medium text-gray-700 dark:text-gray-300'>
                     Project ID
                   </label>
@@ -13175,7 +13196,7 @@ const SiteConfigComponent = ({
               )}
 
               {siteSettings.AnalyticsProvider === 'custom' && (
-                <div>
+                <div className='apex-admin-field-row'>
                   <label className='block text-sm font-medium text-gray-700 dark:text-gray-300'>
                     自定义统计代码
                   </label>
@@ -13200,6 +13221,8 @@ const SiteConfigComponent = ({
           )}
         </div>
       </details>
+
+      </section>
 
       {/* 操作按钮 */}
       <div className='flex justify-end'>
@@ -13458,7 +13481,7 @@ const RegistrationConfigComponent = ({
   return (
     <div className='apex-admin-fields space-y-6'>
       {/* 注册相关配置 */}
-      <div className='space-y-4'>
+      <section aria-label='注册与登录配置' className='apex-admin-config-group space-y-4'>
         <h3 className='text-sm font-semibold text-gray-900 dark:text-gray-100'>
           注册配置
         </h3>
@@ -13505,7 +13528,7 @@ const RegistrationConfigComponent = ({
               </p>
             </div>
 
-            <div>
+            <div className='apex-admin-field-row'>
               <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
                 默认用户组
               </label>
@@ -13523,7 +13546,7 @@ const RegistrationConfigComponent = ({
                     DefaultUserTags: value ? [value] : [],
                   }));
                 }}
-                className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-green-500 focus:border-transparent'
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-apex-accent focus:border-transparent"
               >
                 <option value=''>无用户组（无限制）</option>
                 {config?.UserConfig?.Tags &&
@@ -13584,7 +13607,7 @@ const RegistrationConfigComponent = ({
               </p>
             </div>
 
-            <div>
+            <div className='apex-admin-field-row'>
               <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
                 通用注册邀请码
               </label>
@@ -13598,7 +13621,7 @@ const RegistrationConfigComponent = ({
                     RegistrationInviteCode: e.target.value,
                   }))
                 }
-                className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-green-500 focus:border-transparent'
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-apex-accent focus:border-transparent"
               />
               <p className='mt-1 text-xs text-gray-500 dark:text-gray-400'>
                 仅普通注册生效；开启邀请码注册时不能为空。
@@ -13704,7 +13727,7 @@ const RegistrationConfigComponent = ({
               </p>
             </div>
 
-            <div>
+            <div className='apex-admin-field-row'>
               <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
                 Cloudflare Turnstile Site Key
               </label>
@@ -13718,14 +13741,14 @@ const RegistrationConfigComponent = ({
                     TurnstileSiteKey: e.target.value,
                   }))
                 }
-                className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-green-500 focus:border-transparent'
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-apex-accent focus:border-transparent"
               />
               <p className='mt-1 text-xs text-gray-500 dark:text-gray-400'>
                 在Cloudflare Dashboard中获取的Site Key（公钥）
               </p>
             </div>
 
-            <div>
+            <div className='apex-admin-field-row'>
               <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
                 Cloudflare Turnstile Secret Key
               </label>
@@ -13739,7 +13762,7 @@ const RegistrationConfigComponent = ({
                     TurnstileSecretKey: e.target.value,
                   }))
                 }
-                className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-green-500 focus:border-transparent'
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-apex-accent focus:border-transparent"
               />
               <p className='mt-1 text-xs text-gray-500 dark:text-gray-400'>
                 在Cloudflare Dashboard中获取的Secret Key（私钥），用于服务端验证
@@ -13747,7 +13770,7 @@ const RegistrationConfigComponent = ({
             </div>
           </div>
         </details>
-      </div>
+      </section>
 
       {/* OIDC配置 */}
       <details className='pt-4 border-t border-gray-200 dark:border-gray-700'>
@@ -13828,7 +13851,7 @@ const RegistrationConfigComponent = ({
           </div>
 
           {/* OIDC Issuer */}
-          <div>
+          <div className='apex-admin-field-row'>
             <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
               OIDC Issuer URL（可选）
             </label>
@@ -13843,7 +13866,7 @@ const RegistrationConfigComponent = ({
                     OIDCIssuer: e.target.value,
                   }))
                 }
-                className='flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-green-500 focus:border-transparent'
+                className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-apex-accent focus:border-transparent"
               />
               <button
                 type='button'
@@ -13864,11 +13887,11 @@ const RegistrationConfigComponent = ({
                       });
 
                       if (!res.ok) {
-                        const data = await res.json().catch(() => ({}));
+                        const data = await readJsonResponse<any>(res, "管理设置");
                         throw new Error(data.error || '获取配置失败');
                       }
 
-                      const data = await res.json();
+                      const data = await readJsonResponse<any>(res, "管理设置");
                       setRegistrationSettings((prev) => ({
                         ...prev,
                         OIDCAuthorizationEndpoint:
@@ -13903,7 +13926,7 @@ const RegistrationConfigComponent = ({
           </div>
 
           {/* Authorization Endpoint */}
-          <div>
+          <div className='apex-admin-field-row'>
             <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
               Authorization Endpoint（授权端点）
             </label>
@@ -13917,7 +13940,7 @@ const RegistrationConfigComponent = ({
                   OIDCAuthorizationEndpoint: e.target.value,
                 }))
               }
-              className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-green-500 focus:border-transparent'
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-apex-accent focus:border-transparent"
             />
             <p className='mt-1 text-xs text-gray-500 dark:text-gray-400'>
               用户授权的端点URL
@@ -13925,7 +13948,7 @@ const RegistrationConfigComponent = ({
           </div>
 
           {/* Token Endpoint */}
-          <div>
+          <div className='apex-admin-field-row'>
             <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
               Token Endpoint（Token端点）
             </label>
@@ -13939,7 +13962,7 @@ const RegistrationConfigComponent = ({
                   OIDCTokenEndpoint: e.target.value,
                 }))
               }
-              className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-green-500 focus:border-transparent'
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-apex-accent focus:border-transparent"
             />
             <p className='mt-1 text-xs text-gray-500 dark:text-gray-400'>
               交换授权码获取token的端点URL
@@ -13947,7 +13970,7 @@ const RegistrationConfigComponent = ({
           </div>
 
           {/* UserInfo Endpoint */}
-          <div>
+          <div className='apex-admin-field-row'>
             <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
               UserInfo Endpoint（用户信息端点）
             </label>
@@ -13961,7 +13984,7 @@ const RegistrationConfigComponent = ({
                   OIDCUserInfoEndpoint: e.target.value,
                 }))
               }
-              className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-green-500 focus:border-transparent'
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-apex-accent focus:border-transparent"
             />
             <p className='mt-1 text-xs text-gray-500 dark:text-gray-400'>
               获取用户信息的端点URL
@@ -13969,7 +13992,7 @@ const RegistrationConfigComponent = ({
           </div>
 
           {/* OIDC Client ID */}
-          <div>
+          <div className='apex-admin-field-row'>
             <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
               OIDC Client ID
             </label>
@@ -13983,7 +14006,7 @@ const RegistrationConfigComponent = ({
                   OIDCClientId: e.target.value,
                 }))
               }
-              className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-green-500 focus:border-transparent'
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-apex-accent focus:border-transparent"
             />
             <p className='mt-1 text-xs text-gray-500 dark:text-gray-400'>
               在OIDC提供商处注册应用后获得的Client ID
@@ -13991,7 +14014,7 @@ const RegistrationConfigComponent = ({
           </div>
 
           {/* OIDC Client Secret */}
-          <div>
+          <div className='apex-admin-field-row'>
             <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
               OIDC Client Secret
             </label>
@@ -14005,7 +14028,7 @@ const RegistrationConfigComponent = ({
                   OIDCClientSecret: e.target.value,
                 }))
               }
-              className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-green-500 focus:border-transparent'
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-apex-accent focus:border-transparent"
             />
             <p className='mt-1 text-xs text-gray-500 dark:text-gray-400'>
               在OIDC提供商处注册应用后获得的Client Secret
@@ -14013,7 +14036,7 @@ const RegistrationConfigComponent = ({
           </div>
 
           {/* OIDC Redirect URI - 只读显示 */}
-          <div>
+          <div className='apex-admin-field-row'>
             <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
               OIDC Redirect URI（回调地址）
             </label>
@@ -14052,7 +14075,7 @@ const RegistrationConfigComponent = ({
           </div>
 
           {/* OIDC登录按钮文字 */}
-          <div>
+          <div className='apex-admin-field-row'>
             <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
               OIDC登录按钮文字
             </label>
@@ -14066,7 +14089,7 @@ const RegistrationConfigComponent = ({
                   OIDCButtonText: e.target.value,
                 }))
               }
-              className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-green-500 focus:border-transparent'
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-apex-accent focus:border-transparent"
             />
             <p className='mt-1 text-xs text-gray-500 dark:text-gray-400'>
               自定义OIDC登录按钮显示的文字,如"使用企业账号登录"、"使用SSO登录"等。留空则显示默认文字"使用OIDC登录"
@@ -14074,7 +14097,7 @@ const RegistrationConfigComponent = ({
           </div>
 
           {/* OIDC最低信任等级 */}
-          <div>
+          <div className='apex-admin-field-row'>
             <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
               最低信任等级
             </label>
@@ -14095,7 +14118,7 @@ const RegistrationConfigComponent = ({
                     e.target.value === '' ? 0 : parseInt(e.target.value),
                 }))
               }
-              className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-green-500 focus:border-transparent'
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-apex-accent focus:border-transparent"
             />
             <p className='mt-1 text-xs text-gray-500 dark:text-gray-400'>
               仅LinuxDo网站有效。设置为0时不判断，1-4表示最低信任等级要求
@@ -14319,7 +14342,7 @@ const CustomAdFilterConfig = ({
             jsCode + '\nreturn filterAdsFromM3U8(type, m3u8Content);'
           );
         } catch (parseError) {
-          console.error('代码验证失败:', parseError);
+          reportAppError(parseError, "代码验证失败");
           showError(
             '代码语法错误：' +
               (parseError instanceof Error
@@ -14350,7 +14373,7 @@ const CustomAdFilterConfig = ({
         });
 
         if (!response.ok) {
-          const errorData = await response.json();
+          const errorData = await readJsonResponse<any>(response, "管理设置");
           throw new Error(errorData.error || '保存配置失败');
         }
 
@@ -14438,7 +14461,7 @@ const CustomAdFilterConfig = ({
             onChange={(e) => setAdFilterCode(e.target.value)}
             rows={25}
             placeholder='请输入自定义去广告代码...'
-            className='w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 font-mono text-sm leading-relaxed resize-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 hover:border-gray-400 dark:hover:border-gray-500'
+            className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 font-mono text-sm leading-relaxed resize-none focus:ring-2 focus:ring-apex-accent focus:border-transparent transition-all duration-200 hover:border-gray-400 dark:hover:border-gray-500"
             style={{
               fontFamily:
                 'ui-monospace, SFMono-Regular, "SF Mono", Consolas, "Liberation Mono", Menlo, monospace',
@@ -14555,7 +14578,7 @@ const SuwayomiConfigComponent = ({
         });
 
         if (!response.ok) {
-          const data = await response.json();
+          const data = await readJsonResponse<any>(response, "管理设置");
           throw adminConfigSaveError(response.status, data.error || '保存失败');
         }
 
@@ -14586,7 +14609,7 @@ const SuwayomiConfigComponent = ({
           }),
         });
 
-        const data = await response.json();
+        const data = await readJsonResponse<any>(response, "管理设置");
         if (!response.ok || !data.success) {
           throw new Error(data.message || data.error || '测试连接失败');
         }
@@ -14622,7 +14645,7 @@ const SuwayomiConfigComponent = ({
         </div>
       </div>
 
-      <div className='space-y-4'>
+      <section aria-label='漫画服务配置' className='apex-admin-config-group space-y-4'>
         <div className='flex items-center justify-between py-3 border-b border-gray-200 dark:border-gray-700'>
           <div>
             <h3 className='text-sm font-medium text-gray-900 dark:text-white'>
@@ -14709,7 +14732,7 @@ const SuwayomiConfigComponent = ({
             document.body
           )}
 
-        <div>
+        <div className='apex-admin-field-row'>
           <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
             Suwayomi 服务地址
           </label>
@@ -14725,7 +14748,7 @@ const SuwayomiConfigComponent = ({
           </p>
         </div>
 
-        <div>
+        <div className='apex-admin-field-row'>
           <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
             认证方式
           </label>
@@ -14761,7 +14784,7 @@ const SuwayomiConfigComponent = ({
 
         {authMode !== 'none' && (
           <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
-            <div>
+            <div className='apex-admin-field-row'>
               <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
                 用户名
               </label>
@@ -14773,7 +14796,7 @@ const SuwayomiConfigComponent = ({
                 className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100'
               />
             </div>
-            <div>
+            <div className='apex-admin-field-row'>
               <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
                 密码
               </label>
@@ -14789,7 +14812,7 @@ const SuwayomiConfigComponent = ({
         )}
 
         <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
-          <div>
+          <div className='apex-admin-field-row'>
             <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
               默认语言
             </label>
@@ -14801,7 +14824,7 @@ const SuwayomiConfigComponent = ({
               className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100'
             />
           </div>
-          <div>
+          <div className='apex-admin-field-row'>
             <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
               单次搜索最大源数
             </label>
@@ -14815,7 +14838,7 @@ const SuwayomiConfigComponent = ({
           </div>
         </div>
 
-        <div>
+        <div className='apex-admin-field-row'>
           <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
             源白名单
           </label>
@@ -14844,7 +14867,7 @@ const SuwayomiConfigComponent = ({
             {isLoading('saveSuwayomi') ? (<><Loader2 className='mr-1.5 inline h-4 w-4 animate-spin align-[-3px]' />保存中...</>) : '保存配置'}
           </button>
         </div>
-      </div>
+      </section>
 
       <AlertModal
         isOpen={alertModal.isOpen}
@@ -14993,7 +15016,7 @@ const OPDSConfigComponent = ({
           headers: { 'Content-Type': 'application/json', 'If-Match': getAdminConfigVersion(config) },
           body: JSON.stringify({ ...config, OPDSConfig: buildConfig() }),
         });
-        const data = await response.json().catch(() => ({}));
+        const data = await readJsonResponse<any>(response, "管理设置");
         if (!response.ok) throw adminConfigSaveError(response.status, data.error || '保存失败');
         await refreshConfig();
         showSuccess('电子书源配置已保存', showAlert);
@@ -15021,7 +15044,7 @@ const OPDSConfigComponent = ({
             Sources: [source],
           }),
         });
-        const data = await response.json();
+        const data = await readJsonResponse<any>(response, "管理设置");
         if (!response.ok || !data.success)
           throw new Error(data.message || data.error || '测试连接失败');
         const result = Array.isArray(data.results) ? data.results[0] : null;
@@ -15054,7 +15077,7 @@ const OPDSConfigComponent = ({
             url: legadoSubscriptionUrl,
           }),
         });
-        const data = await response.json();
+        const data = await readJsonResponse<any>(response, "管理设置");
         if (!response.ok || !data.success)
           throw new Error(data.error || '导入 Legado 订阅失败');
         setLegadoSubscriptionName('');
@@ -15081,7 +15104,7 @@ const OPDSConfigComponent = ({
           `/api/admin/legado-subscriptions/${encodeURIComponent(id)}/refresh`,
           { method: 'POST' }
         );
-        const data = await response.json();
+        const data = await readJsonResponse<any>(response, "管理设置");
         if (!response.ok || !data.success)
           throw new Error(data.error || '刷新 Legado 订阅失败');
         await refreshConfig();
@@ -15110,7 +15133,7 @@ const OPDSConfigComponent = ({
               `/api/admin/legado-subscriptions/${encodeURIComponent(id)}`,
               { method: 'DELETE' }
             );
-            const data = await response.json();
+            const data = await readJsonResponse<any>(response, "管理设置");
             if (!response.ok || !data.success)
               throw new Error(data.error || '删除 Legado 订阅失败');
             await refreshConfig();
@@ -15628,7 +15651,7 @@ const XiaoyaConfigComponent = ({
         });
 
         if (!response.ok) {
-          const data = await response.json();
+          const data = await readJsonResponse<any>(response, "管理设置");
           throw new Error(data.error || '保存失败');
         }
 
@@ -15659,7 +15682,7 @@ const XiaoyaConfigComponent = ({
           }),
         });
 
-        const data = await response.json();
+        const data = await readJsonResponse<any>(response, "管理设置");
         if (data.success) {
           showSuccess('连接成功', showAlert);
         } else {
@@ -15691,7 +15714,7 @@ const XiaoyaConfigComponent = ({
         </div>
       </div>
 
-      <div className='space-y-4'>
+      <section aria-label='小雅服务配置' className='apex-admin-config-group space-y-4'>
         <div className='flex items-center justify-between py-3 border-b border-gray-200 dark:border-gray-700'>
           <div>
             <h3 className='text-sm font-medium text-gray-900 dark:text-white'>
@@ -15715,7 +15738,7 @@ const XiaoyaConfigComponent = ({
           </button>
         </div>
 
-        <div>
+        <div className='apex-admin-field-row'>
           <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
             Alist 服务器地址
           </label>
@@ -15731,7 +15754,7 @@ const XiaoyaConfigComponent = ({
           </p>
         </div>
 
-        <div>
+        <div className='apex-admin-field-row'>
           <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
             Token（推荐）
           </label>
@@ -15745,7 +15768,7 @@ const XiaoyaConfigComponent = ({
         </div>
 
         <div className='grid grid-cols-1 sm:grid-cols-2 gap-4'>
-          <div>
+          <div className='apex-admin-field-row'>
             <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
               用户名
             </label>
@@ -15757,7 +15780,7 @@ const XiaoyaConfigComponent = ({
               className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100'
             />
           </div>
-          <div>
+          <div className='apex-admin-field-row'>
             <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
               密码
             </label>
@@ -15812,7 +15835,7 @@ const XiaoyaConfigComponent = ({
             {isLoading('saveXiaoya') ? (<><Loader2 className='mr-1.5 inline h-4 w-4 animate-spin align-[-3px]' />保存中...</>) : '保存配置'}
           </button>
         </div>
-      </div>
+      </section>
 
       <AlertModal
         isOpen={alertModal.isOpen}
@@ -15891,7 +15914,7 @@ const TelegramConfigComponent = ({
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ action: 'save', config: buildConfig() }),
         });
-        const data = await response.json().catch(() => ({}));
+        const data = await readJsonResponse<any>(response, "管理设置");
         if (!response.ok) throw new Error(data.error || '保存失败');
         await refreshConfig();
         showSuccess('Telegram 配置保存成功', showAlert);
@@ -15925,7 +15948,7 @@ const TelegramConfigComponent = ({
             origin: window.location.origin,
           }),
         });
-        const data = await response.json().catch(() => ({}));
+        const data = await readJsonResponse<any>(response, "管理设置");
         if (!response.ok) {
           const telegramDetail = data.telegram
             ? `（HTTP ${data.telegram.status || '-'}，响应：${data.telegram.body || data.telegram.statusText || '-'}）`
@@ -15953,7 +15976,7 @@ const TelegramConfigComponent = ({
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ action: 'test', config: buildConfig(), testChatId: testChatId.trim() }),
         });
-        const data = await response.json().catch(() => ({}));
+        const data = await readJsonResponse<any>(response, "管理设置");
         if (!response.ok) throw new Error(data.error || '发送失败');
         showSuccess('测试消息发送成功', showAlert);
       } catch (error) {
@@ -15981,7 +16004,7 @@ const TelegramConfigComponent = ({
         </div>
       </div>
 
-      <div className='space-y-4'>
+      <section aria-label='Telegram Bot 配置' className='apex-admin-config-group space-y-4'>
         <div className='flex items-center justify-between py-3 border-b border-gray-200 dark:border-gray-700'>
           <div>
             <h3 className='text-sm font-medium text-gray-900 dark:text-white'>启用 Telegram Bot</h3>
@@ -15996,17 +16019,17 @@ const TelegramConfigComponent = ({
         </div>
 
         <div className='grid grid-cols-1 sm:grid-cols-2 gap-4'>
-          <div>
+          <div className='apex-admin-field-row'>
             <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1'>Bot Token *</label>
             <input type='password' value={botToken} onChange={(e) => setBotToken(e.target.value)} placeholder='123456:ABC...' className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white' />
           </div>
-          <div>
+          <div className='apex-admin-field-row'>
             <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1'>Bot 用户名 *</label>
             <input type='text' value={botUsername} onChange={(e) => setBotUsername(e.target.value)} placeholder='your_bot' className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white' />
           </div>
         </div>
 
-        <div>
+        <div className='apex-admin-field-row'>
           <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1'>Webhook Secret</label>
           <input type='password' value={webhookSecret} onChange={(e) => setWebhookSecret(e.target.value)} placeholder='建议填写随机长字符串' className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white' />
           {webhookUrl && <p className='mt-2 break-all text-xs text-gray-500 dark:text-gray-400'>Webhook URL：{webhookUrl}</p>}
@@ -16016,12 +16039,12 @@ const TelegramConfigComponent = ({
         </div>
 
         <div className='grid grid-cols-1 sm:grid-cols-2 gap-4 rounded-lg border border-gray-200 p-4 dark:border-gray-700'>
-          <div>
+          <div className='apex-admin-field-row'>
             <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1'>系统代理</label>
             <input type='text' value={apiProxy} onChange={(e) => setApiProxy(e.target.value)} placeholder='http://127.0.0.1:7890' className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white' />
             <p className='mt-1 text-xs text-gray-500 dark:text-gray-400'>Node 部署可用；Cloudflare/Edge 环境会忽略。</p>
           </div>
-          <div>
+          <div className='apex-admin-field-row'>
             <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1'>反代 Base URL</label>
             <input type='text' value={apiBaseUrl} onChange={(e) => setApiBaseUrl(e.target.value)} placeholder='https://telegram-api.example.com' className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white' />
             <p className='mt-1 text-xs text-gray-500 dark:text-gray-400'>用于替换 https://api.telegram.org。</p>
@@ -16056,7 +16079,7 @@ const TelegramConfigComponent = ({
             {isLoading('saveTelegram') ? (<><Loader2 className='mr-1.5 inline h-4 w-4 animate-spin align-[-3px]' />保存中...</>) : '保存配置'}
           </button>
         </div>
-      </div>
+      </section>
 
       <AlertModal
         isOpen={alertModal.isOpen}
@@ -16157,7 +16180,7 @@ const EmailConfigComponent = ({
         });
 
         if (!response.ok) {
-          const data = await response.json();
+          const data = await readJsonResponse<any>(response, "管理设置");
           throw new Error(data.error || '保存失败');
         }
 
@@ -16214,7 +16237,7 @@ const EmailConfigComponent = ({
           }),
         });
 
-        const data = await response.json();
+        const data = await readJsonResponse<any>(response, "管理设置");
         if (data.success) {
           showSuccess('测试邮件发送成功，请检查收件箱', showAlert);
         } else {
@@ -16243,7 +16266,7 @@ const EmailConfigComponent = ({
         </div>
       </div>
 
-      <div className='space-y-4'>
+      <section aria-label='邮件服务配置' className='apex-admin-config-group space-y-4'>
         {/* 启用开关 */}
         <div className='flex items-center justify-between py-3 border-b border-gray-200 dark:border-gray-700'>
           <div>
@@ -16269,7 +16292,7 @@ const EmailConfigComponent = ({
         </div>
 
         {/* 发送方式选择 */}
-        <div>
+        <div className='apex-admin-field-row'>
           <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
             发送方式
           </label>
@@ -16309,7 +16332,7 @@ const EmailConfigComponent = ({
             </h4>
 
             <div className='grid grid-cols-1 sm:grid-cols-2 gap-4'>
-              <div>
+              <div className='apex-admin-field-row'>
                 <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1'>
                   SMTP 主机 *
                 </label>
@@ -16322,7 +16345,7 @@ const EmailConfigComponent = ({
                 />
               </div>
 
-              <div>
+              <div className='apex-admin-field-row'>
                 <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1'>
                   SMTP 端口 *
                 </label>
@@ -16348,7 +16371,7 @@ const EmailConfigComponent = ({
               </label>
             </div>
 
-            <div>
+            <div className='apex-admin-field-row'>
               <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1'>
                 SMTP 用户名 *
               </label>
@@ -16361,7 +16384,7 @@ const EmailConfigComponent = ({
               />
             </div>
 
-            <div>
+            <div className='apex-admin-field-row'>
               <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1'>
                 SMTP 密码 *
               </label>
@@ -16374,7 +16397,7 @@ const EmailConfigComponent = ({
               />
             </div>
 
-            <div>
+            <div className='apex-admin-field-row'>
               <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1'>
                 发件人邮箱 *
               </label>
@@ -16396,7 +16419,7 @@ const EmailConfigComponent = ({
               Resend 配置
             </h4>
 
-            <div>
+            <div className='apex-admin-field-row'>
               <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1'>
                 Resend API Key *
               </label>
@@ -16421,7 +16444,7 @@ const EmailConfigComponent = ({
               </p>
             </div>
 
-            <div>
+            <div className='apex-admin-field-row'>
               <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1'>
                 发件人邮箱 *
               </label>
@@ -16472,7 +16495,7 @@ const EmailConfigComponent = ({
             {isLoading('saveEmail') ? (<><Loader2 className='mr-1.5 inline h-4 w-4 animate-spin align-[-3px]' />保存中...</>) : '保存配置'}
           </button>
         </div>
-      </div>
+      </section>
 
       <AlertModal
         isOpen={alertModal.isOpen}
@@ -16521,7 +16544,7 @@ const MovieRequestsComponent = ({
   const loadCounts = async () => {
     try {
       const response = await fetch('/api/movie-requests');
-      const data = await response.json();
+      const data = await readJsonResponse<any>(response, "管理设置");
       const allRequests = data.requests || [];
       setPendingCount(
         allRequests.filter((r: any) => r.status === 'pending').length
@@ -16530,7 +16553,7 @@ const MovieRequestsComponent = ({
         allRequests.filter((r: any) => r.status === 'fulfilled').length
       );
     } catch (error) {
-      console.error('加载求片数量失败:', error);
+      reportAppError(error, "加载求片数量失败");
     }
   };
 
@@ -16540,10 +16563,10 @@ const MovieRequestsComponent = ({
       const response = await fetch(
         `/api/movie-requests?status=${filter}&detail=true`
       );
-      const data = await response.json();
+      const data = await readJsonResponse<any>(response, "管理设置");
       setRequests(data.requests || []);
     } catch (error) {
-      console.error('加载求片列表失败:', error);
+      reportAppError(error, "加载求片列表失败");
     } finally {
       setLoading(false);
     }
@@ -16642,7 +16665,7 @@ const MovieRequestsComponent = ({
                 onChange={(e) => setEnableMovieRequest(e.target.checked)}
                 className='sr-only peer'
               />
-              <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-transform after:duration-200 after:ease-[cubic-bezier(.16,1,.3,1)] dark:border-gray-600 peer-checked:bg-blue-600"></div>
+              <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-apex-accent dark:peer-focus:ring-apex-accent rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-transform after:duration-200 after:ease-[cubic-bezier(.16,1,.3,1)] dark:border-gray-600 peer-checked:bg-blue-600"></div>
             </label>
           </div>
 
@@ -16942,7 +16965,7 @@ const AIConfigComponent = ({
         });
 
         if (!response.ok) {
-          const data = await response.json();
+          const data = await readJsonResponse<any>(response, "管理设置");
           throw new Error(data.error || '保存失败');
         }
 
@@ -17006,12 +17029,12 @@ const AIConfigComponent = ({
             onChange={(e) => setEnabled(e.target.checked)}
             className='sr-only peer'
           />
-          <div className="w-14 h-7 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-green-300 dark:peer-focus:ring-green-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:start-[4px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-6 after:w-6 after:transition-transform after:duration-200 after:ease-[cubic-bezier(.16,1,.3,1)] dark:border-gray-600 peer-checked:bg-green-600"></div>
+          <div className="w-14 h-7 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-apex-accent dark:peer-focus:ring-apex-accent rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:start-[4px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-6 after:w-6 after:transition-transform after:duration-200 after:ease-[cubic-bezier(.16,1,.3,1)] dark:border-gray-600 peer-checked:bg-green-600"></div>
         </label>
       </div>
 
       {/* 调用模式切换（旧版/新版卡片） */}
-      <div className='space-y-4'>
+      <section aria-label='AI 调用模式' className='apex-admin-config-group space-y-4'>
         <h3 className='text-base font-semibold text-gray-900 dark:text-gray-100'>
           调用模式
         </h3>
@@ -17058,12 +17081,12 @@ const AIConfigComponent = ({
             </p>
           </button>
         </div>
-      </div>
+      </section>
 
       {/* 旧版 AI模型配置（仅旧版显示） */}
       {!enableNewMode && (
         <>
-      <div className='space-y-4'>
+      <section aria-label='AI 模型配置' className='apex-admin-config-group space-y-4'>
         <h3 className='text-base font-semibold text-gray-900 dark:text-gray-100'>
           AI模型配置
         </h3>
@@ -17074,7 +17097,7 @@ const AIConfigComponent = ({
           <h4 className='text-sm font-semibold text-gray-900 dark:text-gray-100'>
             自定义 API 配置
           </h4>
-          <div>
+          <div className='apex-admin-field-row'>
             <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
               API Key <span className='text-red-500'>*</span>
             </label>
@@ -17086,7 +17109,7 @@ const AIConfigComponent = ({
               className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100'
             />
           </div>
-          <div>
+          <div className='apex-admin-field-row'>
             <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
               Base URL <span className='text-red-500'>*</span>
             </label>
@@ -17098,7 +17121,7 @@ const AIConfigComponent = ({
               className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100'
             />
           </div>
-          <div>
+          <div className='apex-admin-field-row'>
             <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
               模型名称 <span className='text-red-500'>*</span>
             </label>
@@ -17111,7 +17134,7 @@ const AIConfigComponent = ({
             />
           </div>
         </div>
-      </div>
+      </section>
 
       {/* 旧版 决策模型配置（仅旧版显示） */}
       <div className='space-y-4 p-4 border border-gray-200 dark:border-gray-700 rounded-lg'>
@@ -17124,8 +17147,8 @@ const AIConfigComponent = ({
           </p>
         </div>
 
-        <div className='space-y-3 p-3 bg-purple-50/50 dark:bg-purple-900/10 rounded-lg'>
-          <div>
+        <div className="space-y-3 p-3 bg-apex-selected/50 dark:bg-apex-selected/10 rounded-lg">
+          <div className='apex-admin-field-row'>
             <label className='block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1'>
               决策模型名称
             </label>
@@ -17155,7 +17178,7 @@ const AIConfigComponent = ({
 
       {/* 新版 调用配置（仅新版显示） */}
       {enableNewMode && (
-      <div className='space-y-4 p-4 border border-gray-200 dark:border-gray-700 rounded-lg'>
+      <section aria-label='AI 调用配置' className='apex-admin-config-group space-y-4 p-4 border border-gray-200 dark:border-gray-700 rounded-lg'>
         <div>
           <h4 className='text-sm font-semibold text-gray-900 dark:text-gray-100'>
             新版调用配置
@@ -17165,7 +17188,7 @@ const AIConfigComponent = ({
           </p>
         </div>
 
-        <div>
+        <div className='apex-admin-field-row'>
           <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
             调用协议
           </label>
@@ -17180,7 +17203,7 @@ const AIConfigComponent = ({
           </select>
         </div>
 
-        <div>
+        <div className='apex-admin-field-row'>
           <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
             最大上下文Token数
           </label>
@@ -17197,7 +17220,7 @@ const AIConfigComponent = ({
           </p>
         </div>
 
-        <div>
+        <div className='apex-admin-field-row'>
           <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
             上下文压缩触发阈值 (%)
           </label>
@@ -17216,8 +17239,8 @@ const AIConfigComponent = ({
         </div>
 
         {(newProtocol === 'openai-completions' || newProtocol === 'openai-responses') && (
-          <div className='space-y-3 p-3 bg-purple-50/50 dark:bg-purple-900/10 rounded-lg'>
-            <div>
+          <div className="space-y-3 p-3 bg-apex-selected/50 dark:bg-apex-selected/10 rounded-lg">
+            <div className='apex-admin-field-row'>
               <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
                 OpenAI API Key
               </label>
@@ -17229,7 +17252,7 @@ const AIConfigComponent = ({
                 className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100'
               />
             </div>
-            <div>
+            <div className='apex-admin-field-row'>
               <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
                 OpenAI Base URL
               </label>
@@ -17241,7 +17264,7 @@ const AIConfigComponent = ({
                 className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100'
               />
             </div>
-            <div>
+            <div className='apex-admin-field-row'>
               <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
                 OpenAI 模型
               </label>
@@ -17257,8 +17280,8 @@ const AIConfigComponent = ({
         )}
 
         {newProtocol === 'claude' && (
-          <div className='space-y-3 p-3 bg-purple-50/50 dark:bg-purple-900/10 rounded-lg'>
-            <div>
+          <div className="space-y-3 p-3 bg-apex-selected/50 dark:bg-apex-selected/10 rounded-lg">
+            <div className='apex-admin-field-row'>
               <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
                 Claude API Key
               </label>
@@ -17270,7 +17293,7 @@ const AIConfigComponent = ({
                 className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100'
               />
             </div>
-            <div>
+            <div className='apex-admin-field-row'>
               <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
                 Claude Base URL
               </label>
@@ -17282,7 +17305,7 @@ const AIConfigComponent = ({
                 className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100'
               />
             </div>
-            <div>
+            <div className='apex-admin-field-row'>
               <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
                 Claude 模型
               </label>
@@ -17304,7 +17327,7 @@ const AIConfigComponent = ({
             在下方「启用联网搜索」中配置对应搜索服务 API Key（联网搜索工具）。豆瓣工具始终可用。
           </p>
         </div>
-      </div>
+      </section>
       )}
 
       {/* 联网搜索配置 */}
@@ -17325,13 +17348,13 @@ const AIConfigComponent = ({
               onChange={(e) => setEnableWebSearch(e.target.checked)}
               className='sr-only peer'
             />
-            <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-transform after:duration-200 after:ease-[cubic-bezier(.16,1,.3,1)] dark:border-gray-600 peer-checked:bg-blue-600"></div>
+            <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-apex-accent dark:peer-focus:ring-apex-accent rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-transform after:duration-200 after:ease-[cubic-bezier(.16,1,.3,1)] dark:border-gray-600 peer-checked:bg-blue-600"></div>
           </label>
         </div>
 
         {enableWebSearch && (
           <div className='space-y-4 mt-4'>
-            <div>
+            <div className='apex-admin-field-row'>
               <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
                 搜索服务提供商
               </label>
@@ -17348,7 +17371,7 @@ const AIConfigComponent = ({
             </div>
 
             {webSearchProvider === 'tavily' && (
-              <div>
+              <div className='apex-admin-field-row'>
                 <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
                   Tavily API Key
                 </label>
@@ -17374,7 +17397,7 @@ const AIConfigComponent = ({
             )}
 
             {webSearchProvider === 'serper' && (
-              <div>
+              <div className='apex-admin-field-row'>
                 <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
                   Serper API Key
                 </label>
@@ -17400,7 +17423,7 @@ const AIConfigComponent = ({
             )}
 
             {webSearchProvider === 'serpapi' && (
-              <div>
+              <div className='apex-admin-field-row'>
                 <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
                   SerpAPI Key
                 </label>
@@ -17490,7 +17513,7 @@ const AIConfigComponent = ({
                 onChange={(e) => item.setState(e.target.checked)}
                 className='sr-only peer'
               />
-              <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-green-300 dark:peer-focus:ring-green-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-transform after:duration-200 after:ease-[cubic-bezier(.16,1,.3,1)] dark:border-gray-600 peer-checked:bg-green-600"></div>
+              <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-apex-accent dark:peer-focus:ring-apex-accent rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-transform after:duration-200 after:ease-[cubic-bezier(.16,1,.3,1)] dark:border-gray-600 peer-checked:bg-green-600"></div>
             </label>
           </div>
         ))}
@@ -17502,7 +17525,7 @@ const AIConfigComponent = ({
           高级设置 (可选)
         </summary>
         <div className='mt-4 space-y-4'>
-          <div>
+          <div className='apex-admin-field-row'>
             <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
               Temperature ({temperature === '' ? '未设置' : temperature})
             </label>
@@ -17524,7 +17547,7 @@ const AIConfigComponent = ({
             </p>
           </div>
 
-          <div>
+          <div className='apex-admin-field-row'>
             <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
               最大回复Token数
             </label>
@@ -17545,7 +17568,7 @@ const AIConfigComponent = ({
             </p>
           </div>
 
-          <div>
+          <div className='apex-admin-field-row'>
             <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
               自定义系统提示词
             </label>
@@ -17590,7 +17613,7 @@ const AIConfigComponent = ({
           默认消息配置 (可选)
         </summary>
         <div className='mt-4 space-y-4'>
-          <div>
+          <div className='apex-admin-field-row'>
             <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
               无视频时的默认消息
             </label>
@@ -17606,7 +17629,7 @@ const AIConfigComponent = ({
             </p>
           </div>
 
-          <div>
+          <div className='apex-admin-field-row'>
             <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
               有视频时的默认消息
             </label>
@@ -17712,7 +17735,7 @@ const MusicConfigComponent = ({
           }),
         });
 
-        const data = await response.json();
+        const data = await readJsonResponse<any>(response, "管理设置");
         if (!response.ok) {
           throw new Error(data.error || '保存失败');
         }
@@ -17795,7 +17818,7 @@ const MusicConfigComponent = ({
             }}
             className='sr-only peer'
           />
-          <div className="w-14 h-7 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-green-300 dark:peer-focus:ring-green-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:start-[4px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-6 after:w-6 after:transition-transform after:duration-200 after:ease-[cubic-bezier(.16,1,.3,1)] dark:border-gray-600 peer-checked:bg-green-600"></div>
+          <div className="w-14 h-7 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-apex-accent dark:peer-focus:ring-apex-accent rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:start-[4px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-6 after:w-6 after:transition-transform after:duration-200 after:ease-[cubic-bezier(.16,1,.3,1)] dark:border-gray-600 peer-checked:bg-green-600"></div>
         </label>
       </div>
 
@@ -17855,7 +17878,7 @@ const MusicConfigComponent = ({
           document.body
         )}
 
-      <div className='space-y-4'>
+      <section aria-label='音乐服务配置' className='apex-admin-config-group space-y-4'>
         <div className='flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700'>
           <div>
             <h3 className='text-sm font-medium text-gray-900 dark:text-gray-100'>
@@ -17872,11 +17895,11 @@ const MusicConfigComponent = ({
               onChange={(e) => setProxyEnabled(e.target.checked)}
               className='sr-only peer'
             />
-            <div className="w-14 h-7 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-green-300 dark:peer-focus:ring-green-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:start-[4px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-6 after:w-6 after:transition-transform after:duration-200 after:ease-[cubic-bezier(.16,1,.3,1)] dark:border-gray-600 peer-checked:bg-green-600"></div>
+            <div className="w-14 h-7 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-apex-accent dark:peer-focus:ring-apex-accent rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:start-[4px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-6 after:w-6 after:transition-transform after:duration-200 after:ease-[cubic-bezier(.16,1,.3,1)] dark:border-gray-600 peer-checked:bg-green-600"></div>
           </label>
         </div>
 
-        <div>
+        <div className='apex-admin-field-row'>
           <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
             lxserver Base URL
           </label>
@@ -17892,7 +17915,7 @@ const MusicConfigComponent = ({
           </p>
         </div>
 
-        <div>
+        <div className='apex-admin-field-row'>
           <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
             x-user-token
           </label>
@@ -17907,7 +17930,7 @@ const MusicConfigComponent = ({
             推荐填写 lxserver 持久 Token；留空则按匿名访问处理
           </p>
         </div>
-      </div>
+      </section>
 
       <div className='flex justify-end'>
         <button
@@ -18176,7 +18199,7 @@ const LiveSourceConfig = ({
     withLoading(`toggleLiveSource_${key}`, () =>
       callLiveSourceApi({ action, key })
     ).catch(() => {
-      console.error('操作失败', action, key);
+      reportAppError(key, "操作失败");
     });
   };
 
@@ -18222,7 +18245,7 @@ const LiveSourceConfig = ({
         throw error;
       }
     }).catch(() => {
-      console.error('操作失败', 'set_proxy_mode', key);
+      reportAppError(key, "操作失败");
     });
   };
 
@@ -18248,7 +18271,7 @@ const LiveSourceConfig = ({
       });
 
       if (!response.ok) {
-        const data = await response.json().catch(() => ({}));
+        const data = await readJsonResponse<any>(response, "管理设置");
         throw adminConfigSaveError(response.status, data.error || `保存失败: ${response.status}`);
       }
 
@@ -18276,7 +18299,7 @@ const LiveSourceConfig = ({
         });
 
         if (!response.ok) {
-          const data = await response.json().catch(() => ({}));
+          const data = await readJsonResponse<any>(response, "管理设置");
           throw new Error(data.error || `刷新失败: ${response.status}`);
         }
 
@@ -18318,7 +18341,7 @@ const LiveSourceConfig = ({
       });
       setShowAddForm(false);
     }).catch(() => {
-      console.error('操作失败', 'add', newLiveSource);
+      reportAppError(newLiveSource, "操作失败");
     });
   };
 
@@ -18336,7 +18359,7 @@ const LiveSourceConfig = ({
       });
       setEditingLiveSource(null);
     }).catch(() => {
-      console.error('操作失败', 'edit', editingLiveSource);
+      reportAppError(editingLiveSource, "操作失败");
     });
   };
 
@@ -18362,7 +18385,7 @@ const LiveSourceConfig = ({
         setOrderChanged(false);
       })
       .catch(() => {
-        console.error('操作失败', 'sort', order);
+        reportAppError(order, "操作失败");
       });
   };
 
@@ -18409,7 +18432,7 @@ const LiveSourceConfig = ({
             </button>
           </div>
         </div>
-        <div className='flex flex-wrap items-center justify-between gap-3'>
+        <div className='apex-admin-toolbar flex flex-wrap items-center justify-between gap-3'>
           <h4 className='text-sm font-medium text-gray-700 dark:text-gray-300'>
             直播源列表
           </h4>
@@ -18747,7 +18770,7 @@ const WebLiveForm = ({ value, onChange, onSubmit, onCancel, busy, editing }: { v
         }
       }
       setError(''); onSubmit();
-    } catch (err) { setError(err instanceof Error ? err.message : '请检查输入'); }
+    } catch (err) { setError(formatAppError(err, "管理设置")); }
   };
   return <div className='space-y-4 rounded-lg border border-gray-200 bg-gray-50 p-4 dark:border-gray-700 dark:bg-gray-900'>
     <h5 className='text-sm font-semibold text-gray-800 dark:text-gray-100'>{editing ? '编辑网络直播' : '添加网络直播'}</h5>
@@ -19040,8 +19063,8 @@ const WebLiveConfig = ({
           document.body
         )}
 
-      <div className='flex flex-wrap items-center justify-between gap-3'>
-        <h4 className='text-sm font-medium text-gray-700 dark:text-gray-300'>
+      <div className='apex-admin-toolbar flex flex-wrap items-center justify-between gap-3'>
+          <h4 className='text-sm font-medium text-gray-700 dark:text-gray-300'>
           网络直播列表
         </h4>
         <button
@@ -19122,11 +19145,11 @@ function AdminPageClient() {
       const response = await fetch(`/api/admin/config`);
 
       if (!response.ok) {
-        const data = (await response.json()) as any;
+        const data = (await readJsonResponse<any>(response, "管理设置")) as any;
         throw new Error(`获取配置失败: ${data.error}`);
       }
 
-      const data = (await response.json()) as AdminConfigResult & { Revision?: string };
+      const data = (await readJsonResponse<any>(response, "管理设置")) as AdminConfigResult & { Revision?: string };
       registerAdminConfigVersion(data.Config, data.Revision);
       setConfig(data.Config);
       setRole(data.Role);
@@ -19179,14 +19202,14 @@ function AdminPageClient() {
         }
         const response = await fetch(`/api/admin/users?${params.toString()}`);
         if (response.ok) {
-          const data = await response.json();
+          const data = await readJsonResponse<any>(response, "管理设置");
           setUsersV2(data.users);
           setUserTotalPages(data.totalPages || 1);
           setUserTotal(data.total || 0);
           setUserPage(page);
         }
       } catch (err) {
-        console.error('获取新版本用户列表失败:', err);
+        reportAppError(err, "获取新版本用户列表失败");
       } finally {
         setUserListLoading(false);
       }
@@ -19265,7 +19288,7 @@ function AdminPageClient() {
 
   if (loading) {
     return (
-      <PageLayout activePath='/admin'>
+      <PageLayout activePath='/admin' navigationMode='workspace'>
         <div className='apex-admin-page'>
           <div className='apex-admin-container'>
             <h1 className='text-2xl font-bold text-gray-900 dark:text-gray-100 mb-8'>
@@ -19288,7 +19311,7 @@ function AdminPageClient() {
   if (error) {
     // 显示无权限提示页面
     return (
-      <PageLayout activePath='/admin'>
+      <PageLayout activePath='/admin' navigationMode='workspace'>
         <div className='min-h-screen flex items-center justify-center px-4'>
           <div className='max-w-md w-full'>
             <div className='bg-white dark:bg-gray-800 rounded-lg shadow-lg p-8 text-center'>
@@ -19623,14 +19646,16 @@ function AdminPageClient() {
   );
 
   return (
-    <PageLayout activePath='/admin'>
+    <PageLayout activePath='/admin' navigationMode='workspace'>
       <div className='apex-admin-page'>
         <div className='apex-admin-container'>
           {/* 标题与维护操作 */}
           <div className='apex-admin-header'>
-            <h1 className='apex-admin-title'>
-              管理员设置
-            </h1>
+            <div className='apex-admin-heading'>
+              <span className='apex-admin-eyebrow'><Settings size={14} aria-hidden />管理后台</span>
+              <h1 className='apex-admin-title'>管理员设置</h1>
+              <p className='apex-admin-context'><span className='apex-admin-role'>{role === 'owner' ? '站长' : '管理员'}</span><span>{sections.length} 个配置视图</span></p>
+            </div>
             {config && role === 'owner' && (
               <div className='apex-admin-maintenance'>
                 <button
@@ -19651,7 +19676,7 @@ function AdminPageClient() {
 
           {/* TMDB 未配置提示 */}
           {config && !config.SiteConfig.TMDBApiKey && (
-            <div className='bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4 mb-4'>
+            <div className='apex-admin-advisory bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4 mb-4'>
               <div className='flex items-start gap-3'>
                 <div className='flex-shrink-0 mt-0.5'>
                   <svg
@@ -19677,7 +19702,7 @@ function AdminPageClient() {
 
           {/* 视频源过多提示 */}
           {config && (config.SourceConfig?.length ?? 0) > 50 && (
-            <div className='bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg p-4 mb-4'>
+            <div className='apex-admin-advisory bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg p-4 mb-4'>
               <div className='flex items-start gap-3'>
                 <div className='flex-shrink-0 mt-0.5'>
                   <svg
@@ -19704,6 +19729,7 @@ function AdminPageClient() {
           <div className='apex-admin-workspace'>
             <nav className='apex-admin-navigation' aria-label='管理设置导航'>
               <div className='apex-admin-navigation-desktop'>
+                <p className='apex-admin-navigation-title'>配置导航</p>
                 {navigationGroups.map((group, index) => (
                   <div className='apex-admin-nav-group' key={group.title}>
                     <h2 id={`admin-group-${index}`}>{group.title}</h2>
@@ -19714,6 +19740,7 @@ function AdminPageClient() {
                           key={item.key}
                           onClick={() => selectSection(item.key)}
                           aria-current={activeItem.key === item.key ? 'page' : undefined}
+                          aria-controls='admin-config-content'
                           className='apex-admin-nav-item'
                         >
                           {item.icon}
@@ -19744,13 +19771,17 @@ function AdminPageClient() {
 
             <section
               ref={contentScrollRef}
+              id='admin-config-content'
               className='apex-admin-section'
               data-section={activeItem.key}
               aria-labelledby='admin-section-title'
             >
               <header className='apex-admin-section-heading'>
-                <span className='apex-admin-section-category'>{activeGroup?.title}</span>
-                <h2 id='admin-section-title'>{activeItem.title}</h2>
+                <span className='apex-admin-section-icon' aria-hidden>{activeItem.icon}</span>
+                <div className='apex-admin-section-title'>
+                  <span className='apex-admin-section-category'>{activeGroup?.title}</span>
+                  <h2 id='admin-section-title'>{activeItem.title}</h2>
+                </div>
               </header>
               <div key={activeItem.key} className='apex-admin-content ptv-content-in'>
                 {activeItem.render?.()}

@@ -1,3 +1,4 @@
+import { appErrorPayload, reportAppError } from '@/lib/app-error';
 /* eslint-disable no-console,@typescript-eslint/no-explicit-any */
 import { NextRequest, NextResponse } from 'next/server';
 
@@ -83,12 +84,12 @@ export async function GET(request: NextRequest) {
       }
     );
   } catch (error) {
-    console.error('获取用户列表失败:', error);
+    reportAppError(error, "获取用户列表失败");
     return NextResponse.json(
-      {
+      {...{
         error: '获取用户列表失败',
         details: (error as Error).message,
-      },
+      }, ...appErrorPayload(error, "后台配置服务", 500)},
       { status: 500 }
     );
   }

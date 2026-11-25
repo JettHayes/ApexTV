@@ -1,5 +1,8 @@
 'use client';
 
+import { formatAppError, readJsonResponse, reportAppError } from '@/lib/app-error';
+
+
 import {
   Calendar,
   Clock,
@@ -280,7 +283,7 @@ const DetailPanel: React.FC<DetailPanelProps> = ({
         throw new Error('获取剧照失败');
       }
 
-      const data = await response.json();
+      const data = await readJsonResponse<any>(response, "内容操作");
       const stills: string[] = (data.list || []).map((item: { file_path: string }) =>
         getTMDBImageUrl(item.file_path, 'original')
       );
@@ -292,7 +295,7 @@ const DetailPanel: React.FC<DetailPanelProps> = ({
 
       setEpisodeStills(stills);
     } catch (err) {
-      console.error('获取集数剧照失败:', err);
+      reportAppError(err, "获取集数剧照失败");
       setEpisodeStillsError(err instanceof Error ? err.message : '获取剧照失败');
     } finally {
       setEpisodeStillsLoading(false);
@@ -318,11 +321,11 @@ const DetailPanel: React.FC<DetailPanelProps> = ({
         throw new Error('获取照片墙失败');
       }
 
-      const data = await response.json();
+      const data = await readJsonResponse<any>(response, "内容操作");
       setGalleryImages(data.list || []);
       setGalleryTotal(data.total || 0);
     } catch (err) {
-      console.error('获取照片墙失败:', err);
+      reportAppError(err, "获取照片墙失败");
       setGalleryError(err instanceof Error ? err.message : '获取照片墙失败');
     } finally {
       setGalleryLoading(false);
@@ -542,7 +545,7 @@ const DetailPanel: React.FC<DetailPanelProps> = ({
     if (!detailResponse.ok) {
       throw new Error('获取TMDB详情失败');
     }
-    const detailResult = await detailResponse.json();
+    const detailResult = await readJsonResponse<any>(detailResponse, "内容操作");
 
     // 如果有季度信息,尝试获取季度详情
     let seasonDetail = null;
@@ -552,10 +555,10 @@ const DetailPanel: React.FC<DetailPanelProps> = ({
           `/api/tmdb/episodes?id=${detailId}&season=${extractedSeasonNumber}`
         );
         if (seasonResponse.ok) {
-          seasonDetail = await seasonResponse.json();
+          seasonDetail = await readJsonResponse<any>(seasonResponse, "内容操作");
         }
       } catch (err) {
-        console.error('获取季度信息失败', err);
+        reportAppError(err, "获取季度信息失败");
       }
     }
 
@@ -628,8 +631,8 @@ const DetailPanel: React.FC<DetailPanelProps> = ({
       const { extractedSeasonNumber } = parseTmdbSearchInfo();
       await applyTmdbResult(result, extractedSeasonNumber);
     } catch (err) {
-      console.error('切换TMDB结果失败:', err);
-      setError(err instanceof Error ? err.message : '切换失败');
+      reportAppError(err, "切换TMDB结果失败");
+      setError(formatAppError(err, "内容操作"));
       setCurrentSource('tmdb');
     } finally {
       setLoading(false);
@@ -683,7 +686,7 @@ const DetailPanel: React.FC<DetailPanelProps> = ({
                 )}&title=${encodeURIComponent(title)}`)
               );
               if (response.ok) {
-                const data = await response.json();
+                const data = await readJsonResponse<any>(response, "内容操作");
                 const detailData = {
                   title: data.title || title,
                   intro: data.desc || '',
@@ -698,7 +701,7 @@ const DetailPanel: React.FC<DetailPanelProps> = ({
                 return;
               }
             } catch (err) {
-              console.error('获取source-detail失败:', err);
+              reportAppError(err, "获取source-detail失败");
               // 继续执行后续逻辑
             }
           }
@@ -743,7 +746,7 @@ const DetailPanel: React.FC<DetailPanelProps> = ({
           if (!response.ok) {
             throw new Error('获取豆瓣详情失败');
           }
-          const data = await response.json();
+          const data = await readJsonResponse<any>(response, "内容操作");
 
           const detailData = {
             title: data.title,
@@ -780,8 +783,8 @@ const DetailPanel: React.FC<DetailPanelProps> = ({
 
         throw new Error('缺少必要的查询参数');
       } catch (err) {
-        console.error('获取详情失败:', err);
-        setError(err instanceof Error ? err.message : '获取详情失败');
+        reportAppError(err, "获取详情失败");
+        setError(formatAppError(err, "内容操作"));
       } finally {
         setLoading(false);
       }
@@ -798,7 +801,7 @@ const DetailPanel: React.FC<DetailPanelProps> = ({
       if (!searchResponse.ok) {
         throw new Error('搜索失败');
       }
-      const searchData = await searchResponse.json();
+      const searchData = await readJsonResponse<any>(searchResponse, "内容操作");
 
       if (searchData.results && searchData.results.length > 0) {
         // 保存全部搜索结果,供纠错切换
@@ -853,8 +856,8 @@ const DetailPanel: React.FC<DetailPanelProps> = ({
       try {
         await fetchTmdbDataForToggle();
       } catch (err) {
-        console.error('切换到TMDB失败:', err);
-        setError(err instanceof Error ? err.message : '切换到TMDB失败');
+        reportAppError(err, "切换到TMDB失败");
+        setError(formatAppError(err, "内容操作"));
         // 切换失败，但保持 currentSource 为 tmdb，这样可以显示切换回按钮
         setCurrentSource('tmdb');
       } finally {
@@ -873,7 +876,7 @@ const DetailPanel: React.FC<DetailPanelProps> = ({
     if (!searchResponse.ok) {
       throw new Error('搜索失败');
     }
-    const searchData = await searchResponse.json();
+    const searchData = await readJsonResponse<any>(searchResponse, "内容操作");
 
     if (searchData.results && searchData.results.length > 0) {
       // 保存全部搜索结果,供纠错切换
@@ -908,7 +911,7 @@ const DetailPanel: React.FC<DetailPanelProps> = ({
           `/api/tmdb/seasons?tvId=${detailData.tmdbId}`
         );
         if (!seasonsResponse.ok) return;
-        const seasonsData = await seasonsResponse.json();
+        const seasonsData = await readJsonResponse<any>(seasonsResponse, "内容操作");
         const seasons: any[] = seasonsData.seasons || [];
 
         // 计算默认选中季度：优先用标题提取的季度号，
@@ -927,7 +930,7 @@ const DetailPanel: React.FC<DetailPanelProps> = ({
           `/api/tmdb/episodes?id=${detailData.tmdbId}&season=${defaultSeason}`
         );
         const episodesData = episodesResponse.ok
-          ? await episodesResponse.json()
+          ? await readJsonResponse<any>(episodesResponse, "内容操作")
           : null;
 
         // 即使集数获取失败，也保留季度列表，避免整个区块消失
@@ -937,7 +940,7 @@ const DetailPanel: React.FC<DetailPanelProps> = ({
         });
         setSeasonsLoaded(true);
       } catch (err) {
-        console.error('获取季度和集数详情失败:', err);
+        reportAppError(err, "获取季度和集数详情失败");
       } finally {
         setLoadingSeasons(false);
       }
@@ -1003,7 +1006,7 @@ const DetailPanel: React.FC<DetailPanelProps> = ({
           `/api/tmdb/credits?id=${detailData.tmdbId}&type=${detailData.mediaType}`
         );
         if (!creditsResponse.ok) return;
-        const creditsData = await creditsResponse.json();
+        const creditsData = await readJsonResponse<any>(creditsResponse, "内容操作");
 
         // 更新演员和导演信息
         setDetailData((prev) =>
@@ -1028,7 +1031,7 @@ const DetailPanel: React.FC<DetailPanelProps> = ({
             : null
         );
       } catch (err) {
-        console.error('获取演职人员信息失败:', err);
+        reportAppError(err, "获取演职人员信息失败");
       }
     };
 
@@ -1051,7 +1054,7 @@ const DetailPanel: React.FC<DetailPanelProps> = ({
         `/api/tmdb/episodes?id=${detailData.tmdbId}&season=${seasonNumber}`
       );
       if (!episodesResponse.ok) return;
-      const episodesData = await episodesResponse.json();
+      const episodesData = await readJsonResponse<any>(episodesResponse, "内容操作");
 
       // 从当前 seasonData 中查找季度信息
       const season = seasonData?.seasons.find(
@@ -1094,7 +1097,7 @@ const DetailPanel: React.FC<DetailPanelProps> = ({
 
       setExpandedEpisodes(new Set());
     } catch (err) {
-      console.error('获取集数详情失败:', err);
+      reportAppError(err, "获取集数详情失败");
     } finally {
       setLoadingSeasons(false);
     }
@@ -1385,7 +1388,7 @@ const DetailPanel: React.FC<DetailPanelProps> = ({
     useDrawer ? (
       <div className='fixed inset-0 z-[10000] flex items-center justify-end pointer-events-none'>
         <div
-          className={`ptv-drawer-in relative ${drawerWidth} h-full bg-white dark:bg-gray-900 shadow-2xl overflow-hidden flex flex-col pointer-events-auto`}
+          className={`ptv-drawer-in f1-detail-drawer relative ${drawerWidth} h-full bg-white dark:bg-gray-900 shadow-2xl overflow-hidden flex flex-col pointer-events-auto`}
         >
           {galleryHeader}
           {galleryBody}
@@ -1397,7 +1400,7 @@ const DetailPanel: React.FC<DetailPanelProps> = ({
           className='ptv-scrim-in absolute inset-0 bg-black/60'
           onClick={() => setShowGallery(false)}
         />
-        <div className='ptv-modal-in relative w-full max-w-6xl max-h-[90vh] bg-white dark:bg-gray-900 rounded-2xl shadow-2xl overflow-hidden flex flex-col'>
+        <div className='ptv-modal-in f1-detail-dialog relative w-full max-w-6xl max-h-[90vh] bg-white dark:bg-gray-900 rounded-2xl shadow-2xl overflow-hidden flex flex-col'>
           {galleryHeader}
           {galleryBody}
         </div>
@@ -1476,7 +1479,7 @@ const DetailPanel: React.FC<DetailPanelProps> = ({
     useDrawer ? (
       <div className='fixed inset-0 z-[10000] flex items-center justify-end pointer-events-none'>
         <div
-          className={`ptv-drawer-in relative ${drawerWidth} h-full bg-white dark:bg-gray-900 shadow-2xl overflow-hidden flex flex-col pointer-events-auto`}
+          className={`ptv-drawer-in f1-detail-drawer relative ${drawerWidth} h-full bg-white dark:bg-gray-900 shadow-2xl overflow-hidden flex flex-col pointer-events-auto`}
         >
           {episodeStillsHeader}
           {episodeStillsBody}
@@ -1488,7 +1491,7 @@ const DetailPanel: React.FC<DetailPanelProps> = ({
           className='ptv-scrim-in absolute inset-0 bg-black/60'
           onClick={() => setShowEpisodeStills(false)}
         />
-        <div className='ptv-modal-in relative w-full max-w-4xl max-h-[90vh] bg-white dark:bg-gray-900 rounded-2xl shadow-2xl overflow-hidden flex flex-col'>
+        <div className='ptv-modal-in f1-detail-dialog relative w-full max-w-4xl max-h-[90vh] bg-white dark:bg-gray-900 rounded-2xl shadow-2xl overflow-hidden flex flex-col'>
           {episodeStillsHeader}
           {episodeStillsBody}
         </div>
@@ -1533,7 +1536,7 @@ const DetailPanel: React.FC<DetailPanelProps> = ({
               onClick={() => handleSelectTmdbResult(result)}
               className={`flex items-start gap-3 p-2 rounded-lg cursor-pointer transition-colors ${
                 isActive
-                  ? 'bg-green-100 dark:bg-green-900/30 ring-2 ring-green-500'
+                  ? "bg-green-100 dark:bg-green-900/30 ring-2 ring-apex-accent"
                   : 'bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700'
               }`}
             >
@@ -1582,7 +1585,7 @@ const DetailPanel: React.FC<DetailPanelProps> = ({
     useDrawer ? (
       <div className='fixed inset-0 z-[10000] flex items-center justify-end pointer-events-none'>
         <div
-          className={`ptv-drawer-in relative ${drawerWidth} h-full bg-white dark:bg-gray-900 shadow-2xl overflow-hidden flex flex-col pointer-events-auto`}
+          className={`ptv-drawer-in f1-detail-drawer relative ${drawerWidth} h-full bg-white dark:bg-gray-900 shadow-2xl overflow-hidden flex flex-col pointer-events-auto`}
         >
           {tmdbCorrectionHeader}
           {tmdbCorrectionBody}
@@ -1594,7 +1597,7 @@ const DetailPanel: React.FC<DetailPanelProps> = ({
           className='ptv-scrim-in absolute inset-0 bg-black/60'
           onClick={() => setShowTmdbCorrection(false)}
         />
-        <div className='ptv-modal-in relative w-full max-w-lg max-h-[90vh] bg-white dark:bg-gray-900 rounded-2xl shadow-2xl overflow-hidden flex flex-col'>
+        <div className='ptv-modal-in f1-detail-dialog relative w-full max-w-lg max-h-[90vh] bg-white dark:bg-gray-900 rounded-2xl shadow-2xl overflow-hidden flex flex-col'>
           {tmdbCorrectionHeader}
           {tmdbCorrectionBody}
         </div>
@@ -1608,12 +1611,12 @@ const DetailPanel: React.FC<DetailPanelProps> = ({
     <div className='fixed inset-0 z-[9999] flex items-center justify-end pointer-events-none'>
       {/* 详情面板 - 抽屉模式 */}
       <div
-        className={`relative ${drawerWidth} h-full bg-white dark:bg-gray-900 shadow-2xl overflow-hidden flex flex-col transition-transform ease-[cubic-bezier(.16,1,.3,1)] pointer-events-auto ${
+        className={`f1-detail-drawer f1-film-details relative ${drawerWidth} h-full overflow-hidden flex flex-col transition-transform ease-[cubic-bezier(.16,1,.3,1)] pointer-events-auto ${
           isAnimating ? 'translate-x-0 duration-[280ms]' : 'translate-x-full duration-200'
         }`}
       >
         {/* 头部 */}
-        <div className='flex items-center justify-between p-4 border-b border-gray-100 dark:border-gray-800 sticky top-0 bg-white dark:bg-gray-900 z-10'>
+        <div className='f1-detail-heading flex items-center justify-between sticky top-0 z-10'>
           <h2 className='text-xl font-semibold text-gray-900 dark:text-gray-100'>
             详情
           </h2>
@@ -1658,7 +1661,7 @@ const DetailPanel: React.FC<DetailPanelProps> = ({
         </div>
 
         {/* 内容区域 */}
-        <div className='overflow-y-auto max-h-[calc(90vh-4rem)]'>
+        <div className='f1-detail-scroll min-h-0 flex-1 overflow-y-auto'>
           {loading && (
             <div className='flex items-center justify-center py-20'>
               <div className='animate-spin rounded-full h-12 w-12 border-b-2 border-green-500'></div>
@@ -1719,11 +1722,11 @@ const DetailPanel: React.FC<DetailPanelProps> = ({
           )}
 
           {!loading && !error && detailData && (
-            <div className='p-6'>
+            <div className='f1-detail-content p-6'>
               {/* 海报和基本信息 */}
-              <div className='flex gap-6 mb-6'>
+              <div className='f1-detail-hero'>
                 {detailData.poster && (
-                  <div className='flex flex-col items-start gap-3 flex-shrink-0'>
+                  <div className='f1-detail-poster flex flex-col items-start gap-3'>
                     <div
                       className='relative w-32 h-48 rounded-lg overflow-hidden bg-gray-100 dark:bg-gray-800 cursor-pointer hover:opacity-90 transition-opacity'
                       onClick={() => handleImageClick(detailData.poster!)}
@@ -1738,7 +1741,7 @@ const DetailPanel: React.FC<DetailPanelProps> = ({
                     {galleryEntryButton}
                   </div>
                 )}
-                <div className='flex-1 min-w-0'>
+                <div className='f1-detail-identity min-w-0'>
                   <h3 className='text-2xl font-bold text-gray-900 dark:text-gray-100 mb-2'>
                     {detailData.title}
                   </h3>
@@ -1992,7 +1995,7 @@ const DetailPanel: React.FC<DetailPanelProps> = ({
                                 }
                                 className={`flex items-center gap-2 p-2 rounded cursor-pointer transition-colors ${
                                   selectedSeason === season.season_number
-                                    ? 'bg-green-100 dark:bg-green-900/30 ring-2 ring-green-500'
+                                    ? "bg-green-100 dark:bg-green-900/30 ring-2 ring-apex-accent"
                                     : 'bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700'
                                 }`}
                               >
@@ -2067,7 +2070,7 @@ const DetailPanel: React.FC<DetailPanelProps> = ({
                                     id={`episode-${episode.episode_number}`}
                                     className={`flex-shrink-0 w-64 p-3 rounded ${
                                       isCurrentEpisode
-                                        ? 'bg-green-100 dark:bg-green-900/30 ring-2 ring-green-500'
+                                        ? "bg-green-100 dark:bg-green-900/30 ring-2 ring-apex-accent"
                                         : 'bg-gray-50 dark:bg-gray-800'
                                     }`}
                                     style={{
@@ -2214,7 +2217,7 @@ const DetailPanel: React.FC<DetailPanelProps> = ({
 
       {/* 详情面板 - 居中模式 */}
       <div
-        className='relative w-full max-w-2xl max-h-[90vh] bg-white dark:bg-gray-900 rounded-2xl shadow-2xl overflow-hidden transition-all duration-200 ease-out'
+        className='f1-detail-dialog f1-film-details relative w-full max-w-3xl max-h-[90dvh] overflow-hidden flex flex-col transition-[transform,opacity] duration-200 ease-out'
         style={{
           willChange: 'transform, opacity',
           backfaceVisibility: 'hidden',
@@ -2225,7 +2228,7 @@ const DetailPanel: React.FC<DetailPanelProps> = ({
         }}
       >
         {/* 头部 */}
-        <div className='flex items-center justify-between p-4 border-b border-gray-100 dark:border-gray-800 sticky top-0 bg-white dark:bg-gray-900 z-10'>
+        <div className='f1-detail-heading flex items-center justify-between sticky top-0 z-10'>
           <h2 className='text-xl font-semibold text-gray-900 dark:text-gray-100'>
             详情
           </h2>
@@ -2270,7 +2273,7 @@ const DetailPanel: React.FC<DetailPanelProps> = ({
         </div>
 
         {/* 内容区域 */}
-        <div className='overflow-y-auto max-h-[calc(90vh-4rem)]'>
+        <div className='f1-detail-scroll min-h-0 flex-1 overflow-y-auto'>
           {loading && (
             <div className='flex items-center justify-center py-20'>
               <div className='animate-spin rounded-full h-12 w-12 border-b-2 border-green-500'></div>
@@ -2328,11 +2331,11 @@ const DetailPanel: React.FC<DetailPanelProps> = ({
           )}
 
           {!loading && !error && detailData && (
-            <div className='p-6'>
+            <div className='f1-detail-content p-6'>
               {/* 海报和基本信息 */}
-              <div className='flex gap-6 mb-6'>
+              <div className='f1-detail-hero'>
                 {detailData.poster && (
-                  <div className='flex flex-col items-start gap-3 flex-shrink-0'>
+                  <div className='f1-detail-poster flex flex-col items-start gap-3'>
                     <div
                       className='relative w-32 h-48 rounded-lg overflow-hidden bg-gray-100 dark:bg-gray-800 cursor-pointer hover:opacity-90 transition-opacity'
                       onClick={() => handleImageClick(detailData.poster!)}
@@ -2347,7 +2350,7 @@ const DetailPanel: React.FC<DetailPanelProps> = ({
                     {galleryEntryButton}
                   </div>
                 )}
-                <div className='flex-1 min-w-0'>
+                <div className='f1-detail-identity min-w-0'>
                   <h3 className='text-2xl font-bold text-gray-900 dark:text-gray-100 mb-2'>
                     {detailData.title}
                   </h3>
@@ -2601,7 +2604,7 @@ const DetailPanel: React.FC<DetailPanelProps> = ({
                                 }
                                 className={`flex items-center gap-2 p-2 rounded cursor-pointer transition-colors ${
                                   selectedSeason === season.season_number
-                                    ? 'bg-green-100 dark:bg-green-900/30 ring-2 ring-green-500'
+                                    ? "bg-green-100 dark:bg-green-900/30 ring-2 ring-apex-accent"
                                     : 'bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700'
                                 }`}
                               >
@@ -2676,7 +2679,7 @@ const DetailPanel: React.FC<DetailPanelProps> = ({
                                     id={`episode-${episode.episode_number}`}
                                     className={`flex-shrink-0 w-64 p-3 rounded ${
                                       isCurrentEpisode
-                                        ? 'bg-green-100 dark:bg-green-900/30 ring-2 ring-green-500'
+                                        ? "bg-green-100 dark:bg-green-900/30 ring-2 ring-apex-accent"
                                         : 'bg-gray-50 dark:bg-gray-800'
                                     }`}
                                     style={{

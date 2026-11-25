@@ -11,6 +11,7 @@ import {
   useState,
 } from 'react';
 
+import { formatAppError, reportAppError, requestJson } from '@/lib/app-error';
 import { cn } from '@/lib/cn';
 import {
   deleteMangaShelf,
@@ -40,8 +41,6 @@ import MediaGridSkeleton from '@/components/media/MediaGridSkeleton';
 import MediaSectionHeader from '@/components/media/MediaSectionHeader';
 import ShelfChipButton from '@/components/media/ShelfChipButton';
 
-const MANGA_SEARCH_STATE_KEY = 'manga_search_state';
-
 export default function MangaSearchPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -58,7 +57,6 @@ export default function MangaSearchPage() {
   const [hasSearched, setHasSearched] = useState(false);
   const [lastSearchedQuery, setLastSearchedQuery] = useState('');
   const [lastSearchedSourceId, setLastSearchedSourceId] = useState('');
-  const restoredRef = useRef(false);
   const forceNextUrlSearchRef = useRef(false);
   const eventSourceRef = useRef<EventSource | null>(null);
   const currentSearchKeyRef = useRef('');
@@ -163,48 +161,12 @@ export default function MangaSearchPage() {
     []
   );
 
-  const saveSearchState = useCallback(
-    (nextState: {
-      query: string;
-      sourceId: string;
-      results: MangaSearchItem[];
-    }) => {
-      if (typeof window === 'undefined') return;
-      try {
-        sessionStorage.setItem(
-          MANGA_SEARCH_STATE_KEY,
-          JSON.stringify(nextState)
-        );
-      } catch {
-        // ignore session cache failures
-      }
-    },
-    []
-  );
-
-  const restoreSearchState = useCallback(() => {
-    if (typeof window === 'undefined') return null;
-    try {
-      const cached = sessionStorage.getItem(MANGA_SEARCH_STATE_KEY);
-      return cached
-        ? (JSON.parse(cached) as {
-            query: string;
-            sourceId: string;
-            results: MangaSearchItem[];
-          })
-        : null;
-    } catch {
-      return null;
-    }
-  }, []);
-
   useEffect(() => {
     setUseFluidSearch(readFluidSearchSetting());
 
-    fetch('/api/manga/sources')
-      .then((res) => res.json())
+    requestJson<{ sources: MangaSource[] }>('/api/manga/sources', undefined, '加载漫画源')
       .then((data) => setSources(data.sources || []))
-      .catch(() => undefined);
+      .catch((err) => { reportAppError(err, '加载漫画源'); setError(formatAppError(err, '加载漫画源')); });
 
     getAllMangaShelf()
       .then(setShelf)
@@ -245,11 +207,6 @@ export default function MangaSearchPage() {
         : getCachedResults(trimmedQuery, normalizedSourceId);
       if (cached) {
         setResults(cached);
-        saveSearchState({
-          query: trimmedQuery,
-          sourceId: normalizedSourceId,
-          results: cached,
-        });
         setLoading(false);
         setTotalSources(1);
         setCompletedSources(1);
@@ -291,6 +248,7 @@ export default function MangaSearchPage() {
                 }
                 break;
               case 'source_error':
+                setError(payload.error || '部分漫画源搜索失败，请稍后重试。');
                 setCompletedSources((prev) =>
                   Math.max(prev + 1, payload.completedSources || 0)
                 );
@@ -319,22 +277,12 @@ export default function MangaSearchPage() {
                         normalizedSourceId,
                         nextResults
                       );
-                      saveSearchState({
-                        query: trimmedQuery,
-                        sourceId: normalizedSourceId,
-                        results: nextResults,
-                      });
                       return nextResults;
                     });
                   });
                 } else {
                   setResults((prev) => {
                     setCachedResults(trimmedQuery, normalizedSourceId, prev);
-                    saveSearchState({
-                      query: trimmedQuery,
-                      sourceId: normalizedSourceId,
-                      results: prev,
-                    });
                     return prev;
                   });
                 }
@@ -350,6 +298,9 @@ export default function MangaSearchPage() {
 
         es.onerror = () => {
           if (currentSearchKeyRef.current !== searchKey) return;
+          const error = new Error('NetworkError');
+          reportAppError(error, '漫画流式搜索');
+          setError(formatAppError(error, '漫画流式搜索'));
           if (pendingResultsRef.current.length > 0) {
             const toAppend = pendingResultsRef.current;
             pendingResultsRef.current = [];
@@ -368,23 +319,16 @@ export default function MangaSearchPage() {
       }
 
       try {
-        const res = await fetch(`/api/manga/search?${params.toString()}`);
-        const data = await res.json();
+        const data = await requestJson<{ results: MangaSearchItem[] }>(`/api/manga/search?${params.toString()}`, undefined, '搜索漫画');
         if (currentSearchKeyRef.current !== searchKey) return;
-        if (!res.ok) throw new Error(data.error || '搜索失败');
         const nextResults = data.results || [];
         setResults(nextResults);
         setTotalSources(1);
         setCompletedSources(1);
         setCachedResults(trimmedQuery, normalizedSourceId, nextResults);
-        saveSearchState({
-          query: trimmedQuery,
-          sourceId: normalizedSourceId,
-          results: nextResults,
-        });
       } catch (err) {
         if (currentSearchKeyRef.current !== searchKey) return;
-        setError((err as Error).message);
+        reportAppError(err, '搜索漫画'); setError(formatAppError(err, '搜索漫画'));
         setResults([]);
       } finally {
         if (currentSearchKeyRef.current === searchKey) {
@@ -398,33 +342,16 @@ export default function MangaSearchPage() {
       closeEventSource,
       getCachedResults,
       readFluidSearchSetting,
-      saveSearchState,
       setCachedResults,
     ]
   );
 
   useEffect(() => {
-    if (!restoredRef.current) {
-      restoredRef.current = true;
-
-      if (!urlQuery) {
-        const cachedState = restoreSearchState();
-        if (cachedState?.query?.trim()) {
-          setQuery(cachedState.query);
-          setSourceId(cachedState.sourceId || '');
-          setResults(cachedState.results || []);
-          setHasSearched(true);
-          setLastSearchedQuery(cachedState.query);
-          setLastSearchedSourceId(cachedState.sourceId || '');
-        }
-        return;
-      }
-    }
-
     setQuery(urlQuery);
     setSourceId(urlSourceId);
 
     if (!urlQuery) {
+      currentSearchKeyRef.current = '';
       closeEventSource();
       clearPendingResults();
       setResults([]);
@@ -445,7 +372,6 @@ export default function MangaSearchPage() {
     clearPendingResults,
     closeEventSource,
     performSearch,
-    restoreSearchState,
     urlQuery,
     urlSourceId,
   ]);
@@ -502,10 +428,9 @@ export default function MangaSearchPage() {
   };
 
   return (
-    <div className='space-y-6'>
-      {/* 搜索框做成纸面书案的样式：一个实心纸面板托着输入、来源与搜索键。 */}
+    <div className='f1-reading-search f1-comic-search space-y-6'>
       <form
-        className={cn(LIBRARY_PANEL, 'mx-auto max-w-4xl p-3 sm:p-4')}
+        className={cn(LIBRARY_PANEL, 'f1-reading-search-panel p-4 sm:p-6')}
         onSubmit={handleSearch}
       >
         <div className='flex flex-col gap-3 lg:flex-row'>

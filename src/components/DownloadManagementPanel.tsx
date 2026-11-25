@@ -4,12 +4,13 @@ import { Check, ChevronDown, Download, Trash2, X } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
 
-import { downloadDB, CompletedTask } from '@/lib/download-db';
+import { formatAppError, reportAppError } from '@/lib/app-error';
+import { CompletedTask,downloadDB } from '@/lib/download-db';
 import {
   buildIndexedDBVideoCacheKey,
+  deleteIndexedDBVideoCacheByEpisode,
   getIndexedDBVideoManifestByEpisode,
   getIndexedDBVideoSegments,
-  deleteIndexedDBVideoCacheByEpisode,
 } from '@/lib/indexeddb-video-cache';
 
 import { ConfirmDialog } from './ConfirmDialog';
@@ -42,6 +43,7 @@ export function DownloadManagementPanel({
   const [isDeleting, setIsDeleting] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const [error, setError] = useState('');
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
 
   useEffect(() => {
@@ -58,8 +60,10 @@ export function DownloadManagementPanel({
     try {
       const tasks = await downloadDB.getCompletedTasks();
       setCompletedTasks(tasks);
+      setError('');
     } catch (error) {
-      console.error('加载已完成任务失败:', error);
+      reportAppError(error, '加载下载记录');
+      setError(formatAppError(error, '加载下载记录'));
     }
   };
 
@@ -228,8 +232,8 @@ export function DownloadManagementPanel({
       await loadCompletedTasks();
       setSelectedIds(new Set());
     } catch (error) {
-      console.error('删除任务失败:', error);
-      alert('删除失败，请重试');
+      reportAppError(error, '删除下载任务');
+      setError(formatAppError(error, '删除下载任务'));
     } finally {
       setIsDeleting(false);
     }
@@ -449,10 +453,8 @@ export function DownloadManagementPanel({
         alert(`已导出可读取的内容，但以下条目失败：${failedTitles.join('、')}`);
       }
     } catch (error) {
-      console.error('导出失败:', error);
-      alert(
-        `导出失败：${error instanceof Error ? error.message : String(error)}`
-      );
+      reportAppError(error, '导出下载任务');
+      setError(formatAppError(error, '导出下载任务'));
     } finally {
       setIsExporting(false);
     }
@@ -552,10 +554,10 @@ export function DownloadManagementPanel({
       {createPortal(
         <div className='fixed inset-0 z-[9999] flex items-end justify-center p-0 sm:items-center sm:p-4'>
           <div className='ptv-scrim-in absolute inset-0 bg-black/50' onClick={onClose} />
-          <div className='ptv-sheet-in relative flex h-[92dvh] max-h-[92dvh] w-full max-w-4xl flex-col rounded-t-2xl bg-white shadow-xl dark:bg-gray-900 sm:h-auto sm:max-h-[90vh] sm:rounded-lg'>
+          <div role='dialog' aria-modal='true' aria-label='下载管理' className='ptv-dialog f1-task-dialog ptv-sheet-in relative flex h-[92dvh] max-h-[92dvh] w-full max-w-4xl flex-col rounded-t-2xl bg-white shadow-xl dark:bg-gray-900 sm:h-auto sm:max-h-[90vh] sm:rounded-lg'>
             {/* Header */}
             <div className='flex items-center justify-between border-b border-gray-200 p-3 dark:border-gray-700 sm:p-4'>
-              <h2 className='text-lg font-semibold text-gray-800 dark:text-gray-200 sm:text-xl'>
+              <h2 className='flex items-center gap-2 text-lg font-semibold text-gray-800 dark:text-gray-200 sm:text-xl'><Download className='h-5 w-5' aria-hidden='true' />
                 下载文件管理
               </h2>
               <button
@@ -567,8 +569,10 @@ export function DownloadManagementPanel({
               </button>
             </div>
 
+            {error && <p role='alert' className='px-4 py-2 text-sm text-red-600'>{error}</p>}
+
             {/* Toolbar */}
-            <div className='flex items-center justify-between gap-3 border-b border-gray-200 p-3 dark:border-gray-700 sm:p-4'>
+            <div className='ptv-download-toolbar flex flex-wrap items-center justify-between gap-3 border-b border-gray-200 p-3 dark:border-gray-700 sm:p-4'>
               <div className='min-w-0 flex-1 flex-col gap-2 sm:flex sm:flex-row sm:items-center sm:gap-4'>
                 <label className='flex items-center gap-2 cursor-pointer'>
                   <input
@@ -637,14 +641,14 @@ export function DownloadManagementPanel({
                     return (
                       <div
                         key={group.key}
-                        className={`border rounded-lg overflow-hidden transition-colors ${
+                        className={`ptv-download-group border rounded-lg overflow-hidden transition-colors ${
                           isGroupSelected || isGroupPartiallySelected
                             ? 'border-green-500 bg-green-50/70 dark:bg-green-900/10'
                             : 'border-gray-200 dark:border-gray-700'
                         }`}
                       >
                         <div
-                          className='flex cursor-pointer items-start gap-2 p-3 hover:bg-gray-50 dark:hover:bg-gray-800/80 sm:gap-3 sm:p-4'
+                          className='ptv-download-group-heading flex cursor-pointer items-start gap-2 p-3 hover:bg-gray-50 dark:hover:bg-gray-800/80 sm:gap-3 sm:p-4'
                           onClick={() => handleToggleGroupExpand(group.key)}
                         >
                           <button
@@ -717,7 +721,7 @@ export function DownloadManagementPanel({
                             {group.tasks.map((task) => (
                               <div
                                 key={task.id}
-                                className={`flex cursor-pointer items-start gap-2 px-3 py-3.5 transition-colors sm:gap-3 sm:px-4 sm:py-3 ${
+                                className={`ptv-download-task flex cursor-pointer items-start gap-2 px-3 py-3.5 transition-colors sm:gap-3 sm:px-4 sm:py-3 ${
                                   selectedIds.has(task.id)
                                     ? 'bg-green-50 dark:bg-green-900/20'
                                     : 'hover:bg-gray-50 dark:hover:bg-gray-800'

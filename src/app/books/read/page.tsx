@@ -22,6 +22,7 @@ import { useSearchParams } from 'next/navigation';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 
+import { formatAppError, isRequestCancelled, readJsonResponse, reportAppError } from '@/lib/app-error';
 import { saveBookReadRecord } from '@/lib/book.db.client';
 import {
   BookChapter,
@@ -55,6 +56,7 @@ import {
 } from '@/lib/book-tts-progress.client';
 import { cn } from '@/lib/cn';
 import { smoothScrollBehavior } from '@/lib/motion';
+import { resolveThemeColor } from '@/lib/theme-colors';
 
 import {
   LIBRARY_BUTTON,
@@ -201,9 +203,9 @@ const THEME_STYLES: Record<
   { bodyBg: string; bodyColor: string; panelBg: string }
 > = {
   // 与 tailwind 的 colors.library 同一套暖纸色：浅色是纸，护眼是更暖的纸，深色是墨。
-  light: { bodyBg: '#fdfbf6', bodyColor: '#2a241d', panelBg: '#fdfbf6' },
-  sepia: { bodyBg: '#f5f0e6', bodyColor: '#3b322a', panelBg: '#f5f0e6' },
-  dark: { bodyBg: '#13100d', bodyColor: '#ece3d5', panelBg: '#13100d' },
+  light: { bodyBg: 'var(--ptv-reader-light-bg)', bodyColor: 'var(--ptv-reader-light-text)', panelBg: 'var(--ptv-reader-light-bg)' },
+  sepia: { bodyBg: 'var(--ptv-reader-sepia-bg)', bodyColor: 'var(--ptv-reader-sepia-text)', panelBg: 'var(--ptv-reader-sepia-bg)' },
+  dark: { bodyBg: 'var(--ptv-reader-dark-bg)', bodyColor: 'var(--ptv-reader-dark-text)', panelBg: 'var(--ptv-reader-dark-bg)' },
 };
 
 function loadTtsSettings(): TtsSettings {
@@ -599,11 +601,10 @@ async function fetchJsonWithRetry<T>(
   for (let attempt = 0; attempt <= retries; attempt += 1) {
     try {
       const res = await fetch(url, init);
-      const json = await res.json();
-      if (!res.ok) throw new Error(json.error || `请求失败: ${res.status}`);
-      return json as T;
+      return await readJsonResponse<T>(res, '读取电子书');
     } catch (error) {
       lastError = error;
+      if (isRequestCancelled(error) || init?.signal?.aborted) throw error;
       if (attempt < retries) {
         await new Promise((resolve) =>
           setTimeout(resolve, 300 * (attempt + 1))
@@ -812,8 +813,7 @@ function ChapterReader({ manifest }: { manifest: BookReadManifest }) {
     let cancelled = false;
     fetch('/api/books/tts/voices')
       .then(async (res) => {
-        const json = await res.json();
-        if (!res.ok) throw new Error(json.error || '获取朗读配置失败');
+        const json = await readJsonResponse<Omit<TtsVoicesCache, 'savedAt'>>(res, '获取朗读配置');
         if (cancelled) return;
         setTtsAvailable(true);
         setTtsVoices(json.voices || []);
@@ -827,7 +827,8 @@ function ChapterReader({ manifest }: { manifest: BookReadManifest }) {
         if (!cancelled) {
           setTtsAvailable(false);
           setTtsVoices([]);
-          setTtsError(err.message || '朗读能力不可用');
+          reportAppError(err, '获取朗读配置');
+        setTtsError(formatAppError(err, '获取朗读配置'));
         }
       });
     return () => {
@@ -948,7 +949,8 @@ function ChapterReader({ manifest }: { manifest: BookReadManifest }) {
       })
       .catch((err) => {
         if (!cancelled) {
-          setError(err.message || '获取目录失败');
+          reportAppError(err, '获取电子书目录');
+          setError(formatAppError(err, '获取电子书目录'));
           setChaptersLoaded(true);
         }
       });
@@ -993,7 +995,7 @@ function ChapterReader({ manifest }: { manifest: BookReadManifest }) {
           title: (json as BookChapterContent).title || item.title,
         });
       })
-      .catch((err) => setError(err.message || '获取章节失败'))
+      .catch((err) => (reportAppError(err, '获取电子书章节'), setError(formatAppError(err, '获取电子书章节'))))
       .finally(() => setLoading(false));
   }, [
     chapters,
@@ -1083,8 +1085,7 @@ function ChapterReader({ manifest }: { manifest: BookReadManifest }) {
           volume: ttsSettingsRef.current.volume,
         }),
       });
-      const json = await response.json();
-      if (!response.ok) throw new Error(json.error || '朗读音频生成失败');
+      const json = await readJsonResponse<{ audioBase64: string; mimeType: string }>(response, '生成朗读音频');
       return URL.createObjectURL(
         decodeBase64Audio(json.audioBase64 || '', json.mimeType || 'audio/mpeg')
       );
@@ -1112,7 +1113,8 @@ function ChapterReader({ manifest }: { manifest: BookReadManifest }) {
       } catch (err) {
         setTtsStatus('error');
         setTtsLoadingChunkIndex(null);
-        setTtsError((err as Error).message || '朗读失败');
+        reportAppError(err, '朗读电子书');
+        setTtsError(formatAppError(err, '朗读电子书'));
       }
     },
     [currentChapterHref, fetchTtsChunkAudioUrl]
@@ -1316,7 +1318,7 @@ function ChapterReader({ manifest }: { manifest: BookReadManifest }) {
 
   return (
     <div
-      className='relative book-reader-height overflow-hidden'
+      className='f1-book-reader f1-book-reader--chapters relative book-reader-height overflow-hidden'
       style={{ backgroundColor: palette.panelBg, color: palette.bodyColor }}
     >
       {tocOpen && typeof document !== 'undefined'
@@ -1361,17 +1363,18 @@ function ChapterReader({ manifest }: { manifest: BookReadManifest }) {
       {settingsOpen && typeof document !== 'undefined'
         ? createPortal(
             <div
-              className='ptv-scrim-in fixed inset-0 z-40 flex items-center justify-center bg-black/40 px-4'
+              className='f1-reader-settings-overlay ptv-scrim-in fixed inset-0 z-40 flex bg-black/40'
               onClick={() => setSettingsOpen(false)}
             >
               <div
                 role='dialog'
                 aria-modal='true'
                 aria-label='阅读设置'
-                className={cn(READER_SHEET, 'ptv-modal-in max-h-[90vh] w-full max-w-sm overflow-y-auto overscroll-contain p-5 supports-[height:100dvh]:max-h-[calc(100dvh-2rem)]')}
+                className={cn(READER_SHEET, 'f1-reader-settings ptv-modal-in max-h-[90vh] w-full max-w-sm overflow-y-auto overscroll-contain p-5 supports-[height:100dvh]:max-h-[calc(100dvh-2rem)]')}
                 onClick={(event) => event.stopPropagation()}
               >
-                <div className='mb-4'>
+                <div className='f1-reader-settings-header mb-4'>
+                  <button type='button' className='f1-reader-settings-close' onClick={() => setSettingsOpen(false)} aria-label='关闭阅读设置'><X className='h-4 w-4' /></button>
                   <div className='text-base font-semibold text-library-ink dark:text-library-night-ink'>
                     阅读设置
                   </div>
@@ -1379,7 +1382,7 @@ function ChapterReader({ manifest }: { manifest: BookReadManifest }) {
                     Legado 源支持翻页和滚动阅读
                   </div>
                 </div>
-                <div className='space-y-6 p-1 text-sm'>
+                <div className='f1-reader-settings-body space-y-6 p-1 text-sm'>
                   <div>
                     <div className='mb-2 font-medium'>阅读模式</div>
                     <div className='grid grid-cols-2 gap-2'>
@@ -1480,7 +1483,7 @@ function ChapterReader({ manifest }: { manifest: BookReadManifest }) {
                       className={READER_SLIDER}
                     />
                   </div>
-                  <div className='flex justify-end'>
+                  <div className='f1-reader-settings-footer flex justify-end'>
                     <button
                       type='button'
                       className={cn(LIBRARY_BUTTON, 'px-4 py-2')}
@@ -1520,7 +1523,7 @@ function ChapterReader({ manifest }: { manifest: BookReadManifest }) {
         }}
       >
         <article
-          className='mx-auto max-w-3xl text-library-ink dark:text-library-night-ink'
+          className='f1-book-prose mx-auto max-w-3xl text-library-ink dark:text-library-night-ink'
           style={{
             fontSize: `${settings.fontSize}%`,
             lineHeight: settings.lineHeight,
@@ -2222,12 +2225,11 @@ export default function BookReadPage() {
       }),
     })
       .then(async (res) => {
-        const json = await res.json();
-        if (!res.ok) throw new Error(json.error || '获取阅读信息失败');
+        const json = await readJsonResponse<BookReadManifest>(res, '获取电子书阅读信息');
         setManifest(json);
         cacheBookDetail(json.book);
       })
-      .catch((err) => setError(err.message || '获取阅读信息失败'));
+      .catch((err) => (reportAppError(err, '获取电子书阅读信息'), setError(formatAppError(err, '获取电子书阅读信息'))));
   }, [sourceId, bookId, cached]);
 
   useEffect(() => {
@@ -2242,8 +2244,7 @@ export default function BookReadPage() {
     let cancelled = false;
     fetch('/api/books/tts/voices')
       .then(async (res) => {
-        const json = await res.json();
-        if (!res.ok) throw new Error(json.error || '获取朗读配置失败');
+        const json = await readJsonResponse<Omit<TtsVoicesCache, 'savedAt'>>(res, '获取朗读配置');
         if (cancelled) return;
         setTtsAvailable(true);
         setTtsVoices(json.voices || []);
@@ -2257,7 +2258,8 @@ export default function BookReadPage() {
         if (cancelled) return;
         setTtsAvailable(false);
         setTtsVoices([]);
-        setTtsError(err.message || '朗读能力不可用');
+        reportAppError(err, '获取朗读配置');
+        setTtsError(formatAppError(err, '获取朗读配置'));
       });
     return () => {
       cancelled = true;
@@ -2422,16 +2424,16 @@ export default function BookReadPage() {
     const palette = THEME_STYLES[nextSettings.theme];
     rendition.themes.default?.({
       body: {
-        'background-color': palette.bodyBg,
-        color: palette.bodyColor,
+        'background-color': resolveThemeColor(palette.bodyBg),
+        color: resolveThemeColor(palette.bodyColor),
         'font-size': `${nextSettings.fontSize}%`,
         'line-height': String(nextSettings.lineHeight),
         'padding-left': '6px',
         'padding-right': '6px',
       },
-      p: { color: palette.bodyColor },
+      p: { color: resolveThemeColor(palette.bodyColor) },
       // 正文里的链接走赭石，深色模式下用亮一档的赭石，保证在墨底上仍可辨认。
-      a: { color: nextSettings.theme === 'dark' ? '#d9924a' : '#a8611f' },
+      a: { color: resolveThemeColor(nextSettings.theme === 'dark' ? 'var(--ptv-reader-dark-link)' : 'var(--ptv-reader-link)') },
     });
     rendition.themes.fontSize?.(`${nextSettings.fontSize}%`);
     rendition.themes.override?.('line-height', String(nextSettings.lineHeight));
@@ -2601,8 +2603,7 @@ export default function BookReadPage() {
           volume: ttsSettingsRef.current.volume,
         }),
       });
-      const json = await response.json();
-      if (!response.ok) throw new Error(json.error || '朗读音频生成失败');
+      const json = await readJsonResponse<{ audioBase64: string; mimeType: string }>(response, '生成朗读音频');
       const blob = decodeBase64Audio(
         json.audioBase64 || '',
         json.mimeType || 'audio/mpeg'
@@ -2688,7 +2689,8 @@ export default function BookReadPage() {
       } catch (error) {
         setTtsStatus('error');
         setTtsLoadingChunkIndex(null);
-        setTtsError((error as Error).message || '朗读失败');
+        reportAppError(error, '朗读电子书');
+        setTtsError(formatAppError(error, '朗读电子书'));
       }
     },
     [fetchTtsChunkAudioUrl, manifest, persistTtsProgress]
@@ -2761,7 +2763,8 @@ export default function BookReadPage() {
         setTtsStatus('playing');
       } catch (error) {
         setTtsStatus('error');
-        setTtsError((error as Error).message || '恢复播放失败');
+        reportAppError(error, '恢复朗读');
+        setTtsError(formatAppError(error, '恢复朗读'));
       }
       return;
     }
@@ -2992,7 +2995,8 @@ export default function BookReadPage() {
       })
       .catch((err) => {
         setReady(false);
-        setError(err.message || '初始化 EPUB 阅读器失败');
+        reportAppError(err, '初始化 EPUB 阅读器');
+        setError(formatAppError(err, '初始化 EPUB 阅读器'));
       });
 
     return () => {
@@ -3144,7 +3148,7 @@ export default function BookReadPage() {
         setFileLoadState('ready');
       })
       .catch((err) => {
-        if (!cancelled) setError(err.message || 'PDF 加载失败');
+        if (!cancelled) { reportAppError(err, '加载 PDF'); setError(formatAppError(err, '加载 PDF')); }
       });
 
     return () => {
@@ -3522,7 +3526,7 @@ export default function BookReadPage() {
   }
 
   return (
-    <div className={cn('flex book-reader-height flex-col', LIBRARY_PAGE)}>
+    <div className={cn('f1-book-reader f1-book-reader--epub flex book-reader-height flex-col', LIBRARY_PAGE)}>
       {restoredMessage ? (
         <div className='absolute left-1/2 top-[4.5rem] z-30 -translate-x-1/2 rounded-full bg-library-ochre px-4 py-2 text-xs text-white shadow-lg dark:bg-library-night-ochre dark:text-library-night'>
           {restoredMessage}
@@ -3593,15 +3597,16 @@ export default function BookReadPage() {
       {tocOpen && typeof document !== 'undefined'
         ? createPortal(
             <div
-              className='ptv-scrim-in fixed inset-0 z-40 bg-black/30'
+              className='f1-reader-drawer-overlay ptv-scrim-in fixed inset-0 z-40 bg-black/30'
               onClick={() => setTocOpen(false)}
             >
               <div
-                className='ptv-drawer-in absolute right-0 top-0 h-screen supports-[height:100dvh]:h-[100dvh] w-[22rem] pb-[env(safe-area-inset-bottom)] max-w-[88vw] overflow-y-auto border-l border-library-edge bg-library-card shadow-xl dark:border-library-night-edge dark:bg-library-night-card'
+                className='f1-reader-drawer ptv-drawer-in absolute right-0 top-0 h-screen supports-[height:100dvh]:h-[100dvh] w-[22rem] pb-[env(safe-area-inset-bottom)] max-w-[88vw] overflow-y-auto border-l border-library-edge bg-library-card shadow-xl dark:border-library-night-edge dark:bg-library-night-card'
                 onClick={(event) => event.stopPropagation()}
               >
                 <div className='p-4'>
-                  <div className='space-y-2' ref={tocScrollRef}>
+                  <div className='f1-reader-drawer-heading'><h2>目录</h2><button type='button' onClick={() => setTocOpen(false)} aria-label='关闭目录'><X className='h-4 w-4' /></button></div>
+                  <div className='f1-reader-drawer-list space-y-2' ref={tocScrollRef}>
                     {tocItems.length === 0 ? (
                       <div className='p-3 text-sm text-library-muted dark:text-library-night-muted'>
                         当前 EPUB 未提供目录
@@ -3620,17 +3625,18 @@ export default function BookReadPage() {
       {settingsOpen && typeof document !== 'undefined'
         ? createPortal(
             <div
-              className='ptv-scrim-in fixed inset-0 z-40 flex items-center justify-center bg-black/40 px-4'
+              className='f1-reader-settings-overlay ptv-scrim-in fixed inset-0 z-40 flex bg-black/40'
               onClick={() => setSettingsOpen(false)}
             >
               <div
                 role='dialog'
                 aria-modal='true'
                 aria-label='阅读设置'
-                className={cn(READER_SHEET, 'ptv-modal-in max-h-[90vh] w-full max-w-sm overflow-y-auto overscroll-contain p-5 supports-[height:100dvh]:max-h-[calc(100dvh-2rem)]')}
+                className={cn(READER_SHEET, 'f1-reader-settings ptv-modal-in max-h-[90vh] w-full max-w-sm overflow-y-auto overscroll-contain p-5 supports-[height:100dvh]:max-h-[calc(100dvh-2rem)]')}
                 onClick={(event) => event.stopPropagation()}
               >
-                <div className='mb-4'>
+                <div className='f1-reader-settings-header mb-4'>
+                  <button type='button' className='f1-reader-settings-close' onClick={() => setSettingsOpen(false)} aria-label='关闭阅读设置'><X className='h-4 w-4' /></button>
                   <div className='text-base font-semibold text-library-ink dark:text-library-night-ink'>
                     阅读设置
                   </div>
@@ -3638,7 +3644,7 @@ export default function BookReadPage() {
                     可切换翻页或滚动阅读，默认翻页模式
                   </div>
                 </div>
-                <div className='space-y-6 p-1 text-sm'>
+                <div className='f1-reader-settings-body space-y-6 p-1 text-sm'>
                   <div>
                     <div className='mb-2 font-medium'>阅读模式</div>
                     <div className='grid grid-cols-2 gap-2'>
@@ -3754,7 +3760,7 @@ export default function BookReadPage() {
                     {cacheHit ? '已命中本地缓存' : '本次为网络加载'}。
                   </div>
 
-                  <div className='flex justify-end'>
+                  <div className='f1-reader-settings-footer flex justify-end'>
                     <button
                       type='button'
                       className={cn(LIBRARY_BUTTON, 'px-4 py-2')}
@@ -3772,7 +3778,7 @@ export default function BookReadPage() {
 
       {manifest.format === 'epub' && ttsBarVisible ? (
         <>
-          <div className='absolute inset-x-0 bottom-[calc(0.75rem+env(safe-area-inset-bottom))] z-20 mx-auto w-[min(94vw,34rem)]'>
+          <div className='f1-reader-tts-bar absolute inset-x-0 bottom-[calc(0.75rem+env(safe-area-inset-bottom))] z-20 mx-auto w-[min(94vw,34rem)]'>
             <div className={cn(READER_SHEET, 'overflow-hidden')}>
               <div className='px-2 pt-2'>
                 <input
@@ -3888,7 +3894,7 @@ export default function BookReadPage() {
           </div>
 
           {ttsPanelOpen ? (
-            <div className='ptv-content-in absolute inset-x-0 bottom-[calc(5rem+env(safe-area-inset-bottom))] z-30 mx-auto w-[min(94vw,34rem)]'>
+            <div className='f1-reader-tts-panel ptv-content-in absolute inset-x-0 bottom-[calc(5rem+env(safe-area-inset-bottom))] z-30 mx-auto w-[min(94vw,34rem)]'>
               <div className={cn(READER_SHEET, 'p-4 shadow-2xl')}>
                 <div className='mb-3 flex items-center justify-between'>
                   <div className='flex items-center gap-2 text-sm font-medium text-library-ink dark:text-library-night-ink'>

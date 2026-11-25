@@ -1,0 +1,21 @@
+.apex-error-notice { display:flex; align-items:flex-start; gap:12px; min-width:0; padding:16px; border:1px solid var(--ptv-danger-line); border-radius:12px; background:var(--ptv-danger-panel); color:var(--ptv-text); font-family:inherit; font-size:14px; line-height:1.65; overflow-wrap:anywhere; }
+.apex-error-notice > svg { flex:none; margin-top:3px; color:var(--ptv-error); }
+.apex-error-copy { flex:1; min-width:0; }
+.apex-error-copy strong { font-weight:600; }
+.apex-error-copy p { margin:4px 0 0; }
+.apex-error-copy .apex-error-hint { color:var(--ptv-muted); }
+.apex-error-copy details { margin-top:8px; font-size:12px; color:var(--ptv-muted); }
+.apex-error-copy summary { cursor:pointer; color:var(--ptv-error); }
+.apex-error-copy details p { white-space:pre-wrap; }
+.apex-error-notice > button,.apex-error-home { display:inline-flex; align-items:center; justify-content:center; gap:6px; min-height:44px; padding:8px 14px; border:1px solid var(--ptv-line); border-radius:8px; background:var(--ptv-panel); color:var(--ptv-accent); cursor:pointer; text-decoration:none; font:inherit; }
+.apex-error-notice > button:hover,.apex-error-home:hover { background:var(--ptv-soft); }
+.apex-global-error { position:fixed; z-index:2000; inset:16px 16px auto auto; width:min(440px,calc(100vw - 32px)); max-height:calc(100dvh - 32px); overflow:auto; border:1px solid var(--ptv-danger-line); border-radius:12px; background:var(--ptv-panel); box-shadow:var(--ptv-shadow); }
+.apex-global-error .apex-error-notice { border:0; padding-top:38px; }
+.apex-error-dismiss { position:absolute; right:4px; top:2px; display:grid; place-items:center; width:36px; height:36px; border:0; border-radius:8px; background:transparent; color:var(--ptv-muted); cursor:pointer; }
+.apex-error-page { display:grid; place-items:center; min-height:100dvh; margin:0; padding:24px; background:var(--ptv-page); color:var(--ptv-text); box-sizing:border-box; font-family:system-ui,sans-serif; }
+.apex-error-page-inner { width:min(680px,100%); }
+.apex-error-brand { color:var(--ptv-accent); font-weight:600; }
+.apex-error-page h1 { margin:12px 0 24px; font-size:clamp(24px,4vw,32px); }
+.apex-error-home { margin-top:18px; }
+.apex-error-notice :is(button,summary):focus-visible,.apex-error-home:focus-visible,.apex-error-dismiss:focus-visible { outline:2px solid var(--ptv-accent); outline-offset:3px; }
+@media(max-width:600px) { .apex-error-notice { flex-wrap:wrap; padding:14px; } .apex-error-copy { flex-basis:calc(100% - 34px); } .apex-error-notice > button { margin-left:31px; } }

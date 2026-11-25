@@ -1,6 +1,9 @@
+'use client';
+
+import { reportAppError } from '@/lib/app-error';
 /* eslint-disable @typescript-eslint/no-explicit-any, no-console */
 
-'use client';
+
 
 import { Search, X } from 'lucide-react';
 import Image from 'next/image';
@@ -107,7 +110,7 @@ export default function EpisodeTitleCorrectDialog({
         setError('搜索失败');
       }
     } catch (err) {
-      console.error('TMDB 搜索失败:', err);
+      reportAppError(err, "TMDB 搜索失败");
       setError('搜索失败，请重试');
     } finally {
       setSearching(false);
@@ -125,7 +128,7 @@ export default function EpisodeTitleCorrectDialog({
       setError('获取季度列表失败');
       return [];
     } catch (err) {
-      console.error('获取季度列表失败:', err);
+      reportAppError(err, "获取季度列表失败");
       setError('获取季度列表失败，请重试');
       return [];
     } finally {
@@ -292,7 +295,7 @@ export default function EpisodeTitleCorrectDialog({
                         Number.isFinite(v) && v > 1 ? v : undefined,
                     });
                   }}
-                  className='w-28 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent'
+                  className="w-28 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-apex-accent focus:border-transparent"
                 />
                 {totalEpisodes > 0 && (
                   <p className='text-xs text-gray-400 dark:text-gray-500'>
@@ -416,7 +419,7 @@ function TmdbSearchArea({
           onChange={(e) => setSearchQuery(e.target.value)}
           onKeyDown={(e) => e.key === 'Enter' && onSearch()}
           placeholder='搜索剧名'
-          className='flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent'
+          className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-apex-accent focus:border-transparent"
         />
         <button
           onClick={onSearch}

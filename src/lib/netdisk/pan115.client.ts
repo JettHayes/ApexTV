@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 const SHARE_URL = 'https://webapi.115.com/share/snap';
-const PLAY_URL = 'http://pro.api.115.com/app/share/downurl';
+const PLAY_URL = 'https://proapi.115.com/app/share/downurl';
 
 export interface Pan115ShareVideoFile {
   name: string;

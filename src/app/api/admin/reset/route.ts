@@ -1,3 +1,4 @@
+import { appErrorPayload } from '@/lib/app-error';
 /* eslint-disable no-console */
 
 import { NextRequest, NextResponse } from 'next/server';
@@ -41,10 +42,10 @@ export async function GET(request: NextRequest) {
     );
   } catch (error) {
     return NextResponse.json(
-      {
+      {...{
         error: '重置管理员配置失败',
         details: (error as Error).message,
-      },
+      }, ...appErrorPayload(error, "后台配置服务", 500)},
       { status: 500 }
     );
   }

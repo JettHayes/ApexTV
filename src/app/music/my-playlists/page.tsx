@@ -4,6 +4,12 @@ import { ArrowLeft, ImageOff, Play, Trash2 } from 'lucide-react';
 import Link from 'next/link';
 import { useCallback, useEffect, useState } from 'react';
 
+import { formatAppError,readJsonResponse, reportAppError, requestJson } from '@/lib/app-error';
+import { cn } from '@/lib/cn';
+import { playMusicList } from '@/lib/music/actions';
+import { mapSong } from '@/lib/music/shared';
+
+import ErrorNotice from '@/components/ErrorNotice';
 import MusicEmpty, {
   MusicRowListSkeleton,
 } from '@/components/music/MusicEmpty';
@@ -27,10 +33,6 @@ import {
   MUSIC_PICK_DESC,
   MUSIC_PICK_FRAME,
 } from '@/components/music/tokens';
-import { cn } from '@/lib/cn';
-import { playMusicList } from '@/lib/music/actions';
-import { getApiErrorMessage } from '@/lib/music/errors';
-import { mapSong } from '@/lib/music/shared';
 
 /**
  * 左栏歌单名前面那张小缩略图。
@@ -72,6 +74,8 @@ export default function MusicMyPlaylistsPage() {
   // 歌单列表挂载即拉，初值给 true 才不会先闪一帧"还没有歌单"。
   // 下面的曲目列表是人点出来的，初值就留 false。
   const [loadingUserPlaylists, setLoadingUserPlaylists] = useState(true);
+  const [playlistsError, setPlaylistsError] = useState<unknown>(null);
+  const [songsError, setSongsError] = useState<unknown>(null);
   const [loadingUserPlaylistSongs, setLoadingUserPlaylistSongs] =
     useState(false);
   const [deletingPlaylistId, setDeletingPlaylistId] = useState<string | null>(
@@ -81,10 +85,10 @@ export default function MusicMyPlaylistsPage() {
 
   const loadUserPlaylists = useCallback(() => {
     setLoadingUserPlaylists(true);
-    fetch('/api/music/v2/playlists')
-      .then((res) => res.json())
+    setPlaylistsError(null);
+    requestJson<any>('/api/music/v2/playlists', undefined, '获取我的歌单')
       .then((data) => setUserPlaylists(data.data?.playlists || []))
-      .catch(() => setUserPlaylists([]))
+      .catch((error) => { reportAppError(error, '获取我的歌单'); setPlaylistsError(error); })
       .finally(() => setLoadingUserPlaylists(false));
   }, []);
 
@@ -103,10 +107,10 @@ export default function MusicMyPlaylistsPage() {
 
   const loadUserPlaylistSongs = useCallback((playlistId: string) => {
     setLoadingUserPlaylistSongs(true);
-    fetch(`/api/music/v2/playlists/${playlistId}/songs`)
-      .then((res) => res.json())
+    setSongsError(null);
+    requestJson<any>(`/api/music/v2/playlists/${playlistId}/songs`, undefined, '获取歌单歌曲')
       .then((data) => setUserPlaylistSongs(data.data?.songs || []))
-      .catch(() => setUserPlaylistSongs([]))
+      .catch((error) => { reportAppError(error, '获取歌单歌曲'); setSongsError(error); })
       .finally(() => setLoadingUserPlaylistSongs(false));
   }, []);
 
@@ -137,11 +141,7 @@ export default function MusicMyPlaylistsPage() {
       const response = await fetch(`/api/music/v2/playlists/${playlistId}`, {
         method: 'DELETE',
       });
-      if (!response.ok) {
-        const data = await response.json().catch(() => ({}));
-        window.alert(getApiErrorMessage(data.error, '删除失败'));
-        return;
-      }
+      await readJsonResponse(response, '删除歌单');
 
       if (selectedUserPlaylist?.id === playlistId) {
         setSelectedUserPlaylist(null);
@@ -149,8 +149,8 @@ export default function MusicMyPlaylistsPage() {
       }
       loadUserPlaylists();
     } catch (error) {
-      console.error('删除歌单失败:', error);
-      window.alert('删除歌单失败');
+      reportAppError(error, '删除歌单');
+      window.alert(formatAppError(error, '删除歌单'));
     } finally {
       setDeletingPlaylistId(null);
     }
@@ -168,16 +168,12 @@ export default function MusicMyPlaylistsPage() {
         }/songs?songId=${encodeURIComponent(song.id)}`,
         { method: 'DELETE' }
       );
-      if (!response.ok) {
-        const data = await response.json().catch(() => ({}));
-        window.alert(getApiErrorMessage(data.error, '移除失败'));
-        return;
-      }
+      await readJsonResponse(response, '移除歌曲');
 
       loadUserPlaylistSongs(selectedUserPlaylist.id);
     } catch (error) {
-      console.error('移除歌曲失败:', error);
-      window.alert('移除歌曲失败');
+      reportAppError(error, '移除歌曲');
+      window.alert(formatAppError(error, '移除歌曲'));
     } finally {
       setRemovingSongId(null);
     }
@@ -198,6 +194,8 @@ export default function MusicMyPlaylistsPage() {
           靠上面那颗返回键退回列表。md 起恢复两栏并排，两栏同时在，返回键收起。 */}
       {loadingUserPlaylists && userPlaylists.length === 0 ? (
         <MusicRowListSkeleton count={4} />
+      ) : playlistsError ? (
+        <ErrorNotice error={playlistsError} context='获取我的歌单' onRetry={loadUserPlaylists} />
       ) : userPlaylists.length === 0 ? (
         <MusicEmpty
           className='apex-music-empty'
@@ -210,10 +208,10 @@ export default function MusicMyPlaylistsPage() {
           }
         />
       ) : (
-        <div className='apex-playlist-workspace grid grid-cols-1 gap-6 md:grid-cols-3'>
+        <div className='apex-playlist-workspace f1-playlist-library grid grid-cols-1 gap-6 md:grid-cols-3'>
           <div
             className={cn(
-              'md:col-span-1',
+              'f1-playlist-directory md:col-span-1',
               selectedUserPlaylist && 'hidden md:block'
             )}
           >
@@ -266,7 +264,7 @@ export default function MusicMyPlaylistsPage() {
 
           <div
             className={cn(
-              'md:col-span-2',
+              'f1-playlist-tracks md:col-span-2',
               !selectedUserPlaylist && 'hidden md:block'
             )}
           >
@@ -333,6 +331,8 @@ export default function MusicMyPlaylistsPage() {
 
                 {loadingUserPlaylistSongs ? (
                   <MusicRowListSkeleton count={6} />
+                ) : songsError ? (
+                  <ErrorNotice error={songsError} context='获取歌单歌曲' onRetry={() => loadUserPlaylistSongs(selectedUserPlaylist.id)} />
                 ) : mappedSongs.length === 0 ? (
                   <MusicEmpty
                     className='mt-4'

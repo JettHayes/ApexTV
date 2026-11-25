@@ -1,6 +1,11 @@
+'use client';
+
+import { reportAppError, formatAppError, readJsonResponse } from '@/lib/app-error';
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-'use client';
+
+
+import AuthBrandPanel from '@/components/AuthBrandPanel';
 
 import { AlertCircle, ArrowRight, Eye, EyeOff, Lock,Send, User } from 'lucide-react';
 import Image from 'next/image';
@@ -169,8 +174,8 @@ function LoginPageClient() {
         if (res.status === 401) {
           setError('密码错误');
         } else {
-          const data = await res.json().catch(() => ({}));
-          setError(data.error ?? '服务器错误');
+          const data = await readJsonResponse<any>(res, "账户登录");
+          setError(formatAppError(data.error ?? '服务器错误', "账户登录"));
         }
       }
     } catch (error) {
@@ -179,7 +184,7 @@ function LoginPageClient() {
         turnstileRef.current?.reset();
         setTurnstileToken(null);
       }
-      setError('网络错误，请稍后重试');
+      setError(formatAppError(reportAppError(error, '账户请求'), '账户请求'));
     } finally {
       setLoading(false);
     }
@@ -192,7 +197,7 @@ function LoginPageClient() {
     try {
       setTelegramLoginLoading(true);
       const createRes = await fetch('/api/telegram/login/create', { method: 'POST' });
-      const createData = await createRes.json().catch(() => ({}));
+      const createData = await readJsonResponse<any>(createRes, "账户登录");
       if (!createRes.ok) {
         const configDetail = createData.config
           ? `（enabled=${String(createData.config.enabled)}, loginEnabled=${String(createData.config.loginEnabled)}, hasBotToken=${String(createData.config.hasBotToken)}, hasBotUsername=${String(createData.config.hasBotUsername)}, botUsername=${createData.config.botUsername || '-'}）`
@@ -215,7 +220,7 @@ function LoginPageClient() {
         }
 
         const statusRes = await fetch(`/api/telegram/login/status?token=${encodeURIComponent(createData.token)}`);
-        const statusData = await statusRes.json().catch(() => ({}));
+        const statusData = await readJsonResponse<any>(statusRes, "账户登录");
         if (statusData.status === 'confirmed') {
           window.clearInterval(timer);
           const redirect = searchParams.get('redirect') || '/';
@@ -233,7 +238,7 @@ function LoginPageClient() {
         }
       }, 2000);
     } catch (error) {
-      setError('Telegram 登录请求失败，请稍后重试');
+      setError(formatAppError(reportAppError(error, 'Telegram 登录'), 'Telegram 登录'));
       setTelegramLoginLoading(false);
       setTelegramLoginHint(null);
     }
@@ -244,7 +249,7 @@ function LoginPageClient() {
 
   return (
     <div
-      className='ptv-auth relative min-h-screen min-h-[100dvh] flex flex-col items-center justify-center px-4 py-16'
+      className='ptv-auth f1-auth-split relative min-h-screen min-h-[100dvh] flex flex-col items-center justify-center px-4 py-16'
       style={backgroundImage ? {
         backgroundImage: `url(${backgroundImage})`,
         backgroundSize: 'cover',
@@ -256,7 +261,14 @@ function LoginPageClient() {
       <div className='absolute top-4 right-4 z-20'>
         <ThemeToggle />
       </div>
+      <AuthBrandPanel />
       <div className='ptv-auth-panel ptv-login-panel z-10 w-full max-w-md'>
+        <nav className='f1-auth-tabs' aria-label='账户入口'>
+          <span aria-current='page'>登录</span>
+          {siteConfig?.EnableRegistration && shouldAskUsername && (
+            <button type='button' onClick={() => router.push('/register')}>注册</button>
+          )}
+        </nav>
         <div className='ptv-login-brand'>
           <Image
             src={logoFailed ? '/logo.png' : '/logo.svg'}
@@ -372,18 +384,6 @@ function LoginPageClient() {
             )}
           </button>
 
-          {/* 注册按钮 */}
-          {siteConfig?.EnableRegistration && shouldAskUsername && (
-            <div className='text-center'>
-              <button
-                type='button'
-                onClick={() => router.push('/register')}
-                className='ptv-login-link'
-              >
-                还没有账号？立即注册
-              </button>
-            </div>
-          )}
         </form>
 
         {/* 第三方登录区域 */}

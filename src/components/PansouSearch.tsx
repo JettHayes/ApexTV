@@ -1,6 +1,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any,no-console */
 'use client';
 
+import { formatAppError, readJsonResponse, reportAppError } from '@/lib/app-error';
+
 import {
   Activity,
   AlertCircle,
@@ -70,16 +72,16 @@ const CLOUD_TYPE_COLORS: Record<string, string> = {
   aliyun:
     'bg-orange-100 text-orange-800 dark:bg-orange-900/40 dark:text-orange-200',
   quark:
-    'bg-purple-100 text-purple-800 dark:bg-purple-900/40 dark:text-purple-200',
+    "bg-apex-selected text-apex-accent-on-soft dark:bg-apex-selected/40 dark:text-apex-accent-on-soft",
   tianyi: 'bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-200',
   uc: 'bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-200',
   mobile: 'bg-pink-100 text-pink-800 dark:bg-pink-900/40 dark:text-pink-200',
   '115':
     'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/40 dark:text-yellow-200',
   pikpak:
-    'bg-indigo-100 text-indigo-800 dark:bg-indigo-900/40 dark:text-indigo-200',
-  xunlei: 'bg-cyan-100 text-cyan-800 dark:bg-cyan-900/40 dark:text-cyan-200',
-  '123': 'bg-teal-100 text-teal-800 dark:bg-teal-900/40 dark:text-teal-200',
+    "bg-apex-selected text-apex-accent-on-soft dark:bg-apex-selected/40 dark:text-apex-accent-on-soft",
+  xunlei: "bg-apex-selected text-apex-accent-on-soft dark:bg-apex-selected/40 dark:text-apex-accent-on-soft",
+  '123': "bg-apex-selected text-apex-accent-on-soft dark:bg-apex-selected/40 dark:text-apex-accent-on-soft",
   guangya:
     'bg-lime-100 text-lime-800 dark:bg-lime-900/40 dark:text-lime-200',
   magnet: 'bg-gray-100 text-gray-800 dark:bg-gray-700/40 dark:text-gray-200',
@@ -224,10 +226,7 @@ export default function PansouSearch({
             const response = await fetch(
               `/api/netdisk/check/task?id=${encodeURIComponent(state.taskId)}`
             );
-            const data = await response.json();
-            if (!response.ok) {
-              throw new Error(data.error || '获取检测进度失败');
-            }
+            const data = await readJsonResponse<any>(response, '获取检测进度');
             return {
               cloudType,
               taskId: state.taskId,
@@ -308,15 +307,11 @@ export default function PansouSearch({
         }),
       });
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || '搜索失败');
-      }
-
-      const data: PansouSearchResult = await response.json();
+      const data = await readJsonResponse<PansouSearchResult>(response, '搜索资源');
       setResults(data);
     } catch (err: any) {
-      const errorMsg = err.message || '搜索失败，请检查配置';
+      reportAppError(err, '搜索资源');
+      const errorMsg = formatAppError(err, '搜索资源');
       setError(errorMsg);
       onError?.(errorMsg);
     } finally {
@@ -361,10 +356,7 @@ export default function PansouSearch({
         }),
       });
 
-      const data = await response.json();
-      if (!response.ok) {
-        throw new Error(data.error || '转存失败');
-      }
+      const data = await readJsonResponse<any>(response, '转存');
 
       setToast({
         message: `转存成功，已保存到：${data.targetPath}`,
@@ -372,8 +364,9 @@ export default function PansouSearch({
         onClose: () => setToast(null),
       });
     } catch (err: any) {
+      reportAppError(err, '转存');
       setToast({
-        message: err?.message || '转存失败',
+        message: formatAppError(err, '转存'),
         type: 'error',
         onClose: () => setToast(null),
       });
@@ -385,7 +378,7 @@ export default function PansouSearch({
   const magnetHealthBadgeClass = (level: MagnetHealthLevel) => {
     switch (level) {
       case 'good':
-        return 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300';
+        return "bg-apex-selected text-apex-accent-on-soft dark:bg-apex-selected/40 dark:text-apex-accent-on-soft";
       case 'ok':
         return 'bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-200';
       case 'risk':
@@ -425,10 +418,7 @@ export default function PansouSearch({
           skipCache: Boolean(magnetHealthMap[url]),
         }),
       });
-      const data = await response.json();
-      if (!response.ok) {
-        throw new Error(data.error || '测活失败');
-      }
+      const data = await readJsonResponse<any>(response, '测活');
 
       setMagnetHealthMap((prev) => ({
         ...prev,
@@ -444,8 +434,9 @@ export default function PansouSearch({
         },
       }));
     } catch (err: any) {
+      reportAppError(err, '测活');
       setToast({
-        message: err?.message || '测活失败',
+        message: formatAppError(err, '测活'),
         type: 'error',
         onClose: () => setToast(null),
       });
@@ -496,10 +487,7 @@ export default function PansouSearch({
         }),
       });
 
-      const data = await response.json();
-      if (!response.ok) {
-        throw new Error(data.error || '添加下载任务失败');
-      }
+      const data = await readJsonResponse<any>(response, '添加下载任务');
 
       setToast({
         message: data.path
@@ -509,8 +497,9 @@ export default function PansouSearch({
         onClose: () => setToast(null),
       });
     } catch (err: any) {
+      reportAppError(err, '添加下载任务');
       setToast({
-        message: err?.message || '添加下载任务失败',
+        message: formatAppError(err, '添加下载任务'),
         type: 'error',
         onClose: () => setToast(null),
       });
@@ -556,10 +545,7 @@ export default function PansouSearch({
         }),
       });
 
-      const data = await response.json();
-      if (!response.ok) {
-        throw new Error(data.error || '播放失败');
-      }
+      const data = await readJsonResponse<any>(response, '播放');
 
       router.push(
         `/play?source=${encodeURIComponent(
@@ -582,8 +568,9 @@ export default function PansouSearch({
         )}`
       );
     } catch (err: any) {
+      reportAppError(err, '播放');
       setToast({
-        message: err?.message || '播放失败',
+        message: formatAppError(err, '播放'),
         type: 'error',
         onClose: () => setToast(null),
       });
@@ -608,10 +595,7 @@ export default function PansouSearch({
           links: links.map((item) => item.url),
         }),
       });
-      const data = await response.json();
-      if (!response.ok) {
-        throw new Error(data.error || '启动检测失败');
-      }
+      const data = await readJsonResponse<any>(response, '启动检测');
       setCheckStatesByType((prev) => ({
         ...prev,
         [cloudType]: {
@@ -621,8 +605,9 @@ export default function PansouSearch({
       }));
       setCooldownRemainingMs(Number(data.cooldownRemainingMs || 0));
     } catch (err: any) {
+      reportAppError(err, '启动检测');
       setToast({
-        message: err?.message || '启动检测失败',
+        message: formatAppError(err, '启动检测'),
         type: 'error',
         onClose: () => setToast(null),
       });
@@ -640,10 +625,7 @@ export default function PansouSearch({
         },
         body: JSON.stringify({ taskId: state.taskId }),
       });
-      const data = await response.json();
-      if (!response.ok) {
-        throw new Error(data.error || '停止检测失败');
-      }
+      const data = await readJsonResponse<any>(response, '停止检测');
       setCheckStatesByType((prev) => ({
         ...prev,
         [cloudType]: {
@@ -652,8 +634,9 @@ export default function PansouSearch({
         },
       }));
     } catch (err: any) {
+      reportAppError(err, '停止检测');
       setToast({
-        message: err?.message || '停止检测失败',
+        message: formatAppError(err, '停止检测'),
         type: 'error',
         onClose: () => setToast(null),
       });
@@ -977,7 +960,7 @@ export default function PansouSearch({
                               <button
                                 onClick={() => handleQuarkTransfer(link)}
                                 disabled={transferingUrl === link.url}
-                                className='px-2 py-1 rounded-md bg-purple-600 hover:bg-purple-700 text-white text-xs transition-colors disabled:opacity-60'
+                                className="px-2 py-1 rounded-md bg-apex-action hover:bg-apex-action text-apex-action-ink text-xs transition-colors disabled:opacity-60"
                                 title='转存到配置目录'
                               >
                                 {transferingUrl === link.url
@@ -1152,7 +1135,7 @@ export default function PansouSearch({
       </div>
       {showNameDialog && (
         <div className='ptv-scrim-in fixed inset-0 z-[1000] flex items-center justify-center bg-black/50'>
-          <div className='ptv-modal-in bg-white dark:bg-gray-800 rounded-lg p-6 max-w-md w-full mx-4 shadow-xl'>
+          <div role='dialog' aria-modal='true' aria-label='网盘资源操作' className='ptv-dialog f1-task-dialog ptv-modal-in bg-white dark:bg-gray-800 rounded-lg p-6 max-w-md w-full mx-4 shadow-xl'>
             <h3 className='text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4'>
               设置资源名称
             </h3>
@@ -1161,7 +1144,7 @@ export default function PansouSearch({
               value={customName}
               onChange={(e) => setCustomName(e.target.value)}
               placeholder='请输入资源名称'
-              className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-green-500'
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-apex-accent"
               autoFocus
             />
             <label className='mt-4 block text-sm font-medium text-gray-700 dark:text-gray-300'>
@@ -1170,7 +1153,7 @@ export default function PansouSearch({
             <select
               value={downloadTool}
               onChange={(e) => setDownloadTool(e.target.value as DownloadTool)}
-              className='mt-1 w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-green-500'
+              className="mt-1 w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-apex-accent"
             >
               {downloadToolOptions.map((option) => (
                 <option key={option.value} value={option.value}>
@@ -1190,7 +1173,7 @@ export default function PansouSearch({
               value={downloadPath}
               onChange={(e) => setDownloadPath(e.target.value)}
               placeholder='留空使用离线下载目录'
-              className='mt-1 w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-green-500'
+              className="mt-1 w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-apex-accent"
             />
             <p className='mt-1 text-xs text-gray-500 dark:text-gray-400'>
               可选；最终保存到「该目录/资源名称」

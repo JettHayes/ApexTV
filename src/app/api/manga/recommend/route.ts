@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 
+import { reportAppError } from '@/lib/app-error';
 import { MangaRecommendType } from '@/lib/manga.types';
 import { suwayomiClient } from '@/lib/suwayomi.client';
 
@@ -25,6 +26,6 @@ export async function GET(request: NextRequest) {
     const result = await suwayomiClient.getRecommendedManga(sourceId, type, page);
     return NextResponse.json(result);
   } catch (error) {
-    return NextResponse.json({ error: (error as Error).message }, { status: 500 });
+    return NextResponse.json((({ code, message, status, upstreamStatus }) => ({ error: message, code, status, upstreamStatus }))(reportAppError(error, '漫画服务')), { status: 500 });
   }
 }

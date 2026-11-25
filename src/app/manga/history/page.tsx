@@ -3,6 +3,7 @@
 import { History } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 
+import { formatAppError, reportAppError } from '@/lib/app-error';
 import { cn } from '@/lib/cn';
 import {
   deleteMangaReadRecord,
@@ -24,6 +25,7 @@ import MediaGridSkeleton from '@/components/media/MediaGridSkeleton';
 export default function MangaHistoryPage() {
   const [history, setHistory] = useState<Record<string, MangaReadRecord>>({});
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
   const [shelf, setShelf] = useState<Record<string, MangaShelfItem>>({});
 
   const updateHistory = (nextHistory: Record<string, MangaReadRecord>) => {
@@ -42,7 +44,7 @@ export default function MangaHistoryPage() {
         updateHistory(historyData);
         setShelf(shelfData);
       })
-      .catch(() => undefined)
+      .catch((err) => { reportAppError(err, '加载漫画阅读记录'); setError(formatAppError(err, '加载漫画阅读记录')); })
       .finally(() => setLoading(false));
 
     const unsubscribeHistory = subscribeToDataUpdates<
@@ -102,10 +104,16 @@ export default function MangaHistoryPage() {
   };
 
   return (
-    <section className='space-y-4'>
-      <div className={cn('flex items-center gap-2 text-sm', LIBRARY_MUTED)}>
-        <History className={cn('h-4 w-4', LIBRARY_ACCENT_ICON)} /> 共{' '}
-        {historyList.length} 条阅读记录
+    <section className='f1-reading-collection f1-reading-history f1-manga-collection space-y-4'>
+      {error && <p role='alert'>{error}</p>}
+      <div className='f1-collection-toolbar'>
+        <h2>阅读记录</h2>
+        <div className='f1-collection-tools'>
+          <div className={cn('flex items-center gap-2 text-sm', LIBRARY_MUTED)}>
+            <History className={cn('h-4 w-4', LIBRARY_ACCENT_ICON)} /> 共{' '}
+            {historyList.length} 条阅读记录
+          </div>
+        </div>
       </div>
 
       {loading ? (
@@ -114,7 +122,7 @@ export default function MangaHistoryPage() {
         <EmptyState
           icon={<History className='h-7 w-7' />}
           title='还没有阅读记录'
-          description='读过的漫画会按时间排在这里，长按卡片可以继续阅读或删除。'
+          description='读过的漫画会按时间排在这里，点击卡片继续阅读。'
         />
       ) : (
         <MediaGrid>
@@ -123,8 +131,8 @@ export default function MangaHistoryPage() {
               key={key}
               item={item}
               inShelf={!!shelf[`${item.sourceId}+${item.mangaId}`]}
-              onToggleShelf={toggleShelf}
-              onDelete={deleteHistory}
+              onToggleShelf={(item) => toggleShelf(item).catch((err) => { reportAppError(err, '更新漫画书架'); setError(formatAppError(err, '更新漫画书架')); })}
+              onDelete={(item) => deleteHistory(item).catch((err) => { reportAppError(err, '删除漫画阅读记录'); setError(formatAppError(err, '删除漫画阅读记录')); })}
             />
           ))}
         </MediaGrid>

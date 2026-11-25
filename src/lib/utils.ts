@@ -1,3 +1,4 @@
+import { reportAppError } from '@/lib/app-error';
 /* eslint-disable @typescript-eslint/no-explicit-any,no-console */
 import bs58 from 'bs58';
 import he from 'he';
@@ -156,24 +157,10 @@ type AnimeImageSource =
 const BANGUMI_IMAGE_FALLBACK_UNTIL_KEY = 'bangumiImageFallbackUntil';
 const BANGUMI_IMAGE_FALLBACK_SIGNATURE_KEY = 'bangumiImageFallbackSignature';
 const BANGUMI_IMAGE_FALLBACK_DURATION = 60 * 60 * 1000;
-/** 探测主源图片域主页超时（404 也算通） */
 const BANGUMI_IMAGE_PROBE_TIMEOUT_MS = 5000;
-/** 探测成功后的内存缓存，避免列表刷屏时重复探测 */
 const BANGUMI_IMAGE_PROBE_OK_TTL_MS = 15 * 60 * 1000;
-
-type BangumiImageProbeCache = {
-  signature: string;
-  reachable: boolean | null;
-  okUntil: number;
-  inflight: Promise<boolean> | null;
-};
-
-let bangumiImageProbeCache: BangumiImageProbeCache = {
-  signature: '',
-  reachable: null,
-  okUntil: 0,
-  inflight: null,
-};
+type BangumiImageProbeCache = { signature: string; reachable: boolean | null; okUntil: number; inflight: Promise<boolean> | null };
+let bangumiImageProbeCache: BangumiImageProbeCache = { signature: '', reachable: null, okUntil: 0, inflight: null };
 
 function normalizeBaseUrl(baseUrl: string): string {
   return baseUrl.trim().replace(/\/+$/, '');
@@ -255,42 +242,23 @@ function getBangumiImageFallbackSignature(): string {
 }
 
 function getBangumiImageProbeSignature(): string {
-  return JSON.stringify({
-    primary: getPrimaryBangumiImageSource(),
-    imageBaseUrl: getBangumiImageBaseUrl(),
-  });
+  return JSON.stringify({ primary: getPrimaryBangumiImageSource(), imageBaseUrl: getBangumiImageBaseUrl() });
 }
 
-/** 当前主源图片域 origin；server-proxy 无需探测返回 null */
 function getBangumiImageProbeOrigin(): string | null {
   const primary = getPrimaryBangumiImageSource();
-  switch (primary) {
-    case 'server-proxy':
-      return null;
-    case 'sakura':
-      return 'https://lain.bangumi.lol';
-    case 'custom-baseurl': {
-      const base = getBangumiImageBaseUrl();
-      if (!base) return 'https://lain.bgm.tv';
-      try {
-        return new URL(base).origin;
-      } catch {
-        return null;
-      }
-    }
-    case 'direct':
-    default:
-      return 'https://lain.bgm.tv';
+  if (primary === 'server-proxy') return null;
+  if (primary === 'sakura') return 'https://lain.bangumi.lol';
+  if (primary === 'custom-baseurl') {
+    const base = getBangumiImageBaseUrl();
+    if (!base) return 'https://lain.bgm.tv';
+    try { return new URL(base).origin; } catch { return null; }
   }
+  return 'https://lain.bgm.tv';
 }
 
 export function clearBangumiImageProbeCache(): void {
-  bangumiImageProbeCache = {
-    signature: '',
-    reachable: null,
-    okUntil: 0,
-    inflight: null,
-  };
+  bangumiImageProbeCache = { signature: '', reachable: null, okUntil: 0, inflight: null };
 }
 
 /** 仅清除 localStorage 中的 sticky 降级标记，不动内存探测缓存（热路径调用） */
@@ -317,90 +285,40 @@ export function markBangumiImageFallbackActive(): void {
   );
 }
 
-/**
- * 探测主源图片域是否可达：请求 origin 主页（常见 404），5s 超时 + 防缓存。
- * no-cors 下任意完成（含 404）视为可达；超时/DNS/断网视为不可达。
- * 失败时写入 sticky 降级（若有备源）。全局单飞 + 成功缓存 15 分钟。
- * @returns true=主源可用，false=应走备源
- */
+/** 保留既有连通性探测；不透明响应不能用于推断具体 HTTP 状态。 */
 export async function ensureBangumiImagePrimaryProbed(): Promise<boolean> {
   if (typeof window === 'undefined') return true;
-
-  if (isBangumiImageFallbackActive()) {
-    return false;
-  }
-
+  if (isBangumiImageFallbackActive()) return false;
   const origin = getBangumiImageProbeOrigin();
-  if (!origin) {
-    return true;
-  }
-
+  if (!origin) return true;
   const signature = getBangumiImageProbeSignature();
-  const now = Date.now();
-
-  if (
-    bangumiImageProbeCache.signature === signature &&
-    bangumiImageProbeCache.reachable === true &&
-    bangumiImageProbeCache.okUntil > now
-  ) {
-    return true;
-  }
-
-  if (
-    bangumiImageProbeCache.signature === signature &&
-    bangumiImageProbeCache.inflight
-  ) {
-    return bangumiImageProbeCache.inflight;
-  }
-
-  const probePromise = (async (): Promise<boolean> => {
-    const url = `${origin}/?_cb=${Date.now()}_${Math.random()
-      .toString(36)
-      .slice(2, 10)}`;
+  if (bangumiImageProbeCache.signature === signature && bangumiImageProbeCache.reachable === true && bangumiImageProbeCache.okUntil > Date.now()) return true;
+  if (bangumiImageProbeCache.signature === signature && bangumiImageProbeCache.inflight) return bangumiImageProbeCache.inflight;
+  const promise = (async () => {
     try {
-      await fetch(url, {
-        method: 'GET',
-        mode: 'no-cors',
-        cache: 'no-store',
-        credentials: 'omit',
-        signal: AbortSignal.timeout(BANGUMI_IMAGE_PROBE_TIMEOUT_MS),
+      const response = await fetch(origin + '/?_cb=' + Date.now() + '_' + Math.random().toString(36).slice(2,10), {
+        method: 'GET', mode: 'no-cors', cache: 'no-store', credentials: 'omit', signal: AbortSignal.timeout(BANGUMI_IMAGE_PROBE_TIMEOUT_MS),
       });
-      bangumiImageProbeCache = {
-        signature,
-        reachable: true,
-        okUntil: Date.now() + BANGUMI_IMAGE_PROBE_OK_TTL_MS,
-        inflight: null,
-      };
-      return true;
-    } catch {
-      bangumiImageProbeCache = {
-        signature,
-        reachable: false,
-        okUntil: 0,
-        inflight: null,
-      };
-      const primary = getPrimaryBangumiImageSource();
-      if (getBackupBangumiImageSource(primary)) {
-        markBangumiImageFallbackActive();
+      if (response.type === 'opaque') {
+        reportAppError({ code: 'IMAGE_PROBE_STATUS_UNAVAILABLE', message: 'Bangumi 图片域探测收到跨域不透明响应，代码无法读取实际 HTTP 状态码', hint: '请查看同一请求在 F12 网络面板中的原始状态；此探测访问图片域根路径，其 404 不代表具体海报不存在。', details: '响应类型：opaque；状态字段为 0，仅表示不可读取，不是 HTTP 成功或失败代码。' }, '图片域连通性探测', { level: 'warn' });
+      } else if (!response.ok) {
+        reportAppError({ status: response.status, code: 'IMAGE_PROBE_HTTP_ERROR', message: '图片域根路径探测返回非成功状态', hint: '根路径状态不能单独确定图片可用性，请结合实际海报请求判断。' }, '图片域连通性探测');
       }
+      bangumiImageProbeCache = { signature, reachable: true, okUntil: Date.now() + BANGUMI_IMAGE_PROBE_OK_TTL_MS, inflight: null };
+      return true;
+    } catch (error) {
+      reportAppError(error, '图片域连通性探测');
+      bangumiImageProbeCache = { signature, reachable: false, okUntil: 0, inflight: null };
+      if (getBackupBangumiImageSource(getPrimaryBangumiImageSource())) markBangumiImageFallbackActive();
       return false;
     }
   })();
-
-  bangumiImageProbeCache = {
-    signature,
-    reachable: bangumiImageProbeCache.reachable,
-    okUntil: bangumiImageProbeCache.okUntil,
-    inflight: probePromise,
-  };
-
-  return probePromise;
+  bangumiImageProbeCache = { signature, reachable: bangumiImageProbeCache.reachable, okUntil: bangumiImageProbeCache.okUntil, inflight: promise };
+  return promise;
 }
 
-/** 非阻塞触发主源图片域探测（processImageUrl / 首屏侧调用） */
 export function scheduleBangumiImagePrimaryProbe(): void {
-  if (typeof window === 'undefined') return;
-  void ensureBangumiImagePrimaryProbed();
+  if (typeof window !== 'undefined') void ensureBangumiImagePrimaryProbed();
 }
 
 function normalizeComparableUrl(url: string): string {
@@ -600,16 +518,14 @@ export function processImageUrl(originalUrl: string): string {
 
   // 处理 Bangumi 图片代理。直连模式尊重用户选择，不代理图片；
   // 仅在服务器代理 / 自定义 Base URL 模式下使用本站图片代理。
-  // sticky 降级中走备源；否则用主源，并非阻塞探测主源图片域主页（5s，404 算通）。
+  // 已记录的失败使用备源；保留主源探测和真实图片失败后的备用源切换。
   if (isBangumiImageUrl(originalUrl)) {
     const primary = getPrimaryBangumiImageSource();
     const backup = getBackupBangumiImageSource(primary);
     if (backup && isBangumiImageFallbackActive()) {
       return buildBangumiImageUrl(originalUrl, backup);
     }
-    if (primary !== 'server-proxy' && backup) {
-      scheduleBangumiImagePrimaryProbe();
-    }
+    if (primary !== 'server-proxy' && backup) scheduleBangumiImagePrimaryProbe();
     return buildBangumiImageUrl(originalUrl, primary);
   }
 

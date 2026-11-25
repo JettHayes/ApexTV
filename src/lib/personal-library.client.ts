@@ -1,5 +1,8 @@
 'use client';
 
+import { readJsonResponse } from '@/lib/app-error';
+
+
 import { getAuthInfoFromBrowserCookie } from './auth';
 import { fetchWithAuth } from './db.client';
 import {
@@ -56,14 +59,14 @@ export function personalLibrarySnapshot(): PersonalLibrary {
 }
 async function request(path: string, init?: RequestInit) {
   const controller = new AbortController(),
-    timer = window.setTimeout(() => controller.abort(), 15000);
+    timer = window.setTimeout(() => controller.abort(new DOMException('影片整理请求超时', 'TimeoutError')), 15000);
   try {
     const response = await fetchWithAuth(path, {
       ...init,
       cache: 'no-store',
       signal: controller.signal,
     });
-    const data = await response.json();
+    const data = await readJsonResponse<any>(response, "影片整理");
     if (!response.ok) throw new Error(data.error || '操作失败，请重试');
     return data;
   } finally {

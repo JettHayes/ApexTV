@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 
+import { reportAppError } from '@/lib/app-error';
 import { getBookTtsConfig, synthesizeBookTts } from '@/lib/book-tts';
 
 import { getAuthorizedBooksUsername } from '../../_utils';
@@ -47,6 +48,6 @@ export async function POST(request: NextRequest) {
       cacheHit: result.cacheHit,
     });
   } catch (error) {
-    return NextResponse.json({ error: (error as Error).message || '语音合成失败' }, { status: 500 });
+    return NextResponse.json((({ code, message, status, upstreamStatus }) => ({ error: message, code, status, upstreamStatus }))(reportAppError(error, '生成朗读音频')), { status: 500 });
   }
 }

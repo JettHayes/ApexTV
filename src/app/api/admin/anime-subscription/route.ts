@@ -1,3 +1,4 @@
+import { appErrorPayload, reportAppError } from '@/lib/app-error';
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { NextRequest, NextResponse } from 'next/server';
 
@@ -35,9 +36,9 @@ export async function GET(req: NextRequest) {
       DownloadTool: animeConfig.DownloadTool || 'aria2',
     });
   } catch (error: any) {
-    console.error('获取追番订阅配置失败:', error);
+    reportAppError(error, "获取追番订阅配置失败");
     return NextResponse.json(
-      { error: error.message || '获取配置失败' },
+      {...{ error: error.message || '获取配置失败' }, ...appErrorPayload(error, "后台配置服务", 500)},
       { status: 500 }
     );
   }
@@ -182,9 +183,9 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json(newSubscription);
   } catch (error: any) {
-    console.error('创建追番订阅失败:', error);
+    reportAppError(error, "创建追番订阅失败");
     return NextResponse.json(
-      { error: error.message || '创建订阅失败' },
+      {...{ error: error.message || '创建订阅失败' }, ...appErrorPayload(error, "后台配置服务", 500)},
       { status: 500 }
     );
   }

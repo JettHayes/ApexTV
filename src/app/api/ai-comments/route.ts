@@ -1,3 +1,4 @@
+import { reportAppError } from '@/lib/app-error';
 import { NextRequest, NextResponse } from 'next/server';
 
 import {
@@ -197,7 +198,7 @@ export async function GET(request: NextRequest) {
         };
         send(payload);
       } catch (error) {
-        console.error('AI评论生成失败:', error);
+        reportAppError(error, "AI评论生成失败");
         const errorMessage =
           error instanceof Error ? error.message : 'AI评论生成失败';
         send({ error: errorMessage });

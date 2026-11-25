@@ -1,3 +1,4 @@
+import { appErrorPayload, reportAppError } from '@/lib/app-error';
 /* eslint-disable @typescript-eslint/no-explicit-any,no-console */
 
 import { NextRequest, NextResponse } from 'next/server';
@@ -183,12 +184,12 @@ export async function POST(request: NextRequest) {
       }
     );
   } catch (error) {
-    console.error('分类管理操作失败:', error);
+    reportAppError(error, "分类管理操作失败");
     return NextResponse.json(
-      {
+      {...{
         error: '分类管理操作失败',
         details: (error as Error).message,
-      },
+      }, ...appErrorPayload(error, "后台配置服务", 500)},
       { status: 500 }
     );
   }

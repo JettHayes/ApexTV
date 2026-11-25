@@ -1,5 +1,8 @@
-// WatchRoom 全局状态管理 Provider
 'use client';
+
+import { readJsonResponse, reportAppError } from '@/lib/app-error';
+// WatchRoom 全局状态管理 Provider
+
 
 import React, { createContext, useCallback, useContext, useEffect, useState } from 'react';
 import { usePathname } from 'next/navigation';
@@ -204,11 +207,11 @@ export function WatchRoomProvider({ children }: WatchRoomProviderProps) {
             ownerToken: info.ownerToken,
           });
         } catch (error) {
-          console.error('[WatchRoomProvider] Failed to rejoin room after reconnect:', error);
+          reportAppError(error, "观影室");
         }
       }
     } else {
-      console.error('[WatchRoomProvider] Manual reconnect failed');
+      reportAppError('[WatchRoomProvider] Manual reconnect failed', "观影室");
       setReconnectFailed(true);
     }
   }, [watchRoom]);
@@ -234,7 +237,7 @@ export function WatchRoomProvider({ children }: WatchRoomProviderProps) {
         // 使用公共 API 获取观影室配置（不需要管理员权限）
         const response = await fetch('/api/server-config');
         if (response.ok) {
-          const data = await response.json();
+          const data = await readJsonResponse<any>(response, "观影室");
           // API 返回格式: { SiteName, StorageType, Version, WatchRoom }
           const watchRoomConfig: WatchRoomConfig = {
             enabled: data.WatchRoom?.enabled ?? false, // 默认不启用
@@ -252,17 +255,17 @@ export function WatchRoomProvider({ children }: WatchRoomProviderProps) {
               try {
                 const authResponse = await fetch('/api/watch-room-auth');
                 if (authResponse.ok) {
-                  const authData = await authResponse.json();
+                  const authData = await readJsonResponse<any>(authResponse, "观影室");
                   watchRoomConfig.externalServerAuth = authData.externalServerAuth;
                   // 多应用隔离 ID（未配置时不携带，兼容旧版外部服务器）
                   watchRoomConfig.externalAppId = authData.externalAppId || undefined;
                 } else {
-                  console.error('[WatchRoom] Failed to load auth info:', authResponse.status);
+                  reportAppError({status:authResponse.status}, "观影室");
                   // 如果无法获取认证信息，禁用观影室
                   watchRoomConfig.enabled = false;
                 }
               } catch (error) {
-                console.error('[WatchRoom] Error loading auth info:', error);
+                reportAppError(error, "观影室");
                 // 如果无法获取认证信息，禁用观影室
                 watchRoomConfig.enabled = false;
               }
@@ -293,7 +296,7 @@ export function WatchRoomProvider({ children }: WatchRoomProviderProps) {
             console.log('[WatchRoom] Watch room is disabled, skipping connection');
           }
         } else {
-          console.error('[WatchRoom] Failed to load config:', response.status);
+          reportAppError({status:response.status}, "观影室");
           // 加载配置失败时，不连接，保持禁用状态
           const defaultConfig: WatchRoomConfig = {
             enabled: false,
@@ -303,7 +306,7 @@ export function WatchRoomProvider({ children }: WatchRoomProviderProps) {
           setIsEnabled(false);
         }
       } catch (error) {
-        console.error('[WatchRoom] Error loading config:', error);
+        reportAppError(error, "观影室");
         // 加载配置失败时，不连接，保持禁用状态
         const defaultConfig: WatchRoomConfig = {
           enabled: false,

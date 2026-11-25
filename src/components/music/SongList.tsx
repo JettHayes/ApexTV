@@ -79,7 +79,7 @@ function SongRow({
           playMusicSong(song, index);
         }
       }}
-      className={cn(MUSIC_ROW, playing && MUSIC_ROW_PLAYING)}
+      className={cn('f1-song-row', MUSIC_ROW, playing && MUSIC_ROW_PLAYING)}
     >
       <span className={MUSIC_ROW_INDEX}>{String(index + 1).padStart(2, '0')}</span>
 
@@ -156,7 +156,8 @@ export default function SongList({
   if (songs.length === 0) return null;
 
   return (
-    <div className={MUSIC_LIST}>
+    <div className={cn(MUSIC_LIST, 'f1-song-list')}>
+      <div className='f1-song-columns' aria-hidden='true'><span>#</span><span>歌曲 / 歌手</span><span>时长</span><span>音源</span><span>操作</span></div>
       {songs.map((song, index) => (
         <SongRow
           key={`${song.platform}-${song.id}-${index}`}

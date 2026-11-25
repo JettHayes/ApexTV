@@ -61,7 +61,7 @@ export default function TrailerPickerDialog({
   return createPortal(
     <div className='fixed inset-0 z-[10000] flex items-end sm:items-center justify-center'>
       <div className='ptv-scrim-in absolute inset-0 bg-black/60 backdrop-blur-sm' onClick={onClose} />
-      <div className='ptv-sheet-in relative w-full sm:max-w-2xl max-h-[85vh] overflow-hidden rounded-t-2xl sm:rounded-2xl bg-white dark:bg-gray-900 shadow-2xl border border-gray-200 dark:border-gray-700'>
+      <div role='dialog' aria-modal='true' aria-label='选择预告片' className='ptv-dialog f1-task-dialog ptv-sheet-in relative w-full sm:max-w-2xl max-h-[85vh] overflow-hidden rounded-t-2xl sm:rounded-2xl bg-white dark:bg-gray-900 shadow-2xl border border-gray-200 dark:border-gray-700'>
         <div className='flex items-start justify-between gap-4 border-b border-gray-200 dark:border-gray-800 px-4 sm:px-6 py-4'>
           <div className='min-w-0'>
             <div className='flex items-center gap-2 text-gray-500 dark:text-gray-400 text-sm mb-1'>

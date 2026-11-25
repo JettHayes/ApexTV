@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 
+import { reportAppError } from '@/lib/app-error';
 import { bookProvider } from '@/lib/book-provider';
 
 import { getAuthorizedBooksUsername } from '../_utils';
@@ -14,6 +15,6 @@ export async function GET(request: NextRequest) {
     const sources = await bookProvider.getSources();
     return NextResponse.json({ sources });
   } catch (error) {
-    return NextResponse.json({ error: (error as Error).message }, { status: 500 });
+    return NextResponse.json((({ code, message, status, upstreamStatus }) => ({ error: message, code, status, upstreamStatus }))(reportAppError(error, '电子书服务')), { status: 500 });
   }
 }

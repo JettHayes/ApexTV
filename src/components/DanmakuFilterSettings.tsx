@@ -305,20 +305,20 @@ export default function DanmakuFilterSettings({
                 spellCheck="false"
                 data-form-type="other"
                 data-lpignore="true"
-                className="w-full px-4 py-3 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-lg border border-gray-200 dark:border-gray-600 focus:border-teal-500 focus:outline-none focus:ring-2 focus:ring-teal-500/20 transition-all duration-200"
+                className="w-full px-4 py-3 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-lg border border-gray-200 dark:border-gray-600 focus:border-apex-accent focus:outline-none focus:ring-2 focus:ring-apex-accent/20 transition-all duration-200"
               />
               <div className="flex gap-2">
                 <select
                   value={newType}
                   onChange={(e) => setNewType(e.target.value as 'normal' | 'regex')}
-                  className="flex-1 px-4 py-3 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-lg border border-gray-200 dark:border-gray-600 focus:border-teal-500 focus:outline-none focus:ring-2 focus:ring-teal-500/20 transition-all duration-200"
+                  className="flex-1 px-4 py-3 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-lg border border-gray-200 dark:border-gray-600 focus:border-apex-accent focus:outline-none focus:ring-2 focus:ring-apex-accent/20 transition-all duration-200"
                 >
                   <option value="normal">普通模式</option>
                   <option value="regex">正则模式</option>
                 </select>
                 <button
                   onClick={handleAddRule}
-                  className="px-6 py-3 bg-teal-600 hover:bg-teal-700 active:bg-teal-800 text-white rounded-lg transition-all duration-200 flex items-center gap-2 active:scale-[0.98] shadow-sm hover:shadow-md"
+                  className="px-6 py-3 bg-apex-action hover:bg-apex-action active:bg-apex-selected text-apex-action-ink rounded-lg transition-all duration-200 flex items-center gap-2 active:scale-[0.98] shadow-sm hover:shadow-md"
                 >
                   <Plus size={18} />
                   <span className="font-medium">添加</span>
@@ -376,7 +376,7 @@ export default function DanmakuFilterSettings({
                       {rule.enabled ? (
                         <ToggleRight
                           size={28}
-                          className="text-teal-500 hover:text-teal-400 transition-colors duration-150"
+                          className="text-apex-accent-on-soft hover:text-apex-accent-on-soft transition-colors duration-150"
                         />
                       ) : (
                         <ToggleLeft
@@ -399,7 +399,7 @@ export default function DanmakuFilterSettings({
                         <span
                           className={`inline-flex items-center self-start text-xs px-2.5 py-1 rounded-full font-medium ${
                             rule.type === 'regex'
-                              ? 'bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300'
+                              ? "bg-apex-selected dark:bg-apex-selected/30 text-apex-accent-on-soft dark:text-apex-accent-on-soft"
                               : 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300'
                           }`}
                         >
@@ -434,7 +434,7 @@ export default function DanmakuFilterSettings({
             <button
               onClick={handleSave}
               disabled={saving}
-              className="flex-1 px-4 py-3 bg-teal-600 hover:bg-teal-700 active:bg-teal-800 disabled:bg-gray-300 disabled:cursor-not-allowed dark:disabled:bg-gray-700 text-white rounded-xl font-medium transition-all duration-200 active:scale-[0.98] shadow-sm hover:shadow-md disabled:shadow-none"
+              className="flex-1 px-4 py-3 bg-apex-action hover:bg-apex-action active:bg-apex-selected disabled:bg-gray-300 disabled:cursor-not-allowed dark:disabled:bg-gray-700 text-apex-action-ink rounded-xl font-medium transition-all duration-200 active:scale-[0.98] shadow-sm hover:shadow-md disabled:shadow-none"
             >
               {saving ? (
                 <span className="inline-flex items-center gap-2">

@@ -1,3 +1,4 @@
+import { appErrorPayload, reportAppError } from '@/lib/app-error';
 /* eslint-disable no-console */
 
 import { NextRequest, NextResponse } from 'next/server';
@@ -199,9 +200,9 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ error: '未知操作' }, { status: 400 });
   } catch (error) {
-    console.error('[Admin NetDisk] 操作失败:', error);
+    reportAppError(error, "[Admin NetDisk] 操作失败");
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : '操作失败' },
+      {...{ error: error instanceof Error ? error.message : '操作失败' }, ...appErrorPayload(error, "后台配置服务", 500)},
       { status: 500 }
     );
   }

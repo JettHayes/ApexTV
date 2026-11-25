@@ -1,3 +1,4 @@
+import { AppRequestError } from '@/lib/app-error';
 import { NextRequest, NextResponse } from 'next/server';
 
 import { getAuthInfoFromCookie } from '@/lib/auth';
@@ -24,16 +25,18 @@ export async function getMusicV2Username(request: NextRequest): Promise<string |
 }
 
 export function unauthorized() {
-  return NextResponse.json({ success: false, error: { code: 'UNAUTHORIZED', message: 'Unauthorized' } }, { status: 401 });
+  return NextResponse.json({ success: false, error: { code: 'UNAUTHORIZED', message: '请先登录并确认音乐功能权限' } }, { status: 401 });
 }
 
 export function badRequest(message: string, code = 'BAD_REQUEST') {
   return NextResponse.json({ success: false, error: { code, message } }, { status: 400 });
 }
 
-export function internalError(message: string, details?: string) {
+export function internalError(message: string, cause?: unknown) {
+  const info = cause instanceof AppRequestError ? cause.info : undefined;
+  const upstreamStatus = info?.upstreamStatus;
   return NextResponse.json(
-    { success: false, error: { code: 'INTERNAL_ERROR', message, details } },
-    { status: 500 }
+    { success: false, error: { code: info?.code || 'INTERNAL_ERROR', message, upstreamStatus } },
+    { status: upstreamStatus ? 502 : 500 }
   );
 }

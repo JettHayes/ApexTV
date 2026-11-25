@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 
+import { reportAppError } from '@/lib/app-error';
 import { bookProvider } from '@/lib/book-provider';
 import {
   BookCatalogTargetError,
@@ -39,7 +40,7 @@ export async function GET(request: NextRequest) {
         { status: 502, headers: { 'Cache-Control': 'no-store' } }
       );
     return NextResponse.json(
-      { error: (error as Error).message },
+      (({ code, message, status, upstreamStatus }) => ({ error: message, code, status, upstreamStatus }))(reportAppError(error, '电子书服务')),
       { status: 500 }
     );
   }

@@ -16,6 +16,7 @@ interface EpgScrollableRowProps {
   programs: EpgProgram[];
   currentTime?: Date;
   isLoading?: boolean;
+  compact?: boolean;
 }
 
 type ViewMode = 'list' | 'timeline';
@@ -24,6 +25,7 @@ export default function EpgScrollableRow({
   programs,
   currentTime = new Date(),
   isLoading = false,
+  compact = false,
 }: EpgScrollableRowProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const timelineHorizontalRef = useRef<HTMLDivElement>(null);
@@ -85,7 +87,7 @@ export default function EpgScrollableRow({
     if (currentProgramIndex === -1) return;
 
     // 横向时间线
-    if (timelineHorizontalRef.current && window.innerWidth >= 768) {
+    if (timelineHorizontalRef.current && !compact && window.innerWidth >= 768) {
       const programElement = timelineHorizontalRef.current.children[currentProgramIndex] as HTMLElement;
       if (programElement) {
         const container = timelineHorizontalRef.current;
@@ -242,7 +244,7 @@ export default function EpgScrollableRow({
   // 加载中状态
   if (isLoading) {
     return (
-      <div className="pt-4">
+      <div className={compact ? "f1-epg-compact" : "pt-4"}>
         <div className="mb-3 flex items-center justify-between">
           <h4 className="text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300 flex items-center gap-2">
             <Clock className="w-3 h-3 sm:w-4 sm:h-4" />
@@ -263,7 +265,7 @@ export default function EpgScrollableRow({
   // 无节目单状态
   if (!programs || programs.length === 0) {
     return (
-      <div className="pt-4">
+      <div className={compact ? "f1-epg-compact" : "pt-4"}>
         <div className="mb-3 flex items-center justify-between">
           <h4 className="text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300 flex items-center gap-2">
             <Clock className="w-3 h-3 sm:w-4 sm:h-4" />
@@ -282,7 +284,7 @@ export default function EpgScrollableRow({
   }
 
   return (
-    <div className="pt-4 mt-2">
+    <div className={compact ? "f1-epg-compact" : "pt-4 mt-2"}>
       <div className="mb-3 flex items-center justify-between">
         <h4 className="text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300 flex items-center gap-2">
           <Clock className="w-3 h-3 sm:w-4 sm:h-4" />
@@ -336,12 +338,12 @@ export default function EpgScrollableRow({
       {viewMode === 'list' && (
         <div
           className='ptv-content-in relative'
-          onMouseEnter={() => setIsHovered(true)}
+          onMouseEnter={() => setIsHovered(!compact)}
           onMouseLeave={() => setIsHovered(false)}
         >
           <div
             ref={containerRef}
-            className='flex overflow-x-auto scrollbar-hide py-2 pb-4 px-2 sm:px-4 min-h-[100px] sm:min-h-[120px]'
+            className='f1-epg-list flex overflow-x-auto scrollbar-hide py-2 pb-4 px-2 sm:px-4 min-h-[100px] sm:min-h-[120px]'
           >
             {programs.map((program, index) => {
             // 使用 currentPlayingIndex 来判断播放状态，确保样式能正确更新
@@ -352,7 +354,7 @@ export default function EpgScrollableRow({
             return (
               <div
                 key={index}
-                className={`flex-shrink-0 w-36 sm:w-48 p-2 sm:p-3 rounded-lg border transition-all duration-200 flex flex-col min-h-[100px] sm:min-h-[120px] ${isPlaying
+                className={`f1-epg-program flex-shrink-0 w-36 sm:w-48 p-2 sm:p-3 rounded-lg border transition-all duration-200 flex flex-col min-h-[100px] sm:min-h-[120px] ${isPlaying
                   ? 'bg-green-500/10 dark:bg-green-500/20 border-green-500/30'
                   : isFinishedProgram
                     ? 'bg-gray-300/50 dark:bg-gray-800 border-gray-300 dark:border-gray-700'
@@ -422,7 +424,7 @@ export default function EpgScrollableRow({
       {viewMode === 'timeline' && (
         <div className='ptv-content-in relative'>
           {/* 电脑端：横向时间线 */}
-          <div className='hidden md:block'>
+          <div className={compact ? 'hidden' : 'hidden md:block'}>
             <div className='bg-gray-100 dark:bg-gray-800 rounded-lg p-4'>
               {/* 时间线容器 - 可横向滚动 */}
               <div
@@ -541,7 +543,7 @@ export default function EpgScrollableRow({
           </div>
 
           {/* 手机端：竖向时间线 */}
-          <div className='md:hidden'>
+          <div className={compact ? 'block' : 'md:hidden'}>
             <div className='relative bg-gray-100 dark:bg-gray-800 rounded-lg p-4 max-h-[500px] overflow-y-auto'>
               {/* 时间线容器 */}
               <div ref={timelineVerticalRef} className='relative'>

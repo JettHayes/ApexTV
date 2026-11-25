@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 
+import { reportAppError } from '@/lib/app-error';
 import { extractSongmid, fetchLxLyric, getLxPlaybackSongInfo, lxPostJson,MusicQuality, normalizeMusicQuality, normalizeSong } from '@/lib/music-v2';
 import { badRequest, internalError } from '@/lib/music-v2-api';
 import { LxStreamCandidate, MusicStreamFailure, openMusicStream } from '@/lib/music-v2-stream';
@@ -77,7 +78,7 @@ export async function POST(request: NextRequest) {
     const song = normalizeSong(body?.song || {});
 
     if (!song.songId || !song.source || !song.name || !song.artist) {
-      return badRequest(`歌曲信息不完整: songId=${song.songId || ''}, source=${song.source || ''}, name=${song.name || ''}, artist=${song.artist || ''}`);
+      return badRequest('歌曲信息不完整，请重新选择歌曲');
     }
 
     const cacheKey = getPlayMetaCacheKey(song, quality);
@@ -149,7 +150,11 @@ export async function POST(request: NextRequest) {
     });
   } catch (error) {
     const attempts = error instanceof MusicStreamFailure ? error.attempts : [];
-    console.warn('[music-v2] play route failed:', { attempts });
-    return internalError('获取播放信息失败');
+    const upstreamStatus = [...attempts].reverse().find((attempt) => attempt.status)?.status;
+    reportAppError(error instanceof MusicStreamFailure ? { code: 'STREAM_FAILED', message: '所有音源均未返回可播放音频', upstreamStatus } : error, '获取播放信息');
+    if (error instanceof MusicStreamFailure) {
+      return NextResponse.json({ success: false, error: { code: 'STREAM_FAILED', message: '所有音源均未返回可播放音频', upstreamStatus } }, { status: 502 });
+    }
+    return internalError('获取播放信息失败', error);
   }
 }

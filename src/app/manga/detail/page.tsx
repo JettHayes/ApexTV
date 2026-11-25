@@ -12,6 +12,7 @@ import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { useEffect, useMemo, useRef, useState } from 'react';
 
+import { formatAppError, reportAppError, requestJson } from '@/lib/app-error';
 import { cn } from '@/lib/cn';
 import {
   deleteMangaShelf,
@@ -54,8 +55,8 @@ const META_PILL =
 
 function MangaDetailSkeleton() {
   return (
-    <div className='space-y-6'>
-      <div className={cn('grid gap-6 md:grid-cols-[260px_1fr]', PANEL_CLASS)}>
+    <div className='f1-reading-detail f1-comic-detail space-y-6'>
+      <div className={cn('f1-reading-detail-hero grid gap-6 md:grid-cols-[260px_1fr]', PANEL_CLASS)}>
         <div className={cn('aspect-[3/4]', LIBRARY_SKELETON)} />
         <div className='space-y-4'>
           <div className={cn('h-8 w-2/3', LIBRARY_SKELETON)} />
@@ -115,9 +116,11 @@ export default function MangaDetailPage() {
   const sourceId = searchParams.get('sourceId') || '';
   const returnTo = searchParams.get('returnTo') || '/manga';
   const [detail, setDetail] = useState<MangaDetail | null>(null);
+  const [error, setError] = useState('');
   const [history, setHistory] = useState<Record<string, MangaReadRecord>>({});
   const [shelf, setShelf] = useState<Record<string, MangaShelfItem>>({});
   const [descOrder, setDescOrder] = useState(true);
+  const [detailTab, setDetailTab] = useState<'chapters' | 'description'>('chapters');
   const clearedOnOpenRef = useRef<string | null>(null);
 
   const key = `${sourceId}+${mangaId}`;
@@ -137,10 +140,9 @@ export default function MangaDetailPage() {
       status: searchParams.get('status') || '',
     });
 
-    fetch(`/api/manga/detail?${params.toString()}`)
-      .then((res) => res.json())
+    requestJson<MangaDetail>(`/api/manga/detail?${params.toString()}`, undefined, '加载漫画详情')
       .then(setDetail)
-      .catch(() => undefined);
+      .catch((err) => { reportAppError(err, '加载漫画详情'); setError(formatAppError(err, '加载漫画详情')); });
 
     getAllMangaReadRecords()
       .then(setHistory)
@@ -261,15 +263,17 @@ export default function MangaDetailPage() {
       returnTo
     );
 
+  if (error && !detail) return <p role='alert'>{error}</p>;
   if (!detail) return <MangaDetailSkeleton />;
 
   return (
-    <div className='space-y-6'>
-      <div className={cn('grid gap-6 md:grid-cols-[260px_1fr]', PANEL_CLASS)}>
+    <div className='f1-reading-detail f1-comic-detail space-y-6'>
+      {error && <p role='alert'>{error}</p>}
+      <div className={cn('f1-reading-detail-hero grid gap-6 md:grid-cols-[260px_1fr]', PANEL_CLASS)}>
         {/* 封面立起来：外层投影 + 覆盖层书脊，和书墙上的卡片同一套。 */}
         <div
           className={cn(
-            'relative aspect-[3/4] overflow-hidden rounded-md bg-library-ochre-tint dark:bg-library-night-ochre-tint',
+            'f1-reading-detail-cover relative aspect-[3/4] overflow-hidden rounded-md bg-library-ochre-tint dark:bg-library-night-ochre-tint',
             BOOK_COVER_LIFT
           )}
         >
@@ -294,7 +298,7 @@ export default function MangaDetailPage() {
             </div>
           )}
         </div>
-        <div className='space-y-4'>
+        <div className='f1-reading-detail-copy space-y-4'>
           <div>
             <h1
               className={cn(
@@ -324,7 +328,7 @@ export default function MangaDetailPage() {
               {detail.description}
             </p>
           )}
-          <div className='flex flex-wrap gap-3'>
+          <div className='f1-reading-detail-actions flex flex-wrap gap-3'>
             {chapters[0] && (
               <Link href={chapterHref(chapters[0])} className={LIBRARY_BUTTON}>
                 <BookOpen className='h-4 w-4' />
@@ -343,7 +347,7 @@ export default function MangaDetailPage() {
             )}
             <button
               type='button'
-              onClick={toggleShelf}
+              onClick={() => void toggleShelf().catch((err) => { reportAppError(err, '更新漫画书架'); setError(formatAppError(err, '更新漫画书架')); })}
               aria-pressed={Boolean(shelf[key])}
               className={cn(
                 LIBRARY_FOCUS,
@@ -364,7 +368,15 @@ export default function MangaDetailPage() {
         </div>
       </div>
 
-      <div className={PANEL_CLASS}>
+      <div className='f1-manga-detail-tabs' role='tablist' aria-label='漫画详情'>
+        <button type='button' role='tab' aria-selected={detailTab === 'chapters'} onClick={() => setDetailTab('chapters')}>章节目录</button>
+        {detail.description && <button type='button' role='tab' aria-selected={detailTab === 'description'} onClick={() => setDetailTab('description')}>作品简介</button>}
+        <span>共 {chapters.length} 话</span>
+      </div>
+      {detailTab === 'description' && detail.description && (
+        <section className='f1-manga-description'><h2>作品简介</h2><p>{detail.description}</p></section>
+      )}
+      <div hidden={detailTab !== 'chapters'} className={cn(PANEL_CLASS, 'f1-reading-chapters')}>
         <div className='mb-4 flex items-center justify-between gap-3'>
           <h2
             className={cn('text-lg font-semibold', LIBRARY_TEXT, LIBRARY_SERIF)}
@@ -390,7 +402,7 @@ export default function MangaDetailPage() {
             已更新 {unreadChapterCount} 话，最新章节：{latestChapter.name}
           </div>
         )}
-        <div className='grid gap-2'>
+        <div className='f1-chapter-grid grid gap-2'>
           {chapters.map((chapter) => {
             const active = currentRecord?.chapterId === chapter.id;
             const isNewChapter = newChapterIds.has(chapter.id);

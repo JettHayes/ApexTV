@@ -1,5 +1,8 @@
 'use client';
 
+import { formatAppError, reportAppError } from '@/lib/app-error';
+
+
 import {
   AlertTriangle,
   ArrowLeft,
@@ -557,7 +560,7 @@ function TVPlayClient() {
       .catch(
         (err) =>
           alive &&
-          setError(err instanceof Error ? err.message : '加载播放信息失败')
+          setError(formatAppError(reportAppError(err, "电视端"), "电视端"))
       )
       .finally(() => alive && setLoading(false));
     return () => {
@@ -581,7 +584,7 @@ function TVPlayClient() {
         if (alive) setVideoUrl(url);
       } catch (err) {
         if (alive)
-          setError(err instanceof Error ? err.message : '获取播放地址失败');
+          setError(formatAppError(reportAppError(err, "电视端"), "电视端"));
       } finally {
         if (alive) setResolving(false);
       }
@@ -1010,7 +1013,7 @@ function TVPlayClient() {
       setStartTime(targetStartTime);
       setEpisodePage(Math.floor(targetIndex / 30));
     } catch (err) {
-      setError(err instanceof Error ? err.message : '切换播放源失败');
+      setError(formatAppError(reportAppError(err, "电视端"), "电视端"));
     } finally {
       setLoading(false);
     }
@@ -1324,7 +1327,7 @@ function TVPlayClient() {
           revealPanel();
         }
       }}
-      className='fixed inset-0 overflow-hidden bg-black text-white'
+      className='f1-tv-player fixed inset-0 overflow-hidden bg-black text-white'
     >
       {videoUrl ? (
         <TVNativeVideo
@@ -1355,7 +1358,7 @@ function TVPlayClient() {
           {activeDanmakuItems.map((item) => (
             <div
               key={item.id}
-              className='absolute whitespace-nowrap text-3xl font-black drop-shadow-[0_2px_4px_rgba(0,0,0,0.9)]'
+              className="absolute whitespace-nowrap text-3xl font-black drop-shadow-[0_2px_4px_var(--ptv-media-bg-alpha-90)]"
               onAnimationEnd={() => {
                 setActiveDanmakuItems((prev) =>
                   prev.filter((active) => active.id !== item.id)
@@ -1363,7 +1366,7 @@ function TVPlayClient() {
               }}
               style={{
                 top: `${item.lane * 12}%`,
-                color: item.color || '#fff',
+                color: item.color || "var(--ptv-media-text)",
                 fontSize: `${danmakuSettings.fontSize}px`,
                 opacity: danmakuSettings.opacity,
                 animation: `tv-danmaku ${item.duration}s linear forwards`,
@@ -1435,7 +1438,7 @@ function TVPlayClient() {
       </div>
 
       <div
-        className={`absolute left-8 right-8 top-8 flex items-center justify-between transition-opacity duration-300 ${
+        className={`f1-tv-player-heading absolute left-8 right-8 top-8 flex items-center justify-between transition-opacity duration-300 ${
           showPanel ? 'opacity-100' : 'pointer-events-none opacity-0'
         }`}
       >
@@ -1459,11 +1462,11 @@ function TVPlayClient() {
 
       <div
         data-tv-player-control
-        className={`absolute bottom-8 left-8 right-8 transition-opacity duration-300 ${
+        className={`f1-tv-playback-dock absolute bottom-8 left-8 right-8 transition-opacity duration-300 ${
           showPanel ? 'opacity-100' : 'pointer-events-none opacity-0'
         }`}
       >
-        <div className='rounded-[28px] bg-black/75 p-4 backdrop-blur'>
+        <div className='f1-tv-control-surface'>
           <div
             onFocusCapture={scrollFocusedControlIntoView}
             className='flex items-center gap-3 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden [&_button]:shrink-0 [&_button]:whitespace-nowrap'
@@ -1623,13 +1626,13 @@ function TVPlayClient() {
         <aside
           ref={episodesPanelRef}
           data-tv-episode-panel
-          className='ptv-content-in absolute bottom-40 right-8 max-h-[55vh] w-[560px] overflow-y-auto rounded-[34px] border border-white/10 bg-slate-950/92 p-6 shadow-2xl shadow-black/70 backdrop-blur-2xl'
+          className='ptv-content-in f1-tv-episode-panel absolute bottom-40 right-8 max-h-[55vh] w-[560px] overflow-y-auto'
         >
-          <h2 className='mb-5 flex items-center gap-3 text-3xl font-black'>
+          <h2 className='f1-tv-panel-title flex items-center gap-3 text-3xl font-black'>
             <Layers className='h-8 w-8 text-rose-500' />
             选集与线路
           </h2>
-          <div className='mb-6'>
+          <div className='f1-tv-source-section'>
             <div className='mb-2 text-xl font-black text-slate-300'>播放源</div>
             <div className='-my-5 flex gap-3 overflow-x-auto px-2 py-8 [scrollbar-width:none]'>
               {sources.length > 0 ? (
@@ -1673,7 +1676,7 @@ function TVPlayClient() {
               ))}
             </div>
           )}
-          <div className='grid grid-cols-4 gap-3'>
+          <div className='f1-tv-episode-grid grid grid-cols-4 gap-3'>
             {visibleEpisodeIndexes.map((index) => (
               <button
                 key={index}
@@ -1701,7 +1704,7 @@ function TVPlayClient() {
             data-tv-player-control
             data-tv-focus-scope='active'
             data-tv-danmaku-settings
-            className='ptv-modal-in w-[720px] max-w-[92vw] rounded-[34px] border border-white/10 bg-slate-950/95 p-7 text-white shadow-2xl shadow-black/80'
+            className='ptv-modal-in f1-tv-settings-panel w-[720px] max-w-[92vw] p-7 text-white'
             onKeyDownCapture={(event) => {
               const target = event.target;
               if (
@@ -1845,9 +1848,9 @@ function TVPlayClient() {
         <div className='ptv-fade-in absolute inset-0 z-40 flex items-center justify-center bg-black/72 p-10 backdrop-blur-sm'>
           <section
             data-tv-player-control
-            className='ptv-modal-in max-h-[82vh] w-[980px] max-w-[92vw] overflow-y-auto rounded-[42px] border border-white/10 bg-slate-950/95 p-8 text-white shadow-2xl shadow-black/80'
+            className='ptv-modal-in f1-tv-detail-panel max-h-[82vh] w-[980px] max-w-[92vw] overflow-y-auto p-8 text-white'
           >
-            <div className='mb-6 flex items-start justify-between gap-6'>
+            <div className='f1-tv-detail-header mb-6 flex items-start justify-between gap-6'>
               <div>
                 <h2 className='text-5xl font-black'>{detail.title}</h2>
                 <div className='mt-4 flex flex-wrap gap-3 text-xl font-bold text-slate-200'>
@@ -1884,16 +1887,12 @@ function TVPlayClient() {
                 关闭
               </button>
             </div>
-            {detail.poster && (
-              <img
-                src={detail.poster}
-                alt=''
-                className='float-left mr-7 mb-4 h-72 w-48 rounded-3xl object-cover shadow-xl shadow-black/50'
-              />
-            )}
-            <p className='whitespace-pre-line text-2xl leading-relaxed text-slate-200'>
-              {detail.desc || '暂无详情简介'}
-            </p>
+            <div className='f1-tv-detail-body' data-has-poster={Boolean(detail.poster)}>
+              {detail.poster && <img src={detail.poster} alt={detail.title} className='f1-tv-detail-poster' />}
+              <div><h3 className='f1-tv-detail-label'>剧情简介</h3>
+                <p className='whitespace-pre-line text-2xl leading-relaxed text-slate-200'>{detail.desc || '暂无详情简介'}</p>
+              </div>
+            </div>
           </section>
         </div>
       )}

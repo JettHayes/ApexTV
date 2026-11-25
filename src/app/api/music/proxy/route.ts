@@ -1,6 +1,8 @@
 /* eslint-disable no-console */
 
 import { NextRequest, NextResponse } from 'next/server';
+
+import { reportAppError } from '@/lib/app-error';
 import { requireFeaturePermission } from '@/lib/permissions';
 
 export const runtime = 'nodejs';
@@ -112,11 +114,10 @@ export async function GET(request: NextRequest) {
       headers,
     });
   } catch (error) {
-    console.error('代理音频失败:', error);
+    reportAppError(error, '代理音频');
     return NextResponse.json(
       {
         error: '代理请求失败',
-        details: (error as Error).message,
       },
       { status: 500 }
     );

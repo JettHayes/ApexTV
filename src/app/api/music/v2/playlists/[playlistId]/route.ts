@@ -24,7 +24,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     const updated = await db.getMusicV2Playlist(playlistId);
     return NextResponse.json({ success: true, data: { playlist: updated } });
   } catch (error) {
-    return internalError('更新歌单失败', (error as Error).message);
+    return internalError('更新歌单失败', error);
   }
 }
 
@@ -41,6 +41,6 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
     await db.deleteMusicV2Playlist(playlistId);
     return NextResponse.json({ success: true });
   } catch (error) {
-    return internalError('删除歌单失败', (error as Error).message);
+    return internalError('删除歌单失败', error);
   }
 }

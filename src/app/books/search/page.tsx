@@ -13,6 +13,7 @@ import {
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
+import { AppRequestError, formatAppError, reportAppError } from '@/lib/app-error';
 import type {
   BookListItem,
   BookSearchFailure,
@@ -23,9 +24,9 @@ import {
   cacheBookListItem,
 } from '@/lib/book-route-cache.client';
 import {
+  type BookSearchPlanSummary,
   fetchBookSearchPlan,
   traverseBookSearchBatches,
-  type BookSearchPlanSummary,
 } from '@/lib/book-search.client';
 import {
   buildBookSourceOptions,
@@ -239,14 +240,11 @@ export default function BooksSearchPage() {
         saveState(current);
       } catch (error) {
         if (id !== generation.current) return;
+        if (!abort.signal.aborted) reportAppError(error, '搜索电子书');
         current = {
           ...current,
           status: abort.signal.aborted ? 'stopped' : 'error',
-          error: abort.signal.aborted
-            ? ''
-            : error instanceof Error
-            ? error.message
-            : '搜索失败',
+          error: abort.signal.aborted ? '' : formatAppError(error, '搜索电子书'),
         };
         flush();
         saveState(current);
@@ -274,11 +272,11 @@ export default function BooksSearchPage() {
       .then(async (response) => {
         const data = await response.json();
         if (!response.ok)
-          throw new Error('书源列表加载失败；仍可尝试全部书源搜索');
+          throw new AppRequestError({ ...data, status: response.status }, '加载书源');
         setSources(data.sources || []);
       })
       .catch((error) => {
-        if (!abort.signal.aborted) setSourceError(error.message);
+        if (!abort.signal.aborted) { reportAppError(error, '加载书源'); setSourceError(formatAppError(error, '加载书源')); }
       });
     return () => {
       abort.abort();
@@ -367,10 +365,10 @@ export default function BooksSearchPage() {
     : '搜索完成';
 
   return (
-    <div className='space-y-7 sm:space-y-9'>
+    <div className='f1-reading-search space-y-7 sm:space-y-9'>
       <section
         aria-labelledby='book-search-heading'
-        className='border-b border-library-edge pb-6 dark:border-library-night-edge sm:pb-8'
+        className='f1-reading-search-panel border-b border-library-edge pb-6 dark:border-library-night-edge sm:pb-8'
       >
         <p
           className={cn(
@@ -621,7 +619,7 @@ export default function BooksSearchPage() {
       {view.status !== 'idle' && (
         <section
           aria-label='搜索进度'
-          className={cn(LIBRARY_PANEL, 'overflow-hidden')}
+          className={cn(LIBRARY_PANEL, 'f1-reading-progress overflow-hidden')}
         >
           <div className='flex flex-wrap items-center justify-between gap-3 px-4 py-4 sm:px-5'>
             <div className='flex min-w-0 items-center gap-2.5'>

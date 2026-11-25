@@ -4,6 +4,7 @@ import { BookmarkCheck, CircleMinus, Info } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
 
+import { formatAppError, reportAppError } from '@/lib/app-error';
 import { deleteBookShelf, getAllBookShelf } from '@/lib/book.db.client';
 import { BookShelfItem } from '@/lib/book.types';
 import {
@@ -13,8 +14,8 @@ import {
 import { cn } from '@/lib/cn';
 import { processImageUrl } from '@/lib/utils';
 
-import { bookCardItem } from '@/components/media/adapters';
 import BooksPagination from '@/components/books/BooksPagination';
+import { bookCardItem } from '@/components/media/adapters';
 import EmptyState from '@/components/media/EmptyState';
 import { LIBRARY_ACCENT_ICON, LIBRARY_FIELD, LIBRARY_MUTED } from '@/components/media/library';
 import MediaGrid from '@/components/media/MediaGrid';
@@ -32,7 +33,7 @@ export default function BookShelfPage() {
   useEffect(() => {
     getAllBookShelf()
       .then(setShelf)
-      .catch(() => setError('书架读取失败，请稍后刷新重试'))
+      .catch((err) => { reportAppError(err, '加载电子书书架'); setError(formatAppError(err, '加载电子书书架')); })
       .finally(() => setLoading(false));
   }, []);
 
@@ -58,7 +59,8 @@ export default function BookShelfPage() {
   const currentPage = Math.min(page, Math.max(1, Math.ceil(filtered.length / 48)));
 
   return (
-    <section className='space-y-4'>
+    <section className='f1-reading-collection space-y-4'>
+      <div className='f1-collection-toolbar'><h2>书架</h2><div className='f1-collection-tools'>
       <div className={cn('flex flex-wrap items-center gap-x-2 gap-y-1 text-sm', LIBRARY_MUTED)}>
         <BookmarkCheck className={cn('h-4 w-4', LIBRARY_ACCENT_ICON)} />共{' '}
         {items.length} 本电子书
@@ -67,6 +69,7 @@ export default function BookShelfPage() {
 
       <input aria-label='筛选书架书籍' placeholder='查找书架中的书名或作者' value={filter}
         onChange={(event) => { setFilter(event.target.value); setPage(1); }} className={cn(LIBRARY_FIELD, 'min-h-11 text-base sm:max-w-md')} />
+      </div></div>
       {error && <p role='alert' className='text-sm text-red-700 dark:text-red-300'>{error}</p>}
 
       {loading ? (
@@ -106,7 +109,7 @@ export default function BookShelfPage() {
                     id: 'remove-from-shelf',
                     label: '移出书架',
                     icon: <CircleMinus size={20} />,
-                    onClick: () => void removeFromShelf(item),
+                    onClick: () => void removeFromShelf(item).catch((err) => { reportAppError(err, '移出电子书书架'); setError(formatAppError(err, '移出电子书书架')); }),
                     color: 'danger' as const,
                   },
                 ]}

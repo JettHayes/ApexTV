@@ -1,6 +1,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, react-hooks/exhaustive-deps */
 'use client';
 
+import { formatAppError, readJsonResponse, reportAppError } from '@/lib/app-error';
+
 import { ChevronUp, Loader2, Search } from 'lucide-react';
 import { useSearchParams } from 'next/navigation';
 import {
@@ -97,6 +99,9 @@ function SourceSearchPageClient() {
   const [selectedParentCategory, setSelectedParentCategory] = useState<string>('');
   const [selectedCategory, setSelectedCategory] = useState<string>('');
   const [videos, setVideos] = useState<SearchResult[]>([]);
+  const [sourceError, setSourceError] = useState('');
+  const [categoryError, setCategoryError] = useState('');
+  const [videoError, setVideoError] = useState('');
   const [isLoadingSources, setIsLoadingSources] = useState(true);
   const [isLoadingCategories, setIsLoadingCategories] = useState(false);
   const [isLoadingVideos, setIsLoadingVideos] = useState(false);
@@ -209,10 +214,11 @@ function SourceSearchPageClient() {
     if (!restoreChecked) return;
 
     const fetchApiSites = async () => {
+      setSourceError('');
       setIsLoadingSources(true);
       try {
         const response = await fetch(appendSpecialSourceParam('/api/source-search/sources'));
-        const data = await response.json();
+        const data = await readJsonResponse<any>(response, '获取影视数据');
         if (data.sources && Array.isArray(data.sources)) {
           setApiSites(data.sources);
           // 默认选择第一个源（恢复的源仍可用时保持不变）
@@ -225,7 +231,8 @@ function SourceSearchPageClient() {
           }
         }
       } catch (error) {
-        console.error('Failed to load API sources:', error);
+        reportAppError(error, '获取视频源');
+        setSourceError(formatAppError(error, '获取视频源'));
       } finally {
         setIsLoadingSources(false);
       }
@@ -245,6 +252,7 @@ function SourceSearchPageClient() {
     }
 
     const fetchCategories = async () => {
+      setCategoryError('');
       setIsLoadingCategories(true);
       setCategories([]);
       setSelectedParentCategory('');
@@ -256,7 +264,7 @@ function SourceSearchPageClient() {
         const response = await fetch(
           appendSpecialSourceParam(`/api/source-search/categories?source=${encodeURIComponent(selectedSource)}`)
         );
-        const data = await response.json();
+        const data = await readJsonResponse<any>(response, '获取影视数据');
         if (data.categories && Array.isArray(data.categories)) {
           const list = data.categories as Category[];
           setCategories(list);
@@ -266,7 +274,8 @@ function SourceSearchPageClient() {
           setSelectedCategory(category);
         }
       } catch (error) {
-        console.error('Failed to load categories:', error);
+        reportAppError(error, '获取视频分类');
+        setCategoryError(formatAppError(error, '获取视频分类'));
       } finally {
         setIsLoadingCategories(false);
       }
@@ -287,12 +296,13 @@ function SourceSearchPageClient() {
     }
 
     const fetchVideos = async () => {
+      setVideoError('');
       setIsLoadingVideos(true);
       try {
         const response = await fetch(
           appendSpecialSourceParam(`/api/source-search/videos?source=${encodeURIComponent(selectedSource)}&categoryId=${encodeURIComponent(selectedCategory)}&page=${currentPage}`)
         );
-        const data = await response.json();
+        const data = await readJsonResponse<any>(response, '获取影视数据');
         if (data.results && Array.isArray(data.results)) {
           if (currentPage === 1) {
             setVideos(data.results);
@@ -302,7 +312,9 @@ function SourceSearchPageClient() {
           setHasMore(data.page < data.pageCount);
         }
       } catch (error) {
-        console.error('Failed to load videos:', error);
+        reportAppError(error, '获取视频列表');
+        setVideoError(formatAppError(error, '获取视频列表'));
+        setHasMore(false);
       } finally {
         setIsLoadingVideos(false);
       }
@@ -323,12 +335,13 @@ function SourceSearchPageClient() {
     }
 
     const searchVideos = async () => {
+      setVideoError('');
       setIsLoadingVideos(true);
       try {
         const response = await fetch(
           appendSpecialSourceParam(`/api/source-search/search?source=${encodeURIComponent(selectedSource)}&keyword=${encodeURIComponent(searchKeyword)}&page=${currentPage}`)
         );
-        const data = await response.json();
+        const data = await readJsonResponse<any>(response, '获取影视数据');
         if (data.results && Array.isArray(data.results)) {
           if (currentPage === 1) {
             setVideos(data.results);
@@ -338,7 +351,9 @@ function SourceSearchPageClient() {
           setHasMore(data.page < data.pageCount);
         }
       } catch (error) {
-        console.error('Failed to search videos:', error);
+        reportAppError(error, '搜索视频');
+        setVideoError(formatAppError(error, '搜索视频'));
+        setHasMore(false);
       } finally {
         setIsLoadingVideos(false);
       }
@@ -456,13 +471,15 @@ function SourceSearchPageClient() {
 
   return (
     <PageLayout activePath='/source-search'>
-      <div className='px-4 sm:px-10 py-4 sm:py-8 overflow-visible mb-10'>
+      <div className='apex-page f1-source-search-page overflow-visible'>
+        {videoError && videos.length > 0 && <p role='alert' className='text-red-500'>{videoError}</p>}
+        {(sourceError || categoryError || videoError) && <button type='button' onClick={() => window.location.reload()} className='text-red-500 underline'>重试</button>}
         {/* 页面标题 */}
-        <div className='mb-6'>
+        <div className='apex-page-heading f1-media-heading'>
           <h1 className='flex items-center gap-2 text-2xl font-bold text-gray-800 dark:text-gray-200'>
             源站寻片
             {isSpecialVersion && (
-              <span className='rounded-full bg-purple-100 px-2 py-0.5 text-xs font-medium text-purple-600 dark:bg-purple-900/30 dark:text-purple-400'>
+              <span className="rounded-full bg-apex-selected px-2 py-0.5 text-xs font-medium text-apex-accent-on-soft dark:bg-apex-selected/30 dark:text-apex-accent-on-soft">
                 特殊源
               </span>
             )}
@@ -475,7 +492,7 @@ function SourceSearchPageClient() {
         </div>
 
         {/* 源选择和分类选择 */}
-        <div className='max-w-4xl mx-auto mb-8 space-y-6'>
+        <div className='f1-source-toolbar mb-8 space-y-6'>
           {/* 源选择 CapsuleSwitch */}
           <div className='relative'>
             <div className='flex items-center justify-between gap-3 mb-3'>
@@ -529,7 +546,7 @@ function SourceSearchPageClient() {
             ) : apiSites.length === 0 ? (
               <div className='flex items-center justify-center h-12 bg-gray-50/80 rounded-lg border border-gray-200/50 dark:bg-gray-800 dark:border-gray-700'>
                 <span className='text-sm text-gray-500 dark:text-gray-400'>
-                  暂无可用源
+                  {sourceError || '暂无可用源'}
                 </span>
               </div>
             ) : filteredApiSites.length === 0 ? (
@@ -565,7 +582,7 @@ function SourceSearchPageClient() {
                     value={searchInputValue}
                     onChange={(e) => setSearchInputValue(e.target.value)}
                     placeholder='搜索视频...'
-                    className='w-full h-12 rounded-lg bg-gray-50/80 py-3 pl-4 pr-12 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:bg-white border border-gray-200/50 shadow-sm dark:bg-gray-800 dark:text-gray-300 dark:focus:bg-gray-700 dark:border-gray-700'
+                    className="w-full h-12 rounded-lg bg-gray-50/80 py-3 pl-4 pr-12 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-apex-accent focus:bg-white border border-gray-200/50 shadow-sm dark:bg-gray-800 dark:text-gray-300 dark:focus:bg-gray-700 dark:border-gray-700"
                   />
                   <button
                     type='submit'
@@ -606,7 +623,7 @@ function SourceSearchPageClient() {
               ) : categories.length === 0 ? (
                 <div className='flex items-center justify-center h-12 bg-gray-50/80 rounded-lg border border-gray-200/50 dark:bg-gray-800 dark:border-gray-700'>
                   <span className='text-sm text-gray-500 dark:text-gray-400'>
-                    暂无分类
+                    {categoryError || '暂无分类'}
                   </span>
                 </div>
               ) : isHierarchical ? (
@@ -667,7 +684,7 @@ function SourceSearchPageClient() {
 
         {/* 视频列表 */}
         {selectedSource && (viewMode === 'search' ? searchKeyword : selectedCategory) && (
-          <div className='max-w-[95%] mx-auto mt-8'>
+          <div className='f1-source-results mt-8'>
             <div className='mb-4'>
               <h2 className='text-xl font-bold text-gray-800 dark:text-gray-200'>
                 视频列表
@@ -680,17 +697,17 @@ function SourceSearchPageClient() {
               </div>
             ) : videos.length === 0 ? (
               <div className='text-center text-gray-500 py-8 dark:text-gray-400'>
-                暂无视频
+                {videoError || '暂无视频'}
               </div>
             ) : (
               <>
-                <div className='ptv-fade-in grid grid-cols-3 gap-x-2 gap-y-14 sm:gap-y-20 px-0 sm:px-2 sm:grid-cols-[repeat(auto-fill,_minmax(11rem,_1fr))] sm:gap-x-8'>
+                <div className='f1-source-result-list ptv-fade-in'>
                   {videos.map((item) => (
                     <div
                       key={`${item.source}-${item.id}`}
-                      className='w-full'
+                      className='f1-source-result-row'
                     >
-                      <VideoCard
+                      <div className='f1-source-result-poster'><VideoCard
                         id={item.id}
                         title={item.title}
                         poster={item.poster}
@@ -712,7 +729,12 @@ function SourceSearchPageClient() {
                           episodes_titles: item.episodes_titles,
                         }}
                         onBeforeNavigate={saveSnapshot}
-                      />
+                      /></div>
+                      <div className='f1-source-result-copy'>
+                        <h3>{item.title}</h3>
+                        <p>{[item.type_name || item.class, item.year, item.source_name].filter(Boolean).join(' · ')}</p>
+                        {item.desc && <p className='f1-source-result-description'>{item.desc}</p>}
+                      </div>
                     </div>
                   ))}
                 </div>

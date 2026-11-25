@@ -7,6 +7,7 @@ import {
   Info,
   Link,
   ListPlus,
+  MoreHorizontal,
   PlayCircleIcon,
   Radio,
   Sparkles,
@@ -173,16 +174,7 @@ const VideoCard = forwardRef<VideoCardHandle, VideoCardProps>(
     );
     const actualTitle = title;
     const actualPoster = poster;
-    const netdiskPosterPlaceholder = useMemo(() => {
-      return `data:image/svg+xml;utf8,${encodeURIComponent(`
-      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 600">
-        <rect width="400" height="600" fill="#f3f4f6"/>
-        <g fill="none" stroke="#9ca3af" stroke-width="16" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M118 332c-30.9 0-56-25.1-56-56 0-28.5 21.3-52 48.9-55.4C120.6 184.7 154.8 160 195 160c51.1 0 92.9 39.2 97.1 89.2 27.3 4.2 47.9 27.7 47.9 56.8 0 32-26 58-58 58H118z"/>
-        </g>
-      </svg>
-    `)}`;
-    }, []);
+    const netdiskPosterPlaceholder = '/placeholder-cloud.svg';
     const processedPoster = useMemo(
       () =>
         actualPoster
@@ -269,23 +261,15 @@ const VideoCard = forwardRef<VideoCardHandle, VideoCardProps>(
       setDisplayPoster(processedPoster);
     }, [processedPoster]);
 
-    // 主源图片域主页探测：失败写 sticky 后切备源海报（替代原 5s 强制降级）
     useEffect(() => {
       if (!actualPoster) return;
-
       let cancelled = false;
-      void (async () => {
-        const reachable = await ensureBangumiImagePrimaryProbed();
+      void ensureBangumiImagePrimaryProbed().then((reachable) => {
         if (cancelled || reachable) return;
-        const bangumiFallbackPoster = getBangumiImageFallbackUrl(actualPoster);
-        if (bangumiFallbackPoster) {
-          setDisplayPoster(bangumiFallbackPoster);
-        }
-      })();
-
-      return () => {
-        cancelled = true;
-      };
+        const fallback = getBangumiImageFallbackUrl(actualPoster);
+        if (fallback) setDisplayPoster(fallback);
+      });
+      return () => { cancelled = true; };
     }, [actualPoster]);
 
     useImperativeHandle(ref, () => ({
@@ -1005,12 +989,13 @@ const VideoCard = forwardRef<VideoCardHandle, VideoCardProps>(
     return (
       <>
         <div
-          className={`ptv-video-card group relative w-full rounded-lg bg-transparent ${
+          className={`ptv-video-card f1-poster-card group relative w-full rounded-lg bg-transparent ${
             isUpcoming ? 'cursor-default' : 'cursor-pointer'
           } ${showUpcomingInfo ? 'z-[500]' : ''}`}
           onClick={handleClick}
           {...longPressProps}
           role='group'
+          data-orientation={orientation}
           aria-label={actualTitle}
           style={
             {
@@ -1059,7 +1044,7 @@ const VideoCard = forwardRef<VideoCardHandle, VideoCardProps>(
           />
           {/* 海报容器：不在外层 overflow-hidden，避免裁切来源数量浮层 */}
           <div
-            className={`relative rounded-lg ${
+            className={`f1-poster-art relative rounded-lg ${
               origin === 'live'
                 ? 'ring-1 ring-gray-300/80 dark:ring-gray-600/80'
                 : ''
@@ -1116,7 +1101,7 @@ const VideoCard = forwardRef<VideoCardHandle, VideoCardProps>(
                   }`}
                   referrerPolicy='no-referrer'
                   loading='lazy'
-                  onLoadingComplete={() => {
+                  onLoad={() => {
                     setIsLoading(true);
                   }}
                   onError={(e) => {
@@ -1545,7 +1530,7 @@ const VideoCard = forwardRef<VideoCardHandle, VideoCardProps>(
                       actualSource === 'xiaoya'
                         ? 'border-blue-500'
                         : isNetdiskSource(actualSource)
-                        ? 'border-purple-500'
+                        ? "border-apex-accent"
                         : actualSource === 'openlist' ||
                           actualSource === 'emby' ||
                           actualSource?.startsWith('emby_')
@@ -1968,7 +1953,7 @@ const VideoCard = forwardRef<VideoCardHandle, VideoCardProps>(
                                 actualSource === 'xiaoya'
                                   ? 'border-blue-500'
                                   : isNetdiskSource(actualSource)
-                                  ? 'border-purple-500'
+                                  ? "border-apex-accent"
                                   : actualSource === 'openlist' ||
                                     actualSource === 'emby' ||
                                     actualSource?.startsWith('emby_')
@@ -2192,7 +2177,7 @@ const VideoCard = forwardRef<VideoCardHandle, VideoCardProps>(
               checkSearchFavoriteStatus();
             }}
           >
-            <span aria-hidden='true'>···</span>
+            <MoreHorizontal size={18} strokeWidth={2} aria-hidden='true' />
           </button>
         </div>
 

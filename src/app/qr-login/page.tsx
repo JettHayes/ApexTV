@@ -1,5 +1,8 @@
 'use client';
 
+import { formatAppError, readJsonResponse, reportAppError } from '@/lib/app-error';
+
+
 import { CheckCircle, Loader2, LogIn, XCircle } from 'lucide-react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
@@ -14,37 +17,29 @@ function QrLoginClient() {
   const [message, setMessage] = useState('');
   const authed = Boolean(getAuthInfoFromBrowserCookie());
 
-  const confirm = async () => {
+  const perform = async (action: 'confirm' | 'cancel') => {
+    if (loading) return;
     setLoading(true);
     setMessage('');
-    const res = await fetch('/api/auth/qr/confirm', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ token }),
-    });
-    const data = await res.json();
-    setLoading(false);
-    if (res.ok) {
-      setMessage('确认成功，正在返回上一页...');
-      window.setTimeout(() => {
-        window.history.back();
-      }, 700);
-      return;
+    try {
+      const response = await fetch('/api/auth/qr/' + action, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ token }),
+      });
+      await readJsonResponse(response, action === 'confirm' ? '确认电视登录' : '取消电视登录');
+      setMessage(action === 'confirm' ? '确认成功，正在返回上一页...' : '已取消本次电视登录，正在返回上一页...');
+      window.setTimeout(() => window.history.back(), 700);
+    } catch (error) {
+      setMessage(formatAppError(reportAppError(error, '电视登录操作'), '电视登录操作'));
+    } finally {
+      setLoading(false);
     }
-    setMessage(data.error || '确认失败');
   };
-
-  const cancel = async () => {
-    await fetch('/api/auth/qr/cancel', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ token }) });
-    setMessage('已取消本次电视登录，正在返回上一页...');
-    window.setTimeout(() => {
-      window.history.back();
-    }, 500);
-  };
+  const confirm = () => perform('confirm');
+  const cancel = () => perform('cancel');
 
   return (
-    <main className='min-h-screen bg-black px-5 py-10 text-white'>
-      <section className='mx-auto max-w-md rounded-[32px] border border-white/10 bg-slate-950 p-7 shadow-2xl shadow-black'>
+    <main className='f1-standalone f1-qr-login px-5 py-10'>
+      <section className='f1-surface mx-auto max-w-md p-7'>
         <h1 className='text-3xl font-black'>确认登录电视端</h1>
         <p className='mt-3 text-slate-300'>请确认电视屏幕上的二维码来自你正在使用的设备。</p>
         {!authed ? (

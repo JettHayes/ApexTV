@@ -1,3 +1,4 @@
+import { appErrorPayload, reportAppError } from '@/lib/app-error';
 /* eslint-disable no-console */
 
 import { NextRequest, NextResponse } from 'next/server';
@@ -95,9 +96,9 @@ export async function GET(request: NextRequest) {
       { headers: { 'Cache-Control': 'no-store' } }
     );
   } catch (error) {
-    console.error('获取用户设备失败:', error);
+    reportAppError(error, "获取用户设备失败");
     return NextResponse.json(
-      { error: '获取用户设备失败', details: (error as Error).message },
+      {...{ error: '获取用户设备失败', details: (error as Error).message }, ...appErrorPayload(error, "后台配置服务", 500)},
       { status: 500 }
     );
   }
@@ -164,9 +165,9 @@ export async function DELETE(request: NextRequest) {
 
     return NextResponse.json({ ok: true });
   } catch (error) {
-    console.error('登出用户设备失败:', error);
+    reportAppError(error, "登出用户设备失败");
     return NextResponse.json(
-      { error: '登出用户设备失败', details: (error as Error).message },
+      {...{ error: '登出用户设备失败', details: (error as Error).message }, ...appErrorPayload(error, "后台配置服务", 500)},
       { status: 500 }
     );
   }

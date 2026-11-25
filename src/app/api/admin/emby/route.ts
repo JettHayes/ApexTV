@@ -1,3 +1,4 @@
+import { appErrorPayload, reportAppError } from '@/lib/app-error';
 /* eslint-disable no-console */
 
 import { NextRequest, NextResponse } from 'next/server';
@@ -108,9 +109,9 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ error: '不支持的操作' }, { status: 400 });
   } catch (error) {
-    console.error('Emby 配置保存失败:', error);
+    reportAppError(error, "Emby 配置保存失败");
     return NextResponse.json(
-      { error: 'Emby 配置保存失败: ' + (error as Error).message },
+      {...{ error: 'Emby 配置保存失败: ' + (error as Error).message }, ...appErrorPayload(error, "后台配置服务", 500)},
       { status: 500 }
     );
   }

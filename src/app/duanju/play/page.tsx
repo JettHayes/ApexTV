@@ -1,5 +1,7 @@
 'use client';
 
+import { formatAppError, readJsonResponse, reportAppError } from '@/lib/app-error';
+
 import { useRouter, useSearchParams } from 'next/navigation';
 import React, {
   Suspense,
@@ -39,11 +41,11 @@ import { getVideoResolutionFromM3u8 } from '@/lib/utils';
    避免污染全局。播放层单独套 .touchguard 吃 touch-action:none（抽屉要能滚）。 */
 const LOCAL_CSS = `
 #djplayer {
-  --surface:#ffffff; --surface-2:#f5f7fb; --fg:#14161c; --muted:#5f6775; --line:#dbe1ea;
-  --accent: var(--theme-primary, #10b981);
-  --accent-2: var(--theme-primary-hover, #059669);
-  --accent-ink:#04140d; --player:#05070c; --scrim:rgba(10,12,18,.55); --radius:14px;
-  position: fixed; inset: 0; overflow: hidden; background: var(--player); color: #fff;
+  --surface:var(--ptv-media-text); --surface-2:var(--ptv-soft); --fg:var(--ptv-text); --muted:var(--ptv-muted); --line:var(--ptv-line);
+  --accent: var(--theme-primary, var(--ptv-action));
+  --accent-2: var(--theme-primary-hover, var(--ptv-action-hover));
+  --accent-ink:var(--ptv-action-ink); --player:var(--ptv-media-bg); --scrim:var(--ptv-media-bg-alpha-55); --radius:14px;
+  position: fixed; inset: 0; overflow: hidden; background: var(--player); color: var(--ptv-media-text);
   display: flex; align-items: center; justify-content: center;
   /* "手机屏"的宽：竖屏时就是整屏宽；宽屏（PC / 横屏）按高度算 9:16 居中，两侧留黑。
      抽屉也按这个宽度收进来，不然竖列居中、抽屉却横跨整个显示器。
@@ -58,17 +60,17 @@ const LOCAL_CSS = `
 }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) #djplayer {
-    --surface:#14161d; --surface-2:#1a1d27; --fg:#edeff6; --muted:#99a1b1; --line:#272b37;
-    --accent: var(--theme-primary, #10b981);
-    --accent-2: var(--theme-primary-hover, #34d399);
-    --player:#000000; --scrim:rgba(0,0,0,.62);
+    --surface:var(--ptv-media-panel); --surface-2:var(--ptv-media-high); --fg:var(--ptv-media-text); --muted:var(--ptv-media-muted); --line:var(--ptv-media-line);
+    --accent: var(--theme-primary, var(--ptv-action));
+    --accent-2: var(--theme-primary-hover, var(--ptv-action-hover));
+    --player:var(--ptv-media-bg); --scrim:var(--ptv-media-bg-alpha-62);
   }
 }
 :root[data-theme="dark"] #djplayer {
-  --surface:#14161d; --surface-2:#1a1d27; --fg:#edeff6; --muted:#99a1b1; --line:#272b37;
-  --accent: var(--theme-primary, #10b981);
-  --accent-2: var(--theme-primary-hover, #34d399);
-  --player:#000000; --scrim:rgba(0,0,0,.62);
+  --surface:var(--ptv-media-panel); --surface-2:var(--ptv-media-high); --fg:var(--ptv-media-text); --muted:var(--ptv-media-muted); --line:var(--ptv-media-line);
+  --accent: var(--theme-primary, var(--ptv-action));
+  --accent-2: var(--theme-primary-hover, var(--ptv-action-hover));
+  --player:var(--ptv-media-bg); --scrim:var(--ptv-media-bg-alpha-62);
 }
 #djplayer, #djplayer * { box-sizing: border-box; }
 /* touchguard 就是"手机屏"：宽度取 --col-w（竖屏满宽 / 宽屏居中 9:16 竖列）。
@@ -79,9 +81,9 @@ const LOCAL_CSS = `
 /* 播放层：竖排轨道。每一集是一个占满屏的 eslot，按集号固定偏移 ep*100%，
    轨道整体按 -当前集*100% 平移；拖动时叠加手指位移，松手做 300ms 过渡。
    页面自绘一套 UI，所以这里只放 <video>，不引任何播放器皮肤。 */
-#djplayer .stage { position:absolute; inset:0; z-index:0; overflow:hidden; background:#000; pointer-events:none; }
+#djplayer .stage { position:absolute; inset:0; z-index:0; overflow:hidden; background:var(--ptv-media-bg); pointer-events:none; }
 #djplayer .track { position:absolute; inset:0; will-change: transform; }
-#djplayer .eslot { position:absolute; inset:0; overflow:hidden; background:#000; }
+#djplayer .eslot { position:absolute; inset:0; overflow:hidden; background:var(--ptv-media-bg); }
 #djplayer .eslot video { width:100%; height:100%; object-fit:cover; display:block; }
 /* 横屏/方屏视频：机位框已经按视频比例收窄了，画面按原比例完整显示，别再裁。
    （竖屏短剧那条路保持 cover，铺满整屏才是红果那种观感） */
@@ -94,18 +96,18 @@ html:has(#djplayer), body:has(#djplayer) { height:100%; overflow:hidden; overscr
 #djplayer .top {
   position:absolute; top:0; left:0; right:0; z-index:4; display:flex; align-items:center; gap:10px;
   padding: calc(12px + env(safe-area-inset-top, 0px)) 14px 10px;
-  background: linear-gradient(180deg, rgba(0,0,0,0.62), transparent);
+  background: linear-gradient(180deg, var(--ptv-media-bg-alpha-62), transparent);
 }
 #djplayer .iconbtn {
   display:inline-grid; place-items:center; width:34px; height:34px; flex:none;
-  border-radius:50%; border:none; cursor:pointer; color:#fff;
-  background: rgba(255,255,255,0.14); backdrop-filter: blur(6px);
+  border-radius:50%; border:none; cursor:pointer; color:var(--ptv-media-text);
+  background: var(--ptv-media-text-alpha-14); backdrop-filter: blur(6px);
   transition: transform .12s cubic-bezier(.16,1,.3,1);
 }
 #djplayer .iconbtn:active { transform: scale(0.94); }
 #djplayer .top .name {
   font-size:14px; font-weight:700; white-space:nowrap; overflow:hidden;
-  text-overflow:ellipsis; flex:1; min-width:0; text-shadow:0 1px 6px rgba(0,0,0,0.6);
+  text-overflow:ellipsis; flex:1; min-width:0; text-shadow:0 1px 6px var(--ptv-media-bg-alpha-60);
 }
 
 /* 右侧操作列 */
@@ -115,12 +117,12 @@ html:has(#djplayer), body:has(#djplayer) { height:100%; overflow:hidden; overscr
 }
 #djplayer .railbtn {
   position:relative; display:grid; place-items:center; gap:3px; width:52px;
-  border:none; background:none; color:#fff; cursor:pointer; font-family:inherit;
+  border:none; background:none; color:var(--ptv-media-text); cursor:pointer; font-family:inherit;
 }
 #djplayer .railbtn .bubble {
   display:grid; place-items:center; width:46px; height:46px; border-radius:50%;
-  background: rgba(255,255,255,0.16); backdrop-filter: blur(8px);
-  border:1px solid rgba(255,255,255,0.12);
+  background: var(--ptv-media-text-alpha-16); backdrop-filter: blur(8px);
+  border:1px solid var(--ptv-media-text-alpha-12);
   transition: transform .12s cubic-bezier(.16,1,.3,1);
 }
 #djplayer .railbtn:active .bubble { transform: scale(0.93); }
@@ -128,7 +130,7 @@ html:has(#djplayer), body:has(#djplayer) { height:100%; overflow:hidden; overscr
 #djplayer .railbtn.on .lab { color: var(--accent-2); font-weight:700; }
 @keyframes dj-pop { 0% { transform: scale(1); } 40% { transform: scale(1.12); } 100% { transform: scale(1); } }
 #djplayer .railbtn.pop .bubble { animation: dj-pop .34s ease; }
-#djplayer .railbtn .lab { font-size:11px; text-shadow:0 1px 4px rgba(0,0,0,0.7); }
+#djplayer .railbtn .lab { font-size:11px; text-shadow:0 1px 4px var(--ptv-media-bg-alpha-70); }
 #djplayer .railbtn .badge {
   position:absolute; top:-3px; right:2px; min-width:18px; height:18px; padding:0 4px;
   border-radius:999px; background: var(--accent); color: var(--accent-ink);
@@ -139,8 +141,8 @@ html:has(#djplayer), body:has(#djplayer) { height:100%; overflow:hidden; overscr
 #djplayer .center { position:absolute; inset:0; z-index:3; display:grid; place-items:center; pointer-events:none; }
 #djplayer .bigplay {
   width:66px; height:66px; border-radius:50%; display:grid; place-items:center;
-  background: rgba(0,0,0,0.42); backdrop-filter: blur(4px);
-  border:1px solid rgba(255,255,255,0.18);
+  background: var(--ptv-media-bg-alpha-42); backdrop-filter: blur(4px);
+  border:1px solid var(--ptv-media-text-alpha-18);
   opacity:0; transform: scale(0.8); transition: opacity .25s, transform .25s;
 }
 #djplayer.paused .bigplay { opacity:1; transform: scale(1); }
@@ -151,35 +153,35 @@ html:has(#djplayer), body:has(#djplayer) { height:100%; overflow:hidden; overscr
 #djplayer .bottom {
   position:absolute; left:0; right:0; bottom:0; z-index:4;
   padding: 34px 14px calc(16px + env(safe-area-inset-bottom, 0px));
-  background: linear-gradient(0deg, rgba(0,0,0,0.86) 12%, rgba(0,0,0,0.42) 62%, transparent);
+  background: linear-gradient(0deg, var(--ptv-media-bg-alpha-86) 12%, var(--ptv-media-bg-alpha-42) 62%, transparent);
 }
 #djplayer .epblock { display:flex; align-items:center; gap:8px; margin-top:12px; }
 #djplayer .eplab {
   flex:1; min-width:0; display:flex; align-items:center;
-  background:none; border:none; color:#fff; cursor:pointer; font-family:inherit;
+  background:none; border:none; color:var(--ptv-media-text); cursor:pointer; font-family:inherit;
   padding:6px 4px; text-align:left; border-radius:10px;
 }
-#djplayer .eplab:hover { background: rgba(255,255,255,0.08); }
+#djplayer .eplab:hover { background: var(--ptv-media-text-alpha-8); }
 #djplayer .eplab .ep {
   font-size:15px; font-weight:900; font-variant-numeric: tabular-nums;
-  text-shadow:0 1px 6px rgba(0,0,0,0.7);
+  text-shadow:0 1px 6px var(--ptv-media-bg-alpha-70);
 }
 #djplayer .eplab .ep em { color: var(--accent-2); font-style:normal; }
 #djplayer .clearbtn, #djplayer .fsbtn {
   flex:none; display:inline-grid; place-items:center; width:34px; height:34px;
-  border-radius:50%; border:none; cursor:pointer; color:#fff;
-  background: rgba(255,255,255,0.16); backdrop-filter: blur(6px);
+  border-radius:50%; border:none; cursor:pointer; color:var(--ptv-media-text);
+  background: var(--ptv-media-text-alpha-16); backdrop-filter: blur(6px);
   transition: transform .12s cubic-bezier(.16,1,.3,1);
 }
-#djplayer .clearbtn:hover, #djplayer .fsbtn:hover { background: rgba(255,255,255,0.26); }
+#djplayer .clearbtn:hover, #djplayer .fsbtn:hover { background: var(--ptv-media-text-alpha-26); }
 #djplayer .clearbtn:active, #djplayer .fsbtn:active { transform: scale(0.93); }
 #djplayer .clearbtn:not(.on) .icon-off { display:none; }
 #djplayer .clearbtn.on .icon-on { display:none; }
 #djplayer .info { position:relative; max-height:240px; overflow:hidden; transition: max-height .25s ease, opacity .25s ease; }
 #djplayer .vt {
   display:flex; align-items:center; gap:5px; width:100%;
-  background:none; border:none; color:#fff; font-family:inherit; cursor:pointer;
-  padding:2px 4px 0; text-align:left; text-shadow:0 1px 6px rgba(0,0,0,0.7); transition: opacity .12s ease;
+  background:none; border:none; color:var(--ptv-media-text); font-family:inherit; cursor:pointer;
+  padding:2px 4px 0; text-align:left; text-shadow:0 1px 6px var(--ptv-media-bg-alpha-70); transition: opacity .12s ease;
 }
 #djplayer .vt .t {
   font-size:15.5px; font-weight:800; min-width:0;
@@ -187,9 +189,9 @@ html:has(#djplayer), body:has(#djplayer) { height:100%; overflow:hidden; overscr
 }
 #djplayer .vt svg { flex:none; opacity:0.75; }
 #djplayer .desc {
-  width:100%; background:none; border:none; color:rgba(255,255,255,0.72);
+  width:100%; background:none; border:none; color:var(--ptv-media-text-alpha-72);
   font-family:inherit; font-size:12.5px; line-height:1.6; text-align:left; cursor:pointer;
-  margin:7px 0 0; padding:0 4px; text-shadow:0 1px 4px rgba(0,0,0,0.6); transition: opacity .12s ease;
+  margin:7px 0 0; padding:0 4px; text-shadow:0 1px 4px var(--ptv-media-bg-alpha-60); transition: opacity .12s ease;
 }
 #djplayer .desc .dtext {
   display:-webkit-box; -webkit-line-clamp:1; -webkit-box-orient:vertical; overflow:hidden;
@@ -198,7 +200,7 @@ html:has(#djplayer), body:has(#djplayer) { height:100%; overflow:hidden; overscr
 #djplayer .seektime {
   position:absolute; left:4px; bottom:0; display:flex; align-items:baseline; gap:5px;
   opacity:0; pointer-events:none; transition: opacity .14s ease;
-  color:#fff; font-variant-numeric: tabular-nums; text-shadow:0 1px 6px rgba(0,0,0,0.8);
+  color:var(--ptv-media-text); font-variant-numeric: tabular-nums; text-shadow:0 1px 6px var(--ptv-media-bg-alpha-80);
 }
 #djplayer .seektime b { font-size:16px; font-weight:800; }
 #djplayer .seektime .sep { font-size:12px; opacity:0.5; }
@@ -206,11 +208,11 @@ html:has(#djplayer), body:has(#djplayer) { height:100%; overflow:hidden; overscr
 #djplayer .info.seeking .vt, #djplayer .info.seeking .desc { opacity:0; }
 #djplayer .info.seeking .seektime { opacity:1; }
 #djplayer .seek { position:relative; margin-top:4px; padding:10px 0; cursor:pointer; touch-action:none; }
-#djplayer .bar { height:3px; border-radius:999px; background: rgba(255,255,255,0.24); overflow:hidden; }
+#djplayer .bar { height:3px; border-radius:999px; background: var(--ptv-media-text-alpha-24); overflow:hidden; }
 #djplayer .bar > i { display:block; height:100%; width:0; background: var(--accent); border-radius:999px; }
 #djplayer .thumb {
   position:absolute; top:50%; left:0; width:12px; height:12px; border-radius:50%;
-  background:#fff; box-shadow:0 1px 4px rgba(0,0,0,0.55); pointer-events:none;
+  background:var(--ptv-media-text); box-shadow:0 1px 4px var(--ptv-media-bg-alpha-55); pointer-events:none;
   transform: translate(-50%,-50%) scale(0); transition: transform .16s ease;
 }
 #djplayer .seek:hover .thumb, #djplayer .seek.seeking .thumb { transform: translate(-50%,-50%) scale(1); }
@@ -220,9 +222,9 @@ html:has(#djplayer), body:has(#djplayer) { height:100%; overflow:hidden; overscr
 /* 右上角「更多」菜单 */
 #djplayer .menu {
   position:absolute; top: calc(52px + env(safe-area-inset-top, 0px)); right:12px; z-index:7; width:194px;
-  background: rgba(18,20,26,0.96); backdrop-filter: blur(10px);
-  border:1px solid rgba(255,255,255,0.12); border-radius:14px; padding:6px;
-  box-shadow:0 16px 40px -18px rgba(0,0,0,0.85);
+  background: var(--ptv-media-bg-alpha-96); backdrop-filter: blur(10px);
+  border:1px solid var(--ptv-media-text-alpha-12); border-radius:14px; padding:6px;
+  box-shadow:0 16px 40px -18px var(--ptv-media-bg-alpha-85);
   opacity:0; transform: translateY(-4px) scale(.98); transform-origin: top right;
   pointer-events:none; visibility:hidden;
   transition: opacity .16s cubic-bezier(.16,1,.3,1), transform .16s cubic-bezier(.16,1,.3,1), visibility 0s linear .16s;
@@ -233,30 +235,30 @@ html:has(#djplayer), body:has(#djplayer) { height:100%; overflow:hidden; overscr
 }
 #djplayer .mrow {
   display:flex; align-items:center; justify-content:space-between; gap:10px;
-  width:100%; background:none; border:none; color:#fff; font-family:inherit;
+  width:100%; background:none; border:none; color:var(--ptv-media-text); font-family:inherit;
   font-size:13.5px; padding:11px 12px; border-radius:10px; cursor:pointer;
 }
-#djplayer .mrow:hover { background: rgba(255,255,255,0.08); }
+#djplayer .mrow:hover { background: var(--ptv-media-text-alpha-8); }
 #djplayer .mrow .val { color: var(--accent-2); font-weight:700; font-variant-numeric: tabular-nums; }
-#djplayer .mdiv { height:1px; background: rgba(255,255,255,0.1); margin:5px 8px; }
+#djplayer .mdiv { height:1px; background: var(--ptv-media-text-alpha-10); margin:5px 8px; }
 #djplayer .speeds { display:none; flex-wrap:wrap; gap:6px; padding:2px 8px 10px; }
 #djplayer .speeds.on { display:flex; animation: dj-fade-in .18s cubic-bezier(.16,1,.3,1) both; }
 @keyframes dj-fade-in { from { opacity:0; transform: translateY(-4px); } to { opacity:1; transform:none; } }
 #djplayer .speeds button {
   flex:1; min-width:46px; padding:7px 0; border-radius:8px; cursor:pointer;
-  border:1px solid rgba(255,255,255,0.14); background: rgba(255,255,255,0.06);
-  color:#fff; font-family:inherit; font-size:12px; font-variant-numeric: tabular-nums;
+  border:1px solid var(--ptv-media-text-alpha-14); background: var(--ptv-media-text-alpha-6);
+  color:var(--ptv-media-text); font-family:inherit; font-size:12px; font-variant-numeric: tabular-nums;
 }
 #djplayer .speeds button.cur { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); font-weight:700; }
-#djplayer .sw { position:relative; flex:none; width:38px; height:22px; border-radius:999px; background: rgba(255,255,255,0.22); transition: background .2s; }
-#djplayer .sw::after { content:""; position:absolute; top:2px; left:2px; width:18px; height:18px; border-radius:50%; background:#fff; transition: transform .2s; }
+#djplayer .sw { position:relative; flex:none; width:38px; height:22px; border-radius:999px; background: var(--ptv-media-text-alpha-22); transition: background .2s; }
+#djplayer .sw::after { content:""; position:absolute; top:2px; left:2px; width:18px; height:18px; border-radius:50%; background:var(--ptv-media-text); transition: transform .2s; }
 #djplayer .sw.on { background: var(--accent); }
 #djplayer .sw.on::after { transform: translateX(16px); }
 #djplayer .toast {
   position:absolute; left:50%; bottom:128px; z-index:9; transform: translate(-50%, 8px);
-  background: rgba(0,0,0,0.82); color:#fff; font-size:12.5px; padding:8px 14px;
+  background: var(--ptv-media-bg-alpha-82); color:var(--ptv-media-text); font-size:12.5px; padding:8px 14px;
   border-radius:999px; opacity:0; pointer-events:none; white-space:nowrap;
-  border:1px solid rgba(255,255,255,0.12); transition: opacity .2s, transform .2s;
+  border:1px solid var(--ptv-media-text-alpha-12); transition: opacity .2s, transform .2s;
 }
 #djplayer .toast.on { opacity:1; transform: translate(-50%, 0); }
 
@@ -268,7 +270,7 @@ html:has(#djplayer), body:has(#djplayer) { height:100%; overflow:hidden; overscr
 #djplayer .scrim.on { opacity:1; pointer-events:auto; }
 #djplayer .drawer {
   position:absolute; z-index:41; background: var(--surface); color: var(--fg);
-  display:flex; flex-direction:column; box-shadow:0 -18px 50px -20px rgba(0,0,0,0.6);
+  display:flex; flex-direction:column; box-shadow:0 -18px 50px -20px var(--ptv-media-bg-alpha-60);
   transition: transform .3s cubic-bezier(.2,.8,.25,1);
   inset: auto var(--col-x) 0 var(--col-x); max-height:78vh; border-radius:18px 18px 0 0; transform: translateY(101%);
 }
@@ -295,7 +297,7 @@ html:has(#djplayer), body:has(#djplayer) { height:100%; overflow:hidden; overscr
        只 translateX(100%) 的话它只是停在竖列右边那条黑边里、整块常驻可见
        （三个抽屉同位，最后渲染的详情盖在最上面）。所以要连 --col-x 一起挪掉。 */
     border-radius:0; transform: translateX(calc(100% + var(--col-x) + 24px));
-    box-shadow: -18px 0 50px -24px rgba(0,0,0,0.6);
+    box-shadow: -18px 0 50px -24px var(--ptv-media-bg-alpha-60);
   }
   #djplayer .drawer .grab { display:none; }
 }
@@ -334,17 +336,17 @@ html:has(#djplayer), body:has(#djplayer) { height:100%; overflow:hidden; overscr
   flex:none; font-size:11.5px; font-weight:800; color: var(--muted); font-variant-numeric: tabular-nums;
 }
 #djplayer .srcrow .qn:empty { display:none; }
-#djplayer .srcrow .qn.q-ultra { color:#a855f7; }
-#djplayer .srcrow .qn.q-high { color:#10b981; }
-#djplayer .srcrow .qn.q-low { color:#f59e0b; }
+#djplayer .srcrow .qn.q-ultra { color:var(--ptv-action); }
+#djplayer .srcrow .qn.q-high { color:var(--ptv-action); }
+#djplayer .srcrow .qn.q-low { color:var(--ptv-warning); }
 #djplayer .srcrow .stats {
   display:flex; align-items:center; gap:10px; font-size:11.5px; font-weight:600; font-variant-numeric: tabular-nums;
 }
 #djplayer .srcrow .stats.measuring { color: var(--muted); font-weight:500; }
-#djplayer .srcrow .sp { color:#10b981; }
-#djplayer .srcrow .pg { color:#f59e0b; }
-#djplayer .srcrow .br { color:#a855f7; }
-#djplayer .srcrow .err { color:#ef4444; }
+#djplayer .srcrow .sp { color:var(--ptv-action); }
+#djplayer .srcrow .pg { color:var(--ptv-warning); }
+#djplayer .srcrow .br { color:var(--ptv-action); }
+#djplayer .srcrow .err { color:var(--ptv-error); }
 #djplayer .srcrow .tag {
   margin-left:auto; font-size:11px; font-weight:700; color: var(--accent-2);
   background: color-mix(in srgb, var(--accent) 16%, transparent);
@@ -374,8 +376,8 @@ html:has(#djplayer), body:has(#djplayer) { height:100%; overflow:hidden; overscr
 #djplayer .dhero { display:flex; gap:12px; }
 #djplayer .dposter {
   flex:none; width:104px; aspect-ratio:3/4; border-radius:12px; overflow:hidden;
-  background: linear-gradient(160deg, #334155, #0b1120);
-  box-shadow: inset 0 0 0 1px rgba(255,255,255,0.08);
+  background: linear-gradient(160deg, var(--ptv-media-line), var(--ptv-media-bg));
+  box-shadow: inset 0 0 0 1px var(--ptv-media-text-alpha-8);
 }
 #djplayer .dposter img { width:100%; height:100%; object-fit:cover; }
 #djplayer .dname { margin:0 0 8px; font-size:16px; font-weight:800; line-height:1.35; }
@@ -391,7 +393,7 @@ html:has(#djplayer), body:has(#djplayer) { height:100%; overflow:hidden; overscr
   display:flex; flex-direction:column; gap:6px; padding:0; border:none; background:none;
   cursor:pointer; text-align:left; font-family:inherit; color: var(--fg);
 }
-#djplayer .recpic { width:100%; aspect-ratio:3/4; border-radius:10px; overflow:hidden; background: linear-gradient(160deg, #3b4a63, #0f172a); }
+#djplayer .recpic { width:100%; aspect-ratio:3/4; border-radius:10px; overflow:hidden; background: linear-gradient(160deg, var(--ptv-media-line), var(--ptv-media-bg)); }
 #djplayer .recpic img { width:100%; height:100%; object-fit:cover; }
 #djplayer .rect {
   font-size:12.5px; font-weight:600; line-height:1.35; overflow:hidden;
@@ -769,8 +771,7 @@ function DuanjuPlayClient() {
         );
         if (fileNameParam) url += `&fileName=${encodeURIComponent(fileNameParam)}`;
         const res = await fetch(url);
-        if (!res.ok) throw new Error('获取视频详情失败');
-        const data = (await res.json()) as SearchResult;
+        const data = await readJsonResponse<SearchResult>(res, '获取短剧详情');
         if (cancelled) return;
         if (!data || !Array.isArray(data.episodes) || data.episodes.length === 0) {
           throw new Error('未获取到剧集信息');
@@ -828,7 +829,10 @@ function DuanjuPlayClient() {
           /* 忽略 */
         }
       } catch (e) {
-        if (!cancelled) setError((e as Error).message || '加载失败');
+        if (!cancelled) {
+          reportAppError(e, '获取短剧详情');
+          setError(formatAppError(e, '获取短剧详情'));
+        }
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -1655,7 +1659,7 @@ function DuanjuPlayClient() {
         <p>{error}</p>
         <button
           onClick={goBack}
-          className='rounded-full bg-emerald-500 px-5 py-2 text-sm font-semibold text-black'
+          className="rounded-full bg-apex-action px-5 py-2 text-sm font-semibold text-black"
         >
           返回
         </button>
@@ -1672,7 +1676,7 @@ function DuanjuPlayClient() {
   return (
     <div
       id='djplayer'
-      className={`${clean ? 'clean' : ''} ${playing ? '' : 'paused'} ${loading || videoLoading ? 'loading' : ''}${videoWide ? ' fit' : ''}`}
+      className={`f1-duanju-player ${clean ? 'clean' : ''} ${playing ? '' : 'paused'} ${loading || videoLoading ? 'loading' : ''}${videoWide ? ' fit' : ''}`}
       style={{ '--col-num': String(frameNum) } as React.CSSProperties}
     >
       <style dangerouslySetInnerHTML={{ __html: LOCAL_CSS }} />
@@ -1933,8 +1937,24 @@ function DuanjuPlayClient() {
       {/* 遮罩 + 抽屉 */}
       <div className={`scrim ${drawer ? 'on' : ''}`} onClick={() => setDrawer('')} />
 
+      <aside className={`reference-sidebar ${drawer ? 'has-drawer' : ''}`} aria-label='短剧信息与选集'>
+        <div className='reference-summary'>
+          <h1>{detail?.title || titleParam || '短剧'}</h1>
+          <div className='reference-meta'>
+            {detail?.type_name && <span>{detail.type_name}</span>}
+            {detail?.year && <span>{detail.year}</span>}
+            <span>共 {total} 集</span>
+          </div>
+          {detail?.desc && <button type='button' className={`reference-description ${expanded ? 'expanded' : ''}`} aria-expanded={expanded} onClick={() => setExpanded((value) => !value)}>{detail.desc}</button>}
+          <div className='reference-actions'>
+            <button type='button' aria-pressed={fav} onClick={toggleFav}>{fav ? '已收藏' : '收藏'}</button>
+            <button type='button' onClick={() => setDlOpen(true)}>下载</button>
+            <button type='button' onClick={openSrcDrawer}>换源</button>
+            <button type='button' onClick={() => setDrawer('detail')}>详情</button>
+          </div>
+        </div>
       {/* 选集 */}
-      <div className={`drawer ${drawer === 'ep' ? 'on' : ''}`} role='dialog' aria-label='选集' aria-modal='true'>
+      <div className={`drawer drawer-episodes ${drawer === 'ep' ? 'on' : ''}`} role={drawer === 'ep' ? 'dialog' : undefined} aria-label='选集' aria-modal={drawer === 'ep' ? true : undefined}>
         <div className='grab' />
         <div className='dhead'>
           <span className='dtitle'>选集</span>
@@ -1983,7 +2003,7 @@ function DuanjuPlayClient() {
       </div>
 
       {/* 换源 */}
-      <div className={`drawer ${drawer === 'src' ? 'on' : ''}`} role='dialog' aria-label='换源' aria-modal='true'>
+      <div className={`drawer drawer-source ${drawer === 'src' ? 'on' : ''}`} role='dialog' aria-label='换源' aria-modal='true'>
         <div className='grab' />
         <div className='dhead'>
           <span className='dtitle'>换源</span>
@@ -2055,7 +2075,7 @@ function DuanjuPlayClient() {
       </div>
 
       {/* 详情 */}
-      <div className={`drawer ${drawer === 'detail' ? 'on' : ''}`} role='dialog' aria-label='剧集详情' aria-modal='true'>
+      <div className={`drawer drawer-detail ${drawer === 'detail' ? 'on' : ''}`} role='dialog' aria-label='剧集详情' aria-modal='true'>
         <div className='grab' />
         <div className='dhead'>
           <span className='dtitle'>剧集详情</span>
@@ -2105,6 +2125,8 @@ function DuanjuPlayClient() {
         </div>
       </div>
 
+      </aside>
+
       {/* 下载（直接复用 play 页既有的下载选集面板） */}
       <DownloadEpisodeSelector
         isOpen={dlOpen}
@@ -2112,6 +2134,8 @@ function DuanjuPlayClient() {
         totalEpisodes={total}
         episodesTitles={detail?.episodes_titles || []}
         videoTitle={detail?.title || titleParam}
+        videoPoster={detail?.poster}
+        sourceName={detail?.source_name}
         currentEpisodeIndex={episodeIndex}
         onDownload={handleDownload}
       />

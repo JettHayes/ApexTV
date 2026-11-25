@@ -2,17 +2,12 @@
 
 'use client';
 
+import { formatAppError, readJsonResponse, reportAppError } from '@/lib/app-error';
+
 import { readLocalSetting } from '@/lib/local-settings';
-import {
-  BookMarked,
-  BookOpen,
-  Bot,
-  ChevronRight,
-  Link as LinkIcon,
-  ListVideo,
-  Music,
-} from 'lucide-react';
+import { ChevronRight } from 'lucide-react';
 import Link from 'next/link';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { Suspense, useEffect, useState } from 'react';
 
 import {
@@ -50,16 +45,20 @@ interface HomeModule {
 }
 
 function HomeClient() {
-  // 移除了 activeTab 状态，收藏夹功能已移到 UserMenu
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const [hotMovies, setHotMovies] = useState<DoubanItem[]>([]);
   const [hotTvShows, setHotTvShows] = useState<DoubanItem[]>([]);
   const [hotVarietyShows, setHotVarietyShows] = useState<DoubanItem[]>([]);
   const [hotDuanju, setHotDuanju] = useState<any[]>([]);
   const [upcomingContent, setUpcomingContent] = useState<TMDBItem[]>([]);
+  const [duanjuStatus, setDuanjuStatus] = useState('正在加载短剧内容…');
+  const [upcomingStatus, setUpcomingStatus] = useState('正在加载即将上映内容…');
   const [bangumiCalendarData, setBangumiCalendarData] = useState<
     BangumiCalendarData[]
   >([]);
   const [loading, setLoading] = useState(true);
+  const [homeError, setHomeError] = useState('');
   const { announcement, announcementDisplayMode } = useSite();
   // 首页模块配置状态
   const [homeModules, setHomeModules] = useState<HomeModule[]>([
@@ -70,6 +69,7 @@ function HomeClient() {
     { id: 'hotVarietyShows', name: '热门综艺', enabled: true, order: 4 },
     { id: 'upcomingContent', name: '即将上映', enabled: true, order: 5 },
   ]);
+  const [activeHomeModule, setActiveHomeModule] = useState<string | null>(null);
   const [homeBannerEnabled, setHomeBannerEnabled] = useState(true);
   const [homeContinueWatchingEnabled, setHomeContinueWatchingEnabled] =
     useState(true);
@@ -81,10 +81,6 @@ function HomeClient() {
   const [aiDefaultMessageNoVideo, setAiDefaultMessageNoVideo] = useState(
     '你好！我是ApexTV的AI影视助手。想看什么电影或剧集？需要推荐吗？'
   );
-  const [sourceSearchEnabled, setSourceSearchEnabled] = useState(true);
-  const [musicEnabled, setMusicEnabled] = useState(false);
-  const [mangaEnabled, setMangaEnabled] = useState(false);
-  const [booksEnabled, setBooksEnabled] = useState(false);
   const [netdiskTempPlayEnabled, setNetdiskTempPlayEnabled] = useState(false);
   const [showDirectPlayDialog, setShowDirectPlayDialog] = useState(false);
   const [directPlayUrl, setDirectPlayUrl] = useState('');
@@ -191,10 +187,22 @@ function HomeClient() {
     return null;
   };
 
-  const handleDirectPlay = () => {
-    setDirectPlayUrl('');
-    setShowDirectPlayDialog(true);
-  };
+  useEffect(() => {
+    const action = searchParams.get('action');
+    if (action !== 'direct-play' && action !== 'ai-chat') return;
+    if (action === 'ai-chat' && !aiEnabled) return;
+
+    if (action === 'direct-play') {
+      setDirectPlayUrl('');
+      setShowDirectPlayDialog(true);
+    } else {
+      setShowAIChat(true);
+    }
+
+    const remaining = new URLSearchParams(searchParams.toString());
+    remaining.delete('action');
+    router.replace(remaining.size ? '/?' + remaining.toString() : '/', { scroll: false });
+  }, [searchParams, router, aiEnabled]);
 
   const submitDirectPlay = async () => {
     const trimmed = directPlayUrl.trim();
@@ -251,7 +259,7 @@ function HomeClient() {
       window.location.assign(targetUrl);
     } catch (error) {
       setToast({
-        message: error instanceof Error ? error.message : '播放失败',
+        message: formatAppError(error, '播放'),
         type: 'error',
         onClose: () => setToast(null),
       });
@@ -305,39 +313,6 @@ function HomeClient() {
       if (defaultMsg) {
         setAiDefaultMessageNoVideo(defaultMsg);
       }
-    }
-  }, []);
-
-  // 检查源站寻片功能是否启用
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const enabled =
-        (window as any).RUNTIME_CONFIG?.ENABLE_SOURCE_SEARCH !== false;
-      setSourceSearchEnabled(enabled);
-    }
-  }, []);
-
-  // 检查音乐功能是否启用
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const enabled = !!(window as any).RUNTIME_CONFIG?.MUSIC_ENABLED;
-      setMusicEnabled(enabled);
-    }
-  }, []);
-
-  // 检查漫画功能是否启用
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const enabled = !!(window as any).RUNTIME_CONFIG?.SUWAYOMI_ENABLED;
-      setMangaEnabled(enabled);
-    }
-  }, []);
-
-  // 检查电子书功能是否启用
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const enabled = !!(window as any).RUNTIME_CONFIG?.BOOKS_ENABLED;
-      setBooksEnabled(enabled);
     }
   }, []);
 
@@ -450,7 +425,8 @@ function HomeClient() {
               category: '热门',
               type: '全部',
             }).catch((error) => {
-              console.error('获取热门电影数据失败:', error);
+              reportAppError(error, '获取热门电影数据');
+              setHomeError(formatAppError(error, '获取热门电影数据'));
               return null;
             }),
             getDoubanCategories({
@@ -458,7 +434,8 @@ function HomeClient() {
               category: 'tv',
               type: 'tv',
             }).catch((error) => {
-              console.error('获取热门剧集数据失败:', error);
+              reportAppError(error, '获取热门剧集数据');
+              setHomeError(formatAppError(error, '获取热门剧集数据'));
               return null;
             }),
             getDoubanCategories({
@@ -466,11 +443,13 @@ function HomeClient() {
               category: 'show',
               type: 'show',
             }).catch((error) => {
-              console.error('获取热门综艺数据失败:', error);
+              reportAppError(error, '获取热门综艺数据');
+              setHomeError(formatAppError(error, '获取热门综艺数据'));
               return null;
             }),
             GetBangumiCalendarData().catch((error) => {
-              console.error('获取新番放送数据失败:', error);
+              reportAppError(error, '获取新番放送数据');
+              setHomeError(formatAppError(error, '获取新番放送数据'));
               return [];
             }),
           ]);
@@ -499,51 +478,46 @@ function HomeClient() {
           }
 
           try {
-            const duanjuResponse = await fetch('/api/duanju/recommends');
-            if (duanjuResponse.ok) {
-              const duanjuResult = await duanjuResponse.json();
-              if (
-                duanjuResult.code === 200 &&
-                duanjuResult.data &&
-                duanjuResult.data.length > 0
-              ) {
-                setHotDuanju(duanjuResult.data);
-                setCache('homepage_duanju', duanjuResult.data);
-              }
+            const response = await fetch('/api/duanju/recommends');
+            const result = await readJsonResponse<any>(response, '获取推荐');
+            if (response.ok && result.code === 200 && Array.isArray(result.data) && result.data.length > 0) {
+              setHotDuanju(result.data);
+              setCache('homepage_duanju', result.data);
+              setDuanjuStatus('');
+            } else {
+              setDuanjuStatus(result.message || '暂未返回可展示的短剧内容');
             }
           } catch (error) {
-            console.error('获取热播短剧数据失败:', error);
+            reportAppError(error, '获取热播短剧数据');
+            setDuanjuStatus(formatAppError(error, '获取热播短剧数据'));
           }
 
           try {
             const response = await fetch('/api/tmdb/upcoming');
-            if (response.ok) {
-              const result = await response.json();
-              if (
-                result.code === 200 &&
-                result.data &&
-                result.data.length > 0
-              ) {
-                const sorted = [...result.data].sort((a, b) => {
-                  const dateA = new Date(
-                    a.release_date || '9999-12-31'
-                  ).getTime();
-                  const dateB = new Date(
-                    b.release_date || '9999-12-31'
-                  ).getTime();
-                  return dateA - dateB;
-                });
-                setUpcomingContent(sorted);
-                setCache('homepage_upcoming', sorted);
-              }
+            const result = await readJsonResponse<any>(response, '获取推荐');
+            if (response.ok && result.code === 200 && Array.isArray(result.data) && result.data.length > 0) {
+              const sorted = [...result.data].sort((a, b) => {
+                const dateA = new Date(a.release_date || '9999-12-31').getTime();
+                const dateB = new Date(b.release_date || '9999-12-31').getTime();
+                return dateA - dateB;
+              });
+              setUpcomingContent(sorted);
+              setCache('homepage_upcoming', sorted);
+              setUpcomingStatus('');
+            } else {
+              setUpcomingStatus(result.message || '暂未返回可展示的即将上映内容');
             }
           } catch (error) {
-            console.error('获取TMDB即将上映数据失败:', error);
+            reportAppError(error, '获取TMDB即将上映数据');
+            setUpcomingStatus(formatAppError(error, '获取TMDB即将上映数据'));
           }
 
           setLoading(false);
         } catch (error) {
-          console.error('获取推荐数据失败:', error);
+          reportAppError(error, '获取推荐数据');
+          setHomeError(formatAppError(error, '获取推荐数据'));
+          setDuanjuStatus('短剧内容暂时获取失败，请稍后刷新重试');
+          setUpcomingStatus('即将上映内容暂时获取失败，请稍后刷新重试');
           setLoading(false);
         }
       })();
@@ -607,7 +581,7 @@ function HomeClient() {
         );
 
       case 'hotDuanju':
-        if (hotDuanju.length === 0) return null;
+        if (hotDuanju.length === 0) return <div className='f1-home-empty' role='status'><strong>热播短剧</strong><p>{duanjuStatus}</p></div>;
         return (
           <section key='hotDuanju' className='mb-8'>
             <div className='mb-4 flex items-center justify-between'>
@@ -836,7 +810,7 @@ function HomeClient() {
         );
 
       case 'upcomingContent':
-        if (upcomingContent.length === 0) return null;
+        if (upcomingContent.length === 0) return <div className='f1-home-empty' role='status'><strong>即将上映</strong><p>{upcomingStatus}</p></div>;
         return (
           <section key='upcomingContent' className='mb-8'>
             <div className='mb-4 flex items-center justify-between'>
@@ -876,101 +850,71 @@ function HomeClient() {
     }
   };
 
+  const enabledModules = new Set(homeModules.filter((module) => module.enabled).map((module) => module.id));
+  const suggestedVideos = [
+    ...(enabledModules.has('hotTvShows') ? hotTvShows.map((item) => ({ item, kind: 'tv' as const, module: 'hotTvShows' })) : []),
+    ...(enabledModules.has('hotMovies') ? hotMovies.map((item) => ({ item, kind: 'movie' as const, module: 'hotMovies' })) : []),
+    ...(enabledModules.has('hotVarietyShows') ? hotVarietyShows.map((item) => ({ item, kind: 'tv' as const, module: 'hotVarietyShows' })) : []),
+  ];
+  const pickPool = suggestedVideos.filter((video) => video.module !== activeHomeModule);
+  const homePicks = (pickPool.length ? pickPool : suggestedVideos.slice(8)).filter((video, index, list) =>
+    list.findIndex((candidate) => candidate.item.title === video.item.title && candidate.item.year === video.item.year) === index
+  ).slice(0, 4);
+
   return (
     <PageLayout>
+      {homeError && <p role='alert' className='text-red-500'>{homeError}</p>}
       <FireworksCanvas />
       {/* TMDB 热门轮播图 */}
       {homeBannerEnabled && (
-        <div className='ptv-home-hero-wrap'>
+        <div className='ptv-home-hero-wrap f1-home-hero'>
           <BannerCarousel delayLoad={true} />
         </div>
       )}
 
-      <div className='ptv-home-content overflow-visible'>
+      <div className='ptv-home-content f1-home-content overflow-visible'>
         <div className='w-full mx-auto'>
           {/* 首页内容 */}
           <>
             {/* 源站寻片和AI问片入口 */}
-            <div>
-            <div
-              className={`ptv-home-tools flex items-center justify-end gap-2 mb-4 ${
-                homeBannerEnabled ? '' : 'mt-[30px]'
-              }`}
-            >
-              <button
-                onClick={handleDirectPlay}
-                className='p-1.5 rounded-lg text-blue-500 hover:text-blue-600 transition-colors'
-                title='直链播放'
-              >
-                <LinkIcon size={18} />
-              </button>
-
-              {musicEnabled && (
-                <Link href='/music/rankings' prefetch={false}>
-                  <button
-                    className='p-1.5 rounded-lg text-green-500 hover:text-green-600 transition-colors'
-                    title='音乐视听'
-                  >
-                    <Music size={18} />
-                  </button>
-                </Link>
-              )}
-
-              {mangaEnabled && (
-                <Link href='/manga' prefetch={false}>
-                  <button
-                    className='p-1.5 rounded-lg text-emerald-500 hover:text-emerald-600 transition-colors'
-                    title='漫画展馆'
-                  >
-                    <BookOpen size={18} />
-                  </button>
-                </Link>
-              )}
-
-              {booksEnabled && (
-                <Link href='/books' prefetch={false}>
-                  <button
-                    className='p-1.5 rounded-lg text-amber-500 hover:text-amber-600 transition-colors'
-                    title='电子书馆'
-                  >
-                    <BookMarked size={18} />
-                  </button>
-                </Link>
-              )}
-
-              {/* 源站寻片入口 */}
-              {sourceSearchEnabled && (
-                <Link href='/source-search'>
-                  <button
-                    className='p-2 rounded-lg text-blue-500 hover:text-blue-600 transition-colors'
-                    title='源站寻片'
-                  >
-                    <ListVideo size={20} />
-                  </button>
-                </Link>
-              )}
-
-              {/* AI问片入口 */}
-              {aiEnabled && (
-                <button
-                  onClick={() => setShowAIChat(true)}
-                  className='p-2 rounded-lg text-purple-500 hover:text-purple-600 transition-colors'
-                  title='AI问片'
-                >
-                  <Bot size={20} />
-                </button>
-              )}
-            </div>
-            </div>
-
             {/* 继续观看 */}
             {homeContinueWatchingEnabled && <ContinueWatching />}
 
             {/* 根据配置动态渲染首页模块 */}
-            {homeModules
-              .filter((module) => module.enabled)
-              .sort((a, b) => a.order - b.order)
-              .map((module) => renderModule(module.id))}
+            {(() => {
+              const modules = homeModules.filter((module) => module.enabled).sort((a, b) => a.order - b.order);
+              const selected = modules.find((module) => module.id === activeHomeModule) || modules[0];
+              if (!selected) return null;
+              return (
+                <div className='f1-home-recommendations'>
+                  <div className='f1-home-recommendations-heading'>
+                    <h2>正在热播</h2>
+                    <div className='f1-home-tabs' role='group' aria-label='首页推荐分类'>
+                      {modules.map((module) => (
+                        <button key={module.id} type='button' aria-pressed={selected.id === module.id}
+                          onClick={() => setActiveHomeModule(module.id)}>{module.name}</button>
+                      ))}
+                    </div>
+                  </div>
+                  {renderModule(selected.id)}
+                </div>
+              );
+            })()}
+            {homePicks.length > 0 && (
+              <section className='f1-home-picks-section'>
+                <h2>为你推荐</h2>
+                <div className='f1-home-picks'>
+                  {homePicks.map(({ item, kind }) => (
+                    <Link key={item.id + kind} href={{ pathname: '/play', query: { title: item.title, year: item.year, stype: kind } }} prefetch={false} className='f1-home-pick'>
+                      <img src={processImageUrl(item.poster)} alt='' loading='lazy' />
+                      <span className='f1-home-pick-copy'><strong>{item.title}</strong><small>{kind === 'movie' ? '电影' : '剧集'}{item.year ? ' · ' + item.year : ''}</small>{Number(item.rate) > 0 && <span className='f1-home-pick-rating'>★ {item.rate}</span>}</span>
+                    </Link>
+                  ))}
+                </div>
+              </section>
+            )}
+
+
           </>
         </div>
       </div>
@@ -1048,7 +992,7 @@ function HomeClient() {
                   }
                 }}
                 placeholder='https://example.com/video.m3u8'
-                className='w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500'
+                className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-apex-accent"
               />
               <div className='flex justify-end gap-2'>
                 <button

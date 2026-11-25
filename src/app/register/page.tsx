@@ -1,6 +1,11 @@
+'use client';
+
+import { reportAppError, formatAppError, readJsonResponse } from '@/lib/app-error';
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-'use client';
+
+
+import AuthBrandPanel from '@/components/AuthBrandPanel';
 
 import { CheckCircle, Eye, EyeOff, Lock,Send, User } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
@@ -112,7 +117,7 @@ function RegisterPageClient() {
       });
 
       if (res.ok) {
-        const data = await res.json().catch(() => ({}));
+        const data = await readJsonResponse<any>(res, "账户注册");
         if (data.telegramBind?.code) {
           setTelegramBind({
             code: data.telegramBind.code,
@@ -133,13 +138,13 @@ function RegisterPageClient() {
         }
 
         if (res.status === 400) {
-          const data = await res.json().catch(() => ({}));
-          setError(data.error || '注册失败');
+          const data = await readJsonResponse<any>(res, "账户注册");
+          setError(formatAppError(data.error || '注册失败', "账户注册"));
         } else if (res.status === 409) {
           setError('用户名已存在');
         } else {
-          const data = await res.json().catch(() => ({}));
-          setError(data.error ?? '服务器错误');
+          const data = await readJsonResponse<any>(res, "账户注册");
+          setError(formatAppError(data.error ?? '服务器错误', "账户注册"));
         }
       }
     } catch (error) {
@@ -148,7 +153,7 @@ function RegisterPageClient() {
         turnstileRef.current?.reset();
         setTurnstileToken(null);
       }
-      setError('网络错误，请稍后重试');
+      setError(formatAppError(reportAppError(error, '账户请求'), '账户请求'));
     } finally {
       setLoading(false);
     }
@@ -165,7 +170,7 @@ function RegisterPageClient() {
 
   return (
     <div
-      className='ptv-auth relative min-h-screen min-h-[100dvh] flex flex-col items-center justify-center px-4 py-16'
+      className='ptv-auth f1-auth-split relative min-h-screen min-h-[100dvh] flex flex-col items-center justify-center px-4 py-16'
       style={backgroundImage ? {
         backgroundImage: `url(${backgroundImage})`,
         backgroundSize: 'cover',
@@ -176,7 +181,12 @@ function RegisterPageClient() {
       <div className='absolute top-4 right-4 z-20'>
         <ThemeToggle />
       </div>
+      <AuthBrandPanel />
       <div className='ptv-auth-panel ptv-login-panel relative z-10 w-full max-w-md rounded-3xl p-10'>
+        <nav className='f1-auth-tabs' aria-label='账户入口'>
+          <button type='button' onClick={() => router.push('/login')}>登录</button>
+          <span aria-current='page'>注册</span>
+        </nav>
         <h1 className='text-green-600 tracking-tight text-center text-3xl font-extrabold mb-2 bg-clip-text drop-shadow-sm'>
           {siteName}
         </h1>
@@ -238,7 +248,7 @@ function RegisterPageClient() {
                 id='username'
                 type='text'
                 autoComplete='username'
-                className='block w-full rounded-lg border-0 py-3 pl-10 pr-4 text-gray-900 dark:text-gray-100 shadow-sm ring-1 ring-white/60 dark:ring-white/20 placeholder:text-gray-500 dark:placeholder:text-gray-400 focus:ring-2 focus:ring-green-500 focus:outline-none sm:text-base bg-white/60 dark:bg-zinc-800/60'
+                className="block w-full rounded-lg border-0 py-3 pl-10 pr-4 text-gray-900 dark:text-gray-100 shadow-sm ring-1 ring-white/60 dark:ring-white/20 placeholder:text-gray-500 dark:placeholder:text-gray-400 focus:ring-2 focus:ring-apex-accent focus:outline-none sm:text-base bg-white/60 dark:bg-zinc-800/60"
                 placeholder='输入用户名'
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
@@ -258,7 +268,7 @@ function RegisterPageClient() {
                 id='password'
                 type={showPassword ? 'text' : 'password'}
                 autoComplete='new-password'
-                className='block w-full rounded-lg border-0 py-3 pl-10 pr-12 text-gray-900 dark:text-gray-100 shadow-sm ring-1 ring-white/60 dark:ring-white/20 placeholder:text-gray-500 dark:placeholder:text-gray-400 focus:ring-2 focus:ring-green-500 focus:outline-none sm:text-base bg-white/60 dark:bg-zinc-800/60'
+                className="block w-full rounded-lg border-0 py-3 pl-10 pr-12 text-gray-900 dark:text-gray-100 shadow-sm ring-1 ring-white/60 dark:ring-white/20 placeholder:text-gray-500 dark:placeholder:text-gray-400 focus:ring-2 focus:ring-apex-accent focus:outline-none sm:text-base bg-white/60 dark:bg-zinc-800/60"
                 placeholder='输入密码（至少6位）'
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
@@ -289,7 +299,7 @@ function RegisterPageClient() {
                 id='confirmPassword'
                 type={showConfirmPassword ? 'text' : 'password'}
                 autoComplete='new-password'
-                className='block w-full rounded-lg border-0 py-3 pl-10 pr-12 text-gray-900 dark:text-gray-100 shadow-sm ring-1 ring-white/60 dark:ring-white/20 placeholder:text-gray-500 dark:placeholder:text-gray-400 focus:ring-2 focus:ring-green-500 focus:outline-none sm:text-base bg-white/60 dark:bg-zinc-800/60'
+                className="block w-full rounded-lg border-0 py-3 pl-10 pr-12 text-gray-900 dark:text-gray-100 shadow-sm ring-1 ring-white/60 dark:ring-white/20 placeholder:text-gray-500 dark:placeholder:text-gray-400 focus:ring-2 focus:ring-apex-accent focus:outline-none sm:text-base bg-white/60 dark:bg-zinc-800/60"
                 placeholder='再次输入密码'
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
@@ -320,7 +330,7 @@ function RegisterPageClient() {
                 <input
                   id='inviteCode'
                   type='text'
-                  className='block w-full rounded-lg border-0 py-3 pl-10 pr-4 text-gray-900 dark:text-gray-100 shadow-sm ring-1 ring-white/60 dark:ring-white/20 placeholder:text-gray-500 dark:placeholder:text-gray-400 focus:ring-2 focus:ring-green-500 focus:outline-none sm:text-base bg-white/60 dark:bg-zinc-800/60'
+                  className="block w-full rounded-lg border-0 py-3 pl-10 pr-4 text-gray-900 dark:text-gray-100 shadow-sm ring-1 ring-white/60 dark:ring-white/20 placeholder:text-gray-500 dark:placeholder:text-gray-400 focus:ring-2 focus:ring-apex-accent focus:outline-none sm:text-base bg-white/60 dark:bg-zinc-800/60"
                   placeholder='输入邀请码'
                   value={inviteCode}
                   onChange={(e) => setInviteCode(e.target.value)}
@@ -356,15 +366,6 @@ function RegisterPageClient() {
           </button>
 
           {/* 返回登录链接 */}
-          <div className='text-center'>
-            <button
-              type='button'
-              onClick={() => router.push('/login')}
-              className='text-sm text-green-600 dark:text-green-400 hover:text-green-700 dark:hover:text-green-300 transition-colors'
-            >
-              已有账号？返回登录
-            </button>
-          </div>
         </form>
         )}
       </div>

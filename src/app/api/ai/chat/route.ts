@@ -1,3 +1,4 @@
+import { appErrorPayload, reportAppError } from '@/lib/app-error';
 /* eslint-disable @typescript-eslint/no-explicit-any,no-console */
 
 import { NextRequest, NextResponse } from 'next/server';
@@ -168,7 +169,7 @@ function transformToSSE(
               } catch (e) {
                 // 只在非空数据解析失败时打印错误
                 if (data.length > 0) {
-                  console.error('Parse stream chunk error:', e, 'Data:', data.substring(0, 100));
+                  reportAppError(e, "AI 服务");
                 }
               }
             }
@@ -202,13 +203,13 @@ function transformToSSE(
                   }
                 }
               } catch (e) {
-                console.error('Parse final buffer error:', e);
+                reportAppError(e, "AI 服务");
               }
             }
           }
         }
       } catch (error) {
-        console.error('Stream error:', error);
+        reportAppError(error, "AI 服务");
         const message = error instanceof Error ? error.message : String(error);
         controller.enqueue(
           new TextEncoder().encode(`data: ${JSON.stringify({ error: `AI请求失败: ${message}` })}\n\n`)
@@ -467,12 +468,12 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ content });
     }
   } catch (error) {
-    console.error('❌ AI聊天API错误:', error);
+    reportAppError(error, "❌ AI聊天API错误");
     return NextResponse.json(
-      {
+      {...{
         error: 'AI聊天请求失败',
         details: (error as Error).message,
-      },
+      }, ...appErrorPayload(error, "AI 服务", 500)},
       { status: 500 }
     );
   }

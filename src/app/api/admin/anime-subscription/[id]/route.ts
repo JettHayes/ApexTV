@@ -1,3 +1,4 @@
+import { appErrorPayload, reportAppError } from '@/lib/app-error';
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { NextRequest, NextResponse } from 'next/server';
 
@@ -147,9 +148,9 @@ export async function PUT(
 
     return NextResponse.json(subscription);
   } catch (error: any) {
-    console.error('更新追番订阅失败:', error);
+    reportAppError(error, "更新追番订阅失败");
     return NextResponse.json(
-      { error: error.message || '更新订阅失败' },
+      {...{ error: error.message || '更新订阅失败' }, ...appErrorPayload(error, "后台配置服务", 500)},
       { status: 500 }
     );
   }
@@ -183,9 +184,9 @@ export async function DELETE(
 
     return NextResponse.json({ success: true });
   } catch (error: any) {
-    console.error('删除追番订阅失败:', error);
+    reportAppError(error, "删除追番订阅失败");
     return NextResponse.json(
-      { error: error.message || '删除订阅失败' },
+      {...{ error: error.message || '删除订阅失败' }, ...appErrorPayload(error, "后台配置服务", 500)},
       { status: 500 }
     );
   }

@@ -2,7 +2,11 @@
 
 'use client';
 
+import { formatAppError, reportAppError } from '@/lib/app-error';
+
+import { readThemeColorAsHex } from '@/lib/theme-colors';
 import { AlertCircle, ArrowLeft, Cloud, FileText, Heart, Keyboard, Link2, Loader2, Play, RefreshCw, Router, Search, Sparkles, Star, Users, X } from 'lucide-react';
+import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import {
   Suspense,
@@ -398,11 +402,14 @@ function PlayPageClient() {
 
   // 大屏设备检测（判断选集面板是否在右侧）
   const [isLargeScreen, setIsLargeScreen] = useState(false);
+  const [isWideScreen, setIsWideScreen] = useState(false);
+  const [sideTab, setSideTab] = useState<'detail' | 'ai' | 'comments' | 'pansou'>('detail');
 
   // 检测是否为大屏设备
   useEffect(() => {
     const checkScreenSize = () => {
       setIsLargeScreen(window.innerWidth >= 768); // md断点
+      setIsWideScreen(window.innerWidth >= 1200);
     };
 
     checkScreenSize();
@@ -412,6 +419,11 @@ function PlayPageClient() {
 
   // 抽屉管理：打开指定抽屉时关闭其他抽屉
   const openDrawer = (drawerName: 'pansou' | 'aiChat' | 'correct' | 'detail') => {
+    if (isWideScreen && (drawerName === 'pansou' || drawerName === 'aiChat')) {
+      setIsEpisodeSelectorCollapsed(false);
+      setSideTab(drawerName === 'pansou' ? 'pansou' : 'ai');
+      return;
+    }
     if (!isLargeScreen) {
       // 小屏设备不需要互斥
       switch (drawerName) {
@@ -689,7 +701,7 @@ function PlayPageClient() {
         });
       } catch (err) {
         setWebGPUSupported(false);
-        console.log('WebGPU不支持：', err);
+        reportAppError(err, '检测 WebGPU', { level: 'warn' });
       }
     };
 
@@ -790,7 +802,7 @@ function PlayPageClient() {
           episodeFilterConfigRef.current = defaultEpisodeConfig;
         }
       } catch (error) {
-        console.error('加载过滤配置失败:', error);
+        reportAppError(error, '加载过滤配置');
       }
     };
     loadFilterConfig();
@@ -1011,7 +1023,7 @@ function PlayPageClient() {
         artPlayerRef.current.layers.remove('play-record-jump');
         playRecordJumpLayerRef.current = null;
       } catch (err) {
-        console.warn('[PlayRecordJump] 移除跳转按钮失败:', err);
+        reportAppError(err, '移除跳转按钮', { level: 'warn' });
       }
     }
 
@@ -1079,7 +1091,7 @@ function PlayPageClient() {
       try {
         nextEpisodePreCacheHlsRef.current.destroy();
       } catch (e) {
-        console.error('清理预缓存 HLS 实例失败:', e);
+        reportAppError(e, '清理预缓存 HLS 实例');
       }
       nextEpisodePreCacheHlsRef.current = null;
     }
@@ -1238,7 +1250,7 @@ function PlayPageClient() {
                     }
                   }
                 } catch (e) {
-                  console.error('弹幕过滤规则错误:', e);
+                  reportAppError(e, '弹幕过滤规则');
                 }
               }
               return true;
@@ -1315,7 +1327,7 @@ function PlayPageClient() {
           return 'done'; // 使用缓存成功，直接返回
         }
       } catch (error) {
-        console.error('[弹幕] 读取缓存失败:', error);
+        reportAppError(error, '读取缓存');
       }
 
       // 没有缓存，先检查是否有手动选择的剧集 ID
@@ -1337,7 +1349,7 @@ function PlayPageClient() {
           console.log('[弹幕记忆] 使用手动选择的弹幕成功');
           return 'done'; // 使用手动选择成功，直接返回
         } catch (error) {
-          console.error('[弹幕记忆] 使用手动选择的弹幕失败:', error);
+          reportAppError(error, '使用手动选择的弹幕');
           // 继续执行自动搜索
         }
       }
@@ -1379,7 +1391,7 @@ function PlayPageClient() {
             }
           }
         } catch (error) {
-          console.error('[弹幕记忆] 使用保存的动漫ID失败:', error);
+          reportAppError(error, '使用保存的动漫ID');
         }
       }
 
@@ -1507,7 +1519,7 @@ function PlayPageClient() {
           }
         }
       } catch (error) {
-        console.error('自动搜索弹幕失败:', error);
+        reportAppError(error, '自动搜索弹幕');
         if (artPlayerRef.current) {
           artPlayerRef.current.notice.show = '弹幕加载失败，请检查网络或稍后重试';
         }
@@ -1576,7 +1588,7 @@ function PlayPageClient() {
           }
         }
       } catch (error) {
-        console.error('获取豆瓣评分失败:', error);
+        reportAppError(error, '获取豆瓣评分');
         setDoubanRating(null);
         setDoubanCardSubtitle('');
         setDoubanAka([]);
@@ -1678,11 +1690,11 @@ function PlayPageClient() {
             const detailsCacheKey = recommendationCacheKeys.tmdbDetails(result.tmdbId);
             setRecommendationCache(detailsCacheKey, result);
           } catch (e) {
-            console.error('保存缓存失败:', e);
+            reportAppError(e, '保存缓存');
           }
         }
       } catch (error) {
-        console.error('获取TMDB背景图失败:', error);
+        reportAppError(error, '获取TMDB背景图');
         setTmdbBackdrop(null);
       }
     };
@@ -1820,7 +1832,7 @@ function PlayPageClient() {
           setTmdbEpisodeNames(names);
         }
       } catch (err) {
-        console.error('获取TMDB分集名称失败:', err);
+        reportAppError(err, '获取TMDB分集名称');
       }
     },
     [videoTitle]
@@ -2155,9 +2167,9 @@ function PlayPageClient() {
         onClose: () => setToast(null),
       });
     } catch (error) {
-      console.error('创建转码任务失败:', error);
+      reportAppError(error, '创建转码任务');
       setToast({
-        message: error instanceof Error ? error.message : '创建转码任务失败',
+        message: formatAppError(error, '创建转码任务'),
         type: 'error',
         onClose: () => setToast(null),
       });
@@ -2354,7 +2366,7 @@ function PlayPageClient() {
     try {
       pruneLocalEpisodeProgressStorage();
     } catch (error) {
-      console.warn('[Play] Failed to prune local episode progress:', error);
+      reportAppError(error, '视频播放', { level: 'warn' });
     }
   }, []);
 
@@ -2573,7 +2585,7 @@ function PlayPageClient() {
       });
     } catch (error: any) {
       setToast({
-        message: error?.message || '创建观影室失败',
+        message: formatAppError(error, '创建观影室'),
         type: 'error',
         duration: 3000,
         onClose: () => setToast(null),
@@ -2588,7 +2600,7 @@ function PlayPageClient() {
   // -----------------------------------------------------------------------------
 
   const getSubtitleStyle = () => ({
-    color: '#fff',
+    color: "var(--ptv-media-text)",
     fontSize: typeof window !== 'undefined' ? localStorage.getItem('subtitleSize') || '2em' : '2em',
   });
 
@@ -2632,7 +2644,7 @@ function PlayPageClient() {
     try {
       getJassubSubtitleInstance()?.freeTrack?.();
     } catch (error) {
-      console.warn('[Subtitle] 清理高级字幕失败:', error);
+      reportAppError(error, '清理高级字幕', { level: 'warn' });
     }
   };
 
@@ -2767,7 +2779,7 @@ function PlayPageClient() {
     try {
       renderer.dispose?.();
     } catch (error) {
-      console.warn('[Subtitle] 清理位图字幕失败:', error);
+      reportAppError(error, '清理位图字幕', { level: 'warn' });
     }
   };
 
@@ -2846,7 +2858,7 @@ function PlayPageClient() {
           throw error;
         }
 
-        console.warn('[Subtitle] 高级字幕加载失败，尝试降级为普通字幕:', error);
+        reportAppError(error, '加载高级字幕', { level: 'warn' });
         switchSubtitle(subtitle.fallbackUrl, subtitle.label);
 
         const message = `高级字幕渲染失败，已降级为普通字幕：${subtitle.label}`;
@@ -2943,9 +2955,9 @@ function PlayPageClient() {
               : Promise.resolve();
 
           void switchPromise.catch((error) => {
-            console.warn('[Subtitle] 位图字幕切换失败:', error);
+            reportAppError(error, '位图字幕切换', { level: 'warn' });
             setToast({
-              message: error instanceof Error ? error.message : '位图字幕切换失败',
+              message: formatAppError(error, '位图字幕切换'),
               type: 'error',
               onClose: () => setToast(null),
             });
@@ -2968,9 +2980,9 @@ function PlayPageClient() {
               : Promise.resolve();
 
           void switchPromise.catch((error) => {
-            console.warn('[Subtitle] 高级字幕切换失败:', error);
+            reportAppError(error, '高级字幕切换', { level: 'warn' });
             setToast({
-              message: error instanceof Error ? error.message : '高级字幕切换失败',
+              message: formatAppError(error, '高级字幕切换'),
               type: 'error',
               onClose: () => setToast(null),
             });
@@ -3081,7 +3093,7 @@ function PlayPageClient() {
       let displayError = error;
 
       if (isAdvancedSubtitleFormat(extension)) {
-        console.warn('[Subtitle] 高级字幕加载失败，尝试降级为普通字幕:', displayError);
+        reportAppError(displayError, '加载高级字幕', { level: 'warn' });
 
         try {
           const convertedSubtitle = await loadNativeCustomSubtitle(file);
@@ -3093,14 +3105,14 @@ function PlayPageClient() {
           });
           return;
         } catch (fallbackError) {
-          console.warn('[Subtitle] 高级字幕降级加载失败:', fallbackError);
+          reportAppError(fallbackError, '加载降级字幕', { level: 'warn' });
           displayError = fallbackError;
         }
       }
 
-      console.warn('[Subtitle] 自定义字幕加载失败:', displayError);
+      reportAppError(displayError, '加载自定义字幕', { level: 'warn' });
       setToast({
-        message: displayError instanceof Error ? displayError.message : '字幕加载失败',
+        message: formatAppError(displayError, '加载自定义字幕'),
         type: 'error',
         onClose: () => setToast(null),
       });
@@ -3189,7 +3201,7 @@ function PlayPageClient() {
       const info = await getVideoResolutionFromM3u8(episodeUrl, 4000);
       setCurrentSourceVideoInfo(info);
     } catch (error) {
-      console.error('获取视频信息失败:', error);
+      reportAppError(error, '获取视频信息');
       setCurrentSourceVideoInfo(null);
     }
   };
@@ -3533,7 +3545,7 @@ function PlayPageClient() {
         return data.downloaded || false;
       }
     } catch (error) {
-      console.error('检查本地下载失败:', error);
+      reportAppError(error, '检查本地下载');
     }
 
     return false;
@@ -3630,7 +3642,7 @@ function PlayPageClient() {
               }
             } catch (error) {
               // 文件不存在
-              console.error('检查本地文件失败:', error);
+              reportAppError(error, '检查本地文件');
               resolve({ hasLocal: false });
             }
           };
@@ -3645,7 +3657,7 @@ function PlayPageClient() {
         };
       });
     } catch (error) {
-      console.error('检查 File System API 下载失败:', error);
+      reportAppError(error, '检查 File System API 下载');
       return { hasLocal: false };
     }
   };
@@ -3889,7 +3901,7 @@ function PlayPageClient() {
                 console.log('[链接刷新] HLS 刷新完成，恢复到:', video.currentTime);
                 if (!isPaused) {
                   video.play().catch((err) => {
-                    console.warn('[链接刷新] 自动播放失败:', err);
+                    reportAppError(err, '自动播放', { level: 'warn' });
                   });
                 } else {
                   video.pause();
@@ -3965,7 +3977,7 @@ function PlayPageClient() {
             console.log('[链接刷新] 直链刷新完成，恢复到:', video.currentTime);
             if (!isPaused) {
               video.play().catch((err) => {
-                console.warn('[链接刷新] 自动播放失败:', err);
+                reportAppError(err, '自动播放', { level: 'warn' });
               });
             } else {
               video.pause();
@@ -4009,7 +4021,7 @@ function PlayPageClient() {
 
       return true;
     } catch (error) {
-      console.error('[链接刷新] 刷新失败:', error);
+      reportAppError(error, '刷新');
       setIsRefreshingUrl(false);
 
       // 如果是定时刷新失败，不显示错误（继续使用旧链接）
@@ -4172,7 +4184,7 @@ function PlayPageClient() {
           video.removeAttribute('src');
           video.load();
         } catch (error) {
-          console.warn('切集时清空旧视频源失败:', error);
+          reportAppError(error, '切集时清空旧视频源', { level: 'warn' });
         }
       }
 
@@ -4261,7 +4273,7 @@ function PlayPageClient() {
         if (requestSeq !== videoUrlRequestSeqRef.current) {
           return;
         }
-        console.error('获取播放链接失败:', error);
+        reportAppError(error, '获取播放链接');
         setVideoQualities([]);
         currentXiaoyaUrlRef.current = ''; // 获取失败，清空
       }
@@ -4313,7 +4325,7 @@ function PlayPageClient() {
               // 替换为 Blob URL
               modifiedLines.push(line.replace(trimmedLine, blobUrl));
             } catch (error) {
-              console.error(`读取 ts 文件失败: ${trimmedLine}`, error);
+              reportAppError(error, '读取视频分片');
               modifiedLines.push(line);
             }
           }
@@ -4326,7 +4338,7 @@ function PlayPageClient() {
               blobUrls.push(keyBlobUrl);
               modifiedLines.push(line.replace('key.key', keyBlobUrl));
             } catch (error) {
-              console.error('读取密钥文件失败:', error);
+              reportAppError(error, '读取密钥文件');
               modifiedLines.push(line);
             }
           }
@@ -4346,7 +4358,7 @@ function PlayPageClient() {
 
         console.log('使用 File System API 本地文件播放（Blob URL 模式）:', episodeTitle);
       } catch (error) {
-        console.error('读取本地文件失败:', error);
+        reportAppError(error, '读取本地文件');
       }
     }
 
@@ -4390,25 +4402,25 @@ function PlayPageClient() {
         // 使用本地代理接口,URL以.m3u8结尾以便Artplayer自动识别
         newUrl = `/api/offline-download/local/${currentSource}/${currentId}/${episodeIndex}/playlist.m3u8`;
         nextPlaybackSourceBadge = 'offline';
-        console.log('使用服务器端本地下载文件播放:', newUrl);
+        console.log('使用服务器端本地下载文件播放');
       } else {
         const isM3u8 = newUrl.toLowerCase().includes('.m3u') || !newUrl.toLowerCase().match(/\.(mp4|flv|webm|mkv|avi|mov)(\?.*)?$/);
 
         if (sourceProxyMode && newUrl && isM3u8) {
           // 如果视频源启用了代理模式,且不是本地下载,则通过代理播放
           newUrl = `/api/proxy/vod/m3u8?url=${encodeURIComponent(newUrl)}&source=${encodeURIComponent(currentSource)}`;
-          console.log('使用代理模式播放:', newUrl);
+          console.log('使用代理模式播放');
         } else if (currentSource === 'directplay' && newUrl && isM3u8) {
           // 直链播放模式：检查 localStorage 是否记录了该域名需要代理
           if (isDirectplayDomainProxied(newUrl)) {
             const tokenParam = proxyToken ? `&token=${encodeURIComponent(proxyToken)}` : '';
             newUrl = `/api/proxy-m3u8?url=${encodeURIComponent(newUrl)}&source=directplay${tokenParam}`;
-            console.log('直链播放（域名已记忆）使用代理模式:', newUrl);
+            console.log('直链播放（域名已记忆）使用代理模式');
           } else {
-            console.log('直链播放默认直连模式，不使用代理:', newUrl);
+            console.log('直链播放默认直连模式，不使用代理');
           }
         } else if (!isM3u8) {
-          console.log('非 m3u8 格式，豁免代理框架，直接播放原始URL:', newUrl);
+          console.log('非 m3u8 格式，豁免代理框架，直接播放原始URL');
         }
       }
     }
@@ -4486,11 +4498,11 @@ function PlayPageClient() {
           if (response.ok) {
             successCount++;
           } else {
-            console.error(`离线下载任务创建失败 (第${episodeIndex + 1}集):`, data.error);
+            reportAppError(data.error, '下载视频');
             failCount++;
           }
         } catch (error) {
-          console.error(`离线下载任务创建失败 (第${episodeIndex + 1}集):`, error);
+          reportAppError(error, '下载视频');
           failCount++;
         }
       } else if (isM3u8) {
@@ -4504,7 +4516,7 @@ function PlayPageClient() {
           });
           successCount++;
         } catch (error) {
-          console.error(`添加下载任务失败 (第${episodeIndex + 1}集):`, error);
+          reportAppError(error, '下载视频');
           failCount++;
         }
       } else {
@@ -4521,7 +4533,7 @@ function PlayPageClient() {
           // 添加延迟避免浏览器阻止多个下载
           await new Promise(resolve => setTimeout(resolve, 300));
         } catch (error) {
-          console.error(`下载失败 (第${episodeIndex + 1}集):`, error);
+          reportAppError(error, '下载视频');
           failCount++;
         }
       }
@@ -4658,7 +4670,7 @@ function PlayPageClient() {
       if (proxySegments) params.set('proxySegments', 'true');
       return `/api/proxy-m3u8?${params.toString()}`;
     } catch (error) {
-      console.warn('[Harmony HLS] 构建原生去广告地址失败:', error);
+      reportAppError(error, '构建原生去广告地址', { level: 'warn' });
       return url;
     }
   };
@@ -4731,7 +4743,7 @@ function PlayPageClient() {
         console.log('Wake Lock 已启用');
       }
     } catch (err) {
-      console.warn('Wake Lock 请求失败:', err);
+      reportAppError(err, 'Wake Lock 请求', { level: 'warn' });
     }
   };
 
@@ -4743,7 +4755,7 @@ function PlayPageClient() {
         console.log('Wake Lock 已释放');
       }
     } catch (err) {
-      console.warn('Wake Lock 释放失败:', err);
+      reportAppError(err, 'Wake Lock 释放', { level: 'warn' });
     }
   };
 
@@ -4797,7 +4809,7 @@ function PlayPageClient() {
           try {
             artPlayerRef.current.fullscreenWeb = false;
           } catch (err) {
-            console.warn('销毁前退出网页全屏失败:', err);
+            reportAppError(err, '销毁前退出网页全屏', { level: 'warn' });
             restoreWebFullscreenOnReadyRef.current = false;
           }
         }
@@ -4818,7 +4830,7 @@ function PlayPageClient() {
 
         console.log('播放器资源已清理');
       } catch (err) {
-        console.warn('清理播放器资源时出错:', err);
+        reportAppError(err, '清理播放器资源时', { level: 'warn' });
         artPlayerRef.current = null;
         // 即使出错也要清空容器
         if (artRef.current) {
@@ -4977,9 +4989,9 @@ function PlayPageClient() {
         artPlayerRef.current.notice.show = `超分已启用 (${anime4kModeRef.current}, ${scale}x)`;
       }
     } catch (err) {
-      console.error('初始化Anime4K失败:', err);
+      reportAppError(err, '初始化Anime4K');
       if (artPlayerRef.current) {
-        artPlayerRef.current.notice.show = '超分启用失败：' + (err instanceof Error ? err.message : '未知错误');
+        artPlayerRef.current.notice.show = formatAppError(err, '启用超分');
       }
 
       // 移除outputCanvas（如果已创建）
@@ -5021,7 +5033,7 @@ function PlayPageClient() {
 
         console.log('Anime4K已清理');
       } catch (err) {
-        console.warn('清理Anime4K时出错:', err);
+        reportAppError(err, '清理Anime4K时', { level: 'warn' });
       }
     }
   };
@@ -5037,7 +5049,7 @@ function PlayPageClient() {
       setAnime4kEnabled(enabled);
       localStorage.setItem('enable_anime4k', String(enabled));
     } catch (err) {
-      console.error('切换超分状态失败:', err);
+      reportAppError(err, '切换超分状态');
     }
   };
 
@@ -5052,7 +5064,7 @@ function PlayPageClient() {
         await initAnime4K();
       }
     } catch (err) {
-      console.error('更改超分模式失败:', err);
+      reportAppError(err, '更改超分模式');
     }
   };
 
@@ -5067,7 +5079,7 @@ function PlayPageClient() {
         await initAnime4K();
       }
     } catch (err) {
-      console.error('更改超分倍数失败:', err);
+      reportAppError(err, '更改超分倍数');
     }
   };
 
@@ -5103,14 +5115,14 @@ function PlayPageClient() {
             artPlayerRef.current.setting.update({
               name: '跳过配置',
               html: '跳过配置',
-              icon: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="5" cy="12" r="2" fill="#ffffff"/><path d="M9 12L15 12" stroke="#ffffff" stroke-width="2"/><circle cx="19" cy="12" r="2" fill="#ffffff"/></svg>',
+              icon: "<svg width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" xmlns=\"http://www.w3.org/2000/svg\"><circle cx=\"5\" cy=\"12\" r=\"2\" fill=\"var(--ptv-media-text)\"/><path d=\"M9 12L15 12\" stroke=\"var(--ptv-media-text)\" stroke-width=\"2\"/><circle cx=\"19\" cy=\"12\" r=\"2\" fill=\"var(--ptv-media-text)\"/></svg>",
               tooltip:
                 skipConfigRef.current.intro_time === 0 && skipConfigRef.current.outro_time === 0
                   ? '设置跳过配置'
                   : `片头: ${formatTime(skipConfigRef.current.intro_time)} | 片尾: ${formatTime(Math.abs(skipConfigRef.current.outro_time))}`,
             });
           } catch (settingErr) {
-            console.warn('更新播放器设置失败:', settingErr);
+            reportAppError(settingErr, '更新播放器设置', { level: 'warn' });
           }
         }
       } else {
@@ -5122,7 +5134,7 @@ function PlayPageClient() {
       }
       console.log('跳过片头片尾配置已保存:', newConfig);
     } catch (err) {
-      console.error('保存跳过片头片尾配置失败:', err);
+      reportAppError(err, '保存跳过片头片尾配置');
     }
   };
 
@@ -5174,7 +5186,7 @@ function PlayPageClient() {
         setAvailableSources(sourcesWithCorrections);
         return sourcesWithCorrections;
       } catch (err) {
-        console.error('获取视频详情失败:', err);
+        reportAppError(err, '获取视频详情');
         return [];
       } finally {
         setSourceSearchLoading(false);
@@ -5340,7 +5352,7 @@ function PlayPageClient() {
           return parsed;
         }
       } catch (error) {
-        console.error('[Play] 读取缓存失败:', error);
+        reportAppError(error, '读取缓存');
       }
       return null;
     };
@@ -5358,7 +5370,7 @@ function PlayPageClient() {
         };
         sessionStorage.setItem(cacheKey, JSON.stringify(payload));
       } catch (error) {
-        console.error('[Play] 写入缓存失败:', error);
+        reportAppError(error, '写入缓存');
       }
     };
 
@@ -5421,7 +5433,7 @@ function PlayPageClient() {
         setAvailableSources(applyCorrectionsToSources(results));
         return results;
       } catch (err) {
-        setSourceSearchError(err instanceof Error ? err.message : '搜索失败');
+        setSourceSearchError(formatAppError(err, '搜索播放源'));
         if (fallbackCachedResults.length > 0) {
           return fallbackCachedResults;
         }
@@ -5459,7 +5471,7 @@ function PlayPageClient() {
         try {
           directUrl = base58Decode(currentId);
         } catch (decodeError) {
-          console.error('直链地址解析失败:', decodeError);
+          reportAppError(decodeError, '直链地址解析');
           setError('直链地址解析失败');
           setLoading(false);
           return;
@@ -5555,7 +5567,7 @@ function PlayPageClient() {
               sourcesInfo = currentSourceDetail;
             }
           } catch (err) {
-            console.error('获取当前源详情失败:', err);
+            reportAppError(err, '获取当前源详情');
           }
         }
 
@@ -5577,7 +5589,7 @@ function PlayPageClient() {
           );
           setBackgroundSourcesLoading(false);
         }).catch((err) => {
-          console.error('异步获取其他源失败:', err);
+          reportAppError(err, '异步获取其他源');
           setBackgroundSourcesLoading(false);
         });
       } else {
@@ -5792,7 +5804,7 @@ function PlayPageClient() {
           currentEpisodeIndexRef.current = initialIndex;
         }
       } catch (err) {
-        console.error('读取播放记录失败:', err);
+        reportAppError(err, '读取播放记录');
       }
 
       // 短暂延迟让用户看到完成状态
@@ -5816,7 +5828,7 @@ function PlayPageClient() {
           setSkipConfig(config);
         }
       } catch (err) {
-        console.error('读取跳过片头片尾配置失败:', err);
+        reportAppError(err, '读取跳过片头片尾配置');
       }
     };
 
@@ -5894,7 +5906,7 @@ function PlayPageClient() {
     if (currentSubtitles.length > 0) {
       currentSubtitleLabelRef.current = currentSubtitles[0].label;
       void switchSourceSubtitle(currentSubtitles[0]).catch((error) => {
-        console.warn('[Subtitle] 源字幕加载失败:', error);
+        reportAppError(error, '加载源字幕', { level: 'warn' });
         artPlayerRef.current.subtitle.show = false;
         currentSubtitleLabelRef.current = '关闭';
       });
@@ -5932,7 +5944,7 @@ function PlayPageClient() {
         return currentRecord.play_time;
       }
     } catch (error) {
-      console.warn('[Play] Failed to read source-switch play record:', error);
+      reportAppError(error, '视频播放', { level: 'warn' });
     }
 
     return loadLocalEpisodeProgress(
@@ -5971,7 +5983,7 @@ function PlayPageClient() {
           );
           await saveSkipConfig(newSource, newId, skipConfigRef.current);
         } catch (err) {
-          console.error('清除跳过片头片尾配置失败:', err);
+          reportAppError(err, '清除跳过片头片尾配置');
         }
       }
 
@@ -5997,9 +6009,9 @@ function PlayPageClient() {
             throw new Error('获取视频详情失败');
           }
         } catch (err) {
-          console.error('获取视频详情失败:', err);
+          reportAppError(err, '获取视频详情');
           setIsVideoLoading(false);
-          setError('获取视频详情失败，请重试');
+          setError(formatAppError(err, '获取视频详情'));
           return;
         }
       }
@@ -6031,7 +6043,7 @@ function PlayPageClient() {
         const titleForCache = detail?.title || videoTitle;
         console.log(`换源集数不一致 (${oldEpisodeCount} -> ${newEpisodeCount})，清除弹幕缓存: ${titleForCache}`);
         clearDanmakuCacheByTitle(titleForCache).catch((err) => {
-          console.error('清除弹幕缓存失败:', err);
+          reportAppError(err, '清除弹幕缓存');
         });
       }
 
@@ -6121,7 +6133,7 @@ function PlayPageClient() {
             await savePlayRecord(newSource, newId, migratedRecord);
           }
         } catch (error) {
-          console.warn('[Play] Failed to migrate source-switch play record:', error);
+          reportAppError(error, '视频播放', { level: 'warn' });
         }
       }
 
@@ -6134,7 +6146,8 @@ function PlayPageClient() {
     } catch (err) {
       // 隐藏换源加载状态
       setIsVideoLoading(false);
-      setError(err instanceof Error ? err.message : '换源失败');
+      reportAppError(err, '切换播放源');
+      setError(formatAppError(err, '切换播放源'));
     }
   };
 
@@ -6168,7 +6181,7 @@ function PlayPageClient() {
         duration
       );
     } catch (error) {
-      console.warn('[Play] Failed to save local episode progress before episode switch:', error);
+      reportAppError(error, '视频播放', { level: 'warn' });
     }
   };
 
@@ -6464,7 +6477,7 @@ function PlayPageClient() {
                 }
               }
             } catch (e) {
-              console.error('弹幕过滤规则错误:', e);
+              reportAppError(e, '弹幕过滤规则');
             }
           }
           return true;
@@ -6537,7 +6550,7 @@ function PlayPageClient() {
       // 延迟一下让用户看到弹幕数量
       await new Promise((resolve) => setTimeout(resolve, 1500));
     } catch (error) {
-      console.error('加载弹幕失败:', error);
+      reportAppError(error, '加载弹幕');
       setDanmakuCount(0);
     } finally {
       setDanmakuLoading(false);
@@ -6693,7 +6706,7 @@ function PlayPageClient() {
                 if (new RegExp(rule.keyword).test(danmu.text)) return false;
               }
             } catch (e) {
-              console.error('弹幕过滤规则错误:', e);
+              reportAppError(e, '弹幕过滤规则');
             }
           }
           return true;
@@ -6752,7 +6765,7 @@ function PlayPageClient() {
 
       await new Promise((resolve) => setTimeout(resolve, 1500));
     } catch (error) {
-      console.error('上传弹幕失败:', error);
+      reportAppError(error, '上传弹幕');
       if (artPlayerRef.current) {
         artPlayerRef.current.notice.show = '弹幕加载失败';
       }
@@ -6841,7 +6854,7 @@ function PlayPageClient() {
         console.warn('未找到剧集信息');
       }
     } catch (error) {
-      console.error('加载弹幕失败:', error);
+      reportAppError(error, '加载弹幕');
     }
   };
 
@@ -6889,7 +6902,7 @@ function PlayPageClient() {
         setDanmakuLoading(false);
       }
     } catch (error) {
-      console.error('[弹幕] 搜索失败:', error);
+      reportAppError(error, '搜索');
       setDanmakuLoading(false);
     }
   };
@@ -7094,7 +7107,7 @@ function PlayPageClient() {
         progress: `${Math.floor(currentTime)}/${Math.floor(duration)}`,
       });
     } catch (err) {
-      console.error('保存播放进度失败:', err);
+      reportAppError(err, '保存播放进度');
     }
   };
 
@@ -7149,7 +7162,7 @@ function PlayPageClient() {
         const fav = await isFavorited(currentSource, currentId);
         setFavorited(fav);
       } catch (err) {
-        console.error('检查收藏状态失败:', err);
+        reportAppError(err, '检查收藏状态');
       }
     })();
   }, [currentSource, currentId]);
@@ -7201,7 +7214,7 @@ function PlayPageClient() {
         setFavorited(true);
       }
     } catch (err) {
-      console.error('切换收藏失败:', err);
+      reportAppError(err, '切换收藏');
     }
   };
 
@@ -7274,7 +7287,6 @@ function PlayPageClient() {
       setError('视频地址无效');
       return;
     }
-    console.log(videoUrl);
 
     // 检测是否为WebKit浏览器
     const isWebkit =
@@ -7371,7 +7383,7 @@ function PlayPageClient() {
         try {
           previousVideo.hls.destroy?.();
         } catch (err) {
-          console.warn('切换视频源时销毁旧 HLS 实例失败:', err);
+          reportAppError(err, '切换视频源时销毁旧 HLS 实例', { level: 'warn' });
         }
         delete previousVideo.hls;
       }
@@ -7551,10 +7563,10 @@ function PlayPageClient() {
                 hls.attachMedia?.(video);
                 hls.startLoad?.(-1);
                 video.play().catch((error) => {
-                  console.warn('[HLS] Safari rescue play failed:', error);
+                  reportAppError(error, '视频播放', { level: 'warn' });
                 });
               } catch (error) {
-                console.warn('[HLS] Safari bootstrap rescue failed:', error);
+                reportAppError(error, '视频播放', { level: 'warn' });
               }
             }, delay);
           });
@@ -7604,7 +7616,7 @@ function PlayPageClient() {
               url: defaultSubtitle!.url,
               type: 'vtt',
               style: {
-                color: '#fff',
+                color: "var(--ptv-media-text)",
                 fontSize: savedSubtitleSize,
               },
               encoding: 'utf-8',
@@ -7616,7 +7628,7 @@ function PlayPageClient() {
           playsInline: true,
           autoPlayback: false,
           airplay: true,
-          theme: '#22c55e',
+          theme: 'var(--ptv-action)',
           lang: 'zh-cn',
           hotkey: false,
           // 观影室房员禁用长按加速（会临时改变倍速）
@@ -7761,12 +7773,12 @@ function PlayPageClient() {
                 try {
                   hls.startLoad(-1);
                 } catch (error) {
-                  console.warn('[HLS] startLoad failed:', error);
+                  reportAppError(error, '视频播放', { level: 'warn' });
                 }
 
                 if (!video.paused) {
                   video.play().catch((error) => {
-                    console.warn('[HLS] play after attach failed:', error);
+                    reportAppError(error, '视频播放', { level: 'warn' });
                   });
                 }
               };
@@ -7794,7 +7806,7 @@ function PlayPageClient() {
                     hls.attachMedia(video);
                     kickStartHlsPlayback();
                   } catch (error) {
-                    console.warn('[HLS] Safari attach reattach failed:', error);
+                    reportAppError(error, '视频播放', { level: 'warn' });
                   }
                 }, 3000);
               }
@@ -7813,10 +7825,10 @@ function PlayPageClient() {
                 if (video.paused && (player?.option.autoplay || player?.loading)) {
                   try {
                     Promise.resolve(player?.play?.()).catch((error) => {
-                      console.warn('[HLS] play after manifest parsed failed:', error);
+                      reportAppError(error, '视频播放', { level: 'warn' });
                     });
                   } catch (error) {
-                    console.warn('[HLS] play after manifest parsed failed:', error);
+                    reportAppError(error, '视频播放', { level: 'warn' });
                   }
                 }
 
@@ -7832,8 +7844,8 @@ function PlayPageClient() {
                 }
               });
 
-              hls.on(Hls.Events.ERROR, function (event: any, data: any) {
-                console.error('HLS Error:', event, data);
+              hls.on(Hls.Events.ERROR, function (_event: any, data: any) {
+                if (data.fatal) reportAppError(new Error(data.type === Hls.ErrorTypes.NETWORK_ERROR ? 'NetworkError' : data.type === Hls.ErrorTypes.MEDIA_ERROR ? 'MEDIA_ERR_DECODE' : '播放流异常'), '播放视频');
                 if (data.fatal) {
                   switch (data.type) {
                     case Hls.ErrorTypes.NETWORK_ERROR:
@@ -7856,20 +7868,20 @@ function PlayPageClient() {
                         // 原有的错误处理逻辑
                         hls.destroy();
                         if (statusCode === 403) {
-                          setVideoError('访问被拒绝 (403)');
+                          setVideoError(formatAppError({ status: 403 }, '播放视频'));
                         } else if (statusCode === 404) {
-                          setVideoError('视频不存在 (404)');
+                          setVideoError(formatAppError({ status: 404 }, '播放视频'));
                         } else if (statusCode === 415) {
-                          setVideoError('视频格式不兼容 (415)');
+                          setVideoError(formatAppError({ status: 415 }, '播放视频'));
                         } else if (statusCode) {
-                          setVideoError(`HTTP ${statusCode} 错误`);
+                          setVideoError(formatAppError({ status: statusCode }, '播放视频'));
                         } else {
                           // CORS 错误或其他网络错误
                           // 如果是直链直连模式（URL 不含代理前缀），记录原始 URL 以便用户一键启用代理
                           if (currentSourceRef.current === 'directplay' && !url.includes('/api/proxy-m3u8') && !url.includes('/api/proxy/vod/m3u8')) {
                             setCorsFailedUrl(url);
                           }
-                          setVideoError('无法访问视频源（可能是跨域限制或访问被拒绝）');
+                          setVideoError(formatAppError(new Error('NetworkError'), '播放视频'));
                         }
                         return;
                       }
@@ -7879,7 +7891,7 @@ function PlayPageClient() {
                         if (statusCode && statusCode >= 400) {
                           console.log(`HTTP ${statusCode} 错误`);
                           hls.destroy();
-                          setVideoError(`HTTP ${statusCode} 错误`);
+                          setVideoError(formatAppError({ status: statusCode }, '播放视频'));
                           return;
                         }
                       }
@@ -7893,7 +7905,7 @@ function PlayPageClient() {
                     default:
                       console.log('无法恢复的错误');
                       hls.destroy();
-                      setVideoError('视频加载错误');
+                      setVideoError(formatAppError(new Error('视频加载失败，请更换播放源或重试'), '播放视频'));
                       break;
                   }
                 }
@@ -7915,7 +7927,7 @@ function PlayPageClient() {
               speed: danmakuSettingsRef.current.speed,
               opacity: danmakuSettingsRef.current.opacity,
               fontSize: danmakuSettingsRef.current.fontSize,
-              color: '#FFFFFF',
+              color: readThemeColorAsHex('--ptv-media-text'),
               mode: 0,
               margin: [danmakuSettingsRef.current.marginTop, danmakuSettingsRef.current.marginBottom],
               antiOverlap: true,
@@ -7947,7 +7959,7 @@ function PlayPageClient() {
                         }
                       }
                     } catch (e) {
-                      console.error('弹幕过滤规则错误:', e);
+                      reportAppError(e, '弹幕过滤规则');
                     }
                   }
                 }
@@ -7962,7 +7974,7 @@ function PlayPageClient() {
           settings: [
             {
               html: '去广告',
-              icon: '<text x="50%" y="50%" font-size="20" font-weight="bold" text-anchor="middle" dominant-baseline="middle" fill="#ffffff">AD</text>',
+              icon: "<text x=\"50%\" y=\"50%\" font-size=\"20\" font-weight=\"bold\" text-anchor=\"middle\" dominant-baseline=\"middle\" fill=\"var(--ptv-media-text)\">AD</text>",
               tooltip: blockAdEnabled ? '已开启' : '已关闭',
               onClick() {
                 const newVal = !blockAdEnabled;
@@ -7988,7 +8000,7 @@ function PlayPageClient() {
             },
             {
               html: '弹幕过滤',
-              icon: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z" fill="#ffffff"/><path d="M8 12h8" stroke="#ffffff" stroke-width="2" stroke-linecap="round"/></svg>',
+              icon: "<svg width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" xmlns=\"http://www.w3.org/2000/svg\"><path d=\"M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z\" fill=\"var(--ptv-media-text)\"/><path d=\"M8 12h8\" stroke=\"var(--ptv-media-text)\" stroke-width=\"2\" stroke-linecap=\"round\"/></svg>",
               tooltip: '配置弹幕过滤规则',
               onClick() {
                 // 如果播放器处于全屏状态，先退出全屏
@@ -8008,7 +8020,7 @@ function PlayPageClient() {
             ...(!danmakuHeatmapDisabledRef.current ? [{
               name: '弹幕热力',
               html: '弹幕热力',
-              icon: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M3 13h2v-2H3v2zm0 4h2v-2H3v2zm0-8h2V7H3v2zm4 4h14v-2H7v2zm0 4h14v-2H7v2zM7 7v2h14V7H7z" fill="#ffffff"/></svg>',
+              icon: "<svg width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" xmlns=\"http://www.w3.org/2000/svg\"><path d=\"M3 13h2v-2H3v2zm0 4h2v-2H3v2zm0-8h2V7H3v2zm4 4h14v-2H7v2zm0 4h14v-2H7v2zM7 7v2h14V7H7z\" fill=\"var(--ptv-media-text)\"/></svg>",
               switch: danmakuHeatmapEnabledRef.current,
               onSwitch: function (item: any) {
                 const newVal = !item.switch;
@@ -8017,7 +8029,7 @@ function PlayPageClient() {
                   setDanmakuHeatmapEnabled(newVal);
                   console.log('弹幕热力已', newVal ? '开启' : '关闭');
                 } catch (err) {
-                  console.error('切换弹幕热力失败:', err);
+                  reportAppError(err, '切换弹幕热力');
                 }
                 return newVal;
               },
@@ -8025,7 +8037,7 @@ function PlayPageClient() {
             {
               name: 'Anime4K超分',
               html: 'Anime4K超分',
-              icon: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 2L2 7v10c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V7l-10-5zm0 18c-4 0-7-3-7-7V9l7-3.5L19 9v4c0 4-3 7-7 7z" fill="#ffffff"/><path d="M10 12l2 2 4-4" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+              icon: "<svg width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" xmlns=\"http://www.w3.org/2000/svg\"><path d=\"M12 2L2 7v10c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V7l-10-5zm0 18c-4 0-7-3-7-7V9l7-3.5L19 9v4c0 4-3 7-7 7z\" fill=\"var(--ptv-media-text)\"/><path d=\"M10 12l2 2 4-4\" stroke=\"var(--ptv-media-text)\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/></svg>",
               ...(webGPUSupported ? {
                 switch: anime4kEnabledRef.current,
                 onSwitch: async function (item: any) {
@@ -8128,7 +8140,7 @@ function PlayPageClient() {
             {
               name: '快捷快进配置',
               html: '快捷快进配置',
-              icon: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M3 5v14" stroke="#ffffff" stroke-width="2" stroke-linecap="round"/><path d="m16 17 5-5-5-5" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M21 12H9" stroke="#ffffff" stroke-width="2" stroke-linecap="round"/></svg>',
+              icon: "<svg width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" xmlns=\"http://www.w3.org/2000/svg\"><path d=\"M3 5v14\" stroke=\"var(--ptv-media-text)\" stroke-width=\"2\" stroke-linecap=\"round\"/><path d=\"m16 17 5-5-5-5\" stroke=\"var(--ptv-media-text)\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M21 12H9\" stroke=\"var(--ptv-media-text)\" stroke-width=\"2\" stroke-linecap=\"round\"/></svg>",
               tooltip: `${formatQuickForwardDuration(quickForwardSecondsRef.current)}`,
               onClick: async function () {
                 const player = artPlayerRef.current;
@@ -8142,26 +8154,16 @@ function PlayPageClient() {
 
                 const container = document.createElement('div');
                 container.className = 'quick-forward-settings-dialog';
-                container.style.cssText = `
-                  position: fixed;
-                  inset: 0;
-                  z-index: 10000;
-                  display: flex;
-                  align-items: center;
-                  justify-content: center;
-                  padding: 16px;
-                  background: rgba(0, 0, 0, 0.6);
-                  backdrop-filter: blur(3px);
-                `;
+                container.style.cssText = `position: fixed;inset: 0;z-index: 10000;display: flex;align-items: center;justify-content: center;padding: 16px;background: var(--ptv-media-bg-alpha-60);backdrop-filter: blur(3px);`;
                 container.innerHTML = `
-                  <div role="dialog" aria-modal="true" style="width: min(360px, 100%); background: #1f2937; color: #fff; border: 1px solid rgba(255,255,255,.12); border-radius: 12px; padding: 20px; box-shadow: 0 16px 48px rgba(0,0,0,.45);">
+                  <div role="dialog" aria-modal="true" style="width: min(360px, 100%); background: var(--ptv-media-panel); color: var(--ptv-media-text); border: 1px solid var(--ptv-media-text-alpha-12); border-radius: 12px; padding: 20px; box-shadow: 0 16px 48px var(--ptv-media-bg-alpha-45);">
                     <div style="font-size: 17px; font-weight: 600; margin-bottom: 8px;">快捷快进设置</div>
-                    <div style="color: #9ca3af; font-size: 13px; line-height: 1.5; margin-bottom: 16px;">设置点击底部按钮或按 P 键时向前跳转的时间。</div>
-                    <label for="quick-forward-input" style="display: block; color: #d1d5db; font-size: 13px; margin-bottom: 6px;">快进时长（秒）</label>
-                    <input id="quick-forward-input" type="number" min="1" step="1" value="${quickForwardSecondsRef.current}" style="box-sizing: border-box; width: 100%; height: 40px; padding: 0 10px; border: 1px solid #4b5563; border-radius: 6px; background: #111827; color: #fff; font-size: 14px; outline: none;" />
+                    <div style="color: var(--ptv-media-muted); font-size: 13px; line-height: 1.5; margin-bottom: 16px;">设置点击底部按钮或按 P 键时向前跳转的时间。</div>
+                    <label for="quick-forward-input" style="display: block; color: var(--ptv-media-muted); font-size: 13px; margin-bottom: 6px;">快进时长（秒）</label>
+                    <input id="quick-forward-input" type="number" min="1" step="1" value="${quickForwardSecondsRef.current}" style="box-sizing: border-box; width: 100%; height: 40px; padding: 0 10px; border: 1px solid var(--ptv-media-line); border-radius: 6px; background: var(--ptv-media-panel); color: var(--ptv-media-text); font-size: 14px; outline: none;" />
                     <div style="display: flex; justify-content: flex-end; gap: 8px; margin-top: 18px;">
-                      <button type="button" data-action="cancel" style="height: 36px; padding: 0 14px; border: 0; border-radius: 6px; background: #374151; color: #fff; cursor: pointer;">取消</button>
-                      <button type="button" data-action="confirm" style="height: 36px; padding: 0 14px; border: 0; border-radius: 6px; background: #0d9488; color: #fff; cursor: pointer;">保存</button>
+                      <button type="button" data-action="cancel" style="height: 36px; padding: 0 14px; border: 0; border-radius: 6px; background: var(--ptv-media-line); color: var(--ptv-media-text); cursor: pointer;">取消</button>
+                      <button type="button" data-action="confirm" style="height: 36px; padding: 0 14px; border: 0; border-radius: 6px; background: var(--ptv-accent); color: var(--ptv-media-text); cursor: pointer;">保存</button>
                     </div>
                   </div>
                 `;
@@ -8207,7 +8209,7 @@ function PlayPageClient() {
             {
               name: '快进/倒退时间',
               html: '快进/倒退时间',
-              icon: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="m4 12 6-6v12l-6-6Z" fill="#ffffff"/><path d="m20 12-6-6v12l6-6Z" fill="#ffffff"/></svg>',
+              icon: "<svg width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" xmlns=\"http://www.w3.org/2000/svg\"><path d=\"m4 12 6-6v12l-6-6Z\" fill=\"var(--ptv-media-text)\"/><path d=\"m20 12-6-6v12l6-6Z\" fill=\"var(--ptv-media-text)\"/></svg>",
               tooltip: `${formatQuickForwardDuration(seekStepSecondsRef.current)}`,
               onClick: async function () {
                 const player = artPlayerRef.current;
@@ -8221,26 +8223,16 @@ function PlayPageClient() {
 
                 const container = document.createElement('div');
                 container.className = 'seek-step-settings-dialog';
-                container.style.cssText = `
-                  position: fixed;
-                  inset: 0;
-                  z-index: 10000;
-                  display: flex;
-                  align-items: center;
-                  justify-content: center;
-                  padding: 16px;
-                  background: rgba(0, 0, 0, 0.6);
-                  backdrop-filter: blur(3px);
-                `;
+                container.style.cssText = `position: fixed;inset: 0;z-index: 10000;display: flex;align-items: center;justify-content: center;padding: 16px;background: var(--ptv-media-bg-alpha-60);backdrop-filter: blur(3px);`;
                 container.innerHTML = `
-                  <div role="dialog" aria-modal="true" style="width: min(360px, 100%); background: #1f2937; color: #fff; border: 1px solid rgba(255,255,255,.12); border-radius: 12px; padding: 20px; box-shadow: 0 16px 48px rgba(0,0,0,.45);">
+                  <div role="dialog" aria-modal="true" style="width: min(360px, 100%); background: var(--ptv-media-panel); color: var(--ptv-media-text); border: 1px solid var(--ptv-media-text-alpha-12); border-radius: 12px; padding: 20px; box-shadow: 0 16px 48px var(--ptv-media-bg-alpha-45);">
                     <div style="font-size: 17px; font-weight: 600; margin-bottom: 8px;">快进/倒退时间</div>
-                    <div style="color: #9ca3af; font-size: 13px; line-height: 1.5; margin-bottom: 16px;">设置左右方向键快进 / 快退的时间。</div>
-                    <label for="seek-step-input" style="display: block; color: #d1d5db; font-size: 13px; margin-bottom: 6px;">时长（秒）</label>
-                    <input id="seek-step-input" type="number" min="1" step="1" value="${seekStepSecondsRef.current}" style="box-sizing: border-box; width: 100%; height: 40px; padding: 0 10px; border: 1px solid #4b5563; border-radius: 6px; background: #111827; color: #fff; font-size: 14px; outline: none;" />
+                    <div style="color: var(--ptv-media-muted); font-size: 13px; line-height: 1.5; margin-bottom: 16px;">设置左右方向键快进 / 快退的时间。</div>
+                    <label for="seek-step-input" style="display: block; color: var(--ptv-media-muted); font-size: 13px; margin-bottom: 6px;">时长（秒）</label>
+                    <input id="seek-step-input" type="number" min="1" step="1" value="${seekStepSecondsRef.current}" style="box-sizing: border-box; width: 100%; height: 40px; padding: 0 10px; border: 1px solid var(--ptv-media-line); border-radius: 6px; background: var(--ptv-media-panel); color: var(--ptv-media-text); font-size: 14px; outline: none;" />
                     <div style="display: flex; justify-content: flex-end; gap: 8px; margin-top: 18px;">
-                      <button type="button" data-action="cancel" style="height: 36px; padding: 0 14px; border: 0; border-radius: 6px; background: #374151; color: #fff; cursor: pointer;">取消</button>
-                      <button type="button" data-action="confirm" style="height: 36px; padding: 0 14px; border: 0; border-radius: 6px; background: #0d9488; color: #fff; cursor: pointer;">保存</button>
+                      <button type="button" data-action="cancel" style="height: 36px; padding: 0 14px; border: 0; border-radius: 6px; background: var(--ptv-media-line); color: var(--ptv-media-text); cursor: pointer;">取消</button>
+                      <button type="button" data-action="confirm" style="height: 36px; padding: 0 14px; border: 0; border-radius: 6px; background: var(--ptv-accent); color: var(--ptv-media-text); cursor: pointer;">保存</button>
                     </div>
                   </div>
                 `;
@@ -8286,7 +8278,7 @@ function PlayPageClient() {
             {
               name: '跳过配置',
               html: '跳过配置',
-              icon: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="5" cy="12" r="2" fill="#ffffff"/><path d="M9 12L15 12" stroke="#ffffff" stroke-width="2"/><circle cx="19" cy="12" r="2" fill="#ffffff"/></svg>',
+              icon: "<svg width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" xmlns=\"http://www.w3.org/2000/svg\"><circle cx=\"5\" cy=\"12\" r=\"2\" fill=\"var(--ptv-media-text)\"/><path d=\"M9 12L15 12\" stroke=\"var(--ptv-media-text)\" stroke-width=\"2\"/><circle cx=\"19\" cy=\"12\" r=\"2\" fill=\"var(--ptv-media-text)\"/></svg>",
               tooltip:
                 skipConfigRef.current.intro_time === 0 && skipConfigRef.current.outro_time === 0
                   ? '设置跳过配置'
@@ -8312,31 +8304,31 @@ function PlayPageClient() {
                   top: 50%;
                   left: 50%;
                   transform: translate(-50%, -50%);
-                  background: rgba(0, 0, 0, 0.9);
+                  background: var(--ptv-media-bg-alpha-90);
                   padding: 20px;
                   border-radius: 8px;
                   z-index: 9999;
                   min-width: 300px;
-                  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+                  box-shadow: 0 4px 12px var(--ptv-media-bg-alpha-50);
                   animation: ptv-pop 220ms cubic-bezier(.16,1,.3,1) both;
                 `;
 
                   container.innerHTML = `
-                  <div style="color: white; margin-bottom: 15px; font-size: 16px; font-weight: bold; border-bottom: 1px solid #444; padding-bottom: 10px;">
+                  <div style="color: white; margin-bottom: 15px; font-size: 16px; font-weight: bold; border-bottom: 1px solid var(--ptv-media-line); padding-bottom: 10px;">
                     跳过配置
                   </div>
-                  <div style="color: #aaa; font-size: 13px; margin-bottom: 15px; line-height: 1.5;">
+                  <div style="color: var(--ptv-media-muted); font-size: 13px; margin-bottom: 15px; line-height: 1.5;">
                     设置片头片尾跳过时间，到达时间自动跳过
                   </div>
                   <div style="margin-bottom: 10px;">
                     <label style="color: white; display: block; margin-bottom: 5px; font-size: 14px; font-weight: 500;">
                       片头时间 (秒)
-                      <span style="color: #888; font-size: 12px; font-weight: normal; margin-left: 8px;">从视频开始跳过的时长</span>
+                      <span style="color: var(--ptv-muted); font-size: 12px; font-weight: normal; margin-left: 8px;">从视频开始跳过的时长</span>
                     </label>
                     <div style="display: flex; gap: 8px;">
                       <input id="intro-input" type="number" min="0" step="1" value="${currentIntro}" placeholder="如: 90"
-                             style="flex: 1; padding: 8px; border-radius: 4px; border: 1px solid #444; background: #222; color: white; font-size: 14px;" />
-                      <button id="set-intro-btn" style="padding: 8px 12px; border-radius: 4px; border: none; background: #007bff; color: white; cursor: pointer; font-size: 14px; white-space: nowrap;">
+                             style="flex: 1; padding: 8px; border-radius: 4px; border: 1px solid var(--ptv-media-line); background: var(--ptv-media-panel); color: white; font-size: 14px;" />
+                      <button id="set-intro-btn" style="padding: 8px 12px; border-radius: 4px; border: none; background: var(--ptv-action); color: white; cursor: pointer; font-size: 14px; white-space: nowrap;">
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="vertical-align: middle; margin-right: 4px;">
                           <circle cx="12" cy="12" r="10" stroke="white" stroke-width="2"/>
                           <path d="M12 6v6l4 4" stroke="white" stroke-width="2" stroke-linecap="round"/>
@@ -8348,12 +8340,12 @@ function PlayPageClient() {
                   <div style="margin-bottom: 15px;">
                     <label style="color: white; display: block; margin-bottom: 5px; font-size: 14px; font-weight: 500;">
                       片尾时间 (秒)
-                      <span style="color: #888; font-size: 12px; font-weight: normal; margin-left: 8px;">从视频结尾向前跳过的时长</span>
+                      <span style="color: var(--ptv-muted); font-size: 12px; font-weight: normal; margin-left: 8px;">从视频结尾向前跳过的时长</span>
                     </label>
                     <div style="display: flex; gap: 8px;">
                       <input id="outro-input" type="number" min="0" step="1" value="${currentOutro}" placeholder="如: 120"
-                             style="flex: 1; padding: 8px; border-radius: 4px; border: 1px solid #444; background: #222; color: white; font-size: 14px;" />
-                      <button id="set-outro-btn" style="padding: 8px 12px; border-radius: 4px; border: none; background: #007bff; color: white; cursor: pointer; font-size: 14px; white-space: nowrap;">
+                             style="flex: 1; padding: 8px; border-radius: 4px; border: 1px solid var(--ptv-media-line); background: var(--ptv-media-panel); color: white; font-size: 14px;" />
+                      <button id="set-outro-btn" style="padding: 8px 12px; border-radius: 4px; border: none; background: var(--ptv-action); color: white; cursor: pointer; font-size: 14px; white-space: nowrap;">
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="vertical-align: middle; margin-right: 4px;">
                           <circle cx="12" cy="12" r="10" stroke="white" stroke-width="2"/>
                           <path d="M12 6v6l4 4" stroke="white" stroke-width="2" stroke-linecap="round"/>
@@ -8362,18 +8354,18 @@ function PlayPageClient() {
                       </button>
                     </div>
                   </div>
-                  <div style="background: rgba(0, 123, 255, 0.1); border-left: 3px solid #007bff; padding: 10px; margin-bottom: 15px; border-radius: 4px;">
-                    <div style="color: #88c0ff; font-size: 12px; line-height: 1.6;">
+                  <div style="background: var(--ptv-media-bg-alpha-10); border-left: 3px solid var(--ptv-action); padding: 10px; margin-bottom: 15px; border-radius: 4px;">
+                    <div style="color: var(--ptv-action); font-size: 12px; line-height: 1.6;">
                       <div style="margin-bottom: 4px;">💡 <strong>提示：</strong></div>
                       <div>• 点击"当前时间"可快速设置为播放位置</div>
                       <div>• 片头90秒表示跳过前1分30秒</div>
                       <div>• 片尾120秒表示跳过最后2分钟</div>
                     </div>
                   </div>
-                  <div style="display: flex; gap: 10px; justify-content: flex-end; border-top: 1px solid #444; padding-top: 15px;">
-                    <button id="cancel-btn" style="padding: 8px 16px; border-radius: 4px; border: none; background: #444; color: white; cursor: pointer; font-size: 14px; transition: background 0.2s;" onmouseover="this.style.background='#555'" onmouseout="this.style.background='#444'">取消</button>
-                    <button id="clear-btn" style="padding: 8px 16px; border-radius: 4px; border: none; background: #d9534f; color: white; cursor: pointer; font-size: 14px; transition: background 0.2s;" onmouseover="this.style.background='#c9302c'" onmouseout="this.style.background='#d9534f'">清除</button>
-                    <button id="confirm-btn" style="padding: 8px 16px; border-radius: 4px; border: none; background: #5cb85c; color: white; cursor: pointer; font-size: 14px; transition: background 0.2s;" onmouseover="this.style.background='#4cae4c'" onmouseout="this.style.background='#5cb85c'">确定</button>
+                  <div style="display: flex; gap: 10px; justify-content: flex-end; border-top: 1px solid var(--ptv-media-line); padding-top: 15px;">
+                    <button id="cancel-btn" style="padding: 8px 16px; border-radius: 4px; border: none; background: var(--ptv-media-line); color: white; cursor: pointer; font-size: 14px; transition: background 0.2s;" onmouseover="this.style.background='var(--ptv-media-line)'" onmouseout="this.style.background='var(--ptv-media-line)'">取消</button>
+                    <button id="clear-btn" style="padding: 8px 16px; border-radius: 4px; border: none; background: var(--ptv-error); color: white; cursor: pointer; font-size: 14px; transition: background 0.2s;" onmouseover="this.style.background='var(--ptv-error-hover)'" onmouseout="this.style.background='var(--ptv-error)'">清除</button>
+                    <button id="confirm-btn" style="padding: 8px 16px; border-radius: 4px; border: none; background: var(--ptv-action); color: white; cursor: pointer; font-size: 14px; transition: background 0.2s;" onmouseover="this.style.background='var(--ptv-action)'" onmouseout="this.style.background='var(--ptv-action)'">确定</button>
                   </div>
                 `;
 
@@ -8499,7 +8491,7 @@ function PlayPageClient() {
               html: '<i class="art-icon ios-portrait-fullscreen"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z" fill="currentColor"/></svg></i>',
               tooltip: '全屏',
               style: {
-                color: '#fff',
+                color: "var(--ptv-media-text)",
               },
               mounted: function ($el: HTMLElement) {
                 // 添加 CSS 样式：横屏和竖屏都显示
@@ -8516,7 +8508,7 @@ function PlayPageClient() {
                   left: 0;
                   right: 0;
                   bottom: 0;
-                  background: rgba(0, 0, 0, 0.6);
+                  background: var(--ptv-media-bg-alpha-60);
                   backdrop-filter: blur(4px);
                   z-index: 1000;
                   display: flex;
@@ -8530,17 +8522,17 @@ function PlayPageClient() {
                   border-radius: 16px;
                   max-width: 480px;
                   width: 100%;
-                  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+                  box-shadow: 0 20px 60px var(--ptv-media-bg-alpha-50);
                   animation: ptv-pop 220ms cubic-bezier(.16,1,.3,1) both;
                   overflow: hidden;
                 }
                 .dark .ios-fullscreen-dialog-content {
-                  background: rgb(31, 41, 55);
+                  background: var(--ptv-media-bg);
                 }
 
                 /* 标题栏 */
                 .ios-fullscreen-dialog-header {
-                  background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+                  background: linear-gradient(135deg, var(--ptv-action) 0%, var(--ptv-action) 100%);
                   padding: 20px 24px;
                 }
                 .ios-fullscreen-dialog-title {
@@ -8557,7 +8549,7 @@ function PlayPageClient() {
                 }
                 .ios-fullscreen-dialog-subtitle {
                   font-size: 14px;
-                  color: rgba(255, 255, 255, 0.9);
+                  color: var(--ptv-media-text-alpha-90);
                   margin: 0;
                 }
 
@@ -8573,7 +8565,7 @@ function PlayPageClient() {
                   align-items: center;
                   gap: 16px;
                   padding: 16px;
-                  background: rgb(249, 250, 251);
+                  background: var(--ptv-media-text);
                   border: 2px solid transparent;
                   border-radius: 12px;
                   cursor: pointer;
@@ -8581,15 +8573,15 @@ function PlayPageClient() {
                   text-align: left;
                 }
                 .dark .ios-fullscreen-option {
-                  background: rgba(55, 65, 81, 0.5);
+                  background: var(--ptv-media-bg-alpha-50);
                 }
                 .ios-fullscreen-option:hover {
-                  background: rgb(243, 244, 246);
-                  border-color: #22c55e;
-                  box-shadow: 0 4px 12px rgba(34, 197, 94, 0.15);
+                  background: var(--ptv-media-text);
+                  border-color: var(--ptv-action);
+                  box-shadow: 0 4px 12px var(--ptv-media-bg-alpha-15);
                 }
                 .dark .ios-fullscreen-option:hover {
-                  background: rgb(55, 65, 81);
+                  background: var(--ptv-media-bg);
                 }
                 .ios-fullscreen-option:active {
                   transform: scale(0.98);
@@ -8597,7 +8589,7 @@ function PlayPageClient() {
 
                 /* 推荐选项 */
                 .ios-fullscreen-option-recommended {
-                  border-color: #22c55e;
+                  border-color: var(--ptv-action);
                 }
 
                 /* 选项图标 */
@@ -8610,13 +8602,13 @@ function PlayPageClient() {
                   justify-content: center;
                   background: white;
                   border-radius: 10px;
-                  color: #22c55e;
+                  color: var(--ptv-action);
                 }
                 .dark .ios-fullscreen-option-icon {
-                  background: rgb(31, 41, 55);
+                  background: var(--ptv-media-bg);
                 }
                 .ios-fullscreen-option-recommended .ios-fullscreen-option-icon {
-                  background: #22c55e;
+                  background: var(--ptv-action);
                   color: white;
                 }
 
@@ -8627,7 +8619,7 @@ function PlayPageClient() {
                 .ios-fullscreen-option-title {
                   font-size: 16px;
                   font-weight: 600;
-                  color: rgb(17, 24, 39);
+                  color: var(--ptv-media-bg);
                   margin-bottom: 4px;
                   display: flex;
                   align-items: center;
@@ -8639,7 +8631,7 @@ function PlayPageClient() {
                 .ios-fullscreen-option-badge {
                   display: inline-block;
                   padding: 2px 8px;
-                  background: #22c55e;
+                  background: var(--ptv-action);
                   color: white;
                   font-size: 12px;
                   font-weight: 500;
@@ -8647,43 +8639,43 @@ function PlayPageClient() {
                 }
                 .ios-fullscreen-option-desc {
                   font-size: 13px;
-                  color: rgb(107, 114, 128);
+                  color: var(--ptv-media-bg);
                   line-height: 1.4;
                 }
                 .dark .ios-fullscreen-option-desc {
-                  color: rgb(156, 163, 175);
+                  color: var(--ptv-media-bg);
                 }
 
                 /* 箭头图标 */
                 .ios-fullscreen-option-arrow {
                   flex-shrink: 0;
-                  color: rgb(209, 213, 219);
+                  color: var(--ptv-media-text);
                   transition: transform 0.2s;
                 }
                 .dark .ios-fullscreen-option-arrow {
-                  color: rgb(75, 85, 99);
+                  color: var(--ptv-media-bg);
                 }
                 .ios-fullscreen-option:hover .ios-fullscreen-option-arrow {
                   transform: translateX(4px);
-                  color: #22c55e;
+                  color: var(--ptv-action);
                 }
 
                 /* 底部提示 */
                 .ios-fullscreen-dialog-footer {
                   padding: 16px 24px;
-                  background: rgb(249, 250, 251);
-                  border-top: 1px solid rgb(229, 231, 235);
+                  background: var(--ptv-media-text);
+                  border-top: 1px solid var(--ptv-media-text);
                   display: flex;
                   align-items: flex-start;
                   gap: 10px;
                   font-size: 12px;
-                  color: rgb(107, 114, 128);
+                  color: var(--ptv-media-bg);
                   line-height: 1.5;
                 }
                 .dark .ios-fullscreen-dialog-footer {
-                  background: rgba(17, 24, 39, 0.5);
-                  border-top-color: rgb(55, 65, 81);
-                  color: rgb(156, 163, 175);
+                  background: var(--ptv-media-bg-alpha-50);
+                  border-top-color: var(--ptv-media-bg);
+                  color: var(--ptv-media-bg);
                 }
                 .ios-fullscreen-dialog-footer svg {
                   flex-shrink: 0;
@@ -8714,10 +8706,10 @@ function PlayPageClient() {
                     try {
                       const result = exitFullscreen.call(document);
                       if (result && typeof result.catch === 'function') {
-                        result.catch((err: Error) => console.error('退出全屏失败:', err));
+                        result.catch((err: Error) => reportAppError(err, '退出全屏'));
                       }
                     } catch (err) {
-                      console.error('退出全屏失败:', err);
+                      reportAppError(err, '退出全屏');
                     }
                   }
                   return;
@@ -8873,7 +8865,7 @@ function PlayPageClient() {
             try {
               artPlayerRef.current.fullscreenWeb = true;
             } catch (err) {
-              console.warn('恢复网页全屏失败:', err);
+              reportAppError(err, '恢复网页全屏', { level: 'warn' });
             }
           }
 
@@ -8922,7 +8914,7 @@ function PlayPageClient() {
                   background-color: transparent !important;
                   border-radius: 0 !important;
                   margin-left: -15px !important;
-                  filter: ${monochrome ? 'brightness(0) invert(1) drop-shadow(0 1px 2px #101820)' : 'none'} !important;
+                  filter: ${monochrome ? "brightness(0) invert(1) drop-shadow(0 1px 2px var(--ptv-media-bg))" : 'none'} !important;
                 }
               `;
 
@@ -8933,7 +8925,7 @@ function PlayPageClient() {
                 document.head.appendChild(style);
               }
             } catch (error) {
-              console.error('[进度条图标] 应用配置失败:', error);
+              reportAppError(error, '应用配置');
             }
           };
 
@@ -8945,7 +8937,7 @@ function PlayPageClient() {
           if (readyDefaultSubtitle && isCustomRendererSourceSubtitle(readyDefaultSubtitle)) {
             void switchSourceSubtitle(readyDefaultSubtitle)
               .catch((error) => {
-                console.warn('[Subtitle] 高级字幕自动加载失败:', error);
+                reportAppError(error, '自动加载高级字幕', { level: 'warn' });
                 if (artPlayerRef.current) {
                   artPlayerRef.current.subtitle.show = false;
                 }
@@ -9433,7 +9425,7 @@ function PlayPageClient() {
 
                 ctx.lineTo(width, height);
                 ctx.closePath();
-                ctx.fillStyle = 'rgba(128, 128, 128, 0.3)';
+                ctx.fillStyle = "var(--ptv-media-bg-alpha-30)";
                 ctx.fill();
 
                 // 绘制已播放部分的曲线（深色）
@@ -9464,7 +9456,7 @@ function PlayPageClient() {
 
                   ctx.lineTo(width, height);
                   ctx.closePath();
-                  ctx.fillStyle = 'rgba(128, 128, 128, 0.6)';
+                  ctx.fillStyle = "var(--ptv-media-bg-alpha-60)";
                   ctx.fill();
 
                   ctx.restore();
@@ -9526,7 +9518,7 @@ function PlayPageClient() {
                   transform: translateX(-50%);
                   margin-bottom: 8px;
                   padding: 4px 8px;
-                  background: rgba(0, 0, 0, 0.8);
+                  background: var(--ptv-media-bg-alpha-80);
                   color: white;
                   font-size: 12px;
                   border-radius: 4px;
@@ -9657,12 +9649,12 @@ function PlayPageClient() {
           name: 'seek-buttons',
           html: `
           <div class="seek-buttons-container" style="opacity: 0; pointer-events: none; transition: opacity 0.2s;">
-            <button class="seek-button seek-backward" style="position: fixed; left: 20px; top: 40%; transform: translateY(-50%); width: 48px; height: 48px; background: rgba(0,0,0,0.7); border: none; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 9999; transition: opacity 0.2s;">
+            <button class="seek-button seek-backward" style="position: fixed; left: 20px; top: 40%; transform: translateY(-50%); width: 48px; height: 48px; background: var(--ptv-media-bg-alpha-70); border: none; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 9999; transition: opacity 0.2s;">
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <path d="M11 18V6l-8.5 6 8.5 6zm.5-6l8.5 6V6l-8.5 6z" fill="white"/>
               </svg>
             </button>
-            <button class="seek-button seek-forward" style="position: fixed; right: 20px; top: 40%; transform: translateY(-50%); width: 48px; height: 48px; background: rgba(0,0,0,0.7); border: none; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 9999; transition: opacity 0.2s;">
+            <button class="seek-button seek-forward" style="position: fixed; right: 20px; top: 40%; transform: translateY(-50%); width: 48px; height: 48px; background: var(--ptv-media-bg-alpha-70); border: none; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 9999; transition: opacity 0.2s;">
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <path d="M4 18l8.5-6L4 6v12zm9-12v12l8.5-6L13 6z" fill="white"/>
               </svg>
@@ -9752,7 +9744,7 @@ function PlayPageClient() {
               restoredResumeTime = true;
               console.log('成功恢复播放进度到:', resumeTimeRef.current);
             } catch (err) {
-              console.warn('恢复播放进度失败:', err);
+              reportAppError(err, '恢复播放进度', { level: 'warn' });
             }
           }
           resumeTimeRef.current = null;
@@ -9764,7 +9756,7 @@ function PlayPageClient() {
             artPlayerRef.current.pause();
           } else if (shouldResumePlaying === true) {
             Promise.resolve(artPlayerRef.current.play()).catch((error) => {
-              console.warn('[Harmony HLS] 恢复播放失败:', error);
+              reportAppError(error, '恢复播放', { level: 'warn' });
             });
           }
 
@@ -9916,7 +9908,7 @@ function PlayPageClient() {
                       try {
                         artPlayerRef.current?.layers.remove('play-record-jump');
                       } catch (err) {
-                        console.warn('[PlayRecordJump] 移除跳转按钮失败:', err);
+                        reportAppError(err, '移除跳转按钮', { level: 'warn' });
                       }
                     }, 160);
                   };
@@ -9936,12 +9928,12 @@ function PlayPageClient() {
                         align-items: center;
                         gap: 8px;
                         padding: 8px 12px;
-                        background-color: rgba(0, 0, 0, 0.75);
+                        background-color: var(--ptv-media-bg-alpha-75);
                         border-radius: 6px;
                         color: white;
                         font-size: 14px;
                         font-family: system-ui, -apple-system, sans-serif;
-                        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+                        box-shadow: 0 2px 8px var(--ptv-media-bg-alpha-30);
                         backdrop-filter: blur(4px);
                         pointer-events: auto;
                       ">
@@ -9950,8 +9942,8 @@ function PlayPageClient() {
                         </span>
                         <button id="play-record-jump-btn" style="
                           padding: 4px 12px;
-                          background-color: rgba(255, 255, 255, 0.2);
-                          border: 1px solid rgba(255, 255, 255, 0.3);
+                          background-color: var(--ptv-media-text-alpha-20);
+                          border: 1px solid var(--ptv-media-text-alpha-30);
                           border-radius: 4px;
                           color: white;
                           font-size: 13px;
@@ -9965,7 +9957,7 @@ function PlayPageClient() {
                           padding: 4px 8px;
                           background-color: transparent;
                           border: none;
-                          color: rgba(255, 255, 255, 0.7);
+                          color: var(--ptv-media-text-alpha-70);
                           font-size: 18px;
                           cursor: pointer;
                           line-height: 1;
@@ -9991,10 +9983,10 @@ function PlayPageClient() {
 
                   if (jumpBtn) {
                     jumpBtn.addEventListener('mouseenter', () => {
-                      jumpBtn.style.backgroundColor = 'rgba(255, 255, 255, 0.3)';
+                      jumpBtn.style.backgroundColor = "var(--ptv-media-text-alpha-30)";
                     });
                     jumpBtn.addEventListener('mouseleave', () => {
-                      jumpBtn.style.backgroundColor = 'rgba(255, 255, 255, 0.2)';
+                      jumpBtn.style.backgroundColor = "var(--ptv-media-text-alpha-20)";
                     });
                     jumpBtn.addEventListener('click', () => {
                       if (artPlayerRef.current) {
@@ -10010,10 +10002,10 @@ function PlayPageClient() {
 
                   if (dismissBtn) {
                     dismissBtn.addEventListener('mouseenter', () => {
-                      dismissBtn.style.color = 'white';
+                      dismissBtn.style.color = "var(--ptv-media-text)";
                     });
                     dismissBtn.addEventListener('mouseleave', () => {
-                      dismissBtn.style.color = 'rgba(255, 255, 255, 0.7)';
+                      dismissBtn.style.color = "var(--ptv-media-text-alpha-70)";
                     });
                     dismissBtn.addEventListener('click', () => {
                       playRecordJumpDismissedRef.current = true;
@@ -10033,7 +10025,7 @@ function PlayPageClient() {
                 playRecordJumpInitialCheckRef.current = false;
               }
             } catch (err) {
-              console.error('[PlayRecordJump] 检查播放记录失败:', err);
+              reportAppError(err, '检查播放记录');
               // 即使出错也标记为已检查过
               playRecordJumpInitialCheckRef.current = false;
             }
@@ -10088,7 +10080,7 @@ function PlayPageClient() {
         });
 
         artPlayerRef.current.on('error', (err: any) => {
-          console.error('播放器错误:', err);
+          reportAppError(err, '播放视频');
           // CORS 回退（单文件直链/网盘挂载原生 HLS）：乐观设置的 crossOrigin 在
           // 无 ACAO 的 CDN 上首次播放即失败，去掉 crossOrigin 以 no-cors 重试一次。
           // 必须放在 currentTime 守卫与 HLS 分流之前，覆盖原生 HLS 的 m3u8 失败。
@@ -10142,9 +10134,9 @@ function PlayPageClient() {
               setVideoError('视频无法在浏览器中播放（已尝试代理，格式不兼容）');
             } else if (currentSourceRef.current === 'directplay' && !currentUrl.includes('/api/proxy-m3u8')) {
               setCorsFailedUrl(currentUrl);
-              setVideoError('视频播放失败');
+              setVideoError(formatAppError(err, '播放视频'));
             } else {
-              setVideoError('视频播放失败');
+              setVideoError(formatAppError(err, '播放视频'));
             }
           }
         });
@@ -10321,8 +10313,8 @@ function PlayPageClient() {
           );
         }
       } catch (err) {
-        console.error('创建播放器失败:', err);
-        setError('播放器初始化失败');
+        reportAppError(err, '初始化播放器');
+        setError(formatAppError(err, '初始化播放器'));
       }
     };
 
@@ -10414,7 +10406,7 @@ function PlayPageClient() {
                 <>
                   {/* 动画影院图标 */}
                   <div className='relative mb-8'>
-                    <div className='relative mx-auto w-24 h-24 bg-gradient-to-r from-green-500 to-emerald-600 rounded-2xl shadow-2xl flex items-center justify-center transform hover:scale-105 transition-transform duration-300'>
+                    <div className="relative mx-auto w-24 h-24 bg-gradient-to-r from-apex-media-panel to-apex-media-high rounded-2xl shadow-2xl flex items-center justify-center transform hover:scale-105 transition-transform duration-300">
                       <div className='text-white text-4xl'>
                         {loadingStage === 'searching' && '🔍'}
                         {loadingStage === 'preferring' && '⚡'}
@@ -10422,14 +10414,14 @@ function PlayPageClient() {
                         {loadingStage === 'ready' && '✨'}
                       </div>
                       {/* 旋转光环 */}
-                      <div className='absolute -inset-2 bg-gradient-to-r from-green-500 to-emerald-600 rounded-2xl opacity-20 animate-spin'></div>
+                      <div className="absolute -inset-2 bg-gradient-to-r from-apex-media-panel to-apex-media-high rounded-2xl opacity-20 animate-spin"></div>
                     </div>
 
                     {/* 浮动粒子效果 */}
                     <div className='absolute top-0 left-0 w-full h-full pointer-events-none'>
                       <div className='absolute top-2 left-2 w-2 h-2 bg-green-400 rounded-full animate-bounce'></div>
                       <div
-                        className='absolute top-4 right-4 w-1.5 h-1.5 bg-emerald-400 rounded-full animate-bounce'
+                        className="absolute top-4 right-4 w-1.5 h-1.5 bg-apex-action rounded-full animate-bounce"
                         style={{ animationDelay: '0.5s' }}
                       ></div>
                       <div
@@ -10470,7 +10462,7 @@ function PlayPageClient() {
                     {/* 进度条 */}
                     <div className='w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2 overflow-hidden'>
                       <div
-                        className='h-full bg-gradient-to-r from-green-500 to-emerald-600 rounded-full transition-all duration-1000 ease-out'
+                        className="h-full bg-gradient-to-r from-apex-media-panel to-apex-media-high rounded-full transition-all duration-1000 ease-out"
                         style={{
                           width:
                             loadingStage === 'searching' ||
@@ -10560,7 +10552,7 @@ function PlayPageClient() {
                       ? router.push(`/search?q=${encodeURIComponent(videoTitle)}`)
                       : router.back()
                   }
-                  className='flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-green-500 to-emerald-600 px-6 py-3 font-medium text-white shadow-lg transition-all duration-200 hover:scale-105 hover:from-green-600 hover:to-emerald-700 hover:shadow-xl'
+                  className="flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-apex-action to-apex-action px-6 py-3 font-medium text-apex-action-ink shadow-lg transition-all duration-200 hover:scale-105 hover:from-apex-action hover:to-apex-action hover:shadow-xl"
                 >
                   {videoTitle ? (
                     <>
@@ -10634,7 +10626,7 @@ function PlayPageClient() {
 
   return (
     <PageLayout activePath='/play' hideNavigation={isWebFullscreen}>
-      <div className='ptv-play-page'>
+      <div className='ptv-play-page f1-cinema-page'>
       {/* TMDB背景图 */}
       {!tmdbBackdropDisabled && tmdbBackdrop && (
         <div
@@ -10653,7 +10645,7 @@ function PlayPageClient() {
         <div className='ptv-scrim-in fixed inset-0 z-[1000] flex items-center justify-center bg-black/60 backdrop-blur-sm'>
           <div className='ptv-modal-in relative w-full max-w-2xl max-h-[80vh] mx-4 bg-white dark:bg-gray-800 rounded-2xl shadow-2xl overflow-hidden'>
             {/* 标题栏 */}
-            <div className='sticky top-0 z-10 bg-gradient-to-r from-green-500 to-emerald-600 px-6 py-4'>
+            <div className="sticky top-0 z-10 bg-gradient-to-r from-apex-media-panel to-apex-media-high px-6 py-4">
               <h3 className='text-xl font-bold text-white flex items-center gap-2'>
                 <svg className='w-6 h-6' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
                   <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z' />
@@ -10733,9 +10725,7 @@ function PlayPageClient() {
                             </span>
                           )}
                           {anime.episodeCount && (
-                            <span className='inline-flex items-center px-2.5 py-1 rounded-md
-                                           bg-purple-100 dark:bg-purple-900/30 text-purple-700
-                                           dark:text-purple-300 text-sm font-medium'>
+                            <span className="inline-flex items-center px-2.5 py-1 rounded-md\n                                           bg-apex-selected dark:bg-apex-selected/30 text-apex-accent-on-soft\n                                           dark:text-apex-accent-on-soft text-sm font-medium">
                               🎬 {anime.episodeCount} 集
                             </span>
                           )}
@@ -10786,44 +10776,18 @@ function PlayPageClient() {
       )}
 
       <div className='apex-page apex-play-content relative z-10 flex flex-col gap-3'>
-        {/* 第一行：影片标题 */}
-        <div className='py-1'>
-          <h1 className='text-xl font-semibold flex items-center gap-2 flex-wrap text-[color:var(--ptv-text)]'>
-            <span>
-              {videoTitle || '影片标题'}
-              {shouldShowEpisodeLabel && (
-                <span className='text-[color:var(--ptv-muted)]'>
-                  {` > ${episodeLabel}`}
-                </span>
-              )}
-            </span>
-            {/* 完结状态标识 */}
-            {detail && totalEpisodes > 1 && (() => {
-              const status = getSeriesStatus(detail);
-              if (status === 'unknown') return null;
-
-              return (
-                <span
-                  className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${status === 'completed'
-                    ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300'
-                    : 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300'
-                    }`}
-                >
-                  {status === 'completed' ? '已完结' : '连载中'}
-                </span>
-              );
-            })()}
-            {playbackSourceBadge && (
-              <span className='inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300'>
-                {playbackSourceBadge === 'local' ? '本地播放' : '离线播放'}
-              </span>
-            )}
-          </h1>
-        </div>
         {/* 第二行：播放器和选集 */}
         <div className='space-y-2'>
+          <div className={`ptv-player-grid ${isEpisodeSelectorCollapsed ? 'ptv-player-grid-collapsed' : ''}`}>
+            {/* 播放器 */}
+            <div
+              className='ptv-player-stage flex flex-col'
+            >
+              {/* 播放器容器 */}
+              <div className='ptv-player-canvas relative w-full aspect-video'>
+                <h1 className='sr-only'>{videoTitle || '影片标题'}{shouldShowEpisodeLabel ? ` > ${episodeLabel}` : ''}</h1>
           {/* 折叠控制 - 仅在 lg 及以上屏幕显示 */}
-          <div className='hidden lg:flex justify-end'>
+          <div className='f1-player-panel-toggle hidden lg:flex'>
             <button
               onClick={() =>
                 setIsEpisodeSelectorCollapsed(!isEpisodeSelectorCollapsed)
@@ -10860,14 +10824,6 @@ function PlayPageClient() {
               ></div>
             </button>
           </div>
-
-          <div className={`ptv-player-grid ${isEpisodeSelectorCollapsed ? 'ptv-player-grid-collapsed' : ''}`}>
-            {/* 播放器 */}
-            <div
-              className='ptv-player-stage flex flex-col'
-            >
-              {/* 播放器容器 */}
-              <div className='ptv-player-canvas relative w-full aspect-video'>
                 <div
                   ref={artRef}
                   className='bg-black w-full h-full rounded-xl overflow-hidden shadow-lg'
@@ -10915,7 +10871,7 @@ function PlayPageClient() {
                                   artPlayerRef.current.url = videoUrl;
                                 }
                               }}
-                              className='mt-4 px-6 py-2 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-lg hover:from-green-600 hover:to-emerald-700 transition-all duration-200'
+                              className="mt-4 px-6 py-2 bg-gradient-to-r from-apex-action to-apex-action text-apex-action-ink rounded-lg hover:from-apex-action hover:to-apex-action transition-all duration-200"
                             >
                               重试
                             </button>
@@ -10936,7 +10892,7 @@ function PlayPageClient() {
                                   proxyAttemptedRef.current = true;
                                   setVideoUrl(proxyUrl);
                                 }}
-                                className='mt-4 ml-3 px-6 py-2 bg-gradient-to-r from-blue-500 to-indigo-600 text-white rounded-lg hover:from-blue-600 hover:to-indigo-700 transition-all duration-200'
+                                className="mt-4 ml-3 px-6 py-2 bg-gradient-to-r from-apex-action to-apex-action text-apex-action-ink rounded-lg hover:from-apex-action hover:to-apex-action transition-all duration-200"
                               >
                                 使用代理播放
                               </button>
@@ -10954,17 +10910,17 @@ function PlayPageClient() {
                             <>
                               {/* 动画影院图标 */}
                               <div className='relative mb-8'>
-                                <div className='relative mx-auto w-24 h-24 bg-gradient-to-r from-green-500 to-emerald-600 rounded-2xl shadow-2xl flex items-center justify-center transform hover:scale-105 transition-transform duration-300'>
+                                <div className="relative mx-auto w-24 h-24 bg-gradient-to-r from-apex-media-panel to-apex-media-high rounded-2xl shadow-2xl flex items-center justify-center transform hover:scale-105 transition-transform duration-300">
                                   <div className='text-white text-4xl'>🎬</div>
                                   {/* 旋转光环 */}
-                                  <div className='absolute -inset-2 bg-gradient-to-r from-green-500 to-emerald-600 rounded-2xl opacity-20 animate-spin'></div>
+                                  <div className="absolute -inset-2 bg-gradient-to-r from-apex-media-panel to-apex-media-high rounded-2xl opacity-20 animate-spin"></div>
                                 </div>
 
                                 {/* 浮动粒子效果 */}
                                 <div className='absolute top-0 left-0 w-full h-full pointer-events-none'>
                                   <div className='absolute top-2 left-2 w-2 h-2 bg-green-400 rounded-full animate-bounce'></div>
                                   <div
-                                    className='absolute top-4 right-4 w-1.5 h-1.5 bg-emerald-400 rounded-full animate-bounce'
+                                    className="absolute top-4 right-4 w-1.5 h-1.5 bg-apex-action rounded-full animate-bounce"
                                     style={{ animationDelay: '0.5s' }}
                                   ></div>
                                   <div
@@ -11009,7 +10965,7 @@ function PlayPageClient() {
                     {danmakuCount > 0 ? (
                       <>
                         <svg
-                          className='w-4 h-4 text-green-500'
+                          className="w-4 h-4 text-apex-media-accent"
                           fill='none'
                           stroke='currentColor'
                           viewBox='0 0 24 24'
@@ -11021,7 +10977,7 @@ function PlayPageClient() {
                             d='M5 13l4 4L19 7'
                           />
                         </svg>
-                        <span className='text-sm font-medium text-green-400'>
+                        <span className="text-sm font-medium text-apex-media-accent">
                           {danmakuOriginalCount > 0
                             ? `已加载 ${danmakuCount} 条弹幕（原始 ${danmakuOriginalCount} 条）`
                             : `已加载 ${danmakuCount} 条弹幕`
@@ -11031,7 +10987,7 @@ function PlayPageClient() {
                     ) : (
                       <>
                         <div className='w-4 h-4 border-2 border-green-500 border-t-transparent rounded-full animate-spin'></div>
-                        <span className='text-sm font-medium text-green-400'>
+                        <span className="text-sm font-medium text-apex-media-accent">
                           加载弹幕中...
                         </span>
                       </>
@@ -11058,7 +11014,7 @@ function PlayPageClient() {
                             e.preventDefault();
                             setShowDownloadSelector(true);
                           }}
-                          className='group relative flex items-center justify-center gap-1 w-8 h-8 lg:w-auto lg:h-auto lg:px-2 lg:py-1.5 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-xs font-medium rounded-md transition-all duration-200 shadow-sm hover:shadow-md cursor-pointer overflow-hidden border border-green-400 flex-shrink-0'
+                          className="group relative flex items-center justify-center gap-1 w-8 h-8 lg:w-auto lg:h-auto lg:px-2 lg:py-1.5 bg-gradient-to-r from-apex-action to-apex-action hover:from-apex-action hover:to-apex-action text-xs font-medium rounded-md transition-all duration-200 shadow-sm hover:shadow-md cursor-pointer overflow-hidden border border-green-400 flex-shrink-0"
                           title='下载视频'
                         >
                           <svg
@@ -11108,7 +11064,7 @@ function PlayPageClient() {
                                 onClose: () => setToast(null),
                               });
                             }).catch((err) => {
-                              console.error('复制失败:', err);
+                              reportAppError(err, '复制');
                               setToast({
                                 message: '复制失败，请重试',
                                 type: 'error',
@@ -11184,7 +11140,7 @@ function PlayPageClient() {
                             link.remove();
                             setToast({ message: '已交给 ApexTV 电脑客户端。未安装时页面不会再有变化。', type: 'success', onClose: () => setToast(null) });
                           }}
-                          className='group relative flex items-center justify-center gap-1 w-8 h-8 lg:w-auto lg:h-auto lg:px-2 lg:py-1.5 bg-emerald-500 hover:bg-emerald-600 dark:bg-emerald-600 dark:hover:bg-emerald-700 text-xs font-medium rounded-md transition-all duration-200 shadow-sm hover:shadow-md cursor-pointer overflow-hidden border border-emerald-600 dark:border-emerald-700 flex-shrink-0'
+                          className="group relative flex items-center justify-center gap-1 w-8 h-8 lg:w-auto lg:h-auto lg:px-2 lg:py-1.5 bg-apex-action hover:bg-apex-action dark:bg-apex-action dark:hover:bg-apex-action text-xs font-medium rounded-md transition-all duration-200 shadow-sm hover:shadow-md cursor-pointer overflow-hidden border border-apex-accent dark:border-apex-accent flex-shrink-0"
                           title='PC Client打开'
                         >
                           <svg
@@ -11215,7 +11171,7 @@ function PlayPageClient() {
                             }}
                             disabled={isCreatingRoom}
                             data-state={isCreatingRoom ? 'loading' : undefined}
-                            className='group relative flex items-center justify-center gap-1 w-8 h-8 lg:w-auto lg:h-auto lg:px-2 lg:py-1.5 bg-purple-500 hover:bg-purple-600 dark:bg-purple-600 dark:hover:bg-purple-700 text-xs font-medium rounded-md transition-all duration-200 shadow-sm hover:shadow-md cursor-pointer overflow-hidden border border-purple-600 dark:border-purple-700 flex-shrink-0 disabled:opacity-60 disabled:cursor-wait'
+                            className="group relative flex items-center justify-center gap-1 w-8 h-8 lg:w-auto lg:h-auto lg:px-2 lg:py-1.5 bg-apex-action hover:bg-apex-action dark:bg-apex-action dark:hover:bg-apex-action text-xs font-medium rounded-md transition-all duration-200 shadow-sm hover:shadow-md cursor-pointer overflow-hidden border border-apex-accent dark:border-apex-accent flex-shrink-0 disabled:opacity-60 disabled:cursor-wait"
                             title='创建观影室'
                           >
                             {isCreatingRoom ? (
@@ -11276,7 +11232,7 @@ function PlayPageClient() {
                                 if (fileName) params.set('fileName', fileName);
                                 router.push(`/duanju/play?${params.toString()}`);
                               }}
-                              className='group relative flex items-center justify-center gap-1 w-8 h-8 lg:w-auto lg:h-auto lg:px-2 lg:py-1.5 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-xs font-medium rounded-md transition-all duration-200 shadow-sm hover:shadow-md cursor-pointer overflow-hidden border border-emerald-400 flex-shrink-0'
+                              className="group relative flex items-center justify-center gap-1 w-8 h-8 lg:w-auto lg:h-auto lg:px-2 lg:py-1.5 bg-gradient-to-r from-apex-action to-apex-action hover:from-apex-action hover:to-apex-action text-xs font-medium rounded-md transition-all duration-200 shadow-sm hover:shadow-md cursor-pointer overflow-hidden border border-apex-accent flex-shrink-0"
                               title='切换到短剧竖屏模式'
                               aria-label='切换到短剧竖屏模式'
                             >
@@ -11304,7 +11260,7 @@ function PlayPageClient() {
                             e.preventDefault();
                             setShowShortcutDialog(true);
                           }}
-                          className='group relative flex items-center justify-center gap-1 w-8 h-8 lg:w-auto lg:h-auto lg:px-2 lg:py-1.5 bg-gray-200 hover:bg-gray-300 dark:bg-gray-500 dark:hover:bg-gray-400 text-xs font-medium rounded-md transition-all duration-200 shadow-sm hover:shadow-md cursor-pointer overflow-hidden border border-gray-300 dark:border-gray-500 flex-shrink-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-green-500 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-gray-950'
+                          className="group relative flex items-center justify-center gap-1 w-8 h-8 lg:w-auto lg:h-auto lg:px-2 lg:py-1.5 bg-gray-200 hover:bg-gray-300 dark:bg-gray-500 dark:hover:bg-gray-400 text-xs font-medium rounded-md transition-all duration-200 shadow-sm hover:shadow-md cursor-pointer overflow-hidden border border-gray-300 dark:border-gray-500 flex-shrink-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-apex-accent focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-gray-950"
                           title='快捷键说明'
                           aria-label='查看播放快捷键说明'
                         >
@@ -11440,7 +11396,7 @@ function PlayPageClient() {
                         onClick={toggleToolbarAdBlock}
                         aria-pressed={externalPlayerAdBlock}
                         className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-all duration-200 shadow-sm hover:shadow-md cursor-pointer border flex-shrink-0 ${externalPlayerAdBlock
-                          ? 'bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white border-blue-400'
+                          ? "bg-gradient-to-r from-apex-action to-apex-action hover:from-apex-action hover:to-apex-action text-apex-action-ink border-blue-400"
                           : 'bg-white hover:bg-gray-100 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 border-gray-300 dark:border-gray-600'
                           }`}
                         title={externalPlayerAdBlock ? '去广告已开启' : '去广告已关闭'}
@@ -11485,7 +11441,7 @@ function PlayPageClient() {
                           }
                           aria-pressed={harmonyHlsPlaybackMode === 'hlsjs'}
                           className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-all duration-200 shadow-sm hover:shadow-md cursor-pointer border flex-shrink-0 ${harmonyHlsPlaybackMode === 'hlsjs'
-                            ? 'bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white border-blue-400'
+                            ? "bg-gradient-to-r from-apex-action to-apex-action hover:from-apex-action hover:to-apex-action text-apex-action-ink border-blue-400"
                             : 'bg-white hover:bg-gray-100 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 border-gray-300 dark:border-gray-600'
                             }`}
                           title={
@@ -11535,7 +11491,7 @@ function PlayPageClient() {
                             }
                             aria-pressed={netdiskHlsPlaybackMode === 'native'}
                             className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-all duration-200 shadow-sm hover:shadow-md cursor-pointer border flex-shrink-0 ${netdiskHlsPlaybackMode === 'native'
-                              ? 'bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white border-emerald-400'
+                              ? "bg-gradient-to-r from-apex-action to-apex-action hover:from-apex-action hover:to-apex-action text-apex-action-ink border-apex-accent"
                               : 'bg-white hover:bg-gray-100 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 border-gray-300 dark:border-gray-600'
                               }`}
                             title={
@@ -11577,49 +11533,17 @@ function PlayPageClient() {
 
             {/* 选集和换源 - 在移动端始终显示，在 lg 及以上可折叠 */}
             <div
-              className='ptv-player-panel relative z-10 h-[350px] overflow-hidden'
+              className='ptv-player-panel f1-film-panel relative z-10 h-[350px] overflow-hidden'
             >
-              <EpisodeSelector
-                totalEpisodes={totalEpisodes}
-                episodes_titles={detail?.episodes_titles || []}
-                richEpisodeNames={richEpisodeNames}
-                value={currentEpisodeIndex + 1}
-                onChange={playSync.shouldDisableControls ? () => { /* disabled */ } : handleEpisodeChange}
-                onSourceChange={playSync.shouldDisableControls ? () => { /* disabled */ } : handleSourceChange}
-                isRoomMember={playSync.shouldDisableControls}
-                currentSource={currentSource}
-                currentId={currentId}
-                episodeProgressContentKey={episodeProgressContentKey || undefined}
-                videoTitle={searchTitle || videoTitle}
-                availableSources={availableSources}
-                sourceSearchLoading={sourceSearchLoading}
-                sourceSearchError={sourceSearchError}
-                backgroundSourcesLoading={backgroundSourcesLoading}
-                precomputedVideoInfo={precomputedVideoInfo}
-                onDanmakuSelect={(selection) => handleDanmakuSelect(selection, true)}
-                onDanmakuEpisodesLoaded={applyDanmakuEpisodes}
-                currentDanmakuSelection={currentDanmakuSelection}
-                onUploadDanmaku={handleUploadDanmaku}
-                episodeFilterConfig={episodeFilterConfig}
-                onFilterConfigUpdate={setEpisodeFilterConfig}
-                onShowToast={(message, type) => {
-                  setToast({ message, type, onClose: () => setToast(null) });
-                }}
-              />
-            </div>
-          </div>
-        </div>
-
-        {!isDirectPlay && (
-          <>
-            {/* 详情展示 */}
-            <div className='grid grid-cols-1 md:grid-cols-5 lg:grid-cols-6 gap-4'>
-              {/* 文字区 */}
-              <div className='md:col-span-4 lg:col-span-5'>
-                <div className='p-6 flex flex-col min-h-0'>
-                  {/* 标题 */}
-                  <h1 className='text-3xl font-bold mb-2 tracking-wide flex items-center flex-shrink-0 text-center md:text-left w-full flex-wrap gap-2 text-[color:var(--ptv-text)]'>
-                    <span className={doubanAka.length > 0 ? 'relative group cursor-help' : ''}>
+              <div className='f1-film-side-content'>
+                {isWideScreen && <nav className='f1-film-side-tabs' aria-label='播放辅助面板'>
+                  <button type='button' aria-pressed={sideTab === 'detail'} onClick={() => setSideTab('detail')}>播放</button>
+                  {aiEnabled && detail && <button type='button' aria-pressed={sideTab === 'ai'} onClick={() => setSideTab('ai')}>AI问片</button>}
+                  {videoDoubanId !== 0 && enableComments && <button type='button' aria-pressed={sideTab === 'comments'} onClick={() => setSideTab('comments')}>评论</button>}
+                  {netdiskSearchEnabled && <button type='button' aria-pressed={sideTab === 'pansou'} onClick={() => setSideTab('pansou')}>网盘搜索</button>}
+                </nav>}
+                <section hidden={isWideScreen && sideTab !== 'detail'} className='f1-film-side-info' aria-label='影片信息'>
+                  <h2 className='f1-film-title'><span className={doubanAka.length > 0 ? 'relative group cursor-help' : ''}>
                       {videoTitle || '影片标题'}
                       {/* aka 悬浮提示 */}
                       {doubanAka.length > 0 && (
@@ -11633,7 +11557,22 @@ function PlayPageClient() {
                           <div className='absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-800 dark:border-t-gray-900'></div>
                         </div>
                       )}
-                    </span>
+                    </span></h2>
+                  <div className='f1-film-side-meta'>
+                    {detail && totalEpisodes > 1 && getSeriesStatus(detail) !== 'unknown' && <span>{getSeriesStatus(detail) === 'completed' ? '已完结' : '连载中'}</span>}
+                    {playbackSourceBadge && <span>{playbackSourceBadge === 'local' ? '本地播放' : '离线播放'}</span>}
+                    {doubanRating && doubanRating.value > 0 && <span className='f1-film-side-rating'>★ {doubanRating.value.toFixed(1)}</span>}
+                    {(doubanYear || netdiskTMDBMeta?.year || detail?.year || videoYear) && <span>{doubanYear || netdiskTMDBMeta?.year || detail?.year || videoYear}</span>}
+                    {detail?.type_name && <span>{detail.type_name}</span>}
+                    {detail?.class && <span>{detail.class}</span>}
+                  </div>
+                  {(netdiskTMDBMeta?.desc || correctedDesc || detail?.desc || doubanCardSubtitle) && (
+                    <>
+                    <p>{netdiskTMDBMeta?.desc || correctedDesc || detail?.desc || doubanCardSubtitle}</p>
+                    <a href='#film-details' className='f1-film-desc-link'>展开简介</a>
+                    </>
+                  )}
+                  <div className='f1-film-side-actions'>
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
@@ -11642,9 +11581,10 @@ function PlayPageClient() {
                       className='flex-shrink-0 hover:opacity-80 active:scale-90 transition-[transform,opacity] duration-150'
                     >
                       <FavoriteIcon filled={favorited} />
+                      <span>{favorited ? '已收藏' : '收藏'}</span>
                     </button>
                     {/* 网盘搜索按钮 */}
-                    {netdiskSearchEnabled && (
+                    {!isWideScreen && netdiskSearchEnabled && (
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
@@ -11657,7 +11597,7 @@ function PlayPageClient() {
                       </button>
                     )}
                     {/* AI问片按钮 */}
-                    {aiEnabled && detail && (
+                    {!isWideScreen && aiEnabled && detail && (
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
@@ -11679,7 +11619,7 @@ function PlayPageClient() {
                         className='flex-shrink-0 hover:opacity-80 transition-opacity px-2 py-1 text-base font-medium text-gray-700 dark:text-gray-300'
                         title='详情'
                       >
-                        详
+                        影片资料
                       </button>
                     )}
                     {/* 纠错按钮 - 仅小雅源显示 */}
@@ -11761,7 +11701,59 @@ function PlayPageClient() {
                         </span>
                       </div>
                     )}
-                  </h1>
+
+                  </div>
+                </section>
+                <div hidden={isWideScreen && sideTab !== 'detail'} className='f1-film-side-episodes'>
+              <EpisodeSelector
+                totalEpisodes={totalEpisodes}
+                episodes_titles={detail?.episodes_titles || []}
+                richEpisodeNames={richEpisodeNames}
+                value={currentEpisodeIndex + 1}
+                onChange={playSync.shouldDisableControls ? () => { /* disabled */ } : handleEpisodeChange}
+                onSourceChange={playSync.shouldDisableControls ? () => { /* disabled */ } : handleSourceChange}
+                isRoomMember={playSync.shouldDisableControls}
+                currentSource={currentSource}
+                currentId={currentId}
+                episodeProgressContentKey={episodeProgressContentKey || undefined}
+                videoTitle={searchTitle || videoTitle}
+                availableSources={availableSources}
+                sourceSearchLoading={sourceSearchLoading}
+                sourceSearchError={sourceSearchError}
+                backgroundSourcesLoading={backgroundSourcesLoading}
+                precomputedVideoInfo={precomputedVideoInfo}
+                onDanmakuSelect={(selection) => handleDanmakuSelect(selection, true)}
+                onDanmakuEpisodesLoaded={applyDanmakuEpisodes}
+                currentDanmakuSelection={currentDanmakuSelection}
+                onUploadDanmaku={handleUploadDanmaku}
+                episodeFilterConfig={episodeFilterConfig}
+                onFilterConfigUpdate={setEpisodeFilterConfig}
+                onShowToast={(message, type) => {
+                  setToast({ message, type, onClose: () => setToast(null) });
+                }}
+              />
+                </div>
+                {isWideScreen && aiEnabled && detail && <div className='f1-film-side-pane f1-film-side-ai' hidden={sideTab !== 'ai'}>
+                  <AIChatPanel embedded isOpen={sideTab === 'ai'} onClose={() => setSideTab('detail')}
+                    context={{ title: detail.title, year: detail.year, douban_id: videoDoubanId !== 0 ? videoDoubanId : undefined, currentEpisode: currentEpisodeIndex + 1 }}
+                    welcomeMessage={aiDefaultMessageWithVideo ? aiDefaultMessageWithVideo.replace('{title}', detail.title || '') : `想了解《${detail.title}》的更多信息吗？我可以帮你查询剧情、演员、评价等。`} />
+                </div>}
+                {isWideScreen && sideTab === 'comments' && videoDoubanId !== 0 && enableComments && <div className='f1-film-side-pane'><DoubanComments doubanId={videoDoubanId} /></div>}
+                {isWideScreen && sideTab === 'pansou' && netdiskSearchEnabled && <div className='f1-film-side-pane'><PansouSearch keyword={detail?.title || ''} triggerSearch /></div>}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {!isDirectPlay && (
+          <>
+            {/* 详情展示 */}
+            <section id='film-details' className='f1-film-summary grid grid-cols-1 gap-4'>
+              {/* 文字区 */}
+              <div className='f1-film-detail-copy'>
+                <div className='p-6 flex flex-col min-h-0'>
+                  {/* 标题 */}
+                  <div className='f1-film-detail-heading'><h2>剧情简介</h2><button type='button' onClick={() => openDrawer('detail')}>详细资料</button></div>
 
                   {/* 关键信息行 */}
                   <div className='flex flex-wrap items-center gap-3 text-base mb-4 flex-shrink-0 text-[color:var(--ptv-muted)]'>
@@ -11776,7 +11768,7 @@ function PlayPageClient() {
                     )}
                     {detail?.source_name && (
                       <span
-                        className={`relative group cursor-pointer border px-2 py-[1px] rounded ${detail.source === 'xiaoya' ? 'border-blue-500' : isNetdiskSource(detail.source) ? 'border-purple-500' : detail.source === 'openlist' || detail.source === 'emby' || detail.source?.startsWith('emby_') ? 'border-yellow-500' : 'border-gray-500/60'
+                        className={`relative group cursor-pointer border px-2 py-[1px] rounded ${detail.source === 'xiaoya' ? 'border-blue-500' : isNetdiskSource(detail.source) ? "border-apex-accent" : detail.source === 'openlist' || detail.source === 'emby' || detail.source?.startsWith('emby_') ? 'border-yellow-500' : 'border-gray-500/60'
                           }`}
                         onClick={fetchCurrentSourceVideoInfo}
                       >
@@ -11814,7 +11806,7 @@ function PlayPageClient() {
               </div>
 
               {/* 封面展示 */}
-              <div className='hidden md:block md:col-span-1 md:order-first'>
+              <div className='f1-film-detail-cover hidden md:block'>
                 <div className='pl-0 py-4 pr-6 max-w-sm mx-auto'>
                   <div className='relative bg-gray-300 dark:bg-gray-700 aspect-[2/3] flex items-center justify-center rounded-xl overflow-hidden'>
                     {videoCover ? (
@@ -11865,7 +11857,7 @@ function PlayPageClient() {
                   </div>
                 </div>
               </div>
-            </div>
+            </section>
 
             {/* 推荐区域 */}
             <SmartRecommendations
@@ -11938,6 +11930,9 @@ function PlayPageClient() {
         totalEpisodes={totalEpisodes}
         episodesTitles={detail?.episodes_titles || []}
         videoTitle={videoTitle}
+        videoPoster={videoCover}
+        sourceName={detail?.source_name || currentSource}
+        qualityLabel={currentSourceVideoInfo?.quality}
         currentEpisodeIndex={currentEpisodeIndex}
         onDownload={handleDownloadEpisode}
         enableOfflineDownload={enableOfflineDownload}
@@ -11958,7 +11953,7 @@ function PlayPageClient() {
               danmakuPluginRef.current.load();
               console.log('弹幕过滤规则已更新，重新加载弹幕');
             } catch (error) {
-              console.error('重新加载弹幕失败:', error);
+              reportAppError(error, '重新加载弹幕');
             }
           }
         }}
@@ -11985,7 +11980,7 @@ function PlayPageClient() {
             aria-modal='true'
             aria-labelledby='shortcut-dialog-title'
           >
-            <div className='absolute inset-x-0 top-0 h-24 bg-gradient-to-br from-green-500/15 via-cyan-500/10 to-transparent pointer-events-none' />
+            <div className="absolute inset-x-0 top-0 h-24 bg-gradient-to-br from-apex-media-panel/15 via-apex-media-high/10 to-transparent pointer-events-none" />
             <div className='relative flex items-start justify-between gap-4 border-b border-gray-200 px-5 py-4 dark:border-gray-700'>
               <div className='flex items-center gap-3'>
                 <div className='flex h-10 w-10 items-center justify-center rounded-xl border border-green-500/30 bg-green-500/10 text-green-600 dark:text-green-300'>
@@ -11999,7 +11994,7 @@ function PlayPageClient() {
               </div>
               <button
                 onClick={() => setShowShortcutDialog(false)}
-                className='rounded-lg p-2 text-gray-500 transition-colors duration-200 hover:bg-gray-100 hover:text-gray-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-green-500 cursor-pointer dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-white'
+                className="rounded-lg p-2 text-gray-500 transition-colors duration-200 hover:bg-gray-100 hover:text-gray-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-apex-accent cursor-pointer dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-white"
                 aria-label='关闭快捷键说明'
               >
                 <X className='h-5 w-5' />
@@ -12055,7 +12050,7 @@ function PlayPageClient() {
           isOpen={showPansouDialog}
           onClose={() => setShowPansouDialog(false)}
           title={`搜索网盘资源: ${detail?.title || ''}`}
-          width='w-[400px]'
+          width='w-[min(520px,100vw)]'
         >
           <div className='p-4'>
             <PansouSearch
@@ -12071,16 +12066,20 @@ function PlayPageClient() {
             onClick={() => setShowPansouDialog(false)}
           >
             <div
-              className='ptv-modal-in relative w-full max-w-4xl max-h-[80vh] overflow-y-auto bg-white dark:bg-gray-900 rounded-lg shadow-xl m-4'
+              role='dialog'
+              aria-modal='true'
+              aria-label='搜索网盘资源'
+              className='ptv-modal-in f1-resource-dialog relative w-full max-w-4xl max-h-[88dvh] overflow-y-auto m-3'
               onClick={(e) => e.stopPropagation()}
             >
               {/* 弹窗头部 */}
-              <div className='sticky top-0 z-10 flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900'>
+              <div className='f1-detail-heading sticky top-0 z-10 flex items-center justify-between gap-4'>
                 <h2 className='text-xl font-bold text-gray-900 dark:text-gray-100'>
                   搜索网盘资源: {detail?.title || ''}
                 </h2>
                 <button
                   onClick={() => setShowPansouDialog(false)}
+                  aria-label='关闭网盘搜索'
                   className='p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors'
                 >
                   <X className='h-5 w-5 text-gray-600 dark:text-gray-400' />
@@ -12099,7 +12098,7 @@ function PlayPageClient() {
       )}
 
       {/* AI问片面板 */}
-      {aiEnabled && detail && (
+      {!isWideScreen && aiEnabled && detail && (
         <AIChatPanel
           isOpen={showAIChat}
           onClose={() => setShowAIChat(false)}
@@ -12207,7 +12206,7 @@ const getXiaoyaCorrection = (source: string, id: string) => {
       return JSON.parse(correctionJson);
     }
   } catch (error) {
-    console.error('读取纠错信息失败:', error);
+    reportAppError(error, '读取纠错信息');
   }
   return null;
 };
@@ -12251,8 +12250,8 @@ const FavoriteIcon = ({ filled }: { filled: boolean }) => {
       >
         <path
           d='M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z'
-          fill='#ef4444' /* Tailwind red-500 */
-          stroke='#ef4444'
+          fill="var(--ptv-error)" /* Tailwind red-500 */
+          stroke="var(--ptv-error)"
           strokeWidth='2'
           strokeLinecap='round'
           strokeLinejoin='round'

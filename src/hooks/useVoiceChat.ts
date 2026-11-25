@@ -1,5 +1,8 @@
-// React Hook for Voice Chat in Watch Room
 'use client';
+
+import { formatAppError, reportAppError } from '@/lib/app-error';
+// React Hook for Voice Chat in Watch Room
+
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 
@@ -80,7 +83,7 @@ export function useVoiceChat({
       console.log('[VoiceChat] Got local stream');
       return stream;
     } catch (err) {
-      console.error('[VoiceChat] Failed to get local stream:', err);
+      reportAppError(err, "语音聊天");
       setError('无法访问麦克风，请检查权限设置');
       throw err;
     }
@@ -317,7 +320,7 @@ export function useVoiceChat({
       });
       console.log('[VoiceChat] Sent offer to', peerId);
     } catch (err) {
-      console.error('[VoiceChat] Failed to create offer:', err);
+      reportAppError(err, "语音聊天");
     }
   }, [socket, createPeerConnection]);
 
@@ -351,7 +354,7 @@ export function useVoiceChat({
       });
       console.log('[VoiceChat] Sent answer to', data.userId);
     } catch (err) {
-      console.error('[VoiceChat] Failed to handle offer:', err);
+      reportAppError(err, "语音聊天");
     }
   }, [socket, createPeerConnection]);
 
@@ -364,7 +367,7 @@ export function useVoiceChat({
     try {
       await pc.setRemoteDescription(new RTCSessionDescription(data.answer));
     } catch (err) {
-      console.error('[VoiceChat] Failed to handle answer:', err);
+      reportAppError(err, "语音聊天");
     }
   }, []);
 
@@ -376,7 +379,7 @@ export function useVoiceChat({
     try {
       await pc.addIceCandidate(new RTCIceCandidate(data.candidate));
     } catch (err) {
-      console.error('[VoiceChat] Failed to add ICE candidate:', err);
+      reportAppError(err, "语音聊天");
     }
   }, []);
 
@@ -385,12 +388,12 @@ export function useVoiceChat({
   // 启动服务器中转
   const startServerRelay = useCallback(() => {
     if (!socket || !localStreamRef.current) {
-      console.error('[VoiceChat] Cannot start server relay - missing socket or stream');
+      reportAppError('[VoiceChat] Cannot start server relay - missing socket or stream', "语音聊天");
       return;
     }
 
     if (!roomId) {
-      console.error('[VoiceChat] Cannot start server relay - missing roomId');
+      reportAppError('[VoiceChat] Cannot start server relay - missing roomId', "语音聊天");
       return;
     }
 
@@ -472,7 +475,7 @@ export function useVoiceChat({
 
       console.log('[VoiceChat] Server relay started');
     } catch (err) {
-      console.error('[VoiceChat] Failed to start server relay:', err);
+      reportAppError(err, "语音聊天");
       setError('服务器中转启动失败');
     }
   }, [socket, roomId]);
@@ -507,11 +510,11 @@ export function useVoiceChat({
       if (hasEnabledTrack) {
         startServerRelay();
       } else {
-        console.error('[VoiceChat] Cannot start server relay - no enabled audio tracks');
+        reportAppError('[VoiceChat] Cannot start server relay - no enabled audio tracks', "语音聊天");
         setError('服务器中转启动失败：麦克风未启用');
       }
     } else {
-      console.error('[VoiceChat] Cannot start server relay - mic disabled or no stream');
+      reportAppError('[VoiceChat] Cannot start server relay - mic disabled or no stream', "语音聊天");
       setError('服务器中转启动失败：麦克风未开启');
     }
   }, [isMicEnabled, cleanupWebRTC, startServerRelay]);
@@ -580,8 +583,8 @@ export function useVoiceChat({
       // 更新下一个播放时间
       nextPlayTimeRef.current.set(userId, nextPlayTime + duration);
     } catch (err) {
-      console.error('[VoiceChat] Failed to play audio:', err);
-      setError('音频播放失败: ' + (err as Error).message);
+      reportAppError(err, "语音聊天");
+      setError(formatAppError(reportAppError('音频播放失败: ' + (err as Error).message, "语音聊天"), "语音聊天"));
     }
   }, [isSpeakerEnabled]);
 

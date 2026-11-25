@@ -1,3 +1,4 @@
+import { appErrorPayload, reportAppError } from '@/lib/app-error';
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { NextRequest, NextResponse } from 'next/server';
 
@@ -61,9 +62,9 @@ export async function PUT(req: NextRequest) {
       downloadTool: config.AnimeSubscriptionConfig.DownloadTool,
     });
   } catch (error: any) {
-    console.error('切换追番功能状态失败:', error);
+    reportAppError(error, "切换追番功能状态失败");
     return NextResponse.json(
-      { error: error.message || '切换状态失败' },
+      {...{ error: error.message || '切换状态失败' }, ...appErrorPayload(error, "后台配置服务", 500)},
       { status: 500 }
     );
   }

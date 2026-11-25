@@ -1,0 +1,166 @@
+
+:is(.f1-channel-panel, .f1-room-panel) .f1-broadcast-tabs { margin: 0 -16px 14px; border-bottom: 1px solid var(--ptv-line); }
+:is(.f1-channel-panel, .f1-room-panel) .f1-broadcast-tabs > * { min-height: 48px; border-bottom: 2px solid transparent; }
+:is(.f1-channel-panel, .f1-room-panel) .f1-broadcast-tabs > [aria-pressed="true"] { border-bottom-color: var(--ptv-accent); background: var(--ptv-selected); --ptv-muted: var(--ptv-muted-on-soft); --apex-muted-rgb: var(--apex-muted-on-soft-rgb); --ptv-accent: var(--ptv-accent-on-soft); --apex-accent-rgb: var(--apex-accent-on-soft-rgb); }
+.f1-broadcast-search { margin-bottom: 12px; }
+.f1-broadcast-search input { min-height: 42px; background: var(--ptv-soft); border-color: var(--ptv-field-line); color: var(--ptv-text); --ptv-muted: var(--ptv-muted-on-soft); --apex-muted-rgb: var(--apex-muted-on-soft-rgb); --ptv-accent: var(--ptv-accent-on-soft); --apex-accent-rgb: var(--apex-accent-on-soft-rgb); }
+.f1-broadcast-filters { margin-bottom: 12px; border-color: var(--ptv-line); }
+.f1-broadcast-list-heading { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; padding: 2px 2px 10px; }
+.f1-broadcast-list-heading h2 { color: var(--ptv-text); font-size: 14px; font-weight: 700; }
+.f1-broadcast-list-heading span { color: var(--ptv-muted); font-size: 12px; }
+.f1-broadcast-room, .f1-broadcast-platform { border: 1px solid transparent; background: var(--ptv-soft); --ptv-muted: var(--ptv-muted-on-soft); --apex-muted-rgb: var(--apex-muted-on-soft-rgb); --ptv-accent: var(--ptv-accent-on-soft); --apex-accent-rgb: var(--apex-accent-on-soft-rgb); }
+.f1-broadcast-room:hover, .f1-broadcast-platform:hover { border-color: var(--ptv-line); background: var(--ptv-selected); --ptv-muted: var(--ptv-muted-on-soft); --apex-muted-rgb: var(--apex-muted-on-soft-rgb); --ptv-accent: var(--ptv-accent-on-soft); --apex-accent-rgb: var(--apex-accent-on-soft-rgb); }
+.f1-broadcast-console { margin-top: 16px; padding: 18px; border: 1px solid var(--ptv-line); border-radius: var(--f1-radius); background: var(--ptv-panel); }
+.f1-broadcast-console-heading { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; margin-bottom: 14px; }
+.f1-broadcast-console-heading h2, .f1-broadcast-programs h2 { color: var(--ptv-text); font-size: 15px; font-weight: 700; }
+.f1-broadcast-console-heading span { color: var(--ptv-muted); font-size: 12px; }
+.f1-broadcast-console .ptv-live-controls { display: flex; flex-wrap: wrap; align-items: end; gap: 12px; }
+.f1-broadcast-console .ptv-live-field { flex: 1 1 140px; }
+.f1-broadcast-channel-info { margin-top: 20px; border: 1px solid var(--ptv-line); border-radius: var(--f1-radius); background: var(--ptv-panel); overflow: hidden; }
+.f1-broadcast-channel-heading { padding: 20px; }
+.f1-broadcast-programs { border-top: 1px solid var(--ptv-line); padding: 18px 20px; }
+.f1-broadcast-programs h2 { margin-bottom: 12px; }
+@media (max-width: 640px) {
+  .f1-broadcast-console, .f1-broadcast-channel-heading, .f1-broadcast-programs { padding: 14px; }
+  .f1-broadcast-console .ptv-live-field { flex-basis: 120px; }
+}
+
+.f1-room-panel .f1-broadcast-tabs { margin-inline: -24px; }
+.f1-broadcast-room[aria-pressed="true"] { background: var(--ptv-selected); border-color: var(--ptv-accent); --ptv-muted: var(--ptv-muted-on-soft); --apex-muted-rgb: var(--apex-muted-on-soft-rgb); --ptv-accent: var(--ptv-accent-on-soft); --apex-accent-rgb: var(--apex-accent-on-soft-rgb); }
+
+/* Broadcast workspaces use their own grids so film-page rules cannot reverse the screen. */
+.ptv-live-page:is(.f1-tv-live-page,.f1-web-live-page) {
+  --broadcast-gap: 16px;
+}
+.ptv-live-page .f1-broadcast-workspace { position: relative; min-width: 0; }
+.ptv-live-page .f1-broadcast-page-heading h1 { max-width: calc(100% - 110px); }
+.ptv-live-page .f1-broadcast-view-toggle { position: absolute; right: 0; top: -48px; }
+.ptv-live-page .f1-broadcast-view-toggle button {
+  min-height: 36px; padding: 7px 12px; border: 1px solid var(--ptv-line);
+  border-radius: 8px; background: var(--ptv-panel); box-shadow: none; backdrop-filter: none;
+}
+.ptv-live-page:is(.f1-tv-live-page,.f1-web-live-page) .ptv-player-grid {
+  gap: var(--broadcast-gap); overflow: visible; border: 0; border-radius: 0;
+  background: transparent; box-shadow: none;
+}
+.ptv-live-page:is(.f1-tv-live-page,.f1-web-live-page) .ptv-player-stage { min-width: 0; }
+.ptv-live-page:is(.f1-tv-live-page,.f1-web-live-page) .ptv-player-canvas {
+  position: relative; isolation: isolate; z-index: 0; aspect-ratio: 16 / 9;
+  overflow: hidden; border-radius: 12px; background: var(--ptv-media-bg);
+}
+.ptv-live-page:is(.f1-tv-live-page,.f1-web-live-page) .ptv-player-canvas:has(.art-fullscreen-web) {
+  isolation: auto; z-index: 100;
+}
+.ptv-live-page:is(.f1-tv-live-page,.f1-web-live-page) .ptv-player-canvas:has(.art-fullscreen-web) .art-fullscreen-web {
+  z-index: 100;
+}
+.ptv-live-page:is(.f1-tv-live-page,.f1-web-live-page) .ptv-player-grid > .ptv-player-panel {
+  border: 1px solid var(--ptv-line); border-radius: 12px;
+  background: var(--ptv-panel); min-width: 0;
+}
+.ptv-live-page .f1-broadcast-tabs { margin: 0 -16px 14px; padding: 5px; gap: 4px; border-bottom: 1px solid var(--ptv-line); }
+.ptv-live-page .f1-broadcast-tabs > button {
+  min-height: 40px; padding: 8px 12px; border: 1px solid transparent;
+  border-radius: 7px; color: var(--ptv-muted); background: transparent; font-size: 14px;
+}
+.ptv-live-page .f1-broadcast-tabs > button[aria-pressed='true'] {
+  border-color: var(--ptv-accent-on-clear-20);
+  background: var(--ptv-selected); color: var(--ptv-accent); --ptv-muted: var(--ptv-muted-on-soft); --apex-muted-rgb: var(--apex-muted-on-soft-rgb); --ptv-accent: var(--ptv-accent-on-soft); --apex-accent-rgb: var(--apex-accent-on-soft-rgb);
+}
+.f1-tv-live-page .f1-broadcast-filters { gap: 5px; overflow-x: auto; scrollbar-width: thin; padding-bottom: 8px; }
+.f1-tv-live-page .f1-broadcast-filters > * { flex: none; font-size: 12px; }
+.f1-tv-live-page .f1-broadcast-search input { font-size: 13px; }
+.f1-tv-live-page .f1-broadcast-channel-info {
+  display: flex; flex-direction: column; min-width: 0; margin: 0;
+  overflow: hidden; border: 1px solid var(--ptv-line); border-radius: 12px; background: var(--ptv-panel);
+}
+.f1-tv-live-page .f1-broadcast-channel-heading { flex: none; padding: 16px; }
+.f1-tv-live-page .f1-broadcast-channel-heading .w-20 { width: 44px; height: 44px; border-radius: 8px; background: var(--ptv-soft); --ptv-muted: var(--ptv-muted-on-soft); --apex-muted-rgb: var(--apex-muted-on-soft-rgb); --ptv-accent: var(--ptv-accent-on-soft); --apex-accent-rgb: var(--apex-accent-on-soft-rgb); }
+.f1-tv-live-page .f1-broadcast-channel-heading h3 { font-size: 15px; }
+.f1-tv-live-page .f1-broadcast-channel-heading p { margin-top: 5px; font-size: 11px; }
+.f1-tv-live-page .f1-broadcast-programs { flex: 1; min-height: 0; overflow-y: auto; padding: 16px; }
+.f1-tv-live-page .f1-broadcast-programs h2 { margin-bottom: 4px; font-size: 15px; }
+.f1-epg-compact { padding-top: 8px; margin-top: 0; }
+.f1-epg-compact > div:first-child { flex-wrap: wrap; gap: 8px; }
+.f1-epg-compact > div:first-child > div { flex-wrap: wrap; gap: 4px; }
+.f1-epg-compact .f1-epg-list {
+  display: flex; flex-direction: column; gap: 8px; min-height: 0;
+  max-height: 56dvh; overflow-x: hidden; overflow-y: auto; padding: 0;
+}
+.f1-epg-compact .f1-epg-program { width: 100%; min-height: 0; padding: 10px 12px; border-radius: 8px; }
+.f1-epg-compact .f1-epg-program > div:first-child { margin-bottom: 5px; }
+.f1-epg-compact button { min-height: 32px; }
+.f1-web-live-page .f1-network-reference-main { min-width: 0; gap: 16px; }
+.f1-web-live-page .f1-web-live-platform-tabs { gap: 8px; padding: 0 0 4px; }
+.f1-web-live-page .f1-web-live-platform-tabs > button {
+  flex: 0 0 auto; min-height: 40px; padding: 8px 18px; font-size: 14px; font-weight: 550;
+}
+.f1-web-live-page .f1-web-live-platform-tabs > button:disabled { opacity: .45; }
+.f1-web-live-page .f1-room-panel > div { padding: 0 12px; }
+.f1-web-live-page .f1-broadcast-list { margin-top: 0; padding: 16px 0; }
+.f1-web-live-page .f1-broadcast-list-heading { position: sticky; top: -16px; z-index: 1; padding: 4px 2px 14px; background: var(--ptv-panel); }
+.f1-web-live-page .f1-broadcast-room {
+  padding: 12px; border-radius: 9px; background: transparent; color: var(--ptv-text);
+}
+.f1-web-live-page .f1-broadcast-room[aria-pressed='true'] { border-color: var(--ptv-accent); background: var(--ptv-selected); --ptv-muted: var(--ptv-muted-on-soft); --apex-muted-rgb: var(--apex-muted-on-soft-rgb); --ptv-accent: var(--ptv-accent-on-soft); --apex-accent-rgb: var(--apex-accent-on-soft-rgb); }
+.f1-web-live-page .f1-broadcast-room .ptv-room-avatar { width: 52px; height: 42px; border-radius: 7px; }
+.f1-web-live-page .f1-broadcast-console { margin-top: 12px; }
+.f1-web-live-page [id] { scroll-margin-top: calc(var(--f1-header-height,72px) + 20px); }
+@media (min-width: 1024px) {
+  .ptv-live-page.f1-tv-live-page .ptv-player-grid.f1-tv-broadcast-grid {
+    grid-template-columns: clamp(220px,16vw,270px) minmax(0,1fr);
+    align-items: start;
+  }
+  .ptv-live-page.f1-tv-live-page .f1-tv-broadcast-grid > .ptv-player-stage { grid-column: 2; grid-row: 1; }
+  .ptv-live-page.f1-tv-live-page .f1-tv-broadcast-grid > .f1-channel-panel {
+    grid-column: 1; grid-row: 1 / span 2; position: relative;
+    height: min(76dvh,880px); min-height: 400px; max-height: none; border: 1px solid var(--ptv-line);
+  }
+  .ptv-live-page.f1-tv-live-page .f1-tv-broadcast-grid > .f1-broadcast-channel-info { grid-column: 2; grid-row: 2; }
+  .ptv-live-page.f1-tv-live-page .f1-tv-broadcast-grid.ptv-player-grid-collapsed { grid-template-columns: minmax(0,1fr); }
+  .ptv-live-page.f1-tv-live-page .f1-tv-broadcast-grid.ptv-player-grid-collapsed > .ptv-player-stage,
+  .ptv-live-page.f1-tv-live-page .f1-tv-broadcast-grid.ptv-player-grid-collapsed > .f1-broadcast-channel-info { grid-column: 1; }
+  .ptv-live-page.f1-web-live-page .ptv-player-grid.f1-network-broadcast-grid {
+    grid-template-columns: minmax(0,1fr) clamp(280px,21vw,340px); align-items: start;
+  }
+  .ptv-live-page.f1-web-live-page .f1-network-broadcast-grid > .f1-room-panel {
+    position: sticky; top: calc(var(--f1-header-height,72px) + 16px); height: min(76dvh,880px);
+    min-height: 360px; max-height: none; align-self: start; border: 1px solid var(--ptv-line);
+  }
+  .ptv-live-page.f1-web-live-page .f1-network-broadcast-grid.ptv-player-grid-collapsed { grid-template-columns: minmax(0,1fr); }
+  .ptv-live-page:is(.f1-tv-live-page,.f1-web-live-page) .ptv-player-panel > div {
+    position: absolute; inset: 0; height: auto; margin: 0;
+  }
+}
+@media (min-width: 1440px) {
+  .ptv-live-page.f1-tv-live-page .ptv-player-grid.f1-tv-broadcast-grid {
+    grid-template-columns: clamp(230px,15vw,270px) minmax(0,1fr) clamp(260px,19vw,330px);
+    align-items: stretch;
+  }
+  .ptv-live-page.f1-tv-live-page .f1-tv-broadcast-grid > .f1-channel-panel { grid-row: 1; height: auto; min-height: 0; }
+  .ptv-live-page.f1-tv-live-page .f1-tv-broadcast-grid > .f1-broadcast-channel-info { grid-column: 3; grid-row: 1; max-height: 75dvh; }
+  .ptv-live-page.f1-tv-live-page .f1-tv-broadcast-grid.ptv-player-grid-collapsed { grid-template-columns: minmax(0,1fr) 300px; }
+  .ptv-live-page.f1-tv-live-page .f1-tv-broadcast-grid.ptv-player-grid-collapsed > .ptv-player-stage { grid-column: 1; grid-row: 1; }
+  .ptv-live-page.f1-tv-live-page .f1-tv-broadcast-grid.ptv-player-grid-collapsed > .f1-broadcast-channel-info { grid-column: 2; grid-row: 1; }
+}
+@media (max-width: 1023px) {
+  .ptv-live-page.f1-tv-live-page .ptv-player-grid.f1-tv-broadcast-grid,
+  .ptv-live-page.f1-web-live-page .ptv-player-grid.f1-network-broadcast-grid { grid-template-columns: minmax(0,1fr); }
+  .ptv-live-page:is(.f1-tv-live-page,.f1-web-live-page) .ptv-player-grid > .ptv-player-stage { grid-column: 1; grid-row: 1; }
+  .ptv-live-page:is(.f1-tv-live-page,.f1-web-live-page) .ptv-player-grid > .ptv-player-panel {
+    grid-column: 1; grid-row: 2; position: relative; height: min(48dvh,420px); min-height: 240px; max-height: none;
+  }
+  .ptv-live-page:is(.f1-tv-live-page,.f1-web-live-page) .ptv-player-panel > div { position: absolute; inset: 0; height: auto; }
+  .f1-tv-live-page .f1-broadcast-channel-info { grid-column: 1; grid-row: 3; }
+  .f1-tv-live-page .f1-broadcast-programs { max-height: 420px; }
+}
+@media (max-width: 767px) {
+  .ptv-live-page:is(.f1-tv-live-page,.f1-web-live-page) { --broadcast-gap: 12px; }
+  .ptv-live-page .f1-broadcast-page-heading h1 { max-width: 100%; font-size: 17px; }
+  .ptv-live-page .ptv-player-canvas:has(.art-fullscreen-web) { z-index: 100; }
+  .f1-web-live-page .f1-web-live-platform-tabs > button { min-height: 40px; padding-inline: 12px; font-size: 13px; }
+  .f1-tv-live-page .f1-broadcast-channel-heading,.f1-tv-live-page .f1-broadcast-programs { padding: 14px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .ptv-live-page .f1-broadcast-room { transition: none; }
+}

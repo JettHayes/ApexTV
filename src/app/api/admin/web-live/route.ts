@@ -1,3 +1,4 @@
+import { appErrorPayload } from '@/lib/app-error';
 import { NextRequest, NextResponse } from 'next/server';
 
 import { getAuthInfoFromCookie } from '@/lib/auth';
@@ -171,7 +172,7 @@ export async function POST(request: NextRequest) {
         { status: error.status }
       );
     return NextResponse.json(
-      { error: '配置保存失败，请刷新列表后重试' },
+      {...{ error: '配置保存失败，请刷新列表后重试' }, ...appErrorPayload(error, "后台配置服务", 503)},
       { status: 503 }
     );
   }

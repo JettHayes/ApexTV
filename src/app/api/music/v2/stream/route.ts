@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 
+import { reportAppError } from '@/lib/app-error';
 import { getLxPlaybackSongInfo, isMusicSource, lxPostJson, normalizeMusicQuality, normalizeSong } from '@/lib/music-v2';
 import { badRequest } from '@/lib/music-v2-api';
 import { LxStreamCandidate, MusicStreamFailure, openMusicStream } from '@/lib/music-v2-stream';
@@ -83,9 +84,7 @@ export async function GET(request: NextRequest) {
       expiresAt: Date.now() + STREAM_URL_CACHE_TTL_MS,
     });
     if (result.attempts.length) {
-      console.warn('[music-v2/stream] recovered', {
-        source, songId, quality, attempts: result.attempts,
-      });
+      reportAppError({ code: 'STREAM_FALLBACK', message: '部分音源不可用，已切换到其他音源' }, '播放音乐', { level: 'warn' });
     }
 
     const upstream = result.response;
@@ -104,11 +103,14 @@ export async function GET(request: NextRequest) {
     return new NextResponse(upstream.body, { status: upstream.status, headers });
   } catch (error) {
     if (cacheKey) streamUrlCache.delete(cacheKey);
-    const attempts = error instanceof MusicStreamFailure ? error.attempts : [];
-    console.warn('[music-v2/stream] failed', { source, songId, quality, attempts });
+    const attempts = error instanceof MusicStreamFailure
+      ? error.attempts.map(({ stage, reason, status }) => ({ stage, reason, status }))
+      : [];
+    const upstreamStatus = [...attempts].reverse().find((attempt) => attempt.status)?.status;
+    reportAppError({ code: 'STREAM_FAILED', message: '当前音源未返回可播放音频', status: 502, upstreamStatus }, '播放音乐');
     return NextResponse.json({
       success: false,
-      error: { code: 'STREAM_FAILED', message: '当前音源未返回可播放音频', attempts },
+      error: { code: 'STREAM_FAILED', message: '当前音源未返回可播放音频', upstreamStatus, attempts },
     }, { status: 502, headers: { 'Cache-Control': 'no-store' } });
   }
 }
